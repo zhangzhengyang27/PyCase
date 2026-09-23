@@ -1,0 +1,571 @@
+{
+ "name": "办公自动化",
+ "description": "真实办公场景脚本（第三批追加）。",
+ "examples": [
+  {
+   "id": "tools_office-xls-create",
+   "name": "office_xls-create.py",
+   "category": "tools",
+   "tags": [
+    "办公"
+   ],
+   "title": "Excel 建表入门",
+   "description": "创建工作簿、写表头与数据、保存。",
+   "requirements": [
+    "openpyxl"
+   ],
+   "code": "\"\"\"Excel 建表：生成月度销售表。\"\"\"\nfrom openpyxl import Workbook\n\nwb = Workbook()\nws = wb.active\nws.title = \"销售明细\"\nws.append([\"日期\", \"商品\", \"数量\", \"金额\"])\nrows = [[\"2026-09-01\", \"键盘\", 3, 897.0], [\"2026-09-02\", \"鼠标\", 5, 495.0],\n        [\"2026-09-03\", \"显示器\", 2, 2998.0]]\nfor r in rows:\n    ws.append(r)\nwb.save(\"销售明细.xlsx\")\nprint(\"已生成 销售明细.xlsx，\", ws.max_row - 1, \"条记录\")\n"
+  },
+  {
+   "id": "tools_office-xls-read",
+   "name": "office_xls-read.py",
+   "category": "tools",
+   "tags": [
+    "办公"
+   ],
+   "title": "Excel 读取与遍历",
+   "description": "加载工作簿按行迭代，values_only 快速取值。",
+   "requirements": [
+    "openpyxl"
+   ],
+   "code": "\"\"\"Excel 读取：遍历 + 汇总。\"\"\"\nfrom openpyxl import load_workbook\n\nwb = load_workbook(\"销售明细.xlsx\")\nws = wb[\"销售明细\"]\ntotal = 0.0\nfor row in ws.iter_rows(min_row=2, values_only=True):\n    date, item, qty, amount = row\n    print(f\"{date} {item} ×{qty} = {amount}\")\n    total += amount\nprint(\"合计金额:\", total)\n"
+  },
+  {
+   "id": "tools_office-xls-style",
+   "name": "office_xls-style.py",
+   "category": "tools",
+   "tags": [
+    "办公"
+   ],
+   "title": "Excel 样式",
+   "description": "字体/填充/对齐/列宽，产出可直接交付的表。",
+   "requirements": [
+    "openpyxl"
+   ],
+   "code": "\"\"\"Excel 样式：表头加粗白字 + 蓝底 + 定宽列。\"\"\"\nfrom openpyxl import Workbook\nfrom openpyxl.styles import Font, PatternFill, Alignment\n\nwb = Workbook()\nws = wb.active\nws.append([\"姓名\", \"部门\", \"工资\"])\nfor r in [[\"张三\", \"研发\", 25000], [\"李四\", \"市场\", 18000], [\"王五\", \"研发\", 27000]]:\n    ws.append(r)\nheader_font = Font(bold=True, color=\"FFFFFF\")\nheader_fill = PatternFill(\"solid\", fgColor=\"4472C4\")\nfor cell in ws[1]:\n    cell.font = header_font\n    cell.fill = header_fill\n    cell.alignment = Alignment(horizontal=\"center\")\nfor col in \"ABC\":\n    ws.column_dimensions[col].width = 14\nwb.save(\"员工表.xlsx\")\nprint(\"已生成带样式的 员工表.xlsx\")\n"
+  },
+  {
+   "id": "tools_office-xls-formula",
+   "name": "office_xls-formula.py",
+   "category": "tools",
+   "tags": [
+    "办公"
+   ],
+   "title": "Excel 公式与汇总",
+   "description": "写入 SUMIF 与 SUM 公式单元格。",
+   "requirements": [
+    "openpyxl"
+   ],
+   "code": "\"\"\"Excel 公式：SUMIF 与总计行。\"\"\"\nfrom openpyxl import Workbook\n\nwb = Workbook()\nws = wb.active\nws.append([\"部门\", \"金额\"])\nws.append([\"研发\", 25000])\nws.append([\"市场\", 18000])\nws.append([\"研发\", 12000])\nlast = ws.max_row\nws.append([\"研发小计\", f\"=SUMIF(A2:A{last}, \\\"研发\\\", B2:B{last})\"])\nws.append([\"总计\", f\"=SUM(B2:B{last})\"])\nwb.save(\"汇总表.xlsx\")\nprint(\"公式已写入（用 Excel 打开可见计算结果）\")\n"
+  },
+  {
+   "id": "tools_office-xls-multi-sheet",
+   "name": "office_xls-multi-sheet.py",
+   "category": "tools",
+   "tags": [
+    "办公"
+   ],
+   "title": "多 Sheet 拆分",
+   "description": "按部门把总表拆到多个工作表。",
+   "requirements": [
+    "openpyxl"
+   ],
+   "code": "\"\"\"多 Sheet：按部门拆分工作表。\"\"\"\nfrom openpyxl import Workbook\n\ndata = [(\"研发\", \"张三\", 25000), (\"市场\", \"李四\", 18000), (\"研发\", \"王五\", 27000)]\nwb = Workbook()\nwb.remove(wb.active)\nsheets = {}\nfor dept, name, salary in data:\n    ws = sheets.setdefault(dept, wb.create_sheet(dept))\n    if ws[\"A1\"].value is None:\n        ws.append([\"姓名\", \"工资\"])\n    ws.append([name, salary])\nwb.save(\"部门拆分.xlsx\")\nprint(\"工作表:\", wb.sheetnames)\n"
+  },
+  {
+   "id": "tools_office-xls-dedup-merge",
+   "name": "office_xls-dedup-merge.py",
+   "category": "tools",
+   "tags": [
+    "办公"
+   ],
+   "title": "Excel 去重合并",
+   "description": "以工号为主键去重合并两份名单。",
+   "requirements": [
+    "openpyxl"
+   ],
+   "code": "\"\"\"Excel 去重合并：重复工号只保留首条。\"\"\"\nfrom openpyxl import Workbook\n\nwb = Workbook()\nws = wb.active\nws.append([\"工号\", \"姓名\", \"电话\"])\nseen = set()\nfor sheet_data in [[[\"E001\", \"张三\", \"13800000001\"], [\"E002\", \"李四\", \"13800000002\"]],\n                   [[\"E002\", \"李四\", \"13900000002\"], [\"E003\", \"王五\", \"13800000003\"]]]:\n    for row in sheet_data:\n        if row[0] in seen:\n            continue\n        seen.add(row[0])\n        ws.append(row)\nwb.save(\"合并去重.xlsx\")\nprint(\"合并后:\", ws.max_row - 1, \"条\")\n"
+  },
+  {
+   "id": "tools_office-xls-chart",
+   "name": "office_xls-chart.py",
+   "category": "tools",
+   "tags": [
+    "办公"
+   ],
+   "title": "Excel 内嵌图表",
+   "description": "openpyxl BarChart 直接入表。",
+   "requirements": [
+    "openpyxl"
+   ],
+   "code": "\"\"\"Excel 图表：月度数据的内嵌柱状图。\"\"\"\nfrom openpyxl import Workbook\nfrom openpyxl.chart import BarChart, Reference\n\nwb = Workbook()\nws = wb.active\nws.append([\"月份\", \"销售额\"])\nfor m, v in zip([\"1月\", \"2月\", \"3月\", \"4月\"], [120, 135, 150, 142]):\n    ws.append([m, v])\nchart = BarChart()\nchart.title = \"月度销售额\"\ndata = Reference(ws, min_col=2, min_row=1, max_row=5)\ncats = Reference(ws, min_col=1, min_row=2, max_row=5)\nchart.add_data(data, titles_from_data=True)\nchart.set_categories(cats)\nws.add_chart(chart, \"D2\")\nwb.save(\"月度图表.xlsx\")\nprint(\"已生成含图表的 月度图表.xlsx\")\n"
+  },
+  {
+   "id": "tools_office-docx-create",
+   "name": "office_docx-create.py",
+   "category": "tools",
+   "tags": [
+    "办公"
+   ],
+   "title": "Word 文档生成",
+   "description": "python-docx 创建标题、段落与项目符号。",
+   "requirements": [
+    "python-docx"
+   ],
+   "code": "\"\"\"Word 生成：会议纪要模板。\"\"\"\nfrom docx import Document\n\ndoc = Document()\ndoc.add_heading(\"项目周会纪要\", level=1)\ndoc.add_paragraph(\"时间：2026-09-23 10:00\\n地点：3F 会议室\")\ndoc.add_heading(\"一、本周进展\", level=2)\ndoc.add_paragraph(\"爬虫模块联调完成\", style=\"List Bullet\")\ndoc.add_paragraph(\"数据看板上线\", style=\"List Bullet\")\ndoc.add_heading(\"二、风险项\", level=2)\ndoc.add_paragraph(\"第三方接口限流，需申请配额\", style=\"Intense Quote\")\ndoc.save(\"周会纪要.docx\")\nprint(\"已生成 周会纪要.docx\")\n"
+  },
+  {
+   "id": "tools_office-docx-table",
+   "name": "office_docx-table.py",
+   "category": "tools",
+   "tags": [
+    "办公"
+   ],
+   "title": "Word 表格",
+   "description": "插入表格并填充数据、套用样式。",
+   "requirements": [
+    "python-docx"
+   ],
+   "code": "\"\"\"Word 表格：数据报表插入。\"\"\"\nfrom docx import Document\n\ndoc = Document()\ndoc.add_heading(\"季度数据\", level=1)\ntable = doc.add_table(rows=1, cols=3)\ntable.style = \"Light Grid Accent 1\"\nfor i, h in enumerate([\"季度\", \"营收(万)\", \"同比\"]):\n    table.rows[0].cells[i].text = h\nfor row in [(\"Q1\", 120, \"+8%\"), (\"Q2\", 135, \"+12%\"), (\"Q3\", 150, \"+11%\")]:\n    cells = table.add_row().cells\n    for i, v in enumerate(row):\n        cells[i].text = str(v)\ndoc.save(\"季度数据.docx\")\nprint(\"已生成含表格的 季度数据.docx\")\n"
+  },
+  {
+   "id": "tools_office-docx-read",
+   "name": "office_docx-read.py",
+   "category": "tools",
+   "tags": [
+    "办公"
+   ],
+   "title": "Word 读取",
+   "description": "遍历段落提取文本。",
+   "requirements": [
+    "python-docx"
+   ],
+   "code": "\"\"\"Word 读取：先跑 docx-create 生成文件，再提取内容。\"\"\"\nfrom docx import Document\n\ndoc = Document(\"周会纪要.docx\")\nprint(\"== 段落 ==\")\nfor p in doc.paragraphs[:6]:\n    if p.text.strip():\n        print(f\"  [{p.style.name}] {p.text[:30]}\")\n"
+  },
+  {
+   "id": "tools_office-file-batch-rename",
+   "name": "office_file-batch-rename.py",
+   "category": "tools",
+   "tags": [
+    "办公"
+   ],
+   "title": "批量重命名",
+   "description": "目录内文件按规则批量改名（含预览模式）。",
+   "requirements": [],
+   "code": "\"\"\"批量重命名：默认预览，--apply 执行。\"\"\"\nimport argparse\nfrom pathlib import Path\n\n\ndef main():\n    ap = argparse.ArgumentParser()\n    ap.add_argument(\"directory\", nargs=\"?\", default=\".\")\n    ap.add_argument(\"--prefix\", default=\"file\")\n    ap.add_argument(\"--apply\", action=\"store_true\")\n    args = ap.parse_args()\n\n    files = sorted(p for p in Path(args.directory).iterdir() if p.is_file())\n    plan = [(p, p.with_name(f\"{args.prefix}_{i:03d}{p.suffix}\")) for i, p in enumerate(files, 1)]\n    for old, new in plan:\n        print(f\"{old.name} -> {new.name}\")\n    if args.apply:\n        for old, new in plan:\n            old.rename(new)\n        print(f\"已重命名 {len(plan)} 个\")\n"
+  },
+  {
+   "id": "tools_office-file-classify",
+   "name": "office_file-classify.py",
+   "category": "tools",
+   "tags": [
+    "办公"
+   ],
+   "title": "文件自动分类",
+   "description": "按扩展名把目录文件归档到子目录。",
+   "requirements": [],
+   "code": "\"\"\"文件分类：图片/文档/压缩包/其他 四类归档。\"\"\"\nimport shutil\nfrom pathlib import Path\n\nRULES = {\n    \"图片\": {\".jpg\", \".png\", \".gif\", \".webp\"},\n    \"文档\": {\".docx\", \".pdf\", \".md\", \".txt\", \".xlsx\"},\n    \"压缩包\": {\".zip\", \".7z\"},\n}\nbase = Path(\".\")\nfor p in list(base.iterdir()):\n    if not p.is_file():\n        continue\n    folder = next((name for name, exts in RULES.items() if p.suffix in exts), \"其他\")\n    dest = base / folder\n    dest.mkdir(exist_ok=True)\n    shutil.move(str(p), dest / p.name)\n    print(f\"{p.name} -> {folder}/\")\n"
+  },
+  {
+   "id": "tools_office-file-duplicate-find",
+   "name": "office_file-duplicate-find.py",
+   "category": "tools",
+   "tags": [
+    "办公"
+   ],
+   "title": "重复文件查找",
+   "description": "内容 MD5 指纹找重复文件。",
+   "requirements": [],
+   "code": "\"\"\"重复文件：按内容哈希分组。\"\"\"\nimport hashlib\nfrom pathlib import Path\nfrom collections import defaultdict\n\ngroups = defaultdict(list)\nfor p in Path(\".\").iterdir():\n    if p.is_file() and p.stat().st_size < 1024 * 1024:\n        h = hashlib.md5(p.read_bytes()).hexdigest()\n        groups[h].append(p)\n\nfor h, paths in groups.items():\n    if len(paths) > 1:\n        print(\"重复组:\", [str(p) for p in paths])\nprint(\"扫描完成\")\n"
+  },
+  {
+   "id": "tools_office-file-tree-report",
+   "name": "office_file-tree-report.py",
+   "category": "tools",
+   "tags": [
+    "办公"
+   ],
+   "title": "目录体积报告",
+   "description": "统计各子目录大小并排序输出。",
+   "requirements": [],
+   "code": "\"\"\"目录报告：子目录体积排行。\"\"\"\nfrom pathlib import Path\n\ndef dir_size(d: Path) -> int:\n    return sum(f.stat().st_size for f in d.rglob(\"*\") if f.is_file())\n\nbase = Path(\".\")\nsizes = [(dir_size(d), d.name) for d in base.iterdir() if d.is_dir()]\nfor size, name in sorted(sizes, reverse=True)[:10]:\n    print(f\"{size / 1024 / 1024:8.2f} MB  {name}\")\n"
+  },
+  {
+   "id": "tools_office-text-report",
+   "name": "office_text-report.py",
+   "category": "tools",
+   "tags": [
+    "办公"
+   ],
+   "title": "文本日报生成",
+   "description": "从数据拼装纯文本日报（模板化输出）。",
+   "requirements": [],
+   "code": "\"\"\"文本日报：数据 → 模板化报告。\"\"\"\ndata = {\n    \"date\": \"2026-09-23\",\n    \"new_users\": 128,\n    \"active_users\": 1532,\n    \"revenue\": 9820.5,\n    \"incidents\": [\"接口超时 2 次\", \"缓存抖动 1 次\"],\n}\nlines = [\n    f\"运营日报 {data['date']}\",\n    \"=\" * 30,\n    f\"新增用户: {data['new_users']}\",\n    f\"活跃用户: {data['active_users']}\",\n    f\"营收: ¥{data['revenue']:,.2f}\",\n    \"\",\n    \"异常事件:\",\n]\nlines += [f\"  - {x}\" for x in data[\"incidents\"]]\nreport = \"\\n\".join(lines)\nprint(report)\nwith open(\"日报.txt\", \"w\", encoding=\"utf-8\") as f:\n    f.write(report)\n"
+  },
+  {
+   "id": "tools_office-mail-compose-eml",
+   "name": "office_mail-compose-eml.py",
+   "category": "tools",
+   "tags": [
+    "办公"
+   ],
+   "title": "邮件构造与落盘",
+   "description": "email 模块构造 MIME 邮件并存为 .eml（离线安全）。",
+   "requirements": [],
+   "code": "\"\"\"邮件构造：生成 .eml 文件（不实际发送）。\"\"\"\nfrom email.mime.multipart import MIMEMultipart\nfrom email.mime.text import MIMEText\nfrom email.utils import formatdate\nfrom pathlib import Path\n\nmsg = MIMEMultipart()\nmsg[\"From\"] = \"report-bot@example.com\"\nmsg[\"To\"] = \"boss@example.com\"\nmsg[\"Subject\"] = \"【自动】运营日报 2026-09-23\"\nmsg[\"Date\"] = formatdate(localtime=True)\nmsg.attach(MIMEText(\"各位好，\\n\\n今日数据请见附件（演示正文）。\\n\\n-- 自动报表机器人\", \"plain\", \"utf-8\"))\nPath(\"日报邮件.eml\").write_bytes(msg.as_bytes())\nprint(\"已生成 日报邮件.eml（可用邮件客户端打开预览）\")\n"
+  },
+  {
+   "id": "tools_office-sched-once-task",
+   "name": "office_sched-once-task.py",
+   "category": "tools",
+   "tags": [
+    "办公"
+   ],
+   "title": "一次性定时任务",
+   "description": "sched 模块延时执行（简单调度入门）。",
+   "requirements": [],
+   "code": "\"\"\"定时任务：sched 延时执行一次。\"\"\"\nimport sched\nimport time\n\nscheduler = sched.scheduler(time.time, time.sleep)\n\ndef task(name):\n    print(f\"[{time.strftime('%H:%M:%S')}] 执行任务: {name}\")\n\nprint(\"当前:\", time.strftime(\"%H:%M:%S\"))\nscheduler.enter(2, 1, task, (\"每日数据同步\",))\nscheduler.enter(4, 1, task, (\"清理临时文件\",))\nscheduler.run()\nprint(\"队列执行完毕\")\n"
+  },
+  {
+   "id": "tools_office2-xls-freeze-header",
+   "name": "office2_xls-freeze-header.py",
+   "category": "tools",
+   "tags": [
+    "办公"
+   ],
+   "title": "冻结表头",
+   "description": "冻结首行 + 自动筛选，大表浏览体验。",
+   "requirements": [
+    "openpyxl"
+   ],
+   "code": "\"\"\"冻结窗格与自动筛选。\"\"\"\nfrom openpyxl import Workbook\n\nwb = Workbook()\nws = wb.active\nws.append([\"订单号\", \"客户\", \"金额\", \"状态\"])\nfor i in range(1, 21):\n    ws.append([f\"SO{i:04d}\", f\"客户{i}\", i * 37.5, \"已付\" if i % 2 else \"未付\"])\nws.freeze_panes = \"A2\"          # 冻结首行\nws.auto_filter.ref = ws.dimensions  # 表头筛选\nwb.save(\"订单表.xlsx\")\nprint(\"已生成 冻结首行 + 筛选的 订单表.xlsx\")\n"
+  },
+  {
+   "id": "tools_office2-xls-conditional",
+   "name": "office2_xls-conditional.py",
+   "category": "tools",
+   "tags": [
+    "办公"
+   ],
+   "title": "条件格式",
+   "description": "金额超标自动标红（CellIsRule）。",
+   "requirements": [
+    "openpyxl"
+   ],
+   "code": "\"\"\"条件格式：超阈值标红。\"\"\"\nfrom openpyxl import Workbook\nfrom openpyxl.formatting.rule import CellIsRule\nfrom openpyxl.styles import Font, PatternFill\n\nwb = Workbook()\nws = wb.active\nws.append([\"项目\", \"支出\"])\nfor r in [[\"服务器\", 3200], [\"差旅\", 880], [\"外包\", 5600], [\"培训\", 1500]]:\n    ws.append(r)\nred = PatternFill(\"solid\", fgColor=\"FFC7CE\")\nws.conditional_formatting.add(\n    f\"B2:B{ws.max_row}\",\n    CellIsRule(operator=\"greaterThan\", formula=[\"3000\"], fill=red, font=Font(color=\"9C0006\")))\nwb.save(\"支出表.xlsx\")\nprint(\"超 3000 的行已自动标红\")\n"
+  },
+  {
+   "id": "tools_office2-xls-sort-in-place",
+   "name": "office2_xls-sort-in-place.py",
+   "category": "tools",
+   "tags": [
+    "办公"
+   ],
+   "title": "Excel 数据排序",
+   "description": "按列排序后回写（读取 → sorted → 重写）。",
+   "requirements": [
+    "openpyxl"
+   ],
+   "code": "\"\"\"Excel 排序：按金额降序重写。\"\"\"\nfrom openpyxl import Workbook, load_workbook\n\nwb = Workbook()\nws = wb.active\nws.append([\"姓名\", \"分数\"])\nfor r in [[\"甲\", 78], [\"乙\", 92], [\"丙\", 85], [\"丁\", 66]]:\n    ws.append(r)\nwb.save(\"成绩原始.xlsx\")\n\nrows = list(load_workbook(\"成绩原始.xlsx\").active.iter_rows(min_row=2, values_only=True))\nrows.sort(key=lambda r: -r[1])\nout = Workbook()\nosheet = out.active\nosheet.append([\"姓名\", \"分数\"])\nfor r in rows:\n    osheet.append(r)\nout.save(\"成绩排序.xlsx\")\nprint(\"排序完成:\", rows)\n"
+  },
+  {
+   "id": "tools_office2-xls-validate",
+   "name": "office2_xls-validate.py",
+   "category": "tools",
+   "tags": [
+    "办公"
+   ],
+   "title": "数据校验",
+   "description": "工时表合法性校验（范围/必填/类型）。",
+   "requirements": [
+    "openpyxl"
+   ],
+   "code": "\"\"\"Excel 数据校验：错误行收集报告。\"\"\"\nfrom openpyxl import Workbook\n\nwb = Workbook()\nws = wb.active\nws.append([\"日期\", \"工时\", \"备注\"])\ndata = [[\"2026-09-20\", 8, \"\"], [\"2026-09-21\", 12, \"加班\"], [\"2026-09-22\", 0, \"\"], [\"2026-09-23\", -2, \"\"]]\nerrors = []\nfor i, (d, h, note) in enumerate(data, start=2):\n    if not isinstance(h, (int, float)) or not (0 < h <= 16):\n        errors.append(f\"第{i}行 工时非法: {h}\")\n        continue\n    ws.append([d, h, note])\nwb.save(\"工时表.xlsx\")\nprint(\"校验报告:\", errors or \"全部通过\")\n"
+  },
+  {
+   "id": "tools_office2-xls-two-file-diff",
+   "name": "office2_xls-two-file-diff.py",
+   "category": "tools",
+   "tags": [
+    "办公"
+   ],
+   "title": "两表对比",
+   "description": "找出两份名单的差异（新增/消失）。",
+   "requirements": [
+    "openpyxl"
+   ],
+   "code": "\"\"\"两表对比：新增与移除名单。\"\"\"\nfrom openpyxl import Workbook\n\nold = {\"E001\": \"张三\", \"E002\": \"李四\", \"E003\": \"王五\"}\nnew = {\"E002\": \"李四\", \"E003\": \"王五\", \"E004\": \"赵六\"}\n\nadded = {k: v for k, v in new.items() if k not in old}\nremoved = {k: v for k, v in old.items() if k not in new}\nprint(\"新增:\", added)\nprint(\"移除:\", removed)\n\nwb = Workbook()\nws = wb.active\nws.append([\"变更类型\", \"工号\", \"姓名\"])\nfor k, v in added.items():\n    ws.append([\"新增\", k, v])\nfor k, v in removed.items():\n    ws.append([\"移除\", k, v])\nwb.save(\"人员变更.xlsx\")\n"
+  },
+  {
+   "id": "tools_office2-xls-csv-convert",
+   "name": "office2_xls-csv-convert.py",
+   "category": "tools",
+   "tags": [
+    "办公"
+   ],
+   "title": "CSV ↔ Excel 互转",
+   "description": "CSV 导入为 xlsx，再导回 CSV 验证。",
+   "requirements": [
+    "openpyxl"
+   ],
+   "code": "\"\"\"CSV ↔ Excel 互转。\"\"\"\nimport csv\nfrom openpyxl import Workbook, load_workbook\n\n# CSV → Excel\nwith open(\"data.csv\", \"w\", newline=\"\", encoding=\"utf-8\") as f:\n    csv.writer(f).writerows([[\"城市\", \"人口\"], [\"上海\", 2487], [\"北京\", 2189], [\"深圳\", 1756]])\n\nwb = Workbook()\nws = wb.active\nwith open(\"data.csv\", encoding=\"utf-8\") as f:\n    for row in csv.reader(f):\n        ws.append(row)\nwb.save(\"城市.xlsx\")\n\n# Excel → CSV\nrows = load_workbook(\"城市.xlsx\").active.iter_rows(values_only=True)\nwith open(\"还原.csv\", \"w\", newline=\"\", encoding=\"utf-8\") as f:\n    csv.writer(f).writerows(rows)\nprint(\"互转完成，内容一致:\", open(\"data.csv\").read() == open(\"还原.csv\").read())\n"
+  },
+  {
+   "id": "tools_office2-docx-batch-letters",
+   "name": "office2_docx-batch-letters.py",
+   "category": "tools",
+   "tags": [
+    "办公"
+   ],
+   "title": "Word 批量函件",
+   "description": "模板 + 名单批量生成个性化函件。",
+   "requirements": [
+    "python-docx"
+   ],
+   "code": "\"\"\"批量函件：模板替换生成多份 Word。\"\"\"\nfrom docx import Document\n\ntemplate = \"尊敬的 {name}：\\n\\n    您在本系统的账号 {account} 已通过审核。\\n\\n运营团队\"\nmembers = [{\"name\": \"张三\", \"account\": \"zs001\"}, {\"name\": \"李四\", \"account\": \"ls002\"},\n           {\"name\": \"王五\", \"account\": \"ww003\"}]\nfor m in members:\n    doc = Document()\n    doc.add_paragraph(template.format(**m))\n    doc.save(f\"函件_{m['account']}.docx\")\nprint(f\"已生成 {len(members)} 份函件\")\n"
+  },
+  {
+   "id": "tools_office2-docx-image",
+   "name": "office2_docx-image.py",
+   "category": "tools",
+   "tags": [
+    "办公"
+   ],
+   "title": "Word 插入图片",
+   "description": "生成图片并插入文档（配合 matplotlib 出图）。",
+   "requirements": [
+    "python-docx",
+    "matplotlib"
+   ],
+   "code": "\"\"\"Word 插图：matplotlib 出图 → 插入 Word。\"\"\"\nimport matplotlib\nmatplotlib.use(\"Agg\")\nimport matplotlib.pyplot as plt\nfrom docx import Document\nfrom docx.shared import Inches\n\nfig, ax = plt.subplots(figsize=(5, 3))\nax.bar([\"Q1\", \"Q2\", \"Q3\"], [120, 135, 150], color=\"#4472C4\")\nfig.savefig(\"季度图.png\", dpi=100)\nplt.close(fig)\n\ndoc = Document()\ndoc.add_heading(\"季度营收\", level=1)\ndoc.add_picture(\"季度图.png\", width=Inches(4.5))\ndoc.save(\"季度报告.docx\")\nprint(\"已生成含图的 季度报告.docx\")\n"
+  },
+  {
+   "id": "tools_office2-file-backup-zip",
+   "name": "office2_file-backup-zip.py",
+   "category": "tools",
+   "tags": [
+    "办公"
+   ],
+   "title": "目录打包备份",
+   "description": "zipfile 增量命名备份目录。",
+   "requirements": [],
+   "code": "\"\"\"目录备份：zip 打包 + 时间戳命名。\"\"\"\nimport zipfile\nfrom datetime import datetime\nfrom pathlib import Path\n\nsrc = Path(\".\")\nstamp = datetime.now().strftime(\"%Y%m%d_%H%M%S\")\ndest = Path(f\"backup_{stamp}.zip\")\nwith zipfile.ZipFile(dest, \"w\", zipfile.ZIP_DEFLATED) as zf:\n    for p in src.rglob(\"*\"):\n        if p.is_file() and \"backup_\" not in p.name and \".venv\" not in p.parts:\n            zf.write(p, p.relative_to(src))\nprint(f\"备份完成: {dest.name} ({dest.stat().st_size // 1024} KB)\")\n"
+  },
+  {
+   "id": "tools_office2-file-log-rotate",
+   "name": "office2_file-log-rotate.py",
+   "category": "tools",
+   "tags": [
+    "办公"
+   ],
+   "title": "日志轮转",
+   "description": "按大小切分日志文件（RotatingHandler 思路的手写版）。",
+   "requirements": [],
+   "code": "\"\"\"日志轮转：超过阈值切分为 .1/.2 文件。\"\"\"\nfrom pathlib import Path\n\nlog = Path(\"app.log\")\nlog.write_text(\"\\n\".join(f\"line {i}\" for i in range(100)), encoding=\"utf-8\")\n\nMAX_BYTES = 400\nif log.exists() and log.stat().st_size > MAX_BYTES:\n    content = log.read_text(encoding=\"utf-8\").splitlines(keepends=True)\n    part, idx = [], 1\n    size = 0\n    for ln in content:\n        if size + len(ln) > MAX_BYTES:\n            Path(f\"app.log.{idx}\").write_text(\"\".join(part), encoding=\"utf-8\")\n            part, size, idx = [], 0, idx + 1\n        part.append(ln)\n        size += len(ln)\n    if part:\n        Path(f\"app.log.{idx}\").write_text(\"\".join(part), encoding=\"utf-8\")\n    log.unlink()\n    print(f\"已切分为 {idx} 个文件\")\n"
+  },
+  {
+   "id": "tools_office2-todo-markdown",
+   "name": "office2_todo-markdown.py",
+   "category": "tools",
+   "tags": [
+    "办公"
+   ],
+   "title": "Markdown 待办清单",
+   "description": "从数据生成/解析 Markdown 待办（任务管理最小实现）。",
+   "requirements": [],
+   "code": "\"\"\"Markdown 待办：生成与统计。\"\"\"\nfrom pathlib import Path\n\ntasks = [(\"已完成\", \"恢复示例库\"), (\"已完成\", \"修复构建链路\"),\n         (\"进行中\", \"扩充示例规模\"), (\"待办\", \"补拍 README 截图\")]\nlines = [\"# 待办清单\", \"\"]\nfor status, task in tasks:\n    mark = {\"已完成\": \"x\", \"进行中\": \" \", \"待办\": \" \"}[status]\n    lines.append(f\"- [{mark}] {task}（{status}）\")\nPath(\"TODO.md\").write_text(\"\\n\".join(lines), encoding=\"utf-8\")\nprint(\"\\n\".join(lines))\ndone = sum(1 for s, _ in tasks if s == \"已完成\")\nprint(f\"完成度: {done}/{len(tasks)}\")\n"
+  },
+  {
+   "id": "tools_office2-clipboard-inventory",
+   "name": "office2_clipboard-inventory.py",
+   "category": "tools",
+   "tags": [
+    "办公"
+   ],
+   "title": "库存盘点脚本",
+   "description": "字典合并盘点：期初 + 入库 − 出库 = 期末。",
+   "requirements": [],
+   "code": "\"\"\"库存盘点：期初/入库/出库 三表核算。\"\"\"\nfrom collections import defaultdict\n\nopening = {\"键盘\": 12, \"鼠标\": 30, \"显示器\": 5}\ninflow = {\"键盘\": 10, \"鼠标\": 5}\noutflow = {\"键盘\": 8, \"鼠标\": 15, \"显示器\": 2}\n\nstock = defaultdict(int, opening)\nfor k, v in inflow.items():\n    stock[k] += v\nfor k, v in outflow.items():\n    stock[k] -= v\nprint(f\"{'商品':<6}{'期末库存':>8}\")\nfor k in sorted(stock):\n    flag = \" ⚠️需补货\" if stock[k] < 5 else \"\"\n    print(f\"{k:<6}{stock[k]:>8}{flag}\")\n"
+  },
+  {
+   "id": "tools_office3-pptx-create",
+   "name": "office3_pptx-create.py",
+   "category": "tools",
+   "tags": [
+    "办公",
+    "进阶"
+   ],
+   "title": "PPT 幻灯片生成",
+   "description": "python-pptx 生成标题页 + 要点页 + 数据页。",
+   "requirements": [
+    "python-pptx"
+   ],
+   "code": "\"\"\"PPT 生成：三页周报幻灯片。\"\"\"\nfrom pptx import Presentation\nfrom pptx.util import Inches, Pt\n\nprs = Presentation()\ns1 = prs.slides.add_slide(prs.slide_layouts[0])\ns1.shapes.title.text = \"项目周报\"\ns1.placeholders[1].text = \"2026-09-23 · 自动生成\"\n\ns2 = prs.slides.add_slide(prs.slide_layouts[1])\ns2.shapes.title.text = \"本周要点\"\nfor line in [\"爬虫模块联调完成\", \"示例库扩充至 3000+\", \"看板数据接入\"]:\n    s2.placeholders[1].text_frame.add_paragraph().text = line\n\ns3 = prs.slides.add_slide(prs.slide_layouts[5])\ns3.shapes.title.text = \"数据概览\"\ns3.shapes.add_textbox(Inches(1), Inches(2), Inches(8), Inches(2)).text_frame.text = \"3120 个示例 · 13 个集合 · 测试全绿\"\nprs.save(\"项目周报.pptx\")\nprint(\"已生成 项目周报.pptx（3 页）\")\n"
+  },
+  {
+   "id": "tools_office3-pptx-table",
+   "name": "office3_pptx-table.py",
+   "category": "tools",
+   "tags": [
+    "办公",
+    "进阶"
+   ],
+   "title": "PPT 数据表",
+   "description": "幻灯片内插入表格与图片。",
+   "requirements": [
+    "python-pptx"
+   ],
+   "code": "\"\"\"PPT 表格与图片页。\"\"\"\nfrom pptx import Presentation\nfrom pptx.util import Inches\n\nprs = Presentation()\nslide = prs.slides.add_slide(prs.slide_layouts[5])\nslide.shapes.title.text = \"指标表\"\nrows, cols = 3, 3\ntable = slide.shapes.add_table(rows, cols, Inches(1), Inches(2), Inches(8), Inches(2)).table\nfor c, h in enumerate([\"指标\", \"本周\", \"上周\"]):\n    table.cell(0, c).text = h\nfor r, row in enumerate([[\"示例数\", \"3120\", \"176\"], [\"测试\", \"全绿\", \"全绿\"]], 1):\n    for c, v in enumerate(row):\n        table.cell(r, c).text = str(v)\nprs.save(\"指标汇报.pptx\")\nprint(\"已生成 指标汇报.pptx\")\n"
+  },
+  {
+   "id": "tools_office3-pdf-split",
+   "name": "office3_pdf-split.py",
+   "category": "tools",
+   "tags": [
+    "办公",
+    "进阶"
+   ],
+   "title": "PDF 拆分",
+   "description": "把多页 PDF 按页拆成单页文件。",
+   "requirements": [
+    "pypdf"
+   ],
+   "code": "\"\"\"PDF 拆分：每页一个文件。\"\"\"\nimport io\nfrom pypdf import PdfReader, PdfWriter\n\nbuf = io.BytesIO()\nw = PdfWriter()\nfor _ in range(3):\n    w.add_blank_page(width=595, height=842)\nw.write(buf)\nbuf.seek(0)\n\nreader = PdfReader(buf)\nfor i, page in enumerate(reader.pages):\n    out = PdfWriter()\n    out.add_page(page)\n    with open(f\"第{i + 1}页.pdf\", \"wb\") as f:\n        out.write(f)\nprint(f\"已拆分为 {len(reader.pages)} 个单页 PDF\")\n"
+  },
+  {
+   "id": "tools_office3-pdf-extract-text",
+   "name": "office3_pdf-extract-text.py",
+   "category": "tools",
+   "tags": [
+    "办公",
+    "进阶"
+   ],
+   "title": "PDF 文本提取",
+   "description": "逐页提取文本（扫描件需 OCR 另议）。",
+   "requirements": [
+    "pypdf"
+   ],
+   "code": "\"\"\"PDF 文本提取。\"\"\"\nfrom pypdf import PdfReader\nfrom pypdf import PdfWriter\nimport io\n\nbuf = io.BytesIO()\nw = PdfWriter()\npage = w.add_blank_page(width=595, height=842)\nw.write(buf); buf.seek(0)\nreader = PdfReader(buf)\nfor i, page in enumerate(reader.pages):\n    text = page.extract_text() or \"\"\n    print(f\"第{i + 1}页文本长度: {len(text)}（空白页为 0）\")\n"
+  },
+  {
+   "id": "tools_office3-xls-pivot-groupby",
+   "name": "office3_xls-pivot-groupby.py",
+   "category": "tools",
+   "tags": [
+    "办公",
+    "进阶"
+   ],
+   "title": "Excel 透视汇总",
+   "description": "groupby 聚合后写透视结果表。",
+   "requirements": [
+    "openpyxl"
+   ],
+   "code": "\"\"\"透视：按部门/月份双维聚合。\"\"\"\nfrom collections import defaultdict\nfrom openpyxl import Workbook\n\nrows = [(\"研发\", \"1月\", 120), (\"研发\", \"2月\", 135), (\"市场\", \"1月\", 90),\n        (\"市场\", \"2月\", 110), (\"研发\", \"1月\", 60)]\npivot = defaultdict(float)\nfor dept, month, amount in rows:\n    pivot[(dept, month)] += amount\ndepts = sorted({r[0] for r in rows})\nmonths = sorted({r[1] for r in rows})\n\nwb = Workbook()\nws = wb.active\nws.append([\"部门\"] + months)\nfor d in depts:\n    ws.append([d] + [pivot.get((d, m), 0) for m in months])\nwb.save(\"透视表.xlsx\")\nprint(\"透视完成：\", wb.sheetnames, ws.max_row - 1, \"行\")\n"
+  },
+  {
+   "id": "tools_office3-xls-vlookup-join",
+   "name": "office3_xls-vlookup-join.py",
+   "category": "tools",
+   "tags": [
+    "办公",
+    "进阶"
+   ],
+   "title": "跨表关联",
+   "description": "Excel 版 VLOOKUP：按工号拼两表字段。",
+   "requirements": [
+    "openpyxl"
+   ],
+   "code": "\"\"\"跨表关联：主表 + 字典表拼接。\"\"\"\nfrom openpyxl import Workbook\n\nmain = [[\"E001\", \"销售\", 8000], [\"E002\", \"研发\", 12000], [\"E003\", \"市场\", 9000]]\nlookup = {\"E001\": \"张三\", \"E002\": \"李四\", \"E003\": \"王五\"}\nwb = Workbook()\nws = wb.active\nws.append([\"工号\", \"姓名\", \"部门\", \"工资\"])\nfor emp_id, dept, salary in main:\n    ws.append([emp_id, lookup.get(emp_id, \"<未知>\"), dept, salary])\nwb.save(\"关联结果.xlsx\")\nprint(\"关联完成:\", ws.max_row - 1, \"行\")\n"
+  },
+  {
+   "id": "tools_office3-xls-protect",
+   "name": "office3_xls-protect.py",
+   "category": "tools",
+   "tags": [
+    "办公",
+    "进阶"
+   ],
+   "title": "工作表保护",
+   "description": "锁定公式列，仅允许编辑指定区域。",
+   "requirements": [
+    "openpyxl"
+   ],
+   "code": "\"\"\"工作表保护：锁定公式，开放输入列。\"\"\"\nfrom openpyxl import Workbook\nfrom openpyxl.styles import Protection\n\nwb = Workbook()\nws = wb.active\nws.append([\"数量\", \"单价\", \"金额\"])\nfor i in range(1, 4):\n    ws.append([None, 25.0, None])\n    ws.cell(row=i + 1, column=3, value=f\"=A{i + 1}*B{i + 1}\")\nfor row in ws.iter_rows(min_row=2, min_col=1, max_col=2):  # 输入列解锁\n    for cell in row:\n        cell.protection = Protection(locked=False)\nws.protection.sheet = True\nwb.save(\"受保护表.xlsx\")\nprint(\"公式列已锁定，数量/单价列可编辑\")\n"
+  },
+  {
+   "id": "tools_office3-xls-merged-cells",
+   "name": "office3_xls-merged-cells.py",
+   "category": "tools",
+   "tags": [
+    "办公",
+    "进阶"
+   ],
+   "title": "合并单元格表头",
+   "description": "跨列合并的分组表头。",
+   "requirements": [
+    "openpyxl"
+   ],
+   "code": "\"\"\"合并单元格：两级表头。\"\"\"\nfrom openpyxl import Workbook\nfrom openpyxl.styles import Alignment\n\nwb = Workbook()\nws = wb.active\nws.merge_cells(\"A1:A2\"); ws[\"A1\"] = \"月份\"\nws.merge_cells(\"B1:C1\"); ws[\"B1\"] = \"销售额\"\nws[\"B2\"], ws[\"C2\"] = \"线上\", \"线下\"\nfor cell in (\"A1\", \"B1\"):\n    ws[cell].alignment = Alignment(horizontal=\"center\", vertical=\"center\")\nws.append([\"1月\", 100, 60])\nws.append([\"2月\", 120, 75])\nwb.save(\"分组表头.xlsx\")\nprint(\"两级表头已生成\")\n"
+  },
+  {
+   "id": "tools_office3-xls-annotation",
+   "name": "office3_xls-annotation.py",
+   "category": "tools",
+   "tags": [
+    "办公",
+    "进阶"
+   ],
+   "title": "单元格批注",
+   "description": "写批注说明数据口径。",
+   "requirements": [
+    "openpyxl"
+   ],
+   "code": "\"\"\"批注：给数据加口径说明。\"\"\"\nfrom openpyxl import Workbook\nfrom openpyxl.comments import Comment\n\nwb = Workbook()\nws = wb.active\nws.append([\"指标\", \"数值\"])\nws[\"B2\"] = 3120\nws[\"B2\"].comment = Comment(\"示例库总量，2026-09-23 快照\", \"报表机器人\")\nws[\"B3\"] = 39\nws[\"B3\"].comment = Comment(\"共享依赖包数（requirements.txt）\", \"报表机器人\")\nwb.save(\"带批注.xlsx\")\nprint(\"批注已写入（悬停单元格可见）\")\n"
+  },
+  {
+   "id": "tools_office3-img-watermark",
+   "name": "office3_img-watermark.py",
+   "category": "tools",
+   "tags": [
+    "办公",
+    "进阶"
+   ],
+   "title": "图片批量水印",
+   "description": "PIL 半透明文字水印铺满图片。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"批量水印：右下角半透明文字。\"\"\"\nfrom PIL import Image, ImageDraw, ImageFont\n\nbase = Image.new(\"RGB\", (640, 420), \"#2b3a55\")\nd = ImageDraw.Draw(base)\nfor x in range(0, 640, 80):\n    d.line([(x, 0), (x, 420)], fill=\"#3b4a66\", width=1)\n\nwatermark = Image.new(\"RGBA\", base.size, (0, 0, 0, 0))\nwd = ImageDraw.Draw(watermark)\nfor y in range(20, 420, 90):\n    for x in range(20, 640, 200):\n        wd.text((x, y), \"© 示例库\", fill=(255, 255, 255, 90))\nresult = Image.alpha_composite(base.convert(\"RGBA\"), watermark).convert(\"RGB\")\nresult.save(\"水印图.png\")\nprint(\"已生成 水印图.png\")\n"
+  },
+  {
+   "id": "tools_office3-img-to-pdf",
+   "name": "office3_img-to-pdf.py",
+   "category": "tools",
+   "tags": [
+    "办公",
+    "进阶"
+   ],
+   "title": "图片转 PDF",
+   "description": "多张图片合成一个 PDF（img2pdf 思路，Pillow 实现）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"图片转 PDF：Pillow 多页保存。\"\"\"\nfrom PIL import Image\n\npages = []\nfor color in (\"#e74c3c\", \"#2ecc71\", \"#3498db\"):\n    pages.append(Image.new(\"RGB\", (595, 842), color))\npages[0].save(\"图片合集.pdf\", save_all=True, append_images=pages[1:])\nprint(\"已生成 图片合集.pdf（3 页）\")\n"
+  },
+  {
+   "id": "tools_office3-xls-sqlite-export",
+   "name": "office3_xls-sqlite-export.py",
+   "category": "tools",
+   "tags": [
+    "办公",
+    "进阶"
+   ],
+   "title": "SQLite ↔ Excel",
+   "description": "数据库查询结果导出为 Excel 报表。",
+   "requirements": [
+    "openpyxl"
+   ],
+   "code": "\"\"\"SQLite → Excel：查询结果报表化。\"\"\"\nimport sqlite3\nfrom openpyxl import Workbook\n\nconn = sqlite3.connect(\":memory:\")\nconn.execute(\"CREATE TABLE sales (dept TEXT, month TEXT, amount REAL)\")\nconn.executemany(\"INSERT INTO sales VALUES (?, ?, ?)\",\n                 [(\"研发\", \"1月\", 120), (\"研发\", \"2月\", 135), (\"市场\", \"1月\", 90)])\nconn.commit()\n\nwb = Workbook()\nws = wb.active\ncols = [d[0] for d in conn.execute(\"SELECT * FROM sales LIMIT 0\").description]\nws.append(cols)\nfor row in conn.execute(\"SELECT * FROM sales ORDER BY amount DESC\"):\n    ws.append(row)\nwb.save(\"数据库报表.xlsx\")\nprint(\"数据库查询已导出为 数据库报表.xlsx\")\n"
+  }
+ ]
+}

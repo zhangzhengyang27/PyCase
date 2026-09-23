@@ -1,0 +1,1294 @@
+{
+ "name": "基础与工具集",
+ "description": "参数化生成的 Python 基础、经典算法与实用工具示例（纯标准库，参数各不相同）。",
+ "examples": [
+  {
+   "id": "topics_basics-fizzbuzz-1",
+   "name": "basics-fizzbuzz_1.py",
+   "category": "topics",
+   "tags": [
+    "基础",
+    "循环"
+   ],
+   "title": "FizzBuzz 变奏·1~30·3/5",
+   "description": "经典整除分类打印，参数化区间与规则。本变体：1~30·3/5。",
+   "requirements": [],
+   "code": "\"\"\"FizzBuzz：1~30，3 的倍数输出 A，5 的倍数输出 B。\"\"\"\nfor n in range(1, 30 + 1):\n    out = \"\"\n    if n % 3 == 0:\n        out += \"A\"\n    if n % 5 == 0:\n        out += \"B\"\n    print(n, out or n)\n"
+  },
+  {
+   "id": "topics_basics-fizzbuzz-2",
+   "name": "basics-fizzbuzz_2.py",
+   "category": "topics",
+   "tags": [
+    "基础",
+    "循环"
+   ],
+   "title": "FizzBuzz 变奏·1~30·2/7",
+   "description": "经典整除分类打印，参数化区间与规则。本变体：1~30·2/7。",
+   "requirements": [],
+   "code": "\"\"\"FizzBuzz：1~30，2 的倍数输出 A，7 的倍数输出 B。\"\"\"\nfor n in range(1, 30 + 1):\n    out = \"\"\n    if n % 2 == 0:\n        out += \"A\"\n    if n % 7 == 0:\n        out += \"B\"\n    print(n, out or n)\n"
+  },
+  {
+   "id": "topics_basics-fizzbuzz-3",
+   "name": "basics-fizzbuzz_3.py",
+   "category": "topics",
+   "tags": [
+    "基础",
+    "循环"
+   ],
+   "title": "FizzBuzz 变奏·1~30·4/6",
+   "description": "经典整除分类打印，参数化区间与规则。本变体：1~30·4/6。",
+   "requirements": [],
+   "code": "\"\"\"FizzBuzz：1~30，4 的倍数输出 A，6 的倍数输出 B。\"\"\"\nfor n in range(1, 30 + 1):\n    out = \"\"\n    if n % 4 == 0:\n        out += \"A\"\n    if n % 6 == 0:\n        out += \"B\"\n    print(n, out or n)\n"
+  },
+  {
+   "id": "topics_basics-fizzbuzz-4",
+   "name": "basics-fizzbuzz_4.py",
+   "category": "topics",
+   "tags": [
+    "基础",
+    "循环"
+   ],
+   "title": "FizzBuzz 变奏·1~50·3/5",
+   "description": "经典整除分类打印，参数化区间与规则。本变体：1~50·3/5。",
+   "requirements": [],
+   "code": "\"\"\"FizzBuzz：1~50，3 的倍数输出 A，5 的倍数输出 B。\"\"\"\nfor n in range(1, 50 + 1):\n    out = \"\"\n    if n % 3 == 0:\n        out += \"A\"\n    if n % 5 == 0:\n        out += \"B\"\n    print(n, out or n)\n"
+  },
+  {
+   "id": "topics_basics-fizzbuzz-5",
+   "name": "basics-fizzbuzz_5.py",
+   "category": "topics",
+   "tags": [
+    "基础",
+    "循环"
+   ],
+   "title": "FizzBuzz 变奏·1~50·2/7",
+   "description": "经典整除分类打印，参数化区间与规则。本变体：1~50·2/7。",
+   "requirements": [],
+   "code": "\"\"\"FizzBuzz：1~50，2 的倍数输出 A，7 的倍数输出 B。\"\"\"\nfor n in range(1, 50 + 1):\n    out = \"\"\n    if n % 2 == 0:\n        out += \"A\"\n    if n % 7 == 0:\n        out += \"B\"\n    print(n, out or n)\n"
+  },
+  {
+   "id": "topics_basics-fizzbuzz-6",
+   "name": "basics-fizzbuzz_6.py",
+   "category": "topics",
+   "tags": [
+    "基础",
+    "循环"
+   ],
+   "title": "FizzBuzz 变奏·1~50·4/6",
+   "description": "经典整除分类打印，参数化区间与规则。本变体：1~50·4/6。",
+   "requirements": [],
+   "code": "\"\"\"FizzBuzz：1~50，4 的倍数输出 A，6 的倍数输出 B。\"\"\"\nfor n in range(1, 50 + 1):\n    out = \"\"\n    if n % 4 == 0:\n        out += \"A\"\n    if n % 6 == 0:\n        out += \"B\"\n    print(n, out or n)\n"
+  },
+  {
+   "id": "topics_basics-fizzbuzz-7",
+   "name": "basics-fizzbuzz_7.py",
+   "category": "topics",
+   "tags": [
+    "基础",
+    "循环"
+   ],
+   "title": "FizzBuzz 变奏·10~60·3/5",
+   "description": "经典整除分类打印，参数化区间与规则。本变体：10~60·3/5。",
+   "requirements": [],
+   "code": "\"\"\"FizzBuzz：10~60，3 的倍数输出 A，5 的倍数输出 B。\"\"\"\nfor n in range(10, 60 + 1):\n    out = \"\"\n    if n % 3 == 0:\n        out += \"A\"\n    if n % 5 == 0:\n        out += \"B\"\n    print(n, out or n)\n"
+  },
+  {
+   "id": "topics_basics-fizzbuzz-8",
+   "name": "basics-fizzbuzz_8.py",
+   "category": "topics",
+   "tags": [
+    "基础",
+    "循环"
+   ],
+   "title": "FizzBuzz 变奏·10~60·2/7",
+   "description": "经典整除分类打印，参数化区间与规则。本变体：10~60·2/7。",
+   "requirements": [],
+   "code": "\"\"\"FizzBuzz：10~60，2 的倍数输出 A，7 的倍数输出 B。\"\"\"\nfor n in range(10, 60 + 1):\n    out = \"\"\n    if n % 2 == 0:\n        out += \"A\"\n    if n % 7 == 0:\n        out += \"B\"\n    print(n, out or n)\n"
+  },
+  {
+   "id": "topics_basics-fizzbuzz-9",
+   "name": "basics-fizzbuzz_9.py",
+   "category": "topics",
+   "tags": [
+    "基础",
+    "循环"
+   ],
+   "title": "FizzBuzz 变奏·10~60·4/6",
+   "description": "经典整除分类打印，参数化区间与规则。本变体：10~60·4/6。",
+   "requirements": [],
+   "code": "\"\"\"FizzBuzz：10~60，4 的倍数输出 A，6 的倍数输出 B。\"\"\"\nfor n in range(10, 60 + 1):\n    out = \"\"\n    if n % 4 == 0:\n        out += \"A\"\n    if n % 6 == 0:\n        out += \"B\"\n    print(n, out or n)\n"
+  },
+  {
+   "id": "topics_basics-fizzbuzz-10",
+   "name": "basics-fizzbuzz_10.py",
+   "category": "topics",
+   "tags": [
+    "基础",
+    "循环"
+   ],
+   "title": "FizzBuzz 变奏·20~80·3/5",
+   "description": "经典整除分类打印，参数化区间与规则。本变体：20~80·3/5。",
+   "requirements": [],
+   "code": "\"\"\"FizzBuzz：20~80，3 的倍数输出 A，5 的倍数输出 B。\"\"\"\nfor n in range(20, 80 + 1):\n    out = \"\"\n    if n % 3 == 0:\n        out += \"A\"\n    if n % 5 == 0:\n        out += \"B\"\n    print(n, out or n)\n"
+  },
+  {
+   "id": "topics_basics-fizzbuzz-11",
+   "name": "basics-fizzbuzz_11.py",
+   "category": "topics",
+   "tags": [
+    "基础",
+    "循环"
+   ],
+   "title": "FizzBuzz 变奏·20~80·2/7",
+   "description": "经典整除分类打印，参数化区间与规则。本变体：20~80·2/7。",
+   "requirements": [],
+   "code": "\"\"\"FizzBuzz：20~80，2 的倍数输出 A，7 的倍数输出 B。\"\"\"\nfor n in range(20, 80 + 1):\n    out = \"\"\n    if n % 2 == 0:\n        out += \"A\"\n    if n % 7 == 0:\n        out += \"B\"\n    print(n, out or n)\n"
+  },
+  {
+   "id": "topics_basics-fizzbuzz-12",
+   "name": "basics-fizzbuzz_12.py",
+   "category": "topics",
+   "tags": [
+    "基础",
+    "循环"
+   ],
+   "title": "FizzBuzz 变奏·20~80·4/6",
+   "description": "经典整除分类打印，参数化区间与规则。本变体：20~80·4/6。",
+   "requirements": [],
+   "code": "\"\"\"FizzBuzz：20~80，4 的倍数输出 A，6 的倍数输出 B。\"\"\"\nfor n in range(20, 80 + 1):\n    out = \"\"\n    if n % 4 == 0:\n        out += \"A\"\n    if n % 6 == 0:\n        out += \"B\"\n    print(n, out or n)\n"
+  },
+  {
+   "id": "topics_basics-prime-1",
+   "name": "basics-prime_1.py",
+   "category": "topics",
+   "tags": [
+    "基础",
+    "数学"
+   ],
+   "title": "素数筛·N=100",
+   "description": "埃氏筛统计区间素数。本变体：N=100。",
+   "requirements": [],
+   "code": "\"\"\"素数筛：找出 100 以内的全部素数并统计。\"\"\"\nlimit = 100\nsieve = [True] * (limit + 1)\nsieve[0] = sieve[1] = False\nfor n in range(2, int(limit ** 0.5) + 1):\n    if sieve[n]:\n        for m in range(n * n, limit + 1, n):\n            sieve[m] = False\nprimes = [i for i, ok in enumerate(sieve) if ok]\nprint(f\"100 以内素数 {{len(primes)}} 个：\", primes[:20], \"...\")\n"
+  },
+  {
+   "id": "topics_basics-prime-2",
+   "name": "basics-prime_2.py",
+   "category": "topics",
+   "tags": [
+    "基础",
+    "数学"
+   ],
+   "title": "素数筛·N=200",
+   "description": "埃氏筛统计区间素数。本变体：N=200。",
+   "requirements": [],
+   "code": "\"\"\"素数筛：找出 200 以内的全部素数并统计。\"\"\"\nlimit = 200\nsieve = [True] * (limit + 1)\nsieve[0] = sieve[1] = False\nfor n in range(2, int(limit ** 0.5) + 1):\n    if sieve[n]:\n        for m in range(n * n, limit + 1, n):\n            sieve[m] = False\nprimes = [i for i, ok in enumerate(sieve) if ok]\nprint(f\"200 以内素数 {{len(primes)}} 个：\", primes[:20], \"...\")\n"
+  },
+  {
+   "id": "topics_basics-prime-3",
+   "name": "basics-prime_3.py",
+   "category": "topics",
+   "tags": [
+    "基础",
+    "数学"
+   ],
+   "title": "素数筛·N=500",
+   "description": "埃氏筛统计区间素数。本变体：N=500。",
+   "requirements": [],
+   "code": "\"\"\"素数筛：找出 500 以内的全部素数并统计。\"\"\"\nlimit = 500\nsieve = [True] * (limit + 1)\nsieve[0] = sieve[1] = False\nfor n in range(2, int(limit ** 0.5) + 1):\n    if sieve[n]:\n        for m in range(n * n, limit + 1, n):\n            sieve[m] = False\nprimes = [i for i, ok in enumerate(sieve) if ok]\nprint(f\"500 以内素数 {{len(primes)}} 个：\", primes[:20], \"...\")\n"
+  },
+  {
+   "id": "topics_basics-prime-4",
+   "name": "basics-prime_4.py",
+   "category": "topics",
+   "tags": [
+    "基础",
+    "数学"
+   ],
+   "title": "素数筛·N=1000",
+   "description": "埃氏筛统计区间素数。本变体：N=1000。",
+   "requirements": [],
+   "code": "\"\"\"素数筛：找出 1000 以内的全部素数并统计。\"\"\"\nlimit = 1000\nsieve = [True] * (limit + 1)\nsieve[0] = sieve[1] = False\nfor n in range(2, int(limit ** 0.5) + 1):\n    if sieve[n]:\n        for m in range(n * n, limit + 1, n):\n            sieve[m] = False\nprimes = [i for i, ok in enumerate(sieve) if ok]\nprint(f\"1000 以内素数 {{len(primes)}} 个：\", primes[:20], \"...\")\n"
+  },
+  {
+   "id": "topics_basics-prime-5",
+   "name": "basics-prime_5.py",
+   "category": "topics",
+   "tags": [
+    "基础",
+    "数学"
+   ],
+   "title": "素数筛·N=2000",
+   "description": "埃氏筛统计区间素数。本变体：N=2000。",
+   "requirements": [],
+   "code": "\"\"\"素数筛：找出 2000 以内的全部素数并统计。\"\"\"\nlimit = 2000\nsieve = [True] * (limit + 1)\nsieve[0] = sieve[1] = False\nfor n in range(2, int(limit ** 0.5) + 1):\n    if sieve[n]:\n        for m in range(n * n, limit + 1, n):\n            sieve[m] = False\nprimes = [i for i, ok in enumerate(sieve) if ok]\nprint(f\"2000 以内素数 {{len(primes)}} 个：\", primes[:20], \"...\")\n"
+  },
+  {
+   "id": "topics_basics-prime-6",
+   "name": "basics-prime_6.py",
+   "category": "topics",
+   "tags": [
+    "基础",
+    "数学"
+   ],
+   "title": "素数筛·N=5000",
+   "description": "埃氏筛统计区间素数。本变体：N=5000。",
+   "requirements": [],
+   "code": "\"\"\"素数筛：找出 5000 以内的全部素数并统计。\"\"\"\nlimit = 5000\nsieve = [True] * (limit + 1)\nsieve[0] = sieve[1] = False\nfor n in range(2, int(limit ** 0.5) + 1):\n    if sieve[n]:\n        for m in range(n * n, limit + 1, n):\n            sieve[m] = False\nprimes = [i for i, ok in enumerate(sieve) if ok]\nprint(f\"5000 以内素数 {{len(primes)}} 个：\", primes[:20], \"...\")\n"
+  },
+  {
+   "id": "topics_basics-fibonacci-1",
+   "name": "basics-fibonacci_1.py",
+   "category": "topics",
+   "tags": [
+    "基础",
+    "动态规划"
+   ],
+   "title": "斐波那契三解·n=10",
+   "description": "递归/迭代/矩阵快速幂对比。本变体：n=10。",
+   "requirements": [],
+   "code": "\"\"\"斐波那契第 10 项：三种实现对照。\"\"\"\nfrom functools import lru_cache\n\n\n@lru_cache(maxsize=None)\ndef fib_rec(k):\n    return k if k < 2 else fib_rec(k - 1) + fib_rec(k - 2)\n\n\ndef fib_iter(k):\n    a, b = 0, 1\n    for _ in range(k):\n        a, b = b, a + b\n    return a\n\n\ndef fib_fast(k):\n    def mul(x, y):\n        return [[x[0][0] * y[0][0] + x[0][1] * y[1][0], x[0][0] * y[0][1] + x[0][1] * y[1][1]],\n                [x[1][0] * y[0][0] + x[1][1] * y[1][0], x[1][0] * y[0][1] + x[1][1] * y[1][1]]]\n\n    def mpow(m, e):\n        r = [[1, 0], [0, 1]]\n        while e:\n            if e & 1:\n                r = mul(r, m)\n            m = mul(m, m)\n            e >>= 1\n        return r\n\n    return mpow([[1, 1], [1, 0]], k)[0][1]\n\n\nn = 10\nprint(\"迭代:\", fib_iter(n), \"| 递归:\", fib_rec(n), \"| 快速幂:\", fib_fast(n))\n"
+  },
+  {
+   "id": "topics_basics-fibonacci-2",
+   "name": "basics-fibonacci_2.py",
+   "category": "topics",
+   "tags": [
+    "基础",
+    "动态规划"
+   ],
+   "title": "斐波那契三解·n=20",
+   "description": "递归/迭代/矩阵快速幂对比。本变体：n=20。",
+   "requirements": [],
+   "code": "\"\"\"斐波那契第 20 项：三种实现对照。\"\"\"\nfrom functools import lru_cache\n\n\n@lru_cache(maxsize=None)\ndef fib_rec(k):\n    return k if k < 2 else fib_rec(k - 1) + fib_rec(k - 2)\n\n\ndef fib_iter(k):\n    a, b = 0, 1\n    for _ in range(k):\n        a, b = b, a + b\n    return a\n\n\ndef fib_fast(k):\n    def mul(x, y):\n        return [[x[0][0] * y[0][0] + x[0][1] * y[1][0], x[0][0] * y[0][1] + x[0][1] * y[1][1]],\n                [x[1][0] * y[0][0] + x[1][1] * y[1][0], x[1][0] * y[0][1] + x[1][1] * y[1][1]]]\n\n    def mpow(m, e):\n        r = [[1, 0], [0, 1]]\n        while e:\n            if e & 1:\n                r = mul(r, m)\n            m = mul(m, m)\n            e >>= 1\n        return r\n\n    return mpow([[1, 1], [1, 0]], k)[0][1]\n\n\nn = 20\nprint(\"迭代:\", fib_iter(n), \"| 递归:\", fib_rec(n), \"| 快速幂:\", fib_fast(n))\n"
+  },
+  {
+   "id": "topics_basics-fibonacci-3",
+   "name": "basics-fibonacci_3.py",
+   "category": "topics",
+   "tags": [
+    "基础",
+    "动态规划"
+   ],
+   "title": "斐波那契三解·n=30",
+   "description": "递归/迭代/矩阵快速幂对比。本变体：n=30。",
+   "requirements": [],
+   "code": "\"\"\"斐波那契第 30 项：三种实现对照。\"\"\"\nfrom functools import lru_cache\n\n\n@lru_cache(maxsize=None)\ndef fib_rec(k):\n    return k if k < 2 else fib_rec(k - 1) + fib_rec(k - 2)\n\n\ndef fib_iter(k):\n    a, b = 0, 1\n    for _ in range(k):\n        a, b = b, a + b\n    return a\n\n\ndef fib_fast(k):\n    def mul(x, y):\n        return [[x[0][0] * y[0][0] + x[0][1] * y[1][0], x[0][0] * y[0][1] + x[0][1] * y[1][1]],\n                [x[1][0] * y[0][0] + x[1][1] * y[1][0], x[1][0] * y[0][1] + x[1][1] * y[1][1]]]\n\n    def mpow(m, e):\n        r = [[1, 0], [0, 1]]\n        while e:\n            if e & 1:\n                r = mul(r, m)\n            m = mul(m, m)\n            e >>= 1\n        return r\n\n    return mpow([[1, 1], [1, 0]], k)[0][1]\n\n\nn = 30\nprint(\"迭代:\", fib_iter(n), \"| 递归:\", fib_rec(n), \"| 快速幂:\", fib_fast(n))\n"
+  },
+  {
+   "id": "topics_basics-fibonacci-4",
+   "name": "basics-fibonacci_4.py",
+   "category": "topics",
+   "tags": [
+    "基础",
+    "动态规划"
+   ],
+   "title": "斐波那契三解·n=50",
+   "description": "递归/迭代/矩阵快速幂对比。本变体：n=50。",
+   "requirements": [],
+   "code": "\"\"\"斐波那契第 50 项：三种实现对照。\"\"\"\nfrom functools import lru_cache\n\n\n@lru_cache(maxsize=None)\ndef fib_rec(k):\n    return k if k < 2 else fib_rec(k - 1) + fib_rec(k - 2)\n\n\ndef fib_iter(k):\n    a, b = 0, 1\n    for _ in range(k):\n        a, b = b, a + b\n    return a\n\n\ndef fib_fast(k):\n    def mul(x, y):\n        return [[x[0][0] * y[0][0] + x[0][1] * y[1][0], x[0][0] * y[0][1] + x[0][1] * y[1][1]],\n                [x[1][0] * y[0][0] + x[1][1] * y[1][0], x[1][0] * y[0][1] + x[1][1] * y[1][1]]]\n\n    def mpow(m, e):\n        r = [[1, 0], [0, 1]]\n        while e:\n            if e & 1:\n                r = mul(r, m)\n            m = mul(m, m)\n            e >>= 1\n        return r\n\n    return mpow([[1, 1], [1, 0]], k)[0][1]\n\n\nn = 50\nprint(\"迭代:\", fib_iter(n), \"| 递归:\", fib_rec(n), \"| 快速幂:\", fib_fast(n))\n"
+  },
+  {
+   "id": "topics_basics-fibonacci-5",
+   "name": "basics-fibonacci_5.py",
+   "category": "topics",
+   "tags": [
+    "基础",
+    "动态规划"
+   ],
+   "title": "斐波那契三解·n=80",
+   "description": "递归/迭代/矩阵快速幂对比。本变体：n=80。",
+   "requirements": [],
+   "code": "\"\"\"斐波那契第 80 项：三种实现对照。\"\"\"\nfrom functools import lru_cache\n\n\n@lru_cache(maxsize=None)\ndef fib_rec(k):\n    return k if k < 2 else fib_rec(k - 1) + fib_rec(k - 2)\n\n\ndef fib_iter(k):\n    a, b = 0, 1\n    for _ in range(k):\n        a, b = b, a + b\n    return a\n\n\ndef fib_fast(k):\n    def mul(x, y):\n        return [[x[0][0] * y[0][0] + x[0][1] * y[1][0], x[0][0] * y[0][1] + x[0][1] * y[1][1]],\n                [x[1][0] * y[0][0] + x[1][1] * y[1][0], x[1][0] * y[0][1] + x[1][1] * y[1][1]]]\n\n    def mpow(m, e):\n        r = [[1, 0], [0, 1]]\n        while e:\n            if e & 1:\n                r = mul(r, m)\n            m = mul(m, m)\n            e >>= 1\n        return r\n\n    return mpow([[1, 1], [1, 0]], k)[0][1]\n\n\nn = 80\nprint(\"迭代:\", fib_iter(n), \"| 递归:\", fib_rec(n), \"| 快速幂:\", fib_fast(n))\n"
+  },
+  {
+   "id": "topics_basics-wordcount-1",
+   "name": "basics-wordcount_1.py",
+   "category": "topics",
+   "tags": [
+    "基础",
+    "文本",
+    "统计"
+   ],
+   "title": "词频统计·Top3",
+   "description": "Counter 统计文本词频并输出 TopN。本变体：Top3。",
+   "requirements": [],
+   "code": "\"\"\"词频统计：Top {topn}。\"\"\"\nfrom collections import Counter\n\ntext = \"\"\"python is simple python is powerful and python is everywhere simple tools with powerful ideas make python everywhere python\"\"\"\nwords = [w.strip(\".,!?;:()\").lower() for w in text.split()]\nwords = [w for w in words if w]\ncounter = Counter(words)\nfor word, cnt in counter.most_common({topn}):\n    print(f\"{word:>12}  {cnt}\")\nprint(\"去重词数:\", len(counter))\n"
+  },
+  {
+   "id": "topics_basics-date-diff-1",
+   "name": "basics-date-diff_1.py",
+   "category": "topics",
+   "tags": [
+    "基础",
+    "日期"
+   ],
+   "title": "日期计算·202401-202501",
+   "description": "datetime 计算日期差与星期。本变体：202401-202501。",
+   "requirements": [],
+   "code": "\"\"\"日期计算：{{d1}} 与 {{d2}} 之间隔多少天。\"\"\"\nfrom datetime import date\n\nd1 = date(2024, 1, 1)\nd2 = date(2025, 1, 1)\ndiff = abs((d2 - d1).days)\nprint(f\"间隔 {{diff}} 天（约 {{diff / 7:.1f}} 周）\")\nprint(\"各自星期:\", d1.strftime(\"%A\"), \"/\", d2.strftime(\"%A\"))\n"
+  },
+  {
+   "id": "topics_basics-date-diff-2",
+   "name": "basics-date-diff_2.py",
+   "category": "topics",
+   "tags": [
+    "基础",
+    "日期"
+   ],
+   "title": "日期计算·202406-202609",
+   "description": "datetime 计算日期差与星期。本变体：202406-202609。",
+   "requirements": [],
+   "code": "\"\"\"日期计算：{{d1}} 与 {{d2}} 之间隔多少天。\"\"\"\nfrom datetime import date\n\nd1 = date(2024, 6, 15)\nd2 = date(2026, 9, 22)\ndiff = abs((d2 - d1).days)\nprint(f\"间隔 {{diff}} 天（约 {{diff / 7:.1f}} 周）\")\nprint(\"各自星期:\", d1.strftime(\"%A\"), \"/\", d2.strftime(\"%A\"))\n"
+  },
+  {
+   "id": "topics_basics-date-diff-3",
+   "name": "basics-date-diff_3.py",
+   "category": "topics",
+   "tags": [
+    "基础",
+    "日期"
+   ],
+   "title": "日期计算·202002-202602",
+   "description": "datetime 计算日期差与星期。本变体：202002-202602。",
+   "requirements": [],
+   "code": "\"\"\"日期计算：{{d1}} 与 {{d2}} 之间隔多少天。\"\"\"\nfrom datetime import date\n\nd1 = date(2020, 2, 29)\nd2 = date(2026, 2, 28)\ndiff = abs((d2 - d1).days)\nprint(f\"间隔 {{diff}} 天（约 {{diff / 7:.1f}} 周）\")\nprint(\"各自星期:\", d1.strftime(\"%A\"), \"/\", d2.strftime(\"%A\"))\n"
+  },
+  {
+   "id": "topics_basics-date-diff-4",
+   "name": "basics-date-diff_4.py",
+   "category": "topics",
+   "tags": [
+    "基础",
+    "日期"
+   ],
+   "title": "日期计算·202609-202703",
+   "description": "datetime 计算日期差与星期。本变体：202609-202703。",
+   "requirements": [],
+   "code": "\"\"\"日期计算：{{d1}} 与 {{d2}} 之间隔多少天。\"\"\"\nfrom datetime import date\n\nd1 = date(2026, 9, 22)\nd2 = date(2027, 3, 8)\ndiff = abs((d2 - d1).days)\nprint(f\"间隔 {{diff}} 天（约 {{diff / 7:.1f}} 周）\")\nprint(\"各自星期:\", d1.strftime(\"%A\"), \"/\", d2.strftime(\"%A\"))\n"
+  },
+  {
+   "id": "topics_basics-date-diff-5",
+   "name": "basics-date-diff_5.py",
+   "category": "topics",
+   "tags": [
+    "基础",
+    "日期"
+   ],
+   "title": "日期计算·202312-202601",
+   "description": "datetime 计算日期差与星期。本变体：202312-202601。",
+   "requirements": [],
+   "code": "\"\"\"日期计算：{{d1}} 与 {{d2}} 之间隔多少天。\"\"\"\nfrom datetime import date\n\nd1 = date(2023, 12, 31)\nd2 = date(2026, 1, 1)\ndiff = abs((d2 - d1).days)\nprint(f\"间隔 {{diff}} 天（约 {{diff / 7:.1f}} 周）\")\nprint(\"各自星期:\", d1.strftime(\"%A\"), \"/\", d2.strftime(\"%A\"))\n"
+  },
+  {
+   "id": "topics_basics-matrix-mul-1",
+   "name": "basics-matrix-mul_1.py",
+   "category": "topics",
+   "tags": [
+    "基础",
+    "线性代数"
+   ],
+   "title": "矩阵乘法·n=4·m7",
+   "description": "纯 Python 三重循环矩阵乘法。本变体：n=4·m7。",
+   "requirements": [],
+   "code": "\"\"\"矩阵乘法：4×4 方阵（纯 Python 验证）。\"\"\"\nA = [[(i * j + 1) % 7 for j in range(4)] for i in range(4)]\nB = [[(i + 2 * j) % 7 for j in range(4)] for i in range(4)]\nC = [[sum(A[i][k] * B[k][j] for k in range(4)) for j in range(4)] for i in range(4)]\nprint(\"C[0][:6] =\", C[0][:6])\nprint(\"C[-1][-3:] =\", C[-1][-3:])\n"
+  },
+  {
+   "id": "topics_basics-matrix-mul-2",
+   "name": "basics-matrix-mul_2.py",
+   "category": "topics",
+   "tags": [
+    "基础",
+    "线性代数"
+   ],
+   "title": "矩阵乘法·n=6·m11",
+   "description": "纯 Python 三重循环矩阵乘法。本变体：n=6·m11。",
+   "requirements": [],
+   "code": "\"\"\"矩阵乘法：6×6 方阵（纯 Python 验证）。\"\"\"\nA = [[(i * j + 1) % 11 for j in range(6)] for i in range(6)]\nB = [[(i + 2 * j) % 11 for j in range(6)] for i in range(6)]\nC = [[sum(A[i][k] * B[k][j] for k in range(6)) for j in range(6)] for i in range(6)]\nprint(\"C[0][:6] =\", C[0][:6])\nprint(\"C[-1][-3:] =\", C[-1][-3:])\n"
+  },
+  {
+   "id": "topics_basics-matrix-mul-3",
+   "name": "basics-matrix-mul_3.py",
+   "category": "topics",
+   "tags": [
+    "基础",
+    "线性代数"
+   ],
+   "title": "矩阵乘法·n=8·m13",
+   "description": "纯 Python 三重循环矩阵乘法。本变体：n=8·m13。",
+   "requirements": [],
+   "code": "\"\"\"矩阵乘法：8×8 方阵（纯 Python 验证）。\"\"\"\nA = [[(i * j + 1) % 13 for j in range(8)] for i in range(8)]\nB = [[(i + 2 * j) % 13 for j in range(8)] for i in range(8)]\nC = [[sum(A[i][k] * B[k][j] for k in range(8)) for j in range(8)] for i in range(8)]\nprint(\"C[0][:6] =\", C[0][:6])\nprint(\"C[-1][-3:] =\", C[-1][-3:])\n"
+  },
+  {
+   "id": "topics_basics-matrix-mul-4",
+   "name": "basics-matrix-mul_4.py",
+   "category": "topics",
+   "tags": [
+    "基础",
+    "线性代数"
+   ],
+   "title": "矩阵乘法·n=10·m5",
+   "description": "纯 Python 三重循环矩阵乘法。本变体：n=10·m5。",
+   "requirements": [],
+   "code": "\"\"\"矩阵乘法：10×10 方阵（纯 Python 验证）。\"\"\"\nA = [[(i * j + 1) % 5 for j in range(10)] for i in range(10)]\nB = [[(i + 2 * j) % 5 for j in range(10)] for i in range(10)]\nC = [[sum(A[i][k] * B[k][j] for k in range(10)) for j in range(10)] for i in range(10)]\nprint(\"C[0][:6] =\", C[0][:6])\nprint(\"C[-1][-3:] =\", C[-1][-3:])\n"
+  },
+  {
+   "id": "topics_basics-matrix-mul-5",
+   "name": "basics-matrix-mul_5.py",
+   "category": "topics",
+   "tags": [
+    "基础",
+    "线性代数"
+   ],
+   "title": "矩阵乘法·n=12·m9",
+   "description": "纯 Python 三重循环矩阵乘法。本变体：n=12·m9。",
+   "requirements": [],
+   "code": "\"\"\"矩阵乘法：12×12 方阵（纯 Python 验证）。\"\"\"\nA = [[(i * j + 1) % 9 for j in range(12)] for i in range(12)]\nB = [[(i + 2 * j) % 9 for j in range(12)] for i in range(12)]\nC = [[sum(A[i][k] * B[k][j] for k in range(12)) for j in range(12)] for i in range(12)]\nprint(\"C[0][:6] =\", C[0][:6])\nprint(\"C[-1][-3:] =\", C[-1][-3:])\n"
+  },
+  {
+   "id": "topics_algo-binary-search-1",
+   "name": "algo-binary-search_1.py",
+   "category": "topics",
+   "tags": [
+    "算法",
+    "查找"
+   ],
+   "title": "二分查找·n=20",
+   "description": "有序数组二分定位（含边界变体）。本变体：n=20。",
+   "requirements": [],
+   "code": "\"\"\"二分查找：在长度 20 的有序数组中定位全部目标。\"\"\"\ndata = sorted([2, 5, 8, 11, 14, 17, 20, 23, 26, 29, 32, 35, 38, 41, 44, 47, 50, 53, 56, 59])\ntargets = [7, 20, 25]\n\ndef bsearch(arr, x):\n    lo, hi = 0, len(arr) - 1\n    while lo <= hi:\n        mid = (lo + hi) // 2\n        if arr[mid] == x:\n            return mid\n        if arr[mid] < x:\n            lo = mid + 1\n        else:\n            hi = mid - 1\n    return -1\n\nfor t in targets:\n    print(t, \"->\", bsearch(data, t))\n"
+  },
+  {
+   "id": "topics_algo-binary-search-2",
+   "name": "algo-binary-search_2.py",
+   "category": "topics",
+   "tags": [
+    "算法",
+    "查找"
+   ],
+   "title": "二分查找·n=50",
+   "description": "有序数组二分定位（含边界变体）。本变体：n=50。",
+   "requirements": [],
+   "code": "\"\"\"二分查找：在长度 50 的有序数组中定位全部目标。\"\"\"\ndata = sorted([2, 5, 8, 11, 14, 17, 20, 23, 26, 29, 32, 35, 38, 41, 44, 47, 50, 53, 56, 59, 62, 65, 68, 71, 74, 77, 80, 83, 86, 89, 92, 95, 98, 101, 104, 107, 110, 113, 116, 119, 122, 125, 128, 131, 134, 137, 140, 143, 146, 149])\ntargets = [7, 20, 55]\n\ndef bsearch(arr, x):\n    lo, hi = 0, len(arr) - 1\n    while lo <= hi:\n        mid = (lo + hi) // 2\n        if arr[mid] == x:\n            return mid\n        if arr[mid] < x:\n            lo = mid + 1\n        else:\n            hi = mid - 1\n    return -1\n\nfor t in targets:\n    print(t, \"->\", bsearch(data, t))\n"
+  },
+  {
+   "id": "topics_algo-binary-search-3",
+   "name": "algo-binary-search_3.py",
+   "category": "topics",
+   "tags": [
+    "算法",
+    "查找"
+   ],
+   "title": "二分查找·n=100",
+   "description": "有序数组二分定位（含边界变体）。本变体：n=100。",
+   "requirements": [],
+   "code": "\"\"\"二分查找：在长度 100 的有序数组中定位全部目标。\"\"\"\ndata = sorted([2, 5, 8, 11, 14, 17, 20, 23, 26, 29, 32, 35, 38, 41, 44, 47, 50, 53, 56, 59, 62, 65, 68, 71, 74, 77, 80, 83, 86, 89, 92, 95, 98, 101, 104, 107, 110, 113, 116, 119, 122, 125, 128, 131, 134, 137, 140, 143, 146, 149, 152, 155, 158, 161, 164, 167, 170, 173, 176, 179, 182, 185, 188, 191, 194, 197, 200, 203, 206, 209, 212, 215, 218, 221, 224, 227, 230, 233, 236, 239, 242, 245, 248, 251, 254, 257, 260, 263, 266, 269, 272, 275, 278, 281, 284, 287, 290, 293, 296, 299])\ntargets = [7, 20, 105]\n\ndef bsearch(arr, x):\n    lo, hi = 0, len(arr) - 1\n    while lo <= hi:\n        mid = (lo + hi) // 2\n        if arr[mid] == x:\n            return mid\n        if arr[mid] < x:\n            lo = mid + 1\n        else:\n            hi = mid - 1\n    return -1\n\nfor t in targets:\n    print(t, \"->\", bsearch(data, t))\n"
+  },
+  {
+   "id": "topics_algo-quick-sort-1",
+   "name": "algo-quick-sort_1.py",
+   "category": "topics",
+   "tags": [
+    "算法",
+    "排序"
+   ],
+   "title": "快速排序·n=20",
+   "description": "手写快排（尾递归式分区）。本变体：n=20。",
+   "requirements": [],
+   "code": "\"\"\"快速排序：20 个随机整数。\"\"\"\nimport random\nrandom.seed(1)\ndata = [random.randint(0, 100) for _ in range(20)]\n\ndef qsort(arr):\n    if len(arr) <= 1:\n        return arr\n    pivot = arr[len(arr) // 2]\n    left = [x for x in arr if x < pivot]\n    mid = [x for x in arr if x == pivot]\n    right = [x for x in arr if x > pivot]\n    return qsort(left) + mid + qsort(right)\n\nprint(\"原:\", data[:12], \"...\")\nprint(\"排序后:\", qsort(data)[:12], \"...\")\n"
+  },
+  {
+   "id": "topics_algo-quick-sort-2",
+   "name": "algo-quick-sort_2.py",
+   "category": "topics",
+   "tags": [
+    "算法",
+    "排序"
+   ],
+   "title": "快速排序·n=50",
+   "description": "手写快排（尾递归式分区）。本变体：n=50。",
+   "requirements": [],
+   "code": "\"\"\"快速排序：50 个随机整数。\"\"\"\nimport random\nrandom.seed(2)\ndata = [random.randint(0, 500) for _ in range(50)]\n\ndef qsort(arr):\n    if len(arr) <= 1:\n        return arr\n    pivot = arr[len(arr) // 2]\n    left = [x for x in arr if x < pivot]\n    mid = [x for x in arr if x == pivot]\n    right = [x for x in arr if x > pivot]\n    return qsort(left) + mid + qsort(right)\n\nprint(\"原:\", data[:12], \"...\")\nprint(\"排序后:\", qsort(data)[:12], \"...\")\n"
+  },
+  {
+   "id": "topics_algo-quick-sort-3",
+   "name": "algo-quick-sort_3.py",
+   "category": "topics",
+   "tags": [
+    "算法",
+    "排序"
+   ],
+   "title": "快速排序·n=100",
+   "description": "手写快排（尾递归式分区）。本变体：n=100。",
+   "requirements": [],
+   "code": "\"\"\"快速排序：100 个随机整数。\"\"\"\nimport random\nrandom.seed(3)\ndata = [random.randint(-50, 50) for _ in range(100)]\n\ndef qsort(arr):\n    if len(arr) <= 1:\n        return arr\n    pivot = arr[len(arr) // 2]\n    left = [x for x in arr if x < pivot]\n    mid = [x for x in arr if x == pivot]\n    right = [x for x in arr if x > pivot]\n    return qsort(left) + mid + qsort(right)\n\nprint(\"原:\", data[:12], \"...\")\nprint(\"排序后:\", qsort(data)[:12], \"...\")\n"
+  },
+  {
+   "id": "topics_algo-quick-sort-4",
+   "name": "algo-quick-sort_4.py",
+   "category": "topics",
+   "tags": [
+    "算法",
+    "排序"
+   ],
+   "title": "快速排序·n=200",
+   "description": "手写快排（尾递归式分区）。本变体：n=200。",
+   "requirements": [],
+   "code": "\"\"\"快速排序：200 个随机整数。\"\"\"\nimport random\nrandom.seed(4)\ndata = [random.randint(0, 9) for _ in range(200)]\n\ndef qsort(arr):\n    if len(arr) <= 1:\n        return arr\n    pivot = arr[len(arr) // 2]\n    left = [x for x in arr if x < pivot]\n    mid = [x for x in arr if x == pivot]\n    right = [x for x in arr if x > pivot]\n    return qsort(left) + mid + qsort(right)\n\nprint(\"原:\", data[:12], \"...\")\nprint(\"排序后:\", qsort(data)[:12], \"...\")\n"
+  },
+  {
+   "id": "topics_algo-lcs-1",
+   "name": "algo-lcs_1.py",
+   "category": "topics",
+   "tags": [
+    "算法",
+    "动态规划"
+   ],
+   "title": "最长公共子序列·ABCBDA×BDCABA",
+   "description": "动态规划 LCS 与回溯路径。本变体：ABCBDA×BDCABA。",
+   "requirements": [],
+   "code": "\"\"\"LCS：'{a}' 与 '{b}' 的最长公共子序列。\"\"\"\nA, B = \"'ABCBDAB'\", \"'BDCABA'\"\ndp = [[0] * (len(B) + 1) for _ in range(len(A) + 1)]\nfor i in range(1, len(A) + 1):\n    for j in range(1, len(B) + 1):\n        dp[i][j] = dp[i - 1][j - 1] + 1 if A[i - 1] == B[j - 1] else max(dp[i - 1][j], dp[i][j - 1])\ni, j, out = len(A), len(B), []\nwhile i and j:\n    if A[i - 1] == B[j - 1]:\n        out.append(A[i - 1]); i -= 1; j -= 1\n    elif dp[i - 1][j] >= dp[i][j - 1]:\n        i -= 1\n    else:\n        j -= 1\nprint(\"LCS 长度:\", dp[-1][-1], \"| 序列:\", \"\".join(reversed(out)))\n"
+  },
+  {
+   "id": "topics_algo-lcs-2",
+   "name": "algo-lcs_2.py",
+   "category": "topics",
+   "tags": [
+    "算法",
+    "动态规划"
+   ],
+   "title": "最长公共子序列·动态规划很重×规规整整做规",
+   "description": "动态规划 LCS 与回溯路径。本变体：动态规划很重×规规整整做规。",
+   "requirements": [],
+   "code": "\"\"\"LCS：'{a}' 与 '{b}' 的最长公共子序列。\"\"\"\nA, B = \"'动态规划很重要'\", \"'规规整整做规划'\"\ndp = [[0] * (len(B) + 1) for _ in range(len(A) + 1)]\nfor i in range(1, len(A) + 1):\n    for j in range(1, len(B) + 1):\n        dp[i][j] = dp[i - 1][j - 1] + 1 if A[i - 1] == B[j - 1] else max(dp[i - 1][j], dp[i][j - 1])\ni, j, out = len(A), len(B), []\nwhile i and j:\n    if A[i - 1] == B[j - 1]:\n        out.append(A[i - 1]); i -= 1; j -= 1\n    elif dp[i - 1][j] >= dp[i][j - 1]:\n        i -= 1\n    else:\n        j -= 1\nprint(\"LCS 长度:\", dp[-1][-1], \"| 序列:\", \"\".join(reversed(out)))\n"
+  },
+  {
+   "id": "topics_algo-lcs-3",
+   "name": "algo-lcs_3.py",
+   "category": "topics",
+   "tags": [
+    "算法",
+    "动态规划"
+   ],
+   "title": "最长公共子序列·kitten×sittin",
+   "description": "动态规划 LCS 与回溯路径。本变体：kitten×sittin。",
+   "requirements": [],
+   "code": "\"\"\"LCS：'{a}' 与 '{b}' 的最长公共子序列。\"\"\"\nA, B = \"'kitten'\", \"'sitting'\"\ndp = [[0] * (len(B) + 1) for _ in range(len(A) + 1)]\nfor i in range(1, len(A) + 1):\n    for j in range(1, len(B) + 1):\n        dp[i][j] = dp[i - 1][j - 1] + 1 if A[i - 1] == B[j - 1] else max(dp[i - 1][j], dp[i][j - 1])\ni, j, out = len(A), len(B), []\nwhile i and j:\n    if A[i - 1] == B[j - 1]:\n        out.append(A[i - 1]); i -= 1; j -= 1\n    elif dp[i - 1][j] >= dp[i][j - 1]:\n        i -= 1\n    else:\n        j -= 1\nprint(\"LCS 长度:\", dp[-1][-1], \"| 序列:\", \"\".join(reversed(out)))\n"
+  },
+  {
+   "id": "topics_algo-lcs-4",
+   "name": "algo-lcs_4.py",
+   "category": "topics",
+   "tags": [
+    "算法",
+    "动态规划"
+   ],
+   "title": "最长公共子序列·AGGTAB×GXTXAY",
+   "description": "动态规划 LCS 与回溯路径。本变体：AGGTAB×GXTXAY。",
+   "requirements": [],
+   "code": "\"\"\"LCS：'{a}' 与 '{b}' 的最长公共子序列。\"\"\"\nA, B = \"'AGGTAB'\", \"'GXTXAYB'\"\ndp = [[0] * (len(B) + 1) for _ in range(len(A) + 1)]\nfor i in range(1, len(A) + 1):\n    for j in range(1, len(B) + 1):\n        dp[i][j] = dp[i - 1][j - 1] + 1 if A[i - 1] == B[j - 1] else max(dp[i - 1][j], dp[i][j - 1])\ni, j, out = len(A), len(B), []\nwhile i and j:\n    if A[i - 1] == B[j - 1]:\n        out.append(A[i - 1]); i -= 1; j -= 1\n    elif dp[i - 1][j] >= dp[i][j - 1]:\n        i -= 1\n    else:\n        j -= 1\nprint(\"LCS 长度:\", dp[-1][-1], \"| 序列:\", \"\".join(reversed(out)))\n"
+  },
+  {
+   "id": "topics_algo-dijkstra-1",
+   "name": "algo-dijkstra_1.py",
+   "category": "topics",
+   "tags": [
+    "算法",
+    "图"
+   ],
+   "title": "Dijkstra 最短路·n=5",
+   "description": "邻接表 + 堆的最短路径。本变体：n=5。",
+   "requirements": [],
+   "code": "\"\"\"Dijkstra：从 0 号点到各点的最短距离（5 个顶点）。\"\"\"\nimport heapq\n\ngraph = {{0: [(1, 4), (2, 1)], 1: [(3, 1)], 2: [(1, 2), (3, 5)], 3: [(4, 3)], 4: []}}\ndist = {0: 0}\nheap = [(0, 0)]\nwhile heap:\n    d, u = heapq.heappop(heap)\n    if d > dist.get(u, float(\"inf\")):\n        continue\n    for v, w in graph.get(u, []):\n        nd = d + w\n        if nd < dist.get(v, float(\"inf\")):\n            dist[v] = nd\n            heapq.heappush(heap, (nd, v))\nprint(dict(sorted(dist.items())))\n"
+  },
+  {
+   "id": "topics_algo-dijkstra-2",
+   "name": "algo-dijkstra_2.py",
+   "category": "topics",
+   "tags": [
+    "算法",
+    "图"
+   ],
+   "title": "Dijkstra 最短路·n=6",
+   "description": "邻接表 + 堆的最短路径。本变体：n=6。",
+   "requirements": [],
+   "code": "\"\"\"Dijkstra：从 0 号点到各点的最短距离（6 个顶点）。\"\"\"\nimport heapq\n\ngraph = {{0: [(1, 2), (2, 6)], 1: [(3, 5)], 2: [(3, 1)], 3: [(4, 2), (5, 6)], 4: [], 5: []}}\ndist = {0: 0}\nheap = [(0, 0)]\nwhile heap:\n    d, u = heapq.heappop(heap)\n    if d > dist.get(u, float(\"inf\")):\n        continue\n    for v, w in graph.get(u, []):\n        nd = d + w\n        if nd < dist.get(v, float(\"inf\")):\n            dist[v] = nd\n            heapq.heappush(heap, (nd, v))\nprint(dict(sorted(dist.items())))\n"
+  },
+  {
+   "id": "topics_algo-dijkstra-3",
+   "name": "algo-dijkstra_3.py",
+   "category": "topics",
+   "tags": [
+    "算法",
+    "图"
+   ],
+   "title": "Dijkstra 最短路·n=7",
+   "description": "邻接表 + 堆的最短路径。本变体：n=7。",
+   "requirements": [],
+   "code": "\"\"\"Dijkstra：从 0 号点到各点的最短距离（7 个顶点）。\"\"\"\nimport heapq\n\ngraph = {{0: [(1, 7), (2, 9), (3, 14)], 1: [(2, 10), (5, 4)], 2: [(3, 11), (5, 2)], 3: [], 5: [(6, 3)], 6: []}}\ndist = {0: 0}\nheap = [(0, 0)]\nwhile heap:\n    d, u = heapq.heappop(heap)\n    if d > dist.get(u, float(\"inf\")):\n        continue\n    for v, w in graph.get(u, []):\n        nd = d + w\n        if nd < dist.get(v, float(\"inf\")):\n            dist[v] = nd\n            heapq.heappush(heap, (nd, v))\nprint(dict(sorted(dist.items())))\n"
+  },
+  {
+   "id": "topics_algo-knapsack-1",
+   "name": "algo-knapsack_1.py",
+   "category": "topics",
+   "tags": [
+    "算法",
+    "动态规划"
+   ],
+   "title": "0-1 背包·容量10",
+   "description": "动态规划背包最优值与回溯。本变体：容量10。",
+   "requirements": [],
+   "code": "\"\"\"0-1 背包：容量 10，{{n}} 件物品。\"\"\"\nweights = [2, 3, 5, 7]\nvalues = [3, 4, 5, 9]\ncap = 10\ndp = [0] * (cap + 1)\nfor w, v in zip(weights, values):\n    for c in range(cap, w - 1, -1):\n        dp[c] = max(dp[c], dp[c - w] + v)\nprint(\"最大价值:\", dp[cap])\n"
+  },
+  {
+   "id": "topics_algo-knapsack-2",
+   "name": "algo-knapsack_2.py",
+   "category": "topics",
+   "tags": [
+    "算法",
+    "动态规划"
+   ],
+   "title": "0-1 背包·容量15",
+   "description": "动态规划背包最优值与回溯。本变体：容量15。",
+   "requirements": [],
+   "code": "\"\"\"0-1 背包：容量 15，{{n}} 件物品。\"\"\"\nweights = [4, 5, 6, 2, 3]\nvalues = [7, 8, 9, 2, 4]\ncap = 15\ndp = [0] * (cap + 1)\nfor w, v in zip(weights, values):\n    for c in range(cap, w - 1, -1):\n        dp[c] = max(dp[c], dp[c - w] + v)\nprint(\"最大价值:\", dp[cap])\n"
+  },
+  {
+   "id": "topics_algo-knapsack-3",
+   "name": "algo-knapsack_3.py",
+   "category": "topics",
+   "tags": [
+    "算法",
+    "动态规划"
+   ],
+   "title": "0-1 背包·容量20",
+   "description": "动态规划背包最优值与回溯。本变体：容量20。",
+   "requirements": [],
+   "code": "\"\"\"0-1 背包：容量 20，{{n}} 件物品。\"\"\"\nweights = [5, 6, 8, 3, 4, 7]\nvalues = [10, 12, 15, 4, 6, 11]\ncap = 20\ndp = [0] * (cap + 1)\nfor w, v in zip(weights, values):\n    for c in range(cap, w - 1, -1):\n        dp[c] = max(dp[c], dp[c - w] + v)\nprint(\"最大价值:\", dp[cap])\n"
+  },
+  {
+   "id": "topics_algo-knapsack-4",
+   "name": "algo-knapsack_4.py",
+   "category": "topics",
+   "tags": [
+    "算法",
+    "动态规划"
+   ],
+   "title": "0-1 背包·容量30",
+   "description": "动态规划背包最优值与回溯。本变体：容量30。",
+   "requirements": [],
+   "code": "\"\"\"0-1 背包：容量 30，{{n}} 件物品。\"\"\"\nweights = [3, 5, 7, 9, 11, 13, 15, 17]\nvalues = [6, 12, 18, 24, 30, 36, 42, 48]\ncap = 30\ndp = [0] * (cap + 1)\nfor w, v in zip(weights, values):\n    for c in range(cap, w - 1, -1):\n        dp[c] = max(dp[c], dp[c - w] + v)\nprint(\"最大价值:\", dp[cap])\n"
+  },
+  {
+   "id": "topics_algo-union-find-1",
+   "name": "algo-union-find_1.py",
+   "category": "topics",
+   "tags": [
+    "算法",
+    "图"
+   ],
+   "title": "并查集·N8-P0",
+   "description": "路径压缩 + 按秩合并的并查集。本变体：N8-P0。",
+   "requirements": [],
+   "code": "\"\"\"并查集：8 个元素执行 3 次合并/查询。\"\"\"\nparent = list(range(8))\nrank = [0] * 8\n\ndef find(x):\n    while parent[x] != x:\n        parent[x] = parent[parent[x]]\n        x = parent[x]\n    return x\n\ndef union(a, b):\n    ra, rb = find(a), find(b)\n    if ra == rb:\n        return False\n    if rank[ra] < rank[rb]:\n        ra, rb = rb, ra\n    parent[rb] = ra\n    if rank[ra] == rank[rb]:\n        rank[ra] += 1\n    return True\n\npairs = [(0, 1), (2, 4), (5, 6)]\nfor a, b in pairs:\n    union(a, b)\nprint(\"连通分量数:\", len({find(i) for i in range(8)}))\n"
+  },
+  {
+   "id": "topics_algo-union-find-2",
+   "name": "algo-union-find_2.py",
+   "category": "topics",
+   "tags": [
+    "算法",
+    "图"
+   ],
+   "title": "并查集·N9-P1",
+   "description": "路径压缩 + 按秩合并的并查集。本变体：N9-P1。",
+   "requirements": [],
+   "code": "\"\"\"并查集：9 个元素执行 4 次合并/查询。\"\"\"\nparent = list(range(9))\nrank = [0] * 9\n\ndef find(x):\n    while parent[x] != x:\n        parent[x] = parent[parent[x]]\n        x = parent[x]\n    return x\n\ndef union(a, b):\n    ra, rb = find(a), find(b)\n    if ra == rb:\n        return False\n    if rank[ra] < rank[rb]:\n        ra, rb = rb, ra\n    parent[rb] = ra\n    if rank[ra] == rank[rb]:\n        rank[ra] += 1\n    return True\n\npairs = [(0, 2), (2, 5), (5, 6)]\nfor a, b in pairs:\n    union(a, b)\nprint(\"连通分量数:\", len({find(i) for i in range(9)}))\n"
+  },
+  {
+   "id": "topics_algo-union-find-3",
+   "name": "algo-union-find_3.py",
+   "category": "topics",
+   "tags": [
+    "算法",
+    "图"
+   ],
+   "title": "并查集·N10-P2",
+   "description": "路径压缩 + 按秩合并的并查集。本变体：N10-P2。",
+   "requirements": [],
+   "code": "\"\"\"并查集：10 个元素执行 5 次合并/查询。\"\"\"\nparent = list(range(10))\nrank = [0] * 10\n\ndef find(x):\n    while parent[x] != x:\n        parent[x] = parent[parent[x]]\n        x = parent[x]\n    return x\n\ndef union(a, b):\n    ra, rb = find(a), find(b)\n    if ra == rb:\n        return False\n    if rank[ra] < rank[rb]:\n        ra, rb = rb, ra\n    parent[rb] = ra\n    if rank[ra] == rank[rb]:\n        rank[ra] += 1\n    return True\n\npairs = [(0, 3), (2, 6), (5, 6)]\nfor a, b in pairs:\n    union(a, b)\nprint(\"连通分量数:\", len({find(i) for i in range(10)}))\n"
+  },
+  {
+   "id": "tools_tools-temp-converter-1",
+   "name": "tools-temp-converter_1.py",
+   "category": "tools",
+   "tags": [
+    "工具",
+    "换算"
+   ],
+   "title": "温度换算器·日常",
+   "description": "摄氏/华氏/开氏互转。本变体：日常。",
+   "requirements": [],
+   "code": "\"\"\"温度换算：[0, 25, 37, 100]。\"\"\"\nfor c in [[0, 25, 37, 100]]:\n    f = c * 9 / 5 + 32\n    k = c + 273.15\n    print(f\"{c:>6}°C = {f:>6}°F = {k:>6}K\")\n"
+  },
+  {
+   "id": "tools_tools-temp-converter-2",
+   "name": "tools-temp-converter_2.py",
+   "category": "tools",
+   "tags": [
+    "工具",
+    "换算"
+   ],
+   "title": "温度换算器·极端",
+   "description": "摄氏/华氏/开氏互转。本变体：极端。",
+   "requirements": [],
+   "code": "\"\"\"温度换算：[-40, -10, 55, 80]。\"\"\"\nfor c in [[-40, -10, 55, 80]]:\n    f = c * 9 / 5 + 32\n    k = c + 273.15\n    print(f\"{c:>6}°C = {f:>6}°F = {k:>6}K\")\n"
+  },
+  {
+   "id": "tools_tools-temp-converter-3",
+   "name": "tools-temp-converter_3.py",
+   "category": "tools",
+   "tags": [
+    "工具",
+    "换算"
+   ],
+   "title": "温度换算器·精密",
+   "description": "摄氏/华氏/开氏互转。本变体：精密。",
+   "requirements": [],
+   "code": "\"\"\"温度换算：[12.5, 18.8, 23.3, 31.7]。\"\"\"\nfor c in [[12.5, 18.8, 23.3, 31.7]]:\n    f = c * 9 / 5 + 32\n    k = c + 273.15\n    print(f\"{c:>6}°C = {f:>6}°F = {k:>6}K\")\n"
+  },
+  {
+   "id": "tools_tools-qr-matrix-1",
+   "name": "tools-qr-matrix_1.py",
+   "category": "tools",
+   "tags": [
+    "工具",
+    "图案"
+   ],
+   "title": "字符方阵·s9◆◇",
+   "description": "按规则生成字符方阵（可视图案）。本变体：s9◆◇。",
+   "requirements": [],
+   "code": "\"\"\"字符方阵：9×9，字符集 ''◆◇''。\"\"\"\nsize, chars = 9, \"'◆◇'\"\nfor r in range(size):\n    row = \"\".join(chars[(r * c + r + c) % len(chars)] for c in range(size))\n    print(row)\n"
+  },
+  {
+   "id": "tools_tools-qr-matrix-2",
+   "name": "tools-qr-matrix_2.py",
+   "category": "tools",
+   "tags": [
+    "工具",
+    "图案"
+   ],
+   "title": "字符方阵·s11░▒▓",
+   "description": "按规则生成字符方阵（可视图案）。本变体：s11░▒▓。",
+   "requirements": [],
+   "code": "\"\"\"字符方阵：11×11，字符集 ''░▒▓''。\"\"\"\nsize, chars = 11, \"'░▒▓'\"\nfor r in range(size):\n    row = \"\".join(chars[(r * c + r + c) % len(chars)] for c in range(size))\n    print(row)\n"
+  },
+  {
+   "id": "tools_tools-qr-matrix-3",
+   "name": "tools-qr-matrix_3.py",
+   "category": "tools",
+   "tags": [
+    "工具",
+    "图案"
+   ],
+   "title": "字符方阵·s13·:*#",
+   "description": "按规则生成字符方阵（可视图案）。本变体：s13·:*#。",
+   "requirements": [],
+   "code": "\"\"\"字符方阵：13×13，字符集 ''·:*#''。\"\"\"\nsize, chars = 13, \"'·:*#'\"\nfor r in range(size):\n    row = \"\".join(chars[(r * c + r + c) % len(chars)] for c in range(size))\n    print(row)\n"
+  },
+  {
+   "id": "tools_tools-qr-matrix-4",
+   "name": "tools-qr-matrix_4.py",
+   "category": "tools",
+   "tags": [
+    "工具",
+    "图案"
+   ],
+   "title": "字符方阵·s10AB123",
+   "description": "按规则生成字符方阵（可视图案）。本变体：s10AB123。",
+   "requirements": [],
+   "code": "\"\"\"字符方阵：10×10，字符集 ''AB123''。\"\"\"\nsize, chars = 10, \"'AB123'\"\nfor r in range(size):\n    row = \"\".join(chars[(r * c + r + c) % len(chars)] for c in range(size))\n    print(row)\n"
+  },
+  {
+   "id": "tools_tools-base-convert-1",
+   "name": "tools-base-convert_1.py",
+   "category": "tools",
+   "tags": [
+    "工具",
+    "数学"
+   ],
+   "title": "进制转换器·n255",
+   "description": "任意 2~36 进制互转。本变体：n255。",
+   "requirements": [],
+   "code": "\"\"\"进制转换：十进制 255 的各进制表示。\"\"\"\nnum = 255\nfor base in ['2, 8, 16, 32']:\n    digits = \"0123456789abcdefghijklmnopqrstuvwxyz\"\n    out = \"\"\n    n = num\n    while n:\n        out = digits[n % base] + out\n        n //= base\n    print(f\"base-{{base:>2}}: {{out or '0'}}\")\n"
+  },
+  {
+   "id": "tools_tools-base-convert-2",
+   "name": "tools-base-convert_2.py",
+   "category": "tools",
+   "tags": [
+    "工具",
+    "数学"
+   ],
+   "title": "进制转换器·n1024",
+   "description": "任意 2~36 进制互转。本变体：n1024。",
+   "requirements": [],
+   "code": "\"\"\"进制转换：十进制 1024 的各进制表示。\"\"\"\nnum = 1024\nfor base in ['2, 8, 16, 32']:\n    digits = \"0123456789abcdefghijklmnopqrstuvwxyz\"\n    out = \"\"\n    n = num\n    while n:\n        out = digits[n % base] + out\n        n //= base\n    print(f\"base-{{base:>2}}: {{out or '0'}}\")\n"
+  },
+  {
+   "id": "tools_tools-base-convert-3",
+   "name": "tools-base-convert_3.py",
+   "category": "tools",
+   "tags": [
+    "工具",
+    "数学"
+   ],
+   "title": "进制转换器·n4095",
+   "description": "任意 2~36 进制互转。本变体：n4095。",
+   "requirements": [],
+   "code": "\"\"\"进制转换：十进制 4095 的各进制表示。\"\"\"\nnum = 4095\nfor base in ['2, 8, 16, 32']:\n    digits = \"0123456789abcdefghijklmnopqrstuvwxyz\"\n    out = \"\"\n    n = num\n    while n:\n        out = digits[n % base] + out\n        n //= base\n    print(f\"base-{{base:>2}}: {{out or '0'}}\")\n"
+  },
+  {
+   "id": "tools_tools-base-convert-4",
+   "name": "tools-base-convert_4.py",
+   "category": "tools",
+   "tags": [
+    "工具",
+    "数学"
+   ],
+   "title": "进制转换器·n65535",
+   "description": "任意 2~36 进制互转。本变体：n65535。",
+   "requirements": [],
+   "code": "\"\"\"进制转换：十进制 65535 的各进制表示。\"\"\"\nnum = 65535\nfor base in ['2, 8, 16, 32']:\n    digits = \"0123456789abcdefghijklmnopqrstuvwxyz\"\n    out = \"\"\n    n = num\n    while n:\n        out = digits[n % base] + out\n        n //= base\n    print(f\"base-{{base:>2}}: {{out or '0'}}\")\n"
+  },
+  {
+   "id": "tools_tools-base-convert-5",
+   "name": "tools-base-convert_5.py",
+   "category": "tools",
+   "tags": [
+    "工具",
+    "数学"
+   ],
+   "title": "进制转换器·n123456",
+   "description": "任意 2~36 进制互转。本变体：n123456。",
+   "requirements": [],
+   "code": "\"\"\"进制转换：十进制 123456 的各进制表示。\"\"\"\nnum = 123456\nfor base in ['2, 8, 16, 32']:\n    digits = \"0123456789abcdefghijklmnopqrstuvwxyz\"\n    out = \"\"\n    n = num\n    while n:\n        out = digits[n % base] + out\n        n //= base\n    print(f\"base-{{base:>2}}: {{out or '0'}}\")\n"
+  },
+  {
+   "id": "tools_tools-text-table-1",
+   "name": "tools-text-table_1.py",
+   "category": "tools",
+   "tags": [
+    "工具",
+    "文本"
+   ],
+   "title": "文本表格·商品",
+   "description": "格式化对齐输出 Markdown 表格。本变体：商品。",
+   "requirements": [],
+   "code": "\"\"\"文本表格：4 行对齐输出。\"\"\"\nheaders = [\"名称\", \"数量\", \"单价\"]\ndata = [\"[['苹果', 12, 5.5], ['香蕉', 30, 3.2], ['橙子', 8, 6.0], ['葡萄', 15, 9.9]]\"]\nwidths = [max(len(str(headers[i])), max(len(str(r[i])) for r in data)) for i in range(3)]\nline = \"| \" + \" | \".join(h.ljust(w) for h, w in zip(headers, widths)) + \" |\"\nprint(line)\nprint(\"|\" + \"|\".join(\"-\" * (w + 2) for w in widths) + \"|\")\nfor r in data:\n    print(\"| \" + \" | \".join(str(c).ljust(w) for c, w in zip(r, widths)) + \" |\")\n"
+  },
+  {
+   "id": "tools_tools-text-table-2",
+   "name": "tools-text-table_2.py",
+   "category": "tools",
+   "tags": [
+    "工具",
+    "文本"
+   ],
+   "title": "文本表格·库存",
+   "description": "格式化对齐输出 Markdown 表格。本变体：库存。",
+   "requirements": [],
+   "code": "\"\"\"文本表格：3 行对齐输出。\"\"\"\nheaders = [\"名称\", \"数量\", \"单价\"]\ndata = [\"[['螺丝', 400, 0.2], ['螺母', 350, 0.3], ['垫片', 500, 0.1]]\"]\nwidths = [max(len(str(headers[i])), max(len(str(r[i])) for r in data)) for i in range(3)]\nline = \"| \" + \" | \".join(h.ljust(w) for h, w in zip(headers, widths)) + \" |\"\nprint(line)\nprint(\"|\" + \"|\".join(\"-\" * (w + 2) for w in widths) + \"|\")\nfor r in data:\n    print(\"| \" + \" | \".join(str(c).ljust(w) for c, w in zip(r, widths)) + \" |\")\n"
+  },
+  {
+   "id": "tools_tools-text-table-3",
+   "name": "tools-text-table_3.py",
+   "category": "tools",
+   "tags": [
+    "工具",
+    "文本"
+   ],
+   "title": "文本表格·成绩",
+   "description": "格式化对齐输出 Markdown 表格。本变体：成绩。",
+   "requirements": [],
+   "code": "\"\"\"文本表格：5 行对齐输出。\"\"\"\nheaders = [\"名称\", \"数量\", \"单价\"]\ndata = [\"[['小明', 92, 1], ['小红', 88, 2], ['小刚', 95, 1], ['小丽', 79, 3], ['小军', 85, 2]]\"]\nwidths = [max(len(str(headers[i])), max(len(str(r[i])) for r in data)) for i in range(3)]\nline = \"| \" + \" | \".join(h.ljust(w) for h, w in zip(headers, widths)) + \" |\"\nprint(line)\nprint(\"|\" + \"|\".join(\"-\" * (w + 2) for w in widths) + \"|\")\nfor r in data:\n    print(\"| \" + \" | \".join(str(c).ljust(w) for c, w in zip(r, widths)) + \" |\")\n"
+  },
+  {
+   "id": "tools_tools-caesar-1",
+   "name": "tools-caesar_1.py",
+   "category": "tools",
+   "tags": [
+    "工具",
+    "密码学"
+   ],
+   "title": "凯撒密码·移位3",
+   "description": "移位加密与解密（保留大小写）。本变体：移位3。",
+   "requirements": [],
+   "code": "\"\"\"凯撒密码：移位 3。\"\"\"\ndef caesar(text, k):\n    out = []\n    for ch in text:\n        if \"a\" <= ch <= \"z\":\n            out.append(chr((ord(ch) - 97 + k) % 26 + 97))\n        elif \"A\" <= ch <= \"Z\":\n            out.append(chr((ord(ch) - 65 + k) % 26 + 65))\n        else:\n            out.append(ch)\n    return \"\".join(out)\n\nmsg = \"'The quick brown fox jumps over the lazy dog 2026'\"\nenc = caesar(msg, 3)\nprint(\"原文:\", msg)\nprint(\"加密:\", enc)\nprint(\"解密:\", caesar(enc, -3))\n"
+  },
+  {
+   "id": "tools_tools-caesar-2",
+   "name": "tools-caesar_2.py",
+   "category": "tools",
+   "tags": [
+    "工具",
+    "密码学"
+   ],
+   "title": "凯撒密码·移位7",
+   "description": "移位加密与解密（保留大小写）。本变体：移位7。",
+   "requirements": [],
+   "code": "\"\"\"凯撒密码：移位 7。\"\"\"\ndef caesar(text, k):\n    out = []\n    for ch in text:\n        if \"a\" <= ch <= \"z\":\n            out.append(chr((ord(ch) - 97 + k) % 26 + 97))\n        elif \"A\" <= ch <= \"Z\":\n            out.append(chr((ord(ch) - 65 + k) % 26 + 65))\n        else:\n            out.append(ch)\n    return \"\".join(out)\n\nmsg = \"'The quick brown fox jumps over the lazy dog 2026'\"\nenc = caesar(msg, 7)\nprint(\"原文:\", msg)\nprint(\"加密:\", enc)\nprint(\"解密:\", caesar(enc, -7))\n"
+  },
+  {
+   "id": "tools_tools-caesar-3",
+   "name": "tools-caesar_3.py",
+   "category": "tools",
+   "tags": [
+    "工具",
+    "密码学"
+   ],
+   "title": "凯撒密码·移位13",
+   "description": "移位加密与解密（保留大小写）。本变体：移位13。",
+   "requirements": [],
+   "code": "\"\"\"凯撒密码：移位 13。\"\"\"\ndef caesar(text, k):\n    out = []\n    for ch in text:\n        if \"a\" <= ch <= \"z\":\n            out.append(chr((ord(ch) - 97 + k) % 26 + 97))\n        elif \"A\" <= ch <= \"Z\":\n            out.append(chr((ord(ch) - 65 + k) % 26 + 65))\n        else:\n            out.append(ch)\n    return \"\".join(out)\n\nmsg = \"'The quick brown fox jumps over the lazy dog 2026'\"\nenc = caesar(msg, 13)\nprint(\"原文:\", msg)\nprint(\"加密:\", enc)\nprint(\"解密:\", caesar(enc, -13))\n"
+  },
+  {
+   "id": "tools_tools-caesar-4",
+   "name": "tools-caesar_4.py",
+   "category": "tools",
+   "tags": [
+    "工具",
+    "密码学"
+   ],
+   "title": "凯撒密码·移位21",
+   "description": "移位加密与解密（保留大小写）。本变体：移位21。",
+   "requirements": [],
+   "code": "\"\"\"凯撒密码：移位 21。\"\"\"\ndef caesar(text, k):\n    out = []\n    for ch in text:\n        if \"a\" <= ch <= \"z\":\n            out.append(chr((ord(ch) - 97 + k) % 26 + 97))\n        elif \"A\" <= ch <= \"Z\":\n            out.append(chr((ord(ch) - 65 + k) % 26 + 65))\n        else:\n            out.append(ch)\n    return \"\".join(out)\n\nmsg = \"'The quick brown fox jumps over the lazy dog 2026'\"\nenc = caesar(msg, 21)\nprint(\"原文:\", msg)\nprint(\"加密:\", enc)\nprint(\"解密:\", caesar(enc, -21))\n"
+  },
+  {
+   "id": "tools_tools-text-wrap-x1",
+   "name": "tools-text-wrap_x1.py",
+   "category": "tools",
+   "tags": [
+    "工具",
+    "文本"
+   ],
+   "title": "文本折行·W20",
+   "description": "按宽度折行文本（greedy 填充）。本变体：W20。",
+   "requirements": [],
+   "code": "\"\"\"文本折行：宽度 20 列。\"\"\"\ntext = \"'the quick brown fox jumps over the lazy dog and python makes text processing delightfully simple for everyone'\"\nwidth = 20\nlines, cur = [], \"\"\nfor word in text.split():\n    if len(cur) + len(word) + 1 > width and cur:\n        lines.append(cur)\n        cur = word\n    else:\n        cur = (cur + \" \" + word).strip()\nif cur:\n    lines.append(cur)\nfor ln in lines:\n    print(ln)\nprint(f\"共 {{len(lines)}} 行\")\n"
+  },
+  {
+   "id": "tools_tools-text-wrap-x2",
+   "name": "tools-text-wrap_x2.py",
+   "category": "tools",
+   "tags": [
+    "工具",
+    "文本"
+   ],
+   "title": "文本折行·W28",
+   "description": "按宽度折行文本（greedy 填充）。本变体：W28。",
+   "requirements": [],
+   "code": "\"\"\"文本折行：宽度 28 列。\"\"\"\ntext = \"'the quick brown fox jumps over the lazy dog and python makes text processing delightfully simple for everyone'\"\nwidth = 28\nlines, cur = [], \"\"\nfor word in text.split():\n    if len(cur) + len(word) + 1 > width and cur:\n        lines.append(cur)\n        cur = word\n    else:\n        cur = (cur + \" \" + word).strip()\nif cur:\n    lines.append(cur)\nfor ln in lines:\n    print(ln)\nprint(f\"共 {{len(lines)}} 行\")\n"
+  },
+  {
+   "id": "tools_tools-text-wrap-x3",
+   "name": "tools-text-wrap_x3.py",
+   "category": "tools",
+   "tags": [
+    "工具",
+    "文本"
+   ],
+   "title": "文本折行·W36",
+   "description": "按宽度折行文本（greedy 填充）。本变体：W36。",
+   "requirements": [],
+   "code": "\"\"\"文本折行：宽度 36 列。\"\"\"\ntext = \"'the quick brown fox jumps over the lazy dog and python makes text processing delightfully simple for everyone'\"\nwidth = 36\nlines, cur = [], \"\"\nfor word in text.split():\n    if len(cur) + len(word) + 1 > width and cur:\n        lines.append(cur)\n        cur = word\n    else:\n        cur = (cur + \" \" + word).strip()\nif cur:\n    lines.append(cur)\nfor ln in lines:\n    print(ln)\nprint(f\"共 {{len(lines)}} 行\")\n"
+  },
+  {
+   "id": "tools_tools-text-wrap-x4",
+   "name": "tools-text-wrap_x4.py",
+   "category": "tools",
+   "tags": [
+    "工具",
+    "文本"
+   ],
+   "title": "文本折行·W44",
+   "description": "按宽度折行文本（greedy 填充）。本变体：W44。",
+   "requirements": [],
+   "code": "\"\"\"文本折行：宽度 44 列。\"\"\"\ntext = \"'the quick brown fox jumps over the lazy dog and python makes text processing delightfully simple for everyone'\"\nwidth = 44\nlines, cur = [], \"\"\nfor word in text.split():\n    if len(cur) + len(word) + 1 > width and cur:\n        lines.append(cur)\n        cur = word\n    else:\n        cur = (cur + \" \" + word).strip()\nif cur:\n    lines.append(cur)\nfor ln in lines:\n    print(ln)\nprint(f\"共 {{len(lines)}} 行\")\n"
+  },
+  {
+   "id": "tools_tools-text-wrap-x5",
+   "name": "tools-text-wrap_x5.py",
+   "category": "tools",
+   "tags": [
+    "工具",
+    "文本"
+   ],
+   "title": "文本折行·W52",
+   "description": "按宽度折行文本（greedy 填充）。本变体：W52。",
+   "requirements": [],
+   "code": "\"\"\"文本折行：宽度 52 列。\"\"\"\ntext = \"'the quick brown fox jumps over the lazy dog and python makes text processing delightfully simple for everyone'\"\nwidth = 52\nlines, cur = [], \"\"\nfor word in text.split():\n    if len(cur) + len(word) + 1 > width and cur:\n        lines.append(cur)\n        cur = word\n    else:\n        cur = (cur + \" \" + word).strip()\nif cur:\n    lines.append(cur)\nfor ln in lines:\n    print(ln)\nprint(f\"共 {{len(lines)}} 行\")\n"
+  },
+  {
+   "id": "tools_tools-palindrome-x1",
+   "name": "tools-palindrome_x1.py",
+   "category": "tools",
+   "tags": [
+    "工具",
+    "双指针"
+   ],
+   "title": "回文判定·组0",
+   "description": "双指针回文检测（忽略大小写与标点）。本变体：组0。",
+   "requirements": [],
+   "code": "\"\"\"回文判定：'{s}'。\"\"\"\ndef is_palindrome(t):\n    t = \"\".join(ch.lower() for ch in t if ch.isalnum())\n    i, j = 0, len(t) - 1\n    while i < j:\n        if t[i] != t[j]:\n            return False\n        i += 1\n        j -= 1\n    return True\n\nsamples = \"['上海自来水来自海上', 'A man, a plan, a canal: Panama', 'hello']\"\nfor s in samples:\n    print(f\"{{s!r:>30}} -> {{is_palindrome(s)}}\")\n"
+  },
+  {
+   "id": "tools_tools-palindrome-x2",
+   "name": "tools-palindrome_x2.py",
+   "category": "tools",
+   "tags": [
+    "工具",
+    "双指针"
+   ],
+   "title": "回文判定·组1",
+   "description": "双指针回文检测（忽略大小写与标点）。本变体：组1。",
+   "requirements": [],
+   "code": "\"\"\"回文判定：'{s}'。\"\"\"\ndef is_palindrome(t):\n    t = \"\".join(ch.lower() for ch in t if ch.isalnum())\n    i, j = 0, len(t) - 1\n    while i < j:\n        if t[i] != t[j]:\n            return False\n        i += 1\n        j -= 1\n    return True\n\nsamples = \"['level', 'Python', 'Was it a car or a cat I saw?']\"\nfor s in samples:\n    print(f\"{{s!r:>30}} -> {{is_palindrome(s)}}\")\n"
+  },
+  {
+   "id": "tools_tools-palindrome-x3",
+   "name": "tools-palindrome_x3.py",
+   "category": "tools",
+   "tags": [
+    "工具",
+    "双指针"
+   ],
+   "title": "回文判定·组2",
+   "description": "双指针回文检测（忽略大小写与标点）。本变体：组2。",
+   "requirements": [],
+   "code": "\"\"\"回文判定：'{s}'。\"\"\"\ndef is_palindrome(t):\n    t = \"\".join(ch.lower() for ch in t if ch.isalnum())\n    i, j = 0, len(t) - 1\n    while i < j:\n        if t[i] != t[j]:\n            return False\n        i += 1\n        j -= 1\n    return True\n\nsamples = '[\\'12321\\', \"no \\'x\\' in nixon\", \\'almostomla\\']'\nfor s in samples:\n    print(f\"{{s!r:>30}} -> {{is_palindrome(s)}}\")\n"
+  },
+  {
+   "id": "tools_tools-date-calendar-x1",
+   "name": "tools-date-calendar_x1.py",
+   "category": "tools",
+   "tags": [
+    "工具",
+    "日期"
+   ],
+   "title": "月历打印·2026-01",
+   "description": "calendar 模块打印指定月份。本变体：2026-01。",
+   "requirements": [],
+   "code": "\"\"\"月历：2026 年 1 月。\"\"\"\nimport calendar\nprint(calendar.month(2026, 1))\nprint(\"该月天数:\", calendar.monthrange(2026, 1)[1])\n"
+  },
+  {
+   "id": "tools_tools-date-calendar-x2",
+   "name": "tools-date-calendar_x2.py",
+   "category": "tools",
+   "tags": [
+    "工具",
+    "日期"
+   ],
+   "title": "月历打印·2026-06",
+   "description": "calendar 模块打印指定月份。本变体：2026-06。",
+   "requirements": [],
+   "code": "\"\"\"月历：2026 年 6 月。\"\"\"\nimport calendar\nprint(calendar.month(2026, 6))\nprint(\"该月天数:\", calendar.monthrange(2026, 6)[1])\n"
+  },
+  {
+   "id": "tools_tools-date-calendar-x3",
+   "name": "tools-date-calendar_x3.py",
+   "category": "tools",
+   "tags": [
+    "工具",
+    "日期"
+   ],
+   "title": "月历打印·2026-09",
+   "description": "calendar 模块打印指定月份。本变体：2026-09。",
+   "requirements": [],
+   "code": "\"\"\"月历：2026 年 9 月。\"\"\"\nimport calendar\nprint(calendar.month(2026, 9))\nprint(\"该月天数:\", calendar.monthrange(2026, 9)[1])\n"
+  },
+  {
+   "id": "tools_tools-date-calendar-x4",
+   "name": "tools-date-calendar_x4.py",
+   "category": "tools",
+   "tags": [
+    "工具",
+    "日期"
+   ],
+   "title": "月历打印·2026-12",
+   "description": "calendar 模块打印指定月份。本变体：2026-12。",
+   "requirements": [],
+   "code": "\"\"\"月历：2026 年 12 月。\"\"\"\nimport calendar\nprint(calendar.month(2026, 12))\nprint(\"该月天数:\", calendar.monthrange(2026, 12)[1])\n"
+  },
+  {
+   "id": "tools_tools-date-calendar-x5",
+   "name": "tools-date-calendar_x5.py",
+   "category": "tools",
+   "tags": [
+    "工具",
+    "日期"
+   ],
+   "title": "月历打印·2027-02",
+   "description": "calendar 模块打印指定月份。本变体：2027-02。",
+   "requirements": [],
+   "code": "\"\"\"月历：2027 年 2 月。\"\"\"\nimport calendar\nprint(calendar.month(2027, 2))\nprint(\"该月天数:\", calendar.monthrange(2027, 2)[1])\n"
+  },
+  {
+   "id": "tools_tools-date-calendar-x6",
+   "name": "tools-date-calendar_x6.py",
+   "category": "tools",
+   "tags": [
+    "工具",
+    "日期"
+   ],
+   "title": "月历打印·2028-02",
+   "description": "calendar 模块打印指定月份。本变体：2028-02。",
+   "requirements": [],
+   "code": "\"\"\"月历：2028 年 2 月。\"\"\"\nimport calendar\nprint(calendar.month(2028, 2))\nprint(\"该月天数:\", calendar.monthrange(2028, 2)[1])\n"
+  },
+  {
+   "id": "topics_algo-collatz-x1",
+   "name": "algo-collatz_x1.py",
+   "category": "topics",
+   "tags": [
+    "算法",
+    "数学"
+   ],
+   "title": "考拉兹猜想·L1000",
+   "description": "3n+1 序列步数统计。本变体：L1000。",
+   "requirements": [],
+   "code": "\"\"\"考拉兹序列：起点 27，最长链搜索到 1000。\"\"\"\ndef collatz_len(n):\n    steps = 0\n    while n != 1:\n        n = n // 2 if n % 2 == 0 else 3 * n + 1\n        steps += 1\n    return steps\n\nprint(\"起点 27 步数:\", collatz_len(27))\nbest = max(range(1, 1000), key=lambda n: (collatz_len(n), -n))\nprint(f\"1~1000 中链最长: {{best}} ({{collatz_len(best)}} 步)\")\n"
+  },
+  {
+   "id": "topics_algo-collatz-x2",
+   "name": "algo-collatz_x2.py",
+   "category": "topics",
+   "tags": [
+    "算法",
+    "数学"
+   ],
+   "title": "考拉兹猜想·L2000",
+   "description": "3n+1 序列步数统计。本变体：L2000。",
+   "requirements": [],
+   "code": "\"\"\"考拉兹序列：起点 97，最长链搜索到 2000。\"\"\"\ndef collatz_len(n):\n    steps = 0\n    while n != 1:\n        n = n // 2 if n % 2 == 0 else 3 * n + 1\n        steps += 1\n    return steps\n\nprint(\"起点 97 步数:\", collatz_len(97))\nbest = max(range(1, 2000), key=lambda n: (collatz_len(n), -n))\nprint(f\"1~2000 中链最长: {{best}} ({{collatz_len(best)}} 步)\")\n"
+  },
+  {
+   "id": "topics_algo-collatz-x3",
+   "name": "algo-collatz_x3.py",
+   "category": "topics",
+   "tags": [
+    "算法",
+    "数学"
+   ],
+   "title": "考拉兹猜想·L5000",
+   "description": "3n+1 序列步数统计。本变体：L5000。",
+   "requirements": [],
+   "code": "\"\"\"考拉兹序列：起点 871，最长链搜索到 5000。\"\"\"\ndef collatz_len(n):\n    steps = 0\n    while n != 1:\n        n = n // 2 if n % 2 == 0 else 3 * n + 1\n        steps += 1\n    return steps\n\nprint(\"起点 871 步数:\", collatz_len(871))\nbest = max(range(1, 5000), key=lambda n: (collatz_len(n), -n))\nprint(f\"1~5000 中链最长: {{best}} ({{collatz_len(best)}} 步)\")\n"
+  },
+  {
+   "id": "topics_algo-collatz-x4",
+   "name": "algo-collatz_x4.py",
+   "category": "topics",
+   "tags": [
+    "算法",
+    "数学"
+   ],
+   "title": "考拉兹猜想·L10000",
+   "description": "3n+1 序列步数统计。本变体：L10000。",
+   "requirements": [],
+   "code": "\"\"\"考拉兹序列：起点 6171，最长链搜索到 10000。\"\"\"\ndef collatz_len(n):\n    steps = 0\n    while n != 1:\n        n = n // 2 if n % 2 == 0 else 3 * n + 1\n        steps += 1\n    return steps\n\nprint(\"起点 6171 步数:\", collatz_len(6171))\nbest = max(range(1, 10000), key=lambda n: (collatz_len(n), -n))\nprint(f\"1~10000 中链最长: {{best}} ({{collatz_len(best)}} 步)\")\n"
+  },
+  {
+   "id": "topics_algo-gcd-lcm-x1",
+   "name": "algo-gcd-lcm_x1.py",
+   "category": "topics",
+   "tags": [
+    "算法",
+    "数学"
+   ],
+   "title": "GCD/LCM·组0",
+   "description": "辗转相除与最小公倍数。本变体：组0。",
+   "requirements": [],
+   "code": "\"\"\"GCD/LCM：多组数。\"\"\"\nfrom math import gcd\n\ndef lcm(a, b):\n    return a * b // gcd(a, b)\n\npairs = '[(12, 18), (24, 36), (48, 60)]'\nfor a, b in pairs:\n    print(f\"gcd({{a}}, {{b}}) = {{gcd(a, b)}},  lcm = {{lcm(a, b)}}\")\n"
+  },
+  {
+   "id": "topics_algo-gcd-lcm-x2",
+   "name": "algo-gcd-lcm_x2.py",
+   "category": "topics",
+   "tags": [
+    "算法",
+    "数学"
+   ],
+   "title": "GCD/LCM·组1",
+   "description": "辗转相除与最小公倍数。本变体：组1。",
+   "requirements": [],
+   "code": "\"\"\"GCD/LCM：多组数。\"\"\"\nfrom math import gcd\n\ndef lcm(a, b):\n    return a * b // gcd(a, b)\n\npairs = '[(100, 75), (81, 27), (97, 89)]'\nfor a, b in pairs:\n    print(f\"gcd({{a}}, {{b}}) = {{gcd(a, b)}},  lcm = {{lcm(a, b)}}\")\n"
+  },
+  {
+   "id": "topics_algo-gcd-lcm-x3",
+   "name": "algo-gcd-lcm_x3.py",
+   "category": "topics",
+   "tags": [
+    "算法",
+    "数学"
+   ],
+   "title": "GCD/LCM·组2",
+   "description": "辗转相除与最小公倍数。本变体：组2。",
+   "requirements": [],
+   "code": "\"\"\"GCD/LCM：多组数。\"\"\"\nfrom math import gcd\n\ndef lcm(a, b):\n    return a * b // gcd(a, b)\n\npairs = '[(270, 192), (1071, 462), (2026, 922)]'\nfor a, b in pairs:\n    print(f\"gcd({{a}}, {{b}}) = {{gcd(a, b)}},  lcm = {{lcm(a, b)}}\")\n"
+  },
+  {
+   "id": "topics_algo-matrix-rotate-x1",
+   "name": "algo-matrix-rotate_x1.py",
+   "category": "topics",
+   "tags": [
+    "算法",
+    "矩阵"
+   ],
+   "title": "矩阵旋转·n4m9",
+   "description": "n×n 矩阵原地旋转 90 度。本变体：n4m9。",
+   "requirements": [],
+   "code": "\"\"\"矩阵旋转：4×4 顺时针 90°。\"\"\"\nn = 4\nmat = [[(i * n + j) % 9 for j in range(n)] for i in range(n)]\nprint(\"旋转前:\", mat[0])\nfor layer in range(n // 2):\n    first, last = layer, n - 1 - layer\n    for i in range(first, last):\n        off = i - first\n        top = mat[first][i]\n        mat[first][i] = mat[last - off][first]\n        mat[last - off][first] = mat[last][last - off]\n        mat[last][last - off] = mat[i][last]\n        mat[i][last] = top\nprint(\"旋转后:\", mat[0])\n"
+  },
+  {
+   "id": "topics_algo-matrix-rotate-x2",
+   "name": "algo-matrix-rotate_x2.py",
+   "category": "topics",
+   "tags": [
+    "算法",
+    "矩阵"
+   ],
+   "title": "矩阵旋转·n5m7",
+   "description": "n×n 矩阵原地旋转 90 度。本变体：n5m7。",
+   "requirements": [],
+   "code": "\"\"\"矩阵旋转：5×5 顺时针 90°。\"\"\"\nn = 5\nmat = [[(i * n + j) % 7 for j in range(n)] for i in range(n)]\nprint(\"旋转前:\", mat[0])\nfor layer in range(n // 2):\n    first, last = layer, n - 1 - layer\n    for i in range(first, last):\n        off = i - first\n        top = mat[first][i]\n        mat[first][i] = mat[last - off][first]\n        mat[last - off][first] = mat[last][last - off]\n        mat[last][last - off] = mat[i][last]\n        mat[i][last] = top\nprint(\"旋转后:\", mat[0])\n"
+  },
+  {
+   "id": "topics_algo-matrix-rotate-x3",
+   "name": "algo-matrix-rotate_x3.py",
+   "category": "topics",
+   "tags": [
+    "算法",
+    "矩阵"
+   ],
+   "title": "矩阵旋转·n6m13",
+   "description": "n×n 矩阵原地旋转 90 度。本变体：n6m13。",
+   "requirements": [],
+   "code": "\"\"\"矩阵旋转：6×6 顺时针 90°。\"\"\"\nn = 6\nmat = [[(i * n + j) % 13 for j in range(n)] for i in range(n)]\nprint(\"旋转前:\", mat[0])\nfor layer in range(n // 2):\n    first, last = layer, n - 1 - layer\n    for i in range(first, last):\n        off = i - first\n        top = mat[first][i]\n        mat[first][i] = mat[last - off][first]\n        mat[last - off][first] = mat[last][last - off]\n        mat[last][last - off] = mat[i][last]\n        mat[i][last] = top\nprint(\"旋转后:\", mat[0])\n"
+  },
+  {
+   "id": "topics_algo-matrix-rotate-x4",
+   "name": "algo-matrix-rotate_x4.py",
+   "category": "topics",
+   "tags": [
+    "算法",
+    "矩阵"
+   ],
+   "title": "矩阵旋转·n8m5",
+   "description": "n×n 矩阵原地旋转 90 度。本变体：n8m5。",
+   "requirements": [],
+   "code": "\"\"\"矩阵旋转：8×8 顺时针 90°。\"\"\"\nn = 8\nmat = [[(i * n + j) % 5 for j in range(n)] for i in range(n)]\nprint(\"旋转前:\", mat[0])\nfor layer in range(n // 2):\n    first, last = layer, n - 1 - layer\n    for i in range(first, last):\n        off = i - first\n        top = mat[first][i]\n        mat[first][i] = mat[last - off][first]\n        mat[last - off][first] = mat[last][last - off]\n        mat[last][last - off] = mat[i][last]\n        mat[i][last] = top\nprint(\"旋转后:\", mat[0])\n"
+  }
+ ]
+}

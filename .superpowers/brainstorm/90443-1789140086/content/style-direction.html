@@ -1,0 +1,236 @@
+<h2>视觉气质：三种风格样张</h2>
+<p class="subtitle">同一个「示例画廊」界面，三种完全不同的气质。样式与质感都按各自方向做足，选你最想天天面对的那个。点击选择。</p>
+
+<div class="cards">
+
+  <!-- 风格 1：深邃层次 -->
+  <div class="card" data-choice="s1-deep" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding:12px;background:#101014;">
+      <div style="height:230px;border-radius:8px;overflow:hidden;background:#0d0e11;border:1px solid rgba(255,255,255,0.08);box-shadow:0 12px 32px rgba(0,0,0,0.5);font-family:-apple-system,'PingFang SC',sans-serif;">
+        <!-- 顶栏 -->
+        <div style="display:flex;align-items:center;gap:8px;height:30px;padding:0 10px;background:#101115;border-bottom:1px solid rgba(255,255,255,0.06);">
+          <div style="width:120px;height:14px;border-radius:5px;background:#17181d;border:1px solid rgba(255,255,255,0.07);display:flex;align-items:center;padding:0 6px;font-size:8px;color:#6b7078;">搜索示例…</div>
+          <div style="margin-left:auto;display:flex;gap:4px;">
+            <div style="height:14px;padding:0 7px;border-radius:5px;background:rgba(94,106,210,0.16);border:1px solid rgba(132,132,255,0.35);color:#9d9cff;font-size:7px;line-height:14px;">可视化</div>
+            <div style="height:14px;padding:0 7px;border-radius:5px;background:rgba(255,255,255,0.05);color:#8a8f98;font-size:7px;line-height:14px;">数据处理</div>
+          </div>
+        </div>
+        <!-- 卡片网格 -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:10px;">
+          <div style="border-radius:7px;background:linear-gradient(180deg,#1b1d24,#171920);border:1px solid rgba(255,255,255,0.08);border-top-color:rgba(255,255,255,0.13);box-shadow:0 3px 10px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04);padding:9px;">
+            <div style="display:flex;align-items:center;gap:5px;margin-bottom:5px;">
+              <div style="width:16px;height:16px;border-radius:5px;background:rgba(94,106,210,0.2);border:1px solid rgba(132,132,255,0.4);display:flex;align-items:center;justify-content:center;font-size:8px;">📊</div>
+              <div style="font-size:9px;color:#ecf0f6;font-weight:600;">Matplotlib 双子图排版</div>
+              <div style="margin-left:auto;font-size:8px;color:#8584ff;">★</div>
+            </div>
+            <div style="font-size:7.5px;color:#8a8f98;line-height:1.5;margin-bottom:6px;">共享 x 轴的上下双子图，含网格线与图例位置微调</div>
+            <div style="display:flex;gap:3px;align-items:center;">
+              <span style="font-size:6.5px;padding:1px 4px;border-radius:2px;background:rgba(39,166,68,0.14);color:#4cc66a;">质量 92</span>
+              <span style="font-size:6.5px;padding:1px 4px;border-radius:2px;background:rgba(255,255,255,0.06);color:#8a8f98;">matplotlib</span>
+              <span style="margin-left:auto;font-size:7px;color:#c3c7cf;">运行 ▸</span>
+            </div>
+          </div>
+          <div style="border-radius:7px;background:#171920;border:1px solid rgba(255,255,255,0.07);padding:9px;">
+            <div style="display:flex;align-items:center;gap:5px;margin-bottom:5px;">
+              <div style="width:16px;height:16px;border-radius:5px;background:rgba(36,130,222,0.18);border:1px solid rgba(90,160,255,0.35);display:flex;align-items:center;justify-content:center;font-size:8px;">🐼</div>
+              <div style="font-size:9px;color:#d5dae2;font-weight:600;">CSV 去重合并</div>
+            </div>
+            <div style="font-size:7.5px;color:#787d86;line-height:1.5;margin-bottom:6px;">按主键合并两张表并清洗空值，输出统计摘要</div>
+            <div style="display:flex;gap:3px;align-items:center;">
+              <span style="font-size:6.5px;padding:1px 4px;border-radius:2px;background:rgba(39,166,68,0.14);color:#4cc66a;">质量 87</span>
+              <span style="font-size:6.5px;padding:1px 4px;border-radius:2px;background:rgba(255,255,255,0.06);color:#8a8f98;">pandas</span>
+              <span style="margin-left:auto;font-size:7px;color:#6b7078;">运行 ▸</span>
+            </div>
+          </div>
+          <div style="border-radius:7px;background:#171920;border:1px solid rgba(255,255,255,0.07);padding:9px;">
+            <div style="display:flex;align-items:center;gap:5px;margin-bottom:5px;">
+              <div style="width:16px;height:16px;border-radius:5px;background:rgba(230,126,60,0.16);border:1px solid rgba(255,160,90,0.35);display:flex;align-items:center;justify-content:center;font-size:8px;">🕸</div>
+              <div style="font-size:9px;color:#d5dae2;font-weight:600;">requests 爬取 API</div>
+            </div>
+            <div style="font-size:7.5px;color:#787d86;line-height:1.5;margin-bottom:6px;">带重试与超时的分页抓取，落盘为 JSONL</div>
+            <div style="display:flex;gap:3px;align-items:center;">
+              <span style="font-size:6.5px;padding:1px 4px;border-radius:2px;background:rgba(245,165,36,0.14);color:#f0b24a;">质量 64</span>
+              <span style="font-size:6.5px;padding:1px 4px;border-radius:2px;background:rgba(255,255,255,0.06);color:#8a8f98;">requests</span>
+              <span style="margin-left:auto;font-size:7px;color:#6b7078;">运行 ▸</span>
+            </div>
+          </div>
+          <div style="border-radius:7px;background:#171920;border:1px solid rgba(255,255,255,0.07);padding:9px;">
+            <div style="display:flex;align-items:center;gap:5px;margin-bottom:5px;">
+              <div style="width:16px;height:16px;border-radius:5px;background:rgba(50,180,150,0.16);border:1px solid rgba(90,220,180,0.35);display:flex;align-items:center;justify-content:center;font-size:8px;">🧮</div>
+              <div style="font-size:9px;color:#d5dae2;font-weight:600;">NumPy 矩阵运算</div>
+            </div>
+            <div style="font-size:7.5px;color:#787d86;line-height:1.5;margin-bottom:6px;">广播机制速查：逐元素、点积与归一化</div>
+            <div style="display:flex;gap:3px;align-items:center;">
+              <span style="font-size:6.5px;padding:1px 4px;border-radius:2px;background:rgba(39,166,68,0.14);color:#4cc66a;">质量 95</span>
+              <span style="font-size:6.5px;padding:1px 4px;border-radius:2px;background:rgba(255,255,255,0.06);color:#8a8f98;">numpy</span>
+              <span style="margin-left:auto;font-size:7px;color:#6b7078;">运行 ▸</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>1 · 深邃层次（Linear 精修）</h3>
+      <p>延续现在的深色靛蓝基因，但质感全面拉满：卡片顶部受光的 1px 高边、柔和投影、克制的彩色分类图标、渐变表面。安静、专业、耐看。</p>
+      <p style="color:#8a8f98;font-size:12px;">参考：Linear / Raycast　·　默认深色，浅色同步重做</p>
+    </div>
+  </div>
+
+  <!-- 风格 2：清爽橱窗 -->
+  <div class="card" data-choice="s2-gallery" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding:12px;background:#e9e7e2;">
+      <div style="height:230px;border-radius:8px;overflow:hidden;background:#faf9f7;border:1px solid #dcd9d2;box-shadow:0 12px 32px rgba(0,0,0,0.12);font-family:-apple-system,'PingFang SC',sans-serif;">
+        <!-- 顶栏 -->
+        <div style="display:flex;align-items:center;gap:8px;height:32px;padding:0 10px;background:#ffffff;border-bottom:1px solid #ebe8e2;">
+          <div style="width:120px;height:16px;border-radius:8px;background:#f2f0ec;border:1px solid #e5e2dc;display:flex;align-items:center;padding:0 7px;font-size:8px;color:#9a958c;">搜索示例…</div>
+          <div style="margin-left:auto;display:flex;gap:4px;">
+            <div style="height:16px;padding:0 8px;border-radius:8px;background:#efe9ff;color:#6d4fd0;font-size:7px;line-height:16px;font-weight:600;">可视化</div>
+            <div style="height:16px;padding:0 8px;border-radius:8px;background:#f2f0ec;color:#8a857c;font-size:7px;line-height:16px;">数据处理</div>
+          </div>
+        </div>
+        <!-- 卡片网格 -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px;padding:10px;">
+          <div style="border-radius:12px;background:#ffffff;border:1px solid #e9e6df;box-shadow:0 2px 8px rgba(40,35,25,0.06);padding:10px;">
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
+              <div style="width:22px;height:22px;border-radius:7px;background:linear-gradient(135deg,#eef0ff,#e3e6ff);display:flex;align-items:center;justify-content:center;font-size:10px;">📊</div>
+              <div style="font-size:9.5px;color:#26231e;font-weight:650;">Matplotlib 双子图排版</div>
+              <div style="margin-left:auto;font-size:9px;color:#e0566a;">♥</div>
+            </div>
+            <div style="font-size:8px;color:#7a756b;line-height:1.55;margin-bottom:7px;">共享 x 轴的上下双子图，含网格线与图例位置微调</div>
+            <div style="display:flex;gap:4px;align-items:center;">
+              <span style="font-size:7px;padding:1.5px 5px;border-radius:6px;background:#e4f5e9;color:#1c7c34;font-weight:600;">质量 92</span>
+              <span style="font-size:7px;padding:1.5px 5px;border-radius:6px;background:#f2f0ec;color:#8a857c;">matplotlib</span>
+              <span style="margin-left:auto;font-size:7.5px;color:#26231e;font-weight:600;background:#f4f2ee;border:1px solid #e5e2dc;padding:1.5px 6px;border-radius:6px;">运行 ▸</span>
+            </div>
+          </div>
+          <div style="border-radius:12px;background:#ffffff;border:1px solid #e9e6df;box-shadow:0 2px 8px rgba(40,35,25,0.06);padding:10px;">
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
+              <div style="width:22px;height:22px;border-radius:7px;background:linear-gradient(135deg,#e7f3ff,#dcebff);display:flex;align-items:center;justify-content:center;font-size:10px;">🐼</div>
+              <div style="font-size:9.5px;color:#26231e;font-weight:650;">CSV 去重合并</div>
+            </div>
+            <div style="font-size:8px;color:#7a756b;line-height:1.55;margin-bottom:7px;">按主键合并两张表并清洗空值，输出统计摘要</div>
+            <div style="display:flex;gap:4px;align-items:center;">
+              <span style="font-size:7px;padding:1.5px 5px;border-radius:6px;background:#e4f5e9;color:#1c7c34;font-weight:600;">质量 87</span>
+              <span style="font-size:7px;padding:1.5px 5px;border-radius:6px;background:#f2f0ec;color:#8a857c;">pandas</span>
+              <span style="margin-left:auto;font-size:7.5px;color:#26231e;font-weight:600;background:#f4f2ee;border:1px solid #e5e2dc;padding:1.5px 6px;border-radius:6px;">运行 ▸</span>
+            </div>
+          </div>
+          <div style="border-radius:12px;background:#ffffff;border:1px solid #e9e6df;box-shadow:0 2px 8px rgba(40,35,25,0.06);padding:10px;">
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
+              <div style="width:22px;height:22px;border-radius:7px;background:linear-gradient(135deg,#fff0e2,#ffe6cf);display:flex;align-items:center;justify-content:center;font-size:10px;">🕸</div>
+              <div style="font-size:9.5px;color:#26231e;font-weight:650;">requests 爬取 API</div>
+            </div>
+            <div style="font-size:8px;color:#7a756b;line-height:1.55;margin-bottom:7px;">带重试与超时的分页抓取，落盘为 JSONL</div>
+            <div style="display:flex;gap:4px;align-items:center;">
+              <span style="font-size:7px;padding:1.5px 5px;border-radius:6px;background:#fdf3d8;color:#9c6b08;font-weight:600;">质量 64</span>
+              <span style="font-size:7px;padding:1.5px 5px;border-radius:6px;background:#f2f0ec;color:#8a857c;">requests</span>
+              <span style="margin-left:auto;font-size:7.5px;color:#26231e;font-weight:600;background:#f4f2ee;border:1px solid #e5e2dc;padding:1.5px 6px;border-radius:6px;">运行 ▸</span>
+            </div>
+          </div>
+          <div style="border-radius:12px;background:#ffffff;border:1px solid #e9e6df;box-shadow:0 2px 8px rgba(40,35,25,0.06);padding:10px;">
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
+              <div style="width:22px;height:22px;border-radius:7px;background:linear-gradient(135deg,#e5f8f1,#d2f0e6);display:flex;align-items:center;justify-content:center;font-size:10px;">🧮</div>
+              <div style="font-size:9.5px;color:#26231e;font-weight:650;">NumPy 矩阵运算</div>
+            </div>
+            <div style="font-size:8px;color:#7a756b;line-height:1.55;margin-bottom:7px;">广播机制速查：逐元素、点积与归一化</div>
+            <div style="display:flex;gap:4px;align-items:center;">
+              <span style="font-size:7px;padding:1.5px 5px;border-radius:6px;background:#e4f5e9;color:#1c7c34;font-weight:600;">质量 95</span>
+              <span style="font-size:7px;padding:1.5px 5px;border-radius:6px;background:#f2f0ec;color:#8a857c;">numpy</span>
+              <span style="margin-left:auto;font-size:7.5px;color:#26231e;font-weight:600;background:#f4f2ee;border:1px solid #e5e2dc;padding:1.5px 6px;border-radius:6px;">运行 ▸</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>2 · 清爽橱窗（Hugging Face 式）</h3>
+      <p>暖白底、大圆角、柔和投影；每个分类有专属色彩的渐变图标，标签用药丸胶囊，整体像精品商店的陈列架。友好、轻松、有橱窗感。</p>
+      <p style="color:#8a8f98;font-size:12px;">参考：Hugging Face / Notion　·　默认浅色，深色同步重做</p>
+    </div>
+  </div>
+
+  <!-- 风格 3：硬核终端 -->
+  <div class="card" data-choice="s3-terminal" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding:12px;background:#0a0a0a;">
+      <div style="height:230px;border-radius:8px;overflow:hidden;background:#0a0a0a;border:1px solid #262626;font-family:ui-monospace,'SF Mono',Menlo,monospace;">
+        <!-- 顶栏 -->
+        <div style="display:flex;align-items:center;gap:8px;height:30px;padding:0 10px;background:#0a0a0a;border-bottom:1px solid #1f1f1f;">
+          <div style="width:120px;height:14px;border-radius:4px;background:#141414;border:1px solid #262626;display:flex;align-items:center;padding:0 6px;font-size:8px;color:#666;">$ search examples</div>
+          <div style="margin-left:auto;display:flex;gap:4px;">
+            <div style="height:14px;padding:0 7px;border-radius:3px;border:1px solid #333;color:#a1a1a1;font-size:7px;line-height:13px;">viz</div>
+            <div style="height:14px;padding:0 7px;border-radius:3px;border:1px solid #262626;color:#666;font-size:7px;line-height:13px;">data</div>
+          </div>
+        </div>
+        <!-- 卡片网格 -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:10px;background:repeating-linear-gradient(0deg,#0a0a0a,#0a0a0a 2px,#0b0b0b 3px);">
+          <div style="border-radius:5px;background:#111;border:1px solid #262626;padding:9px;">
+            <div style="display:flex;align-items:center;gap:5px;margin-bottom:5px;">
+              <span style="font-size:7px;color:#3fb950;">●</span>
+              <div style="font-size:9px;color:#ededed;font-weight:600;letter-spacing:-0.2px;">matplotlib/duo-plots</div>
+              <div style="margin-left:auto;font-size:8px;color:#666;">☆</div>
+            </div>
+            <div style="font-size:7.5px;color:#8b8b8b;line-height:1.5;margin-bottom:6px;">共享 x 轴双子图，网格线与图例微调</div>
+            <div style="display:flex;gap:3px;align-items:center;">
+              <span style="font-size:6.5px;color:#3fb950;">92pts</span>
+              <span style="font-size:6.5px;color:#666;">·</span>
+              <span style="font-size:6.5px;color:#8b8b8b;">matplotlib</span>
+              <span style="margin-left:auto;font-size:7px;color:#ededed;border:1px solid #333;border-radius:3px;padding:1px 6px;">run ▸</span>
+            </div>
+          </div>
+          <div style="border-radius:5px;background:#111;border:1px solid #262626;padding:9px;">
+            <div style="display:flex;align-items:center;gap:5px;margin-bottom:5px;">
+              <span style="font-size:7px;color:#3fb950;">●</span>
+              <div style="font-size:9px;color:#ededed;font-weight:600;letter-spacing:-0.2px;">pandas/dedupe-merge</div>
+              <div style="margin-left:auto;font-size:8px;color:#666;">☆</div>
+            </div>
+            <div style="font-size:7.5px;color:#8b8b8b;line-height:1.5;margin-bottom:6px;">按主键合并两张表并清洗空值</div>
+            <div style="display:flex;gap:3px;align-items:center;">
+              <span style="font-size:6.5px;color:#3fb950;">87pts</span>
+              <span style="font-size:6.5px;color:#666;">·</span>
+              <span style="font-size:6.5px;color:#8b8b8b;">pandas</span>
+              <span style="margin-left:auto;font-size:7px;color:#ededed;border:1px solid #333;border-radius:3px;padding:1px 6px;">run ▸</span>
+            </div>
+          </div>
+          <div style="border-radius:5px;background:#111;border:1px solid #262626;padding:9px;">
+            <div style="display:flex;align-items:center;gap:5px;margin-bottom:5px;">
+              <span style="font-size:7px;color:#d29922;">●</span>
+              <div style="font-size:9px;color:#ededed;font-weight:600;letter-spacing:-0.2px;">requests/paged-fetch</div>
+              <div style="margin-left:auto;font-size:8px;color:#666;">☆</div>
+            </div>
+            <div style="font-size:7.5px;color:#8b8b8b;line-height:1.5;margin-bottom:6px;">带重试与超时的分页抓取，落盘 JSONL</div>
+            <div style="display:flex;gap:3px;align-items:center;">
+              <span style="font-size:6.5px;color:#d29922;">64pts</span>
+              <span style="font-size:6.5px;color:#666;">·</span>
+              <span style="font-size:6.5px;color:#8b8b8b;">requests</span>
+              <span style="margin-left:auto;font-size:7px;color:#ededed;border:1px solid #333;border-radius:3px;padding:1px 6px;">run ▸</span>
+            </div>
+          </div>
+          <div style="border-radius:5px;background:#111;border:1px solid #262626;padding:9px;">
+            <div style="display:flex;align-items:center;gap:5px;margin-bottom:5px;">
+              <span style="font-size:7px;color:#3fb950;">●</span>
+              <div style="font-size:9px;color:#ededed;font-weight:600;letter-spacing:-0.2px;">numpy/broadcast</div>
+              <div style="margin-left:auto;font-size:8px;color:#666;">☆</div>
+            </div>
+            <div style="font-size:7.5px;color:#8b8b8b;line-height:1.5;margin-bottom:6px;">广播机制速查：逐元素、点积、归一化</div>
+            <div style="display:flex;gap:3px;align-items:center;">
+              <span style="font-size:6.5px;color:#3fb950;">95pts</span>
+              <span style="font-size:6.5px;color:#666;">·</span>
+              <span style="font-size:6.5px;color:#8b8b8b;">numpy</span>
+              <span style="margin-left:auto;font-size:7px;color:#ededed;border:1px solid #333;border-radius:3px;padding:1px 6px;">run ▸</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>3 · 硬核终端（Vercel 式）</h3>
+      <p>近纯黑底、等宽字体做主字体、路径式命名（目录/文件）、状态用绿色小圆点表达、边框锐利。极度克制、工程师审美，让代码本身当主角。</p>
+      <p style="color:#8a8f98;font-size:12px;">参考：Vercel / GitHub Dark　·　默认深色，浅色为黑白反转</p>
+    </div>
+  </div>
+
+</div>
+
+<div class="section">
+  <p class="subtitle">无论选哪个，深/浅色双主题和「跟随系统」都会保留，这里选的是<strong>默认气质</strong>与<strong>质感语言</strong>。选完这个，剩下的质感细节（动效强度、阴影层次、圆角体系）我会在设计稿里给出完整规范。</p>
+</div>

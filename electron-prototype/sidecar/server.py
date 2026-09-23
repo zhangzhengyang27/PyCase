@@ -1,0 +1,1208 @@
+#!/usr/bin/env python3
+"""Electron + Python sidecar 最小原型。
+
+通过 stdio 行分隔 JSON-RPC 2.0 与 Electron 主进程通信。
+复用现有 app 包的 ExampleStore 加载示例，用 asyncio 子进程运行脚本
+（替代原 QProcess 实现），输出通过 JSON-RPC notification 实时推送。
+
+协议：
+  请求:  {"jsonrpc":"2.0","id":1,"method":"list_examples","params":{}}
+  响应:  {"jsonrpc":"2.0","id":1,"result":{...}}
+  错误:  {"jsonrpc":"2.0","id":1,"error":{"code":-1,"message":"..."}}
+  通知:  {"jsonrpc":"2.0","method":"run_output","params":{"run_id":"...","text":"..."}}
+         {"jsonrpc":"2.0","method":"run_finished","params":{"run_id":"...","exit_code":0}}
+"""
+
+import ast
+import asyncio
+import base64
+import json
+import logging
+import os
+import shutil
+import sys
+import threading
+import time
+import uuid
+from pathlib import Path
+from typing import Any
+
+# AI 代码解释（同目录模块，纯标准库）
+import ai_service
+
+# stdout 输出锁：AI 流式解释在工作线程中推送通知，需与主线程输出互斥
+_STDOUT_LOCK = threading.Lock()
+
+# ---------------------------------------------------------------------------
+# 路径设置：与 main.py 保持一致，确保能 import app 包且示例内部导入正常
+# ---------------------------------------------------------------------------
+if getattr(sys, "frozen", False):
+    # PyInstaller 打包模式：__file__ 指向临时解压目录，
+    # 使用 cwd 作为基础目录（Electron 主进程 spawn 时设置了 cwd=APP_DIR）
+    APP_DIR = Path(os.getcwd()).resolve()
+    SCRIPT_DIR = APP_DIR / "electron-prototype" / "sidecar"
+    PROTOTYPE_DIR = APP_DIR / "electron-prototype"
+else:
+    # 开发模式
+    SCRIPT_DIR = Path(__file__).resolve().parent  # electron-prototype/sidecar
+    PROTOTYPE_DIR = SCRIPT_DIR.parent  # electron-prototype
+    APP_DIR = PROTOTYPE_DIR.parent  # desktop-app
+# 仓库根（含 topics/tools/projects）：示例仓库已并入本项目时直接用 APP_DIR，
+# 否则回退到上级目录（旧布局）
+if all((APP_DIR / d).is_dir() for d in ("topics", "tools", "projects")):
+    REPO_ROOT = APP_DIR
+else:
+    REPO_ROOT = APP_DIR.parent
+
+# 可写数据根：打包模式下 APP_DIR（.app/Contents/Resources）只读且随升级重置，
+# Electron 主进程注入 userData 存放 venv / 示例物化缓存 / 运行输出。
+# 开发模式未注入时回退 APP_DIR，行为与旧版一致。
+DATA_DIR = Path(os.environ.get("DESKTOP_APP_DATA_DIR") or APP_DIR).resolve()
+# 用户示例集合目录（导入向导产物）：内置库只读捆绑，用户库可写、随应用数据存续
+_USER_DIR = DATA_DIR / "user_examples"
+
+for p in (str(APP_DIR), str(REPO_ROOT)):
+    if p not in sys.path:
+        sys.path.insert(0, p)
+
+# PyInstaller 冻结环境中 sys.executable 是 sidecar 自身，
+# 运行示例与创建 venv 必须使用系统真实 Python
+if getattr(sys, "frozen", False):
+    # 优先复用已建好的项目共享 venv（.venv 在首次运行示例时创建）
+    if sys.platform == "win32":
+        _venv_python = REPO_ROOT / ".venv" / "Scripts" / "python.exe"
+    else:
+        _venv_python = REPO_ROOT / ".venv" / "bin" / "python"
+    REAL_PYTHON = (
+        os.environ.get("PYTHON_EXECUTABLE")
+        or (str(_venv_python) if _venv_python.exists() else None)
+        or shutil.which("python3")
+        or shutil.which("python")
+        or sys.executable
+    )
+else:
+    REAL_PYTHON = sys.executable
+
+from app import importer  # noqa: E402
+from app.json_examples import ExampleStore  # noqa: E402
+from app.logger import configure_logging, get_logger  # noqa: E402
+from app.models import ExampleItem  # noqa: E402
+from app.venv_manager import VenvManager  # noqa: E402
+
+# ---------------------------------------------------------------------------
+# 运行时状态
+# ---------------------------------------------------------------------------
+_store: ExampleStore | None = None
+_root: ExampleItem | None = None
+# example_id -> ExampleItem（扁平索引）
+_index: dict[str, ExampleItem] = {}
+# store 懒加载锁：预热线程与请求线程可能同时首次初始化，
+# 无锁时 _rebuild_index 的 clear→fill 窗口会让并发 list_examples 读到空索引
+_store_lock = threading.Lock()
+# run_id -> asyncio.subprocess.Process（None 表示进程正在启动中）
+_running: dict[str, asyncio.subprocess.Process | None] = {}
+# 启动前就收到停止请求的 run_id 集合：进程启动后检查到此集合中的 id 则立即终止
+_pending_stop: set[str] = set()
+# run_id -> threading.Event（AI 解释取消标志，设置后流式读取中断）
+_ai_running: dict[str, threading.Event] = {}
+# 后台任务的强引用集合（asyncio 只弱引用 Task，见 method_run_example）
+_bg_tasks: set[asyncio.Task] = set()
+_venv_manager: VenvManager | None = None
+
+
+def _on_bg_task_done(task: asyncio.Task) -> None:
+    """后台任务收尾：解除强引用并把意外异常写入日志（而非静默消失）。"""
+    _bg_tasks.discard(task)
+    if task.cancelled():
+        return
+    exc = task.exception()
+    if exc is not None:
+        get_logger(__name__).error("后台任务异常: %s", exc)
+
+
+def _ensure_store() -> ExampleStore:
+    """懒加载 ExampleStore（首次调用时物化所有示例，可能较慢）。"""
+    global _store, _root
+    if _store is None:
+        with _store_lock:
+            if _store is None:
+                store = _build_store()
+                root = store.load()
+                _rebuild_index(root)
+                _store = store
+                _root = root
+    return _store
+
+
+def _build_store() -> ExampleStore:
+    """构造 ExampleStore：内置集合目录 + 用户集合目录（可写根下 user_examples/）。"""
+    return ExampleStore(
+        base_dir=APP_DIR,
+        cache_dir=DATA_DIR / ".json_examples_cache",
+        user_dir=_USER_DIR,
+    )
+
+
+def _reload_store() -> None:
+    """重建 store/根树/索引（导入或删除用户集合后调用；锁内防竞态）。
+
+    旧实例的模块索引直接转嫁（免一次子进程枚举）；可运行性缓存按 id 重算。
+    """
+    global _store, _root
+    with _store_lock:
+        old = _store
+        store = _build_store()
+        if old is not None and old._module_index is not None and old._module_index.available:
+            store._module_index = old._module_index
+        root = store.load()
+        _rebuild_index(root)
+        _store = store
+        _root = root
+
+
+def _get_venv_manager() -> VenvManager:
+    """懒加载 VenvManager。"""
+    global _venv_manager
+    if _venv_manager is None:
+        _venv_manager = VenvManager(repo_root=REPO_ROOT, python_exe=REAL_PYTHON, venv_root=DATA_DIR)
+    return _venv_manager
+
+
+def _rebuild_index(root: ExampleItem) -> None:
+    """递归构建 example_id -> item 的扁平索引。"""
+    _index.clear()
+
+    def _walk(item: ExampleItem) -> None:
+        if not item.is_dir and item.json_id:
+            _index[item.json_id] = item
+        for child in item.children:
+            _walk(child)
+
+    _walk(root)
+
+
+def _item_to_dict(item: ExampleItem, include_code: bool = True) -> dict[str, Any]:
+    """把 ExampleItem 序列化为可 JSON 化的字典。
+
+    质量评分为惰性计算：加载时不做 AST 解析，首次序列化时才计算并缓存。
+    include_code=False 用于目录树节点：树与 examples 数组共用此序列化，
+    源码只需随数组传输一份。
+    """
+    store = _ensure_store()
+    quality_score = store.ensure_quality_score(item)
+    run_status = store.ensure_run_status(item)
+    result = {
+        "id": item.json_id or item.name,
+        "name": item.name,
+        "title": item.title,
+        "category": item.category,
+        "tags": item.tags,
+        "quality_score": quality_score,
+        "risk_high": store.ensure_risk_high(item),
+        "run_status": run_status,
+        "path": str(item.path),
+        "source_dir": item.source_dir,
+        "run_pythonpath": item.run_pythonpath,
+        "description": item.description or "",
+    }
+    # 所属集合与来源标记（树节点与示例数组共用此序列化，两处一致）
+    if item.parent is not None:
+        result["collection"] = item.parent.name.removeprefix("📦 ")
+    result["user_collection"] = store.is_user_collection(item.json_file)
+    # HIGH 风险明细仅高危条目携带（全库十余条量级），供运行前确认弹窗展示
+    if run_status == "risky" or result["risk_high"]:
+        result["risk_findings"] = store.ensure_risk_findings(item)
+    if include_code:
+        result["code"] = item.code or ""
+    return result
+
+
+# ---------------------------------------------------------------------------
+# JSON-RPC 输出辅助
+# ---------------------------------------------------------------------------
+def _send(obj: dict[str, Any]) -> None:
+    """写一行 JSON 到 stdout 并 flush。线程安全（AI 流式在线程中调用）。"""
+    with _STDOUT_LOCK:
+        sys.stdout.write(json.dumps(obj, ensure_ascii=False) + "\n")
+        sys.stdout.flush()
+
+
+def _result(req_id: Any, result: Any) -> None:
+    _send({"jsonrpc": "2.0", "id": req_id, "result": result})
+
+
+def _error(req_id: Any, code: int, message: str) -> None:
+    _send({"jsonrpc": "2.0", "id": req_id, "error": {"code": code, "message": message}})
+
+
+def _notify(method: str, params: dict[str, Any]) -> None:
+    _send({"jsonrpc": "2.0", "method": method, "params": params})
+
+
+# ---------------------------------------------------------------------------
+# 方法实现
+# ---------------------------------------------------------------------------
+def method_ping(req_id: Any, params: dict[str, Any]) -> None:
+    _result(req_id, {"status": "ok", "python": sys.version.split()[0]})
+
+
+def _tree_to_dict(item: ExampleItem) -> dict[str, Any]:
+    """递归把 ExampleItem 树转为 JSON 友好的字典。"""
+    node: dict[str, Any] = {
+        "name": item.name,
+        "type": "root" if item.category == "root" else ("collection" if item.is_dir else "example"),
+        "is_dir": item.is_dir,
+        "category": item.category,
+        "children": [],
+    }
+    if not item.is_dir:
+        # 示例节点携带元数据；完整源码只在 examples 数组发一份——
+        # 1349 个示例的 code 重复序列化两份会让 list_examples 响应体翻倍
+        node.update(_item_to_dict(item, include_code=False))
+    for child in item.children:
+        node["children"].append(_tree_to_dict(child))
+    return node
+
+
+def method_list_examples(req_id: Any, params: dict[str, Any]) -> None:
+    store = _ensure_store()
+    examples = [_item_to_dict(item) for item in _index.values()]
+    tree = _tree_to_dict(_root) if _root else None
+    _result(
+        req_id,
+        {
+            "total": len(examples),
+            "categories": list(store.categories),
+            "examples": examples,
+            "tree": tree,
+        },
+    )
+
+
+def method_get_example(req_id: Any, params: dict[str, Any]) -> None:
+    _ensure_store()
+    example_id = params.get("id")
+    item = _index.get(example_id)
+    if item is None:
+        _error(req_id, -32602, f"示例不存在: {example_id}")
+        return
+    _result(req_id, _item_to_dict(item))
+
+
+async def method_run_example(req_id: Any, params: dict[str, Any]) -> None:
+    """运行示例。立即返回 run_id，输出通过 notification 推送。"""
+    _ensure_store()
+    example_id = params.get("id")
+    args = params.get("args") or []
+    # args 逐项校验：非字符串元素会让 create_subprocess_exec 抛 TypeError，
+    # 异常逃出后台协程后 run_finished 永不到达，前端会永远显示"运行中"
+    if not isinstance(args, list) or not all(isinstance(a, str) for a in args):
+        _error(req_id, -32602, "args 必须是字符串数组")
+        return
+    try:
+        timeout = float(params.get("timeout", 30))
+    except (TypeError, ValueError):
+        timeout = 30.0
+
+    item = _index.get(example_id)
+    if item is None:
+        _error(req_id, -32602, f"示例不存在: {example_id}")
+        return
+
+    run_id = uuid.uuid4().hex[:12]
+    # 先注册为"启动中"（None），防止用户在子进程 spawn 前点击停止时
+    # stop_run 找不到 run_id 而报错；_run_subprocess 启动后更新为实际进程
+    _running[run_id] = None
+    # 立即返回 run_id（不等待运行完成）
+    _result(req_id, {"run_id": run_id})
+
+    # 后台协程：启动子进程并流式推送输出。
+    # 保存强引用：事件循环只弱引用 Task，无引用的任务可能在挂起期间被 GC
+    task = asyncio.create_task(_run_subprocess(run_id, item, args, timeout))
+    _bg_tasks.add(task)
+    task.add_done_callback(_on_bg_task_done)
+
+
+_IMAGE_EXTS = {".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp"}
+
+# 运行示例时允许传递的环境变量白名单：
+# 不可信示例不应继承用户 shell 中的全部环境变量（可能含 API Key、令牌、密码等），
+# 只保留 Python 运行所必需的、以及显式声明安全的变量。
+_SAFE_ENV_VARS = frozenset(
+    {
+        # Python 运行必需
+        "PATH",
+        "PYTHONPATH",
+        "PYTHONUNBUFFERED",
+        "PYTHONIOENCODING",
+        "PYTHONUTF8",
+        "LANG",
+        "LC_ALL",
+        "LC_CTYPE",
+        "HOME",
+        "USER",
+        "USERNAME",
+        "TEMP",
+        "TMP",
+        "TMPDIR",
+        # 系统/平台
+        "OS",
+        "SYSTEMROOT",
+        "COMSPEC",
+        "PATHEXT",
+        # 显示相关（GUI 示例可能需要）
+        "DISPLAY",
+        "WAYLAND_DISPLAY",
+        "XAUTHORITY",
+        "XDG_RUNTIME_DIR",
+        "XDG_SESSION_TYPE",
+        # macOS 特定
+        "__CF_USER_TEXT_ENCODING",
+        "COMMAND_MODE",
+    }
+)
+
+
+def _build_safe_env(extra: dict[str, str] | None = None) -> dict[str, str]:
+    """构建运行示例用的安全环境变量：白名单过滤 + 额外注入。"""
+    env: dict[str, str] = {}
+    for key, value in os.environ.items():
+        if key in _SAFE_ENV_VARS:
+            env[key] = value
+    if extra:
+        env.update(extra)
+    return env
+
+
+def _collect_images(working_dir: Path, since: float, limit: int = 12) -> list[str]:
+    """递归扫描工作目录中本次运行生成的图片，返回 file:// URL 列表（按修改时间倒序）。
+
+    只收集 mtime 不早于运行开始时间的文件，避免把历史残留图片也展示出来。
+    递归扫描子目录（如 files/），确保脚本保存到相对子路径的结果图也能预览。
+    """
+    try:
+        files = [p for p in working_dir.rglob("*") if p.is_file()]
+    except OSError:
+        return []
+    files = [p for p in files if p.suffix.lower() in _IMAGE_EXTS]
+    try:
+        files = [p for p in files if p.stat().st_mtime >= since - 1]
+    except OSError:
+        pass
+    files.sort(key=lambda p: p.stat().st_mtime, reverse=True)
+    return [p.resolve().as_uri() for p in files[:limit]]
+
+
+async def _run_subprocess(
+    run_id: str,
+    item: ExampleItem,
+    args: list[str],
+    timeout: float,
+) -> None:
+    """启动子进程运行示例，逐行读取输出并推送。"""
+    file_path = item.path
+    working_dir = file_path.parent
+    run_started = time.time()
+
+    # 通过 VenvManager 获取项目共享 venv 的解释器（首次运行时自动创建并预装常用库，
+    # 示例目录的 requirements.txt 会装入同一环境）；阻塞操作放到线程池执行
+    venv_mgr = _get_venv_manager()
+    if venv_mgr.needs_prepare():
+        _notify(
+            "run_output",
+            {
+                "run_id": run_id,
+                "text": "[系统] 首次运行：正在初始化共享运行环境（创建 venv 并安装常用依赖，约需几分钟）...\n",
+            },
+        )
+    try:
+        ok, python_exe = await asyncio.to_thread(venv_mgr.ensure_python, file_path)
+        # 成功路径不输出环境噪音日志，仅在异常时提示回退
+        if not ok:
+            _notify(
+                "run_output",
+                {
+                    "run_id": run_id,
+                    "text": "[系统] 共享虚拟环境创建失败，回退系统 Python\n",
+                },
+            )
+    except Exception as e:  # noqa: BLE001
+        _notify(
+            "run_output",
+            {
+                "run_id": run_id,
+                "text": f"[系统] 虚拟环境准备失败，回退系统 Python: {e}\n",
+            },
+        )
+        python_exe = REAL_PYTHON
+
+    # 构建环境变量：使用白名单过滤，避免把用户 shell 中的敏感环境变量
+    # （API Key、令牌、密码等）传递给不可信示例
+    pythonpath_parts = list(item.run_pythonpath) + [str(REPO_ROOT)]
+    existing_pp = os.environ.get("PYTHONPATH", "")
+    if existing_pp:
+        pythonpath_parts.append(existing_pp)
+    env = _build_safe_env(
+        {
+            "PYTHONPATH": os.pathsep.join(pythonpath_parts),
+            "PYTHONUNBUFFERED": "1",
+        }
+    )
+
+    cmd = [python_exe, str(file_path)] + list(args)
+
+    try:
+        proc = await asyncio.create_subprocess_exec(
+            *cmd,
+            cwd=str(working_dir),
+            env=env,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.STDOUT,  # 合并输出，与原 MergedChannels 一致
+            # 单行输出上限 8MB：默认 64KB 会让 print 超长行（如打印大列表）崩溃运行任务
+            limit=8 * 1024 * 1024,
+        )
+    except OSError as e:
+        _notify("run_output", {"run_id": run_id, "text": f"[错误] 无法启动子进程: {e}\n"})
+        _notify("run_finished", {"run_id": run_id, "exit_code": -1})
+        _pending_stop.discard(run_id)  # spawn 失败也要清理，避免集合泄漏
+        return
+
+    _running[run_id] = proc
+
+    # 检查是否在启动前就收到了停止请求：如果是，立即终止
+    if run_id in _pending_stop:
+        _pending_stop.discard(run_id)
+        _notify("run_output", {"run_id": run_id, "text": "[系统] 已在启动前收到停止指令，进程已终止\n"})
+        _terminate(proc)
+        try:
+            await asyncio.wait_for(proc.wait(), timeout=5)
+        except asyncio.TimeoutError:
+            _kill(proc)
+            await proc.wait()
+        _running.pop(run_id, None)
+        _notify("run_finished", {"run_id": run_id, "exit_code": -15})
+        return
+
+    async def _read_stream():
+        assert proc.stdout is not None
+        while True:
+            line = await proc.stdout.readline()
+            if not line:
+                break
+            try:
+                text = line.decode("utf-8")
+            except UnicodeDecodeError:
+                text = line.decode("gbk", errors="replace")
+            _notify("run_output", {"run_id": run_id, "text": text})
+
+    try:
+        await asyncio.wait_for(_read_stream(), timeout=timeout + 5)
+        exit_code = await asyncio.wait_for(proc.wait(), timeout=5)
+    except asyncio.TimeoutError:
+        _notify(
+            "run_output",
+            {
+                "run_id": run_id,
+                "text": f"\n[系统] 运行超过 {timeout} 秒，已强制终止。\n",
+            },
+        )
+        _kill(proc)
+        try:
+            await asyncio.wait_for(proc.wait(), timeout=5)
+        except asyncio.TimeoutError:
+            pass  # 进程无法被 kill（如 D 状态），放弃等待，避免无限阻塞
+        exit_code = -9
+    except Exception as e:  # noqa: BLE001 - 输出流等异常也必须让 run_finished 到达前端
+        _notify("run_output", {"run_id": run_id, "text": f"\n[系统] 输出流异常，已终止运行: {e}\n"})
+        _kill(proc)
+        try:
+            await asyncio.wait_for(proc.wait(), timeout=5)
+        except asyncio.TimeoutError:
+            pass  # 同上，避免无限阻塞
+        exit_code = -1
+    finally:
+        _running.pop(run_id, None)
+
+    # 结束状态由前端结果面板徽章展示（成功/失败 + 退出码），不再推送日志文本
+    # 扫描本次运行生成的图片并推送预览（PIL / 数据可视化 / OpenCV 等图形示例）
+    # 保底：无论图片扫描是否异常，run_finished 必须到达前端，避免前端死锁
+    try:
+        images = _collect_images(working_dir, run_started)
+        if images:
+            _notify("run_images", {"run_id": run_id, "images": images})
+    except Exception as e:  # noqa: BLE001
+        get_logger(__name__).warning("扫描运行结果图片失败: %s", e)
+    _notify("run_finished", {"run_id": run_id, "exit_code": exit_code})
+
+
+def _terminate(proc: asyncio.subprocess.Process) -> None:
+    """terminate 的安全封装：进程恰在收尾时可能已退出，ProcessLookupError 不算错误。"""
+    try:
+        proc.terminate()
+    except ProcessLookupError:
+        pass
+
+
+def _kill(proc: asyncio.subprocess.Process) -> None:
+    """kill 的安全封装：同 _terminate，SIGKILL 发给已 reap 的进程同样会抛错。"""
+    try:
+        proc.kill()
+    except ProcessLookupError:
+        pass
+
+
+async def method_stop_run(req_id: Any, params: dict[str, Any]) -> None:
+    run_id = params.get("run_id")
+    proc = _running.get(run_id)
+    if run_id not in _running:
+        _error(req_id, -32602, f"运行不存在或已结束: {run_id}")
+        return
+    if proc is None:
+        # 进程正在启动中（spawn 尚未完成）：记录待停止，_run_subprocess 启动后立即终止
+        _pending_stop.add(run_id)
+        _result(req_id, {"status": "pending_terminate", "run_id": run_id})
+        return
+    _terminate(proc)
+    _result(req_id, {"status": "terminating", "run_id": run_id})
+    # 5 秒后进程仍未退出则升级为 SIGKILL（忽略 SIGTERM 的进程）
+    try:
+        await asyncio.wait_for(proc.wait(), timeout=5)
+    except asyncio.TimeoutError:
+        get_logger(__name__).warning("运行 %s 5 秒内未响应 SIGTERM，升级 SIGKILL", run_id)
+        _kill(proc)
+
+
+# ---------------------------------------------------------------------------
+# argparse 静态分析（AST，无需执行代码）
+# ---------------------------------------------------------------------------
+def _ast_constant(node: ast.AST) -> Any:
+    """从 AST 节点提取常量值；非字面量节点（动态表达式）返回 None。
+
+    仅支持 ast.Constant：ast.Num/Str/NameConstant 兼容别名在 Python 3.14
+    已被移除，访问即抛 AttributeError，不得引用。
+    """
+    if isinstance(node, ast.Constant):
+        return node.value
+    return None
+
+
+def _ast_name(node: ast.AST) -> str | None:
+    """从 AST 节点提取名称（如 int, str, float）。"""
+    if isinstance(node, ast.Name):
+        return node.id
+    if isinstance(node, ast.Attribute):
+        return node.attr
+    return None
+
+
+def _parse_argparse_from_code(code: str) -> list[dict[str, Any]]:
+    """静态分析 Python 代码中的 argparse.add_argument 调用，返回参数规格列表。
+
+    每个参数字典包含：
+      - name: 显示名（如 --name 或位置参数名）
+      - flags: 命令行 flag 列表（如 ["--name", "-n"]），位置参数为空列表
+      - dest: 参数变量名
+      - type: 类型名（str/int/float/bool），默认 str
+      - default: 默认值
+      - help: 帮助文本
+      - choices: 可选值列表
+      - required: 是否必填
+      - action: action 类型（store/store_true/store_false 等）
+      - is_positional: 是否为位置参数
+      - nargs: nargs 说明
+    """
+    try:
+        tree = ast.parse(code)
+    except SyntaxError:
+        return []
+
+    args_specs: list[dict[str, Any]] = []
+
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Call):
+            continue
+        func = node.func
+        if not isinstance(func, ast.Attribute) or func.attr != "add_argument":
+            continue
+
+        # 第一个位置参数（或前几个）是 flag 名
+        flags: list[str] = []
+        positional_name: str | None = None
+        for arg in node.args:
+            val = _ast_constant(arg)
+            if isinstance(val, str):
+                if val.startswith("-"):
+                    flags.append(val)
+                elif positional_name is None:
+                    positional_name = val
+
+        is_positional = len(flags) == 0
+
+        # 解析关键字参数
+        kw: dict[str, Any] = {}
+        for kwnode in node.keywords:
+            key = kwnode.arg
+            if key is None:
+                continue
+            if key == "type":
+                kw["type"] = _ast_name(kwnode.value) or "str"
+            elif key == "default":
+                kw["default"] = _ast_constant(kwnode.value)
+            elif key == "help":
+                help_val = _ast_constant(kwnode.value)
+                kw["help"] = help_val if isinstance(help_val, str) else ""
+            elif key == "required":
+                req_val = _ast_constant(kwnode.value)
+                kw["required"] = bool(req_val) if req_val is not None else False
+            elif key == "action":
+                action_val = _ast_constant(kwnode.value)
+                kw["action"] = action_val if isinstance(action_val, str) else "store"
+            elif key == "choices":
+                choices: list[Any] = []
+                if isinstance(kwnode.value, (ast.List, ast.Tuple)):
+                    for elt in kwnode.value.elts:
+                        v = _ast_constant(elt)
+                        if v is not None:
+                            choices.append(v)
+                kw["choices"] = choices
+            elif key == "nargs":
+                nargs_val = _ast_constant(kwnode.value)
+                kw["nargs"] = nargs_val if isinstance(nargs_val, (str, int)) else None
+            elif key == "metavar":
+                meta_val = _ast_constant(kwnode.value)
+                kw["metavar"] = meta_val if isinstance(meta_val, str) else None
+
+        # 推导 dest
+        if is_positional:
+            dest = positional_name or f"arg{len(args_specs)}"
+            display_name = dest
+        else:
+            # 取第一个长 flag 去掉 -- 作为 dest
+            long_flag = next((f for f in flags if f.startswith("--")), flags[0])
+            dest = long_flag.lstrip("-").replace("-", "_")
+            display_name = flags[0]
+
+        action = kw.get("action", "store")
+        arg_type = kw.get("type", "str")
+        # store_true/store_false 隐含 bool 类型且无 default 时默认 False
+        if action in ("store_true", "store_false"):
+            arg_type = "bool"
+            if "default" not in kw:
+                kw["default"] = action == "store_false"
+
+        spec = {
+            "name": display_name,
+            "flags": flags,
+            "dest": dest,
+            "type": arg_type,
+            "default": kw.get("default"),
+            "help": kw.get("help", ""),
+            "choices": kw.get("choices", []),
+            "required": kw.get("required", False) and not is_positional,
+            "action": action,
+            "is_positional": is_positional,
+            "nargs": kw.get("nargs"),
+            "metavar": kw.get("metavar"),
+        }
+        args_specs.append(spec)
+
+    return args_specs
+
+
+def method_parse_args(req_id: Any, params: dict[str, Any]) -> None:
+    """静态分析示例代码中的 argparse 定义，返回参数规格。"""
+    example_id = params.get("id")
+    code = params.get("code")
+
+    if code is None:
+        _ensure_store()
+        item = _index.get(example_id)
+        if item is None:
+            _error(req_id, -32602, f"示例不存在: {example_id}")
+            return
+        code = item.code or ""
+
+    specs = _parse_argparse_from_code(code)
+    _result(req_id, {"args": specs, "count": len(specs)})
+
+
+def method_save_example(req_id: Any, params: dict[str, Any]) -> None:
+    """把编辑后的代码写回 JSON 源文件和缓存文件。"""
+    example_id = params.get("id")
+    new_code = params.get("code")
+
+    if example_id is None or new_code is None:
+        _error(req_id, -32602, "缺少 id 或 code 参数")
+        return
+
+    _ensure_store()
+    item = _index.get(example_id)
+    if item is None:
+        _error(req_id, -32602, f"示例不存在: {example_id}")
+        return
+
+    success = _store.save_item(item, new_code)
+    if success:
+        _result(
+            req_id,
+            {
+                "status": "saved",
+                "id": example_id,
+                "json_file": str(item.json_file) if item.json_file else None,
+                "path": str(item.path),
+            },
+        )
+    else:
+        _error(req_id, -32000, "保存失败：该示例可能不是 JSON 来源或写入出错")
+
+
+# ---------------------------------------------------------------------------
+# 示例资源文件（详情页上传图片/文档，运行时可直接用文件名引用）
+# ---------------------------------------------------------------------------
+_IMAGE_EXTS_ASSET = {".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp"}
+
+
+def _asset_dir(item: ExampleItem) -> Path:
+    """示例的资源目录 = 示例脚本所在目录（sidecar 运行时的 cwd）。"""
+    return item.path.parent
+
+
+def _safe_asset_name(filename: str) -> str:
+    """只保留文件名，防止路径穿越。"""
+    return Path(filename or "").name or "uploaded_file"
+
+
+# 资源写入/删除的保护名单：上传同名脚本会产生"编辑器显示 JSON 代码、
+# 实际执行上传内容"的所见非所跑；覆盖 requirements.txt 则可向共享 venv 任意装包
+def _is_protected_asset(item: ExampleItem, filename: str) -> bool:
+    lowered = filename.lower()
+    if lowered.endswith(".py") or lowered == "requirements.txt":
+        return True
+    return filename == item.path.name
+
+
+def _collect_assets(item: ExampleItem) -> list[dict[str, Any]]:
+    """列出示例目录中的资源文件（排除示例脚本与 __init__.py）。"""
+    d = _asset_dir(item)
+    assets = []
+    try:
+        for p in sorted(d.iterdir()):
+            if not p.is_file():
+                continue
+            # 排除 Python 脚本（示例源码 / __init__.py）
+            if p.suffix.lower() == ".py":
+                continue
+            try:
+                st = p.stat()
+            except OSError:
+                continue
+            is_image = p.suffix.lower() in _IMAGE_EXTS_ASSET
+            assets.append(
+                {
+                    "filename": p.name,
+                    "size": st.st_size,
+                    "modified": round(st.st_mtime, 3),
+                    "is_image": is_image,
+                }
+            )
+    except OSError:
+        pass
+    return assets
+
+
+def method_upload_asset(req_id: Any, params: dict[str, Any]) -> None:
+    """把前端上传的图片/文档保存到示例运行目录（base64）。"""
+    example_id = params.get("id")
+    filename = params.get("filename")
+    data = params.get("data")
+    if example_id is None or filename is None or data is None:
+        _error(req_id, -32602, "缺少 id / filename / data 参数")
+        return
+    _ensure_store()
+    item = _index.get(example_id)
+    if item is None:
+        _error(req_id, -32602, f"示例不存在: {example_id}")
+        return
+    try:
+        raw = base64.b64decode(data, validate=False)
+    except Exception as e:  # noqa: BLE001
+        _error(req_id, -32602, f"base64 解码失败: {e}")
+        return
+    safe = _safe_asset_name(filename)
+    if _is_protected_asset(item, safe):
+        _error(req_id, -32602, f"不允许上传该文件名（可能与示例脚本/依赖清单冲突）: {safe}")
+        return
+    target = _asset_dir(item) / safe
+    try:
+        target.write_bytes(raw)
+    except OSError as e:
+        _error(req_id, -32000, f"写入失败: {e}")
+        return
+    _result(
+        req_id,
+        {
+            "status": "uploaded",
+            "filename": safe,
+            "size": len(raw),
+            "path": str(target),
+            "assets": _collect_assets(item),
+        },
+    )
+
+
+def method_list_assets(req_id: Any, params: dict[str, Any]) -> None:
+    """列出示例目录中的资源文件。"""
+    example_id = params.get("id")
+    if example_id is None:
+        _error(req_id, -32602, "缺少 id 参数")
+        return
+    _ensure_store()
+    item = _index.get(example_id)
+    if item is None:
+        _error(req_id, -32602, f"示例不存在: {example_id}")
+        return
+    _result(req_id, {"assets": _collect_assets(item)})
+
+
+def method_delete_asset(req_id: Any, params: dict[str, Any]) -> None:
+    """删除示例目录中的某个资源文件。"""
+    example_id = params.get("id")
+    filename = params.get("filename")
+    if example_id is None or filename is None:
+        _error(req_id, -32602, "缺少 id 或 filename 参数")
+        return
+    _ensure_store()
+    item = _index.get(example_id)
+    if item is None:
+        _error(req_id, -32602, f"示例不存在: {example_id}")
+        return
+    safe = _safe_asset_name(filename)
+    if _is_protected_asset(item, safe):
+        _error(req_id, -32602, f"不允许删除该文件（示例脚本/依赖清单受保护）: {safe}")
+        return
+    target = _asset_dir(item) / safe
+    try:
+        if target.exists() and target.is_file():
+            target.unlink()
+            _result(req_id, {"deleted": safe, "assets": _collect_assets(item)})
+        else:
+            _error(req_id, -32000, f"文件不存在: {safe}")
+    except OSError as e:
+        _error(req_id, -32000, f"删除失败: {e}")
+
+
+# ---------------------------------------------------------------------------
+# 用户示例集合导入/删除（示例库与应用解耦）
+# ---------------------------------------------------------------------------
+def _import_availability():
+    """依赖猜测的可用性谓词：优先共享 venv 模块索引（与可运行性判定同源），
+    索引未就绪时退化为当前解释器的 find_spec（importer 缺省行为）。"""
+    store = _ensure_store()
+    idx = store._module_index  # noqa: SLF001 - 模块内访问自有 store
+    if idx is not None and idx.available:
+        return idx.is_available
+    return None
+
+
+def method_scan_import_source(req_id: Any, params: dict[str, Any]) -> None:
+    """扫描待导入目录，返回预览清单（不写盘、不改动集合）。
+
+    预览 id 与随后 import_examples 的最终 id 一致（同 existing_ids 去重口径）。
+    """
+    source = Path(str(params.get("source_path") or ""))
+    if not source.is_dir():
+        _error(req_id, -32602, f"目录不存在: {source}")
+        return
+    _ensure_store()
+    payload = importer.import_directory(
+        source, "preview", existing_ids=set(_index.keys()), is_available=_import_availability()
+    )
+    # 预览不回传完整 code（大目录体积可观），回传大小供 UI 展示
+    files = [
+        {
+            "id": ex["id"],
+            "name": ex["name"],
+            "tags": ex["tags"],
+            "requirements": ex["requirements"],
+            "bytes": len(ex["code"].encode("utf-8")),
+        }
+        for ex in payload["examples"]
+    ]
+    _result(req_id, {"total": payload["stats"]["scanned"], "files": files, "skipped": payload["skipped"]})
+
+
+def method_import_examples(req_id: Any, params: dict[str, Any]) -> None:
+    """把目录导入为用户集合：构建 payload → id 去重 → 原子写 JSON → 重建索引。"""
+    source = Path(str(params.get("source_path") or ""))
+    name = str(params.get("name") or "").strip() or source.name
+    if not source.is_dir():
+        _error(req_id, -32602, f"目录不存在: {source}")
+        return
+    _ensure_store()
+    payload = importer.import_directory(
+        source, name, existing_ids=set(_index.keys()), is_available=_import_availability()
+    )
+    imported = payload["examples"]
+    if not imported:
+        _result(req_id, {"imported": 0, "skipped": payload["skipped"], "collection": None})
+        return
+
+    _USER_DIR.mkdir(parents=True, exist_ok=True)
+    # 全中文等非 ASCII 名称 slug 化后只剩下划线，回退通用名
+    slug = importer.slugify(name).strip("_") or "user_collection"
+    final = _USER_DIR / f"{slug}.json"
+    n = 1
+    while final.exists():  # 集合文件重名：加后缀，不覆盖既有用户数据
+        n += 1
+        final = _USER_DIR / f"{slug}_{n}.json"
+    try:
+        # 临时文件 + 原子替换（与 save_item 同一防护）
+        tmp = final.with_name(final.name + ".tmp")
+        try:
+            tmp.write_text(
+                json.dumps(
+                    {"name": name, "description": payload["description"], "examples": imported},
+                    ensure_ascii=False,
+                    indent=2,
+                ),
+                encoding="utf-8",
+            )
+            os.replace(tmp, final)
+        finally:
+            tmp.unlink(missing_ok=True)
+    except OSError as e:
+        _error(req_id, -32603, f"写入用户集合失败: {e}")
+        return
+    _reload_store()
+    _result(
+        req_id,
+        {
+            "imported": len(imported),
+            "skipped": payload["skipped"],
+            "collection": final.stem,
+            "total": len(_index),
+        },
+    )
+
+
+def method_delete_example(req_id: Any, params: dict[str, Any]) -> None:
+    """删除一个用户集合示例（内置集合受保护，sidecar 侧再校验一次）。"""
+    _ensure_store()
+    example_id = str(params.get("id") or "")
+    item = _index.get(example_id)
+    if item is None:
+        _error(req_id, -32602, f"示例不存在: {example_id}")
+        return
+    if not _store.is_user_collection(item.json_file):
+        _error(req_id, -32602, "仅可删除用户集合中的示例")
+        return
+    if not _store.delete_user_example(item):
+        _error(req_id, -32603, f"删除失败: {example_id}")
+        return
+    _reload_store()
+    _result(req_id, {"deleted": example_id, "total": len(_index)})
+
+
+async def method_explain_code(req_id: Any, params: dict[str, Any]) -> None:
+    """AI 代码解释（DeepSeek 流式）。立即返回 run_id，chunk 通过 notification 推送。
+
+    params: {code, api_key, file_name?, context?, base_url?, model?, timeout?}
+    通知: ai_explain_chunk {run_id, text}
+          ai_explain_done  {run_id, full_text, model, tokens}
+          ai_explain_error {run_id, error}
+    """
+    code = params.get("code", "")
+    api_key = params.get("api_key", "")
+    run_id = params.get("run_id") or uuid.uuid4().hex[:12]
+
+    # 参数转换/校验全部前置：首响应发出后再转换会让坏参数对同一 req_id
+    # 先发 result 再发 error，违反 JSON-RPC 一请求一响应
+    file_name = str(params.get("file_name") or "")
+    context = str(params.get("context") or "")
+    base_url = str(params.get("base_url") or ai_service.DEFAULT_BASE_URL)
+    model = str(params.get("model") or ai_service.DEFAULT_MODEL)
+    try:
+        timeout = int(params.get("timeout") or ai_service.DEFAULT_TIMEOUT)
+    except (TypeError, ValueError):
+        timeout = ai_service.DEFAULT_TIMEOUT
+
+    # 无 key 或空代码：同步返回错误，不启动流
+    if not api_key or not str(api_key).strip():
+        _result(req_id, {"run_id": run_id, "status": "error", "error": "no_api_key"})
+        return
+    if not code or not str(code).strip():
+        _result(req_id, {"run_id": run_id, "status": "error", "error": "empty_code"})
+        return
+
+    _result(req_id, {"run_id": run_id, "status": "started"})
+
+    cancel_event = threading.Event()
+    _ai_running[run_id] = cancel_event
+
+    def on_chunk(text: str) -> None:
+        _notify("ai_explain_chunk", {"run_id": run_id, "text": text})
+
+    try:
+        # urllib 阻塞，放到工作线程避免阻塞 JSON-RPC 事件循环
+        result = await asyncio.to_thread(
+            ai_service.explain_code_streaming,
+            str(code),
+            str(api_key),
+            file_name=file_name,
+            context=context,
+            base_url=base_url,
+            model=model,
+            timeout=timeout,
+            on_chunk=on_chunk,
+            cancel_event=cancel_event,
+        )
+    except Exception as e:  # noqa: BLE001 - 前端只认 ai_explain_error 通知，异常必须转成通知
+        get_logger(__name__).warning("AI 解释内部异常 run_id=%s: %s", run_id, e)
+        result = {"ok": False, "error": f"internal: {e}", "full_text": "", "model": model, "tokens": 0}
+    finally:
+        _ai_running.pop(run_id, None)
+
+    if result.get("ok"):
+        _notify(
+            "ai_explain_done",
+            {
+                "run_id": run_id,
+                "full_text": result.get("full_text", ""),
+                "model": result.get("model", ""),
+                "tokens": result.get("tokens", 0),
+            },
+        )
+    else:
+        _notify("ai_explain_error", {"run_id": run_id, "error": result.get("error", "unknown")})
+
+
+def method_stop_ai(req_id: Any, params: dict[str, Any]) -> None:
+    """停止正在进行的 AI 解释（设置 cancel_event，流式读取会在下一行中断）。"""
+    run_id = params.get("run_id")
+    event = _ai_running.get(run_id)
+    if event is None:
+        _error(req_id, -32602, f"AI 解释不存在或已结束: {run_id}")
+        return
+    event.set()
+    _result(req_id, {"status": "cancelled", "run_id": run_id})
+
+
+# ---------------------------------------------------------------------------
+# 方法分发表
+# ---------------------------------------------------------------------------
+METHODS = {
+    "ping": method_ping,
+    "list_examples": method_list_examples,
+    "get_example": method_get_example,
+    "parse_args": method_parse_args,
+    "save_example": method_save_example,
+    "run_example": method_run_example,  # async
+    "stop_run": method_stop_run,
+    "upload_asset": method_upload_asset,
+    "list_assets": method_list_assets,
+    "delete_asset": method_delete_asset,
+    "scan_import_source": method_scan_import_source,
+    "import_examples": method_import_examples,
+    "delete_example": method_delete_example,
+    "explain_code": method_explain_code,  # async，流式
+    "stop_ai": method_stop_ai,
+}
+
+
+async def _handle_request(line: str) -> None:
+    """处理一行 JSON-RPC 请求。"""
+    line = line.strip()
+    if not line:
+        return
+    try:
+        req = json.loads(line)
+    except json.JSONDecodeError as e:
+        _error(None, -32700, f"JSON 解析失败: {e}")
+        return
+
+    if not isinstance(req, dict) or req.get("jsonrpc") != "2.0":
+        _error(req.get("id") if isinstance(req, dict) else None, -32600, "无效的 JSON-RPC 2.0 请求")
+        return
+
+    method_name = req.get("method")
+    params = req.get("params") or {}
+    req_id = req.get("id")
+
+    handler = METHODS.get(method_name)
+    if handler is None:
+        _error(req_id, -32601, f"未知方法: {method_name}")
+        return
+
+    try:
+        result = handler(req_id, params)
+        if asyncio.iscoroutine(result):
+            await result
+    except Exception as e:  # noqa: BLE001 - sidecar 不应崩溃
+        _error(req_id, -32603, f"内部错误: {e}")
+
+
+async def _stdin_reader() -> None:
+    """从 stdin 逐行读取请求并处理。"""
+    loop = asyncio.get_event_loop()
+    # 默认 limit=64KB：上传 base64 图片/文档会触发 LimitOverrunError 导致 sidecar 崩溃。
+    # 提高到 128MB，足以容纳单次上传的资源文件。
+    reader = asyncio.StreamReader(limit=128 * 1024 * 1024)
+    protocol = asyncio.StreamReaderProtocol(reader)
+    await loop.connect_read_pipe(lambda: protocol, sys.stdin)
+
+    while True:
+        try:
+            line = await reader.readline()
+        except (ValueError, asyncio.LimitOverrunError) as e:
+            # 单行超过 128MB 缓冲上限：丢弃该行并保持进程存活，而不是崩出事件循环
+            get_logger(__name__).error("请求行超出缓冲上限，已丢弃: %s", e)
+            continue
+        if not line:
+            break
+        try:
+            text = line.decode("utf-8")
+        except UnicodeDecodeError:
+            continue
+        try:
+            await _handle_request(text)
+        except Exception as e:  # noqa: BLE001 - 单条请求的意外异常不得杀死整个 sidecar
+            get_logger(__name__).exception("处理请求时发生未捕获异常: %s", e)
+
+
+def _warmup_venv() -> None:
+    """后台预热共享 venv：创建 .venv 并预装常用依赖，用户浏览界面时并行完成。"""
+    try:
+        if _get_venv_manager().prepare():
+            get_logger(__name__).info("共享运行环境已就绪: %s", _get_venv_manager().venv_path)
+            # venv 就绪后构建模块索引并批量预热可运行性状态，
+            # 让画廊首屏就带 run_status 徽章（判定全部为内存集合运算）
+            store = _ensure_store()
+            store.set_module_python(str(_get_venv_manager().get_python_executable()))
+            _ = [store.ensure_run_status(it) for it in list(_index.values())]
+            get_logger(__name__).info("可运行性状态预热完成: %d 个示例", len(_index))
+    except Exception as e:  # noqa: BLE001 - 预热失败不影响 sidecar，首次运行时会重试
+        get_logger(__name__).warning("共享运行环境预热失败: %s", e)
+
+
+def main() -> None:
+    """sidecar 入口。"""
+    # 强制 stdout/stderr 为 UTF-8：Windows 下管道默认 ANSI 代码页（如 cp936），
+    # ensure_ascii=False 输出的中文/emoji 会触发 UnicodeEncodeError——
+    # 轻则误杀正在运行的示例，重则 AI 流式中断且前端收不到 error 通知
+    for stream in (sys.stdout, sys.stderr):
+        if stream is not None and hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8", errors="backslashreplace")
+    # INFO 级日志走 stderr（不污染 JSON-RPC stdout），否则 venv 创建等关键过程不可见
+    configure_logging(level=logging.INFO)
+    # 启动时发一条 ready 通知，让 Electron 知道 sidecar 已就绪
+    _notify("sidecar_ready", {"version": "0.9.0", "app_dir": str(APP_DIR)})
+    # 后台预热共享 venv（线程内阻塞安装依赖，不阻碍 JSON-RPC 事件循环）
+    threading.Thread(target=_warmup_venv, name="venv-warmup", daemon=True).start()
+    try:
+        asyncio.run(_stdin_reader())
+    except KeyboardInterrupt:
+        pass
+
+
+if __name__ == "__main__":
+    main()

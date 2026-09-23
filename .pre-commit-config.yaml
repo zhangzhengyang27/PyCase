@@ -1,0 +1,56 @@
+# Pre-commit 钩子配置：提交前自动运行代码检查与格式化
+# 安装：pip install pre-commit && pre-commit install
+# 手动运行：pre-commit run --all-files
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.6.9
+    hooks:
+      # 代码格式化（替代 black）
+      - id: ruff-format
+        name: ruff format
+        types_or: [python, pyi]
+      # Lint 检查（替代 flake8 + isort + 多种插件）
+      - id: ruff
+        name: ruff check
+        types_or: [python, pyi]
+        args: [--fix]
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      # 检查文件末尾是否有空行
+      - id: end-of-file-fixer
+      # 去除尾随空格
+      - id: trailing-whitespace
+      # 检查 JSON 语法
+      - id: check-json
+      # 检查 YAML 语法
+      - id: check-yaml
+      # 检查 Python 语法
+      - id: check-ast
+      # 防止提交过大的文件
+      - id: check-added-large-files
+        args: ["--maxkb=1024"]
+      # 防止提交 merge 冲突标记
+      - id: check-merge-conflict
+      # 修复 requirements.txt 中的问题
+      - id: fix-encoding-pragma
+        args: ["--remove"]
+
+  - repo: local
+    hooks:
+      # 文档引用防漂移：README/ROADMAP/docs 引用的仓库文件必须真实存在
+      - id: check-doc-refs
+        name: check doc refs
+        entry: python3 scripts/check_doc_refs.py
+        language: system
+        files: ^(README\.md|ROADMAP\.md|docs/.*\.md)$
+        pass_filenames: false
+      # 运行单元测试（提交前快速验证）
+      - id: pytest
+        name: pytest (quick)
+        entry: .venv/bin/python -m pytest tests/ -q --tb=short
+        language: system
+        types: [python]
+        pass_filenames: false
+        stages: [push]  # 仅在 push 时运行，避免每次 commit 都等测试

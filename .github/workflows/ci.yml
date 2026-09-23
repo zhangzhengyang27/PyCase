@@ -1,0 +1,23 @@
+        run: npm run typecheck
+
+      - name: 多维筛选引擎纯函数测试
+        run: node tests/test_filter_engine.mjs
+
+      - name: 渲染层 history/favorites 纯函数测试（TS 转译加载）
+        run: node tests/test_renderer_utils.mjs
+
+      - name: 画廊总览分区纯函数测试（TS 转译加载）
+        run: node tests/test_overview.mjs
+
+      - name: 筛选芯片纯函数测试（TS 转译加载）
+        run: node tests/test_filter_chips.mjs
+
+      - name: 工具箱分组纯函数测试（TS 转译加载）
+        run: node tests/test_toolbox_groups.mjs
+
+  # ---------------------------------------------------------------------------
+  # Electron 冒烟自测：仅在已验证的 macOS 上运行（SMOKE_TEST 自校验后退出）
+  # 链路：sidecar ready → ping → list_examples 非空 → 渲染进程无 console error
+  # ---------------------------------------------------------------------------
+  electron-smoke:
+    name: Electron smoke (macos)

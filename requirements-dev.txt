@@ -1,0 +1,2 @@
+# 开发依赖：运行测试所需（sidecar 运行时仅依赖 Python 标准库）
+pytest>=7.0

@@ -1,0 +1,295 @@
+/* ============================================================
+   共享 Tailwind 4 主题层（旧渲染层与 Vue 渲染层共用）
+   ------------------------------------------------------------
+   Tailwind 3 → 4 迁移说明：
+   - v4 采用 CSS-first 配置，原 tailwind.config.js 的 theme 映射
+     全部搬进 @theme 块（工具类 bg-panel / text-ink-dim / shadow-elev-1
+     / font-sans / animate-pulse 由此生成）；
+   - 颜色/阴影引用 :root 设计令牌（CSS 变量），
+     data-theme dark/light 切换对工具类同样生效；
+   - preflight 保持关闭（应用自带精简 reset，避免与既有样式冲突），
+     显式只引入 theme + utilities 两层；
+   - 源扫描显式声明（@source），覆盖旧 TS 模板与 Vue SFC。
+   ============================================================ */
+
+@layer theme, base, components, utilities;
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities);
+
+@source "../index.html";
+@source "./";
+
+/* ============================================================
+   设计令牌（CSS 变量，dark/light 双主题）
+   ------------------------------------------------------------
+   S0 回归修复：本块在 f4fa0fb（Vue 3 迁移）中随旧 style.css 一起
+   丢失，@theme 的 var() 引用全部悬空导致主题层失效；此处按
+   f4fa0fb^:src/renderer/src/style.css 原样恢复表面/文字/品牌/
+   状态/边框/阴影六组值，并按设计规范 v1（方向 A）补充
+   字号阶梯 / 控件高度 / 圆角 / 动效 / 状态底色 五组度量令牌。
+   ============================================================ */
+:root {
+  /* 原生控件（select 弹层/滚动条/file input）跟随主题 */
+  color-scheme: dark;
+
+  /* 1. 背景表面 */
+  --bg-marketing: #0a0b0d;
+  --bg-panel: #0e0f12;
+  --bg-level3: #15171c;
+  --bg-secondary: #28282c;
+  --bg-hover: rgba(255, 255, 255, 0.05);
+  --bg-inset: #08090a;
+
+  /* 2. 文字（quaternary 为面板底上仍达 AA 4.5:1 的最浅灰，只许更实不许更虚） */
+  --text-primary: #f7f8f8;
+  --text-secondary: #d0d6e0;
+  --text-tertiary: #8a8f98;
+  --text-quaternary: #80858d;
+
+  /* 3. 品牌与强调（accent-strong 供彩色底/浅色小字使用，对 accent 12% 底 ≥4.5:1） */
+  --brand-indigo: #5e6ad2;
+  --accent-violet: #7170ff;
+  --accent-hover: #828fff;
+  --accent-strong: #8584ff;
+  --accent-ring: rgba(94, 106, 210, 0.4);
+
+  /* 4. 状态（red 取对红 14% 底 ≥4.5:1 的最亮值） */
+  --status-green: #27a644;
+  --status-red: #ea4d52;
+  --status-amber: #f5a524;
+
+  /* 5. 边框分隔线 */
+  --border-primary: #23252a;
+  --border-secondary: #34343a;
+  --border-tertiary: #3e3e44;
+  --line-tint: #141516;
+  --border-subtle: rgba(255, 255, 255, 0.05);
+  --border-standard: rgba(255, 255, 255, 0.08);
+
+  /* 6. 字体（系统栈：仓库不打包 webfont，栈里不放装不上的字体名） */
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+    "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+  /* 7. 阴影层级 */
+  --elevation-1: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --elevation-2: 0 2px 8px rgba(0, 0, 0, 0.4);
+  --elevation-3: 0 8px 24px rgba(0, 0, 0, 0.5);
+  --elevation-focus: 0 0 0 2px var(--accent-ring);
+  --elevation-inset: inset 0 1px 3px rgba(0, 0, 0, 0.4);
+
+  /* 8. 字号阶梯（设计规范 v1；badge 为徽章/kbd 的刻意微字号，无行高对避免改变继承行为） */
+  --text-caption-size: 11px;
+  --text-badge-size: 10px;
+  --text-control-size: 12px;
+  --text-body-size: 13px;
+  --text-title-size: 15px;
+  --text-page-size: 17px;
+
+  /* 9. 控件高度三档：sm 24 / md 28 / lg 32（对应 Tailwind h-6/h-7/h-8） */
+  --control-h-sm: 24px;
+  --control-h-md: 28px;
+  --control-h-lg: 32px;
+
+  /* 10. 圆角体系（药丸 full 仅限筛选芯片与收藏 pill） */
+  --radius-badge: 3px;
+  --radius-control: 5px;
+  --radius-panel: 8px;
+
+  /* 11. 动效 */
+  --duration-fast: 120ms;
+  --duration-panel: 180ms;
+  --ease-standard: cubic-bezier(0.25, 0.8, 0.35, 1);
+  --ease-panel: cubic-bezier(0.32, 0.72, 0, 1);
+
+  /* 12. 状态底色（收编散落的硬编码 rgba） */
+  --status-green-bg: rgba(39, 166, 68, 0.14);
+  --status-red-bg: rgba(229, 72, 77, 0.14);
+  --status-amber-bg: rgba(245, 165, 36, 0.14);
+
+  /* 13. 卡片「深邃层次」（.surface-card 消费；浅色主题在 [data-theme] 覆盖，边框换实色） */
+  --card-grad-top: #1c1e26;
+  --card-grad-bottom: #16181f;
+  --card-highlight: rgba(255, 255, 255, 0.11);
+  --card-highlight-hover: rgba(255, 255, 255, 0.18);
+  --border-card: var(--border-subtle);
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.25);
+  --shadow-card-hover: 0 6px 18px rgba(0, 0, 0, 0.4);
+
+  /* 14. 卡片圆角（卡片 9px，控件 5px 不变） */
+  --radius-card: 9px;
+}
+
+/* Light 主题：仅覆盖表面/文字/边框/阴影，品牌色与状态色双主题共用。
+   状态色整体加深一档：浅色底上原值（绿 3.2 / 红 3.4 / 琥珀 1.9）远低于 AA 4.5:1 */
+[data-theme="light"] {
+  color-scheme: light;
+
+  --bg-marketing: #f7f8f8;
+  --bg-panel: #ffffff;
+  --bg-level3: #f3f4f5;
+  --bg-secondary: #f3f4f5;
+  --bg-hover: rgba(0, 0, 0, 0.04);
+  --bg-inset: #f3f4f5;
+
+  --text-primary: #08090a;
+  --text-secondary: #28282c;
+  --text-tertiary: #62666d;
+  --text-quaternary: #68707a;
+
+  --border-primary: #d0d6e0;
+  --border-secondary: #e6e6e6;
+  --border-tertiary: #e6e6e6;
+  --line-tint: #e6e6e6;
+  --border-subtle: rgba(0, 0, 0, 0.05);
+  --border-standard: rgba(0, 0, 0, 0.08);
+
+  --accent-strong: #4f51c0;
+  --status-green: #187a30;
+  --status-red: #c43238;
+  --status-amber: #b45309;
+
+  --elevation-1: 0 1px 2px rgba(0, 0, 0, 0.06);
+  --elevation-2: 0 2px 8px rgba(0, 0, 0, 0.08);
+  --elevation-3: 0 8px 24px rgba(0, 0, 0, 0.12);
+  --elevation-inset: inset 0 1px 3px rgba(0, 0, 0, 0.06);
+
+  --card-highlight: rgba(0, 0, 0, 0.06);
+  --card-highlight-hover: rgba(0, 0, 0, 0.1);
+  --border-card: #e7e8ea;
+  --shadow-card: 0 2px 8px rgba(24, 28, 34, 0.06);
+  --shadow-card-hover: 0 6px 18px rgba(24, 28, 34, 0.1);
+}
+
+@theme {
+  /* 表面（背景） */
+  --color-page: var(--bg-marketing); /* 窗口最底色 */
+  --color-panel: var(--bg-panel); /* 工具栏/侧栏/面板 */
+  --color-card: var(--bg-level3); /* 卡片、激活分段 */
+  --color-surface: var(--bg-secondary); /* hover 后的次级表面 */
+  --color-hover: var(--bg-hover); /* 半透明 hover 覆盖层 */
+  --color-inset: var(--bg-inset); /* 输出终端内嵌背景 */
+
+  /* 前景（文字） */
+  --color-ink: var(--text-primary);
+  --color-ink-dim: var(--text-secondary);
+  --color-ink-mute: var(--text-tertiary);
+  --color-ink-faint: var(--text-quaternary);
+
+  /* 品牌与强调 */
+  --color-accent: var(--brand-indigo);
+  --color-accent-violet: var(--accent-violet);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-strong: var(--accent-strong);
+  --color-accent-ring: var(--accent-ring);
+
+  /* 状态 */
+  --color-ok: var(--status-green);
+  --color-danger: var(--status-red);
+  --color-warn: var(--status-amber);
+  --color-ok-bg: var(--status-green-bg);
+  --color-danger-bg: var(--status-red-bg);
+  --color-warn-bg: var(--status-amber-bg);
+
+  /* 边框分隔线 */
+  --color-line: var(--border-standard);
+  --color-line-subtle: var(--border-subtle);
+  --color-line-strong: var(--border-primary);
+  --color-line-mid: var(--border-secondary);
+  --color-line-deep: var(--border-tertiary);
+  --color-line-tint: var(--line-tint);
+
+  /* 阴影层级 */
+  --shadow-elev-1: var(--elevation-1);
+  --shadow-elev-2: var(--elevation-2);
+  --shadow-elev-3: var(--elevation-3);
+  --shadow-elev-focus: var(--elevation-focus);
+  --shadow-elev-inset: var(--elevation-inset);
+
+  /* 字体（与 :root 保持一致） */
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+  /* 字号阶梯（语义工具类：text-badge / caption / control / body / title / page） */
+  --text-badge: var(--text-badge-size);
+  --text-caption: var(--text-caption-size);
+  --text-caption--line-height: 1.4;
+  --text-control: var(--text-control-size);
+  --text-control--line-height: 1.4;
+  --text-body: var(--text-body-size);
+  --text-body--line-height: 1.55;
+  --text-title: var(--text-title-size);
+  --text-title--line-height: 1.35;
+  --text-page: var(--text-page-size);
+  --text-page--line-height: 1.3;
+
+  /* 圆角体系（rounded-badge / rounded-control / rounded-panel） */
+  --radius-badge: 3px;
+  --radius-control: 5px;
+  --radius-panel: 8px;
+
+  /* 覆盖内置 pulse：状态点呼吸（opacity 0.4 谷底） */
+  --animate-pulse: pulse 1.5s infinite;
+  @keyframes pulse {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.4;
+    }
+  }
+
+  /* 弹窗/命令面板入场 */
+  --animate-modal-in: modal-in var(--duration-panel) var(--ease-panel);
+  @keyframes modal-in {
+    from {
+      opacity: 0;
+      transform: scale(0.98) translateY(4px);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+    }
+  }
+
+  /* 运行中不确定进度条 */
+  --animate-indeterminate: indeterminate 1.2s ease-in-out infinite;
+  @keyframes indeterminate {
+    0% {
+      transform: translateX(-100%);
+    }
+    100% {
+      transform: translateX(320%);
+    }
+  }
+
+  /* 卡片圆角（rounded-card） */
+  --radius-card: 9px;
+
+  /* 卡片/列表行入场（stagger 由消费方内联 animation-delay 控制，backwards 保证延迟期不可见） */
+  --animate-card-in: card-in 240ms var(--ease-panel) backwards;
+  @keyframes card-in {
+    from {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* 视图切换（v-show 分支从 display:none 恢复时自动重放） */
+  --animate-view-in: view-in 200ms var(--ease-panel);
+  @keyframes view-in {
+    from {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}

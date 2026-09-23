@@ -1,0 +1,493 @@
+"""保留核心模块（Electron sidecar 复用链路）的单元测试，无需图形界面。
+
+覆盖：仓库根识别、示例加载、物化（含兄弟数据文件）、JSON 回写、
+安全扫描、质量评分、VenvManager 的 Python 解释器注入。
+"""
+
+import json
+import os
+import shutil
+import sys
+from pathlib import Path
+
+import pytest
+from app.json_examples import ExampleStore
+from app.models import ExampleItem
+from app.quality import QualityScorer
+from app.security import SecurityChecker
+from app.venv_manager import VenvManager
+
+APP_DIR = Path(__file__).resolve().parent.parent
+
+
+@pytest.fixture(scope="module")
+def items() -> dict[str, ExampleItem]:
+    """加载全部示例并构建 json_id -> ExampleItem 扁平索引。"""
+    store = ExampleStore(base_dir=APP_DIR)
+    root = store.load()
+    flat: dict[str, ExampleItem] = {}
+
+    def walk(item: ExampleItem) -> None:
+        if not item.is_dir and item.json_id:
+            flat[item.json_id] = item
+        for child in item.children:
+            walk(child)
+
+    walk(root)
+    return flat
+
+
+def test_repo_root_is_project_itself():
+    """示例仓库迁入后，仓库根应识别为 desktop-app 自身而非上级目录。"""
+    store = ExampleStore(base_dir=APP_DIR)
+    assert store._source_root == APP_DIR
+
+
+def test_load_examples(items):
+    # 2026-09-23 调整基线：Turtle 变体精简（345），新增实用工具箱 50 条
+    assert len(items) > 1400
+    some = next(iter(items.values()))
+    assert some.category in {"topics", "tools", "projects", "json"}
+    assert some.path.is_file() and some.path.suffix == ".py"
+
+
+def test_materialize_keeps_sibling_files(items):
+    """迁移示例物化时应保留原始目录的兄弟数据文件。"""
+    ex = items.get("topics_algorithms_cycle-detection_code_example06.py")
+    assert ex is not None
+    assert (ex.path.parent / "dictionary.txt").is_file()
+
+
+def test_save_item_writes_back_json_and_cache(items):
+    ex = items["hello_world"]
+    original = ex.code
+    new_code = original + "\n# touched by test\n"
+    store = ExampleStore(base_dir=APP_DIR)
+    try:
+        assert ex.json_file is not None
+        assert store.save_item(ex, new_code) is True
+        assert "# touched by test" in ex.path.read_text(encoding="utf-8")
+        assert "# touched by test" in ex.json_file.read_text(encoding="utf-8")
+    finally:
+        store.save_item(ex, original)
+    assert ex.code == original
+
+
+def test_save_item_survives_midwrite_failure(tmp_path, monkeypatch):
+    """写盘中途失败（文件已被截断）不得损坏 JSON 真相源。
+
+    save_item 必须走"临时文件 + 原子替换"：写入失败时原集合文件保持完好、
+    无 .tmp 残留。直接原地覆盖写会让整个集合（几十上百个示例）丢失。
+    """
+    coll = tmp_path / "json_examples"
+    coll.mkdir()
+    spec = {"id": "demo", "name": "demo.py", "title": "Demo", "code": "print('v1')\n"}
+    json_file = coll / "demo.json"
+    json_file.write_text(json.dumps({"name": "demo", "examples": [spec]}), encoding="utf-8")
+
+    store = ExampleStore(base_dir=tmp_path)
+    root = store.load()
+    item = root.children[0].children[0]
+
+    real_write_text = Path.write_text
+    state = {"failed": False}
+
+    def flaky_write_text(self, data, **kwargs):
+        # 只让集合目录内的首次写入失败（模拟截断已发生后的磁盘故障）：
+        # 先按真实行为打开 'w' 模式（截断文件），再抛错——
+        # 旧实现在此截断 json_file 本体，新实现截断的应是 .tmp 临时文件
+        if not state["failed"] and str(self).startswith(str(coll)):
+            state["failed"] = True
+            with open(self, "w", encoding="utf-8"):
+                pass
+            raise OSError("simulated mid-write failure")
+        return real_write_text(self, data, **kwargs)
+
+    monkeypatch.setattr(Path, "write_text", flaky_write_text)
+    try:
+        assert store.save_item(item, "print('v2')\n") is False
+    finally:
+        monkeypatch.undo()
+
+    data = json.loads(json_file.read_text(encoding="utf-8"))
+    assert data["examples"][0]["code"] == "print('v1')\n"
+    assert list(coll.glob("*.tmp")) == []
+
+
+def test_materialize_rejects_path_traversal(tmp_path):
+    """JSON 的 dir/name 字段不得把物化引到缓存目录之外（绝对路径 / .. 穿越）。"""
+    # 仓库根标记：让 _find_repo_root 识别 tmp_path 为 source_root
+    for d in ("topics", "tools", "projects"):
+        (tmp_path / d).mkdir()
+    # 绝对路径指向 tmp_path 之外的小目录（RED 阶段旧实现会把它整个拷入缓存）
+    outside = tmp_path.parent / f"trav_outside_{os.getpid()}"
+    outside.mkdir(exist_ok=True)
+    (outside / "secret.txt").write_text("sensitive", encoding="utf-8")
+    coll = tmp_path / "json_examples"
+    coll.mkdir()
+    evil_dir = {"id": "evil_abs", "name": "e1.py", "code": "print('x')", "dir": str(outside)}
+    evil_name = {"id": "evil_name", "name": "../outside.py", "code": "print('x')"}
+    (coll / "evil.json").write_text(json.dumps({"name": "evil", "examples": [evil_dir, evil_name]}), encoding="utf-8")
+    try:
+        store = ExampleStore(base_dir=tmp_path)
+        root = store.load()
+        # 两条越界示例都应被拒绝加载（collection 下没有合法示例）
+        assert root.children[0].children == []
+        # 缓存目录中没有出现越界内容
+        assert not (tmp_path / ".json_examples_cache" / "secret.txt").exists()
+        assert not (tmp_path / "outside.py").exists()
+    finally:
+        shutil.rmtree(outside, ignore_errors=True)
+
+
+def test_materialize_allows_normal_relative_dir(tmp_path):
+    """正常相对 dir 与文件名不受路径校验影响。"""
+    # 仓库根标记：让 _find_repo_root 识别 tmp_path 为 source_root
+    for d in ("tools", "projects"):
+        (tmp_path / d).mkdir()
+    src = tmp_path / "topics" / "demo"
+    src.mkdir(parents=True)
+    (src / "data.txt").write_text("hello", encoding="utf-8")
+    coll = tmp_path / "json_examples"
+    coll.mkdir()
+    (coll / "ok.json").write_text(
+        json.dumps(
+            {
+                "name": "ok",
+                "examples": [
+                    {"id": "ok_1", "name": "ok1.py", "code": "print('ok')", "dir": "topics/demo"},
+                    {"id": "ok_2", "name": "ok2.py", "code": "print('ok2')"},
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    store = ExampleStore(base_dir=tmp_path)
+    root = store.load()
+    children = root.children[0].children
+    assert len(children) == 2
+    # 兄弟数据文件随目录物化
+    assert (children[0].path.parent / "data.txt").is_file()
+
+
+def test_security_checker_detects_risky_code(tmp_path):
+    risky = tmp_path / "risky.py"
+    risky.write_text("import shutil\nshutil.rmtree('/tmp/x')\n", encoding="utf-8")
+    report = SecurityChecker().check(risky)
+    assert report.risks, "rmtree 应被判定为风险"
+
+
+def test_security_checker_passes_clean_code(tmp_path):
+    clean = tmp_path / "clean.py"
+    clean.write_text("print('hello')\n", encoding="utf-8")
+    report = SecurityChecker().check(clean)
+    assert not report.risks
+
+
+def test_security_risk_level_rmtree_is_high(tmp_path):
+    """shutil.rmtree 递归删除应判定为高风险。"""
+    from app.security import RiskLevel
+
+    risky = tmp_path / "risky.py"
+    risky.write_text("import shutil\nshutil.rmtree('/tmp/x')\n", encoding="utf-8")
+    report = SecurityChecker().check(risky)
+    assert report.max_risk_level == RiskLevel.HIGH
+    assert any(r.level == RiskLevel.HIGH for r in report.risk_details)
+
+
+def test_security_risk_level_subprocess_no_shell_is_medium(tmp_path):
+    """subprocess.run 无 shell=True 应判定为中风险（常见操作）。"""
+    from app.security import RiskLevel
+
+    code = tmp_path / "sub.py"
+    code.write_text("import subprocess\nsubprocess.run(['ls', '-la'])\n", encoding="utf-8")
+    report = SecurityChecker().check(code)
+    assert report.max_risk_level == RiskLevel.MEDIUM
+    assert not report.high_risks
+
+
+def test_security_risk_level_subprocess_shell_true_is_high(tmp_path):
+    """subprocess.run(shell=True) 应判定为高风险（命令注入）。"""
+    from app.security import RiskLevel
+
+    code = tmp_path / "shell.py"
+    code.write_text("import subprocess\nsubprocess.run('ls', shell=True)\n", encoding="utf-8")
+    report = SecurityChecker().check(code)
+    assert report.max_risk_level == RiskLevel.HIGH
+    assert any("shell=True" in r for r in report.high_risks)
+
+
+def test_security_risk_level_eval_is_high(tmp_path):
+    """eval() 任意代码执行应判定为高风险。"""
+    from app.security import RiskLevel
+
+    code = tmp_path / "eval.py"
+    code.write_text("eval('1+1')\n", encoding="utf-8")
+    report = SecurityChecker().check(code)
+    assert report.max_risk_level == RiskLevel.HIGH
+
+
+def test_security_whitelist_by_id(tmp_path):
+    """白名单中的示例 ID 应跳过安全扫描。"""
+    code = tmp_path / "safe.py"
+    code.write_text("import shutil\nshutil.rmtree('/tmp/x')\n", encoding="utf-8")
+    checker = SecurityChecker(whitelist_ids={"my_safe_example"})
+    report = checker.check(code, example_id="my_safe_example")
+    assert report.is_safe
+    assert not report.risks
+
+
+def test_security_whitelist_by_pattern(tmp_path):
+    """白名单 glob 模式匹配的示例 ID 应跳过安全扫描。"""
+    code = tmp_path / "safe.py"
+    code.write_text("import shutil\nshutil.rmtree('/tmp/x')\n", encoding="utf-8")
+    checker = SecurityChecker(whitelist_patterns=["pil_*", "dataviz_*"])
+    report = checker.check(code, example_id="pil_image_filter_01")
+    assert report.is_safe
+    assert not report.risks
+
+
+def test_security_non_whitelisted_still_scanned(tmp_path):
+    """不在白名单中的示例应正常扫描。"""
+    code = tmp_path / "risky.py"
+    code.write_text("import shutil\nshutil.rmtree('/tmp/x')\n", encoding="utf-8")
+    checker = SecurityChecker(whitelist_ids={"other_example"})
+    report = checker.check(code, example_id="my_risky_example")
+    assert not report.is_safe
+    assert report.risks
+
+
+def test_quality_scoring(items):
+    ex = items.get("hello_world") or next(iter(items.values()))
+    report = QualityScorer().score(ex)
+    assert 0 <= report.score <= 100
+
+
+def test_venv_manager_python_exe_override(tmp_path):
+    override = VenvManager(repo_root=tmp_path, python_exe="/opt/fake/python3")
+    assert override.python_exe == "/opt/fake/python3"
+
+    default = VenvManager(repo_root=tmp_path)
+    assert default.python_exe == sys.executable
+
+
+def test_bootstrap_prefers_project_manifest(tmp_path, monkeypatch):
+    """引导安装优先使用仓库根的共享依赖清单（requirements.txt）。"""
+    installed: list[str] = []
+    mgr = VenvManager(repo_root=tmp_path, bootstrap_packages=("fallback-pkg",))
+
+    def fake_pip_install(args, timeout):
+        installed.append(args[0])
+        return True
+
+    def fake_create_venv():
+        mgr.get_python_executable().parent.mkdir(parents=True, exist_ok=True)
+        return True
+
+    monkeypatch.setattr(mgr, "_pip_install", fake_pip_install)
+    monkeypatch.setattr(mgr, "_create_venv", fake_create_venv)
+
+    # 清单缺失 → 回退内置兜底清单
+    mgr.prepare()
+    assert "fallback-pkg" in installed
+
+    # 有清单 → 按清单安装（忽略注释），不再用兜底
+    installed.clear()
+    (tmp_path / "requirements.txt").write_text("# 项目清单\nrequests\ndjango\n\n", encoding="utf-8")
+    marker = mgr.venv_path / mgr.MARKER_FILE_NAME
+    marker.unlink(missing_ok=True)
+    mgr._marker_loaded = False
+    mgr.prepare()
+    assert "requests" in installed and "django" in installed
+    assert "fallback-pkg" not in installed
+
+
+def test_ensure_python_uses_shared_venv(tmp_path, monkeypatch):
+    """所有示例统一使用共享 .venv：requirements 按内容 hash 去重后装入同一环境。"""
+    calls: list[tuple] = []
+    mgr = VenvManager(repo_root=tmp_path, bootstrap_packages=())
+
+    def fake_create_venv():
+        mgr.get_python_executable().parent.mkdir(parents=True, exist_ok=True)
+        return True
+
+    def fake_pip_install(args, timeout):
+        calls.append(tuple(args))
+        return True
+
+    monkeypatch.setattr(mgr, "_create_venv", fake_create_venv)
+    monkeypatch.setattr(mgr, "_pip_install", fake_pip_install)
+
+    example = tmp_path / "examples" / "demo.py"
+    example.parent.mkdir(parents=True)
+    (example.parent / "requirements.txt").write_text("requests\n", encoding="utf-8")
+
+    ok, python_exe = mgr.ensure_python(example)
+    assert ok is True
+    assert Path(python_exe) == mgr.get_python_executable()
+    assert tmp_path / ".venv" in Path(python_exe).parents
+    # 首次：创建 venv 并安装示例 requirements
+    assert ("-r", str(example.parent / "requirements.txt")) in calls
+
+    # 第二次：hash 已记录，不再触发 pip
+    mgr.ensure_python(example)
+    pip_calls = [c for c in calls if c and c[0] == "-r"]
+    assert len(pip_calls) == 1
+
+
+def test_shared_venv_without_requirements_skips_pip(tmp_path, monkeypatch):
+    """无 requirements.txt 的示例直接用共享 venv 解释器，不触发安装。"""
+    calls: list[tuple] = []
+
+    def fake_create_venv():
+        calls.append(("create",))
+        return True
+
+    def fake_pip_install(args, timeout):
+        calls.append(tuple(args))
+        return True
+
+    mgr = VenvManager(repo_root=tmp_path, bootstrap_packages=())
+    monkeypatch.setattr(mgr, "_create_venv", fake_create_venv)
+    monkeypatch.setattr(mgr, "_pip_install", fake_pip_install)
+
+    example = tmp_path / "solo.py"
+    example.write_text("print('hi')\n", encoding="utf-8")
+    ok, _ = mgr.ensure_python(example)
+
+    assert ok is True
+    assert calls == [("create",)]
+
+
+def test_merge_requirements_drops_invalid_names(tmp_path):
+    """乱码/非法包名（历史迁移数据）不应写入 requirements.txt 污染共享 venv。"""
+    store = ExampleStore(base_dir=APP_DIR)
+    cache_dir = tmp_path / "ex"
+    cache_dir.mkdir()
+    store._merge_requirements(cache_dir, ["\x00F\x00l\x00a\x00s\x00k\x00", "requests", "ok-pkg_2"])
+    lines = (cache_dir / "requirements.txt").read_text(encoding="utf-8").splitlines()
+    assert lines == ["requests", "ok-pkg_2"]
+
+
+# --------------------------------------------------------------------- 用户集合（解耦）
+
+
+def _make_two_source_store(tmp_path):
+    """内置库（json_examples/）+ 用户库（user_examples/）各一个集合。"""
+    coll = tmp_path / "json_examples"
+    coll.mkdir()
+    (coll / "builtin.json").write_text(
+        json.dumps({"name": "builtin", "examples": [{"id": "b1", "name": "b1.py", "code": "print(1)\n"}]}),
+        encoding="utf-8",
+    )
+    user = tmp_path / "user_examples"
+    user.mkdir()
+    (user / "mine.json").write_text(
+        json.dumps(
+            {
+                "name": "mine",
+                "examples": [
+                    {"id": "u1", "name": "u1.py", "code": "print(2)\n"},
+                    {"id": "u2", "name": "u2.py", "code": "print(3)\n"},
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    return ExampleStore(base_dir=tmp_path, user_dir=user), user
+
+
+def _flat(root):
+    flat: dict[str, ExampleItem] = {}
+
+    def walk(item):
+        if not item.is_dir and item.json_id:
+            flat[item.json_id] = item
+        for child in item.children:
+            walk(child)
+
+    walk(root)
+    return flat
+
+
+def test_user_dir_loads_alongside_builtin(tmp_path):
+    store, _ = _make_two_source_store(tmp_path)
+    flat = _flat(store.load())
+    assert {"b1", "u1", "u2"} <= set(flat)
+
+
+def test_source_dir_survives_load(tmp_path):
+    """JSON 条目的 dir 字段透传到 item.source_dir（工具箱分组依据）；无 dir 条目为 None。"""
+    coll = tmp_path / "json_examples"
+    coll.mkdir()
+    (coll / "tools.json").write_text(
+        json.dumps(
+            {
+                "name": "tools",
+                "examples": [
+                    {"id": "t1", "name": "t1.py", "code": "print(1)\n", "dir": "tools/utility-crawlers"},
+                    {"id": "t2", "name": "t2.py", "code": "print(2)\n"},
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    store = ExampleStore(base_dir=tmp_path, user_dir=tmp_path / "user_examples")
+    flat = _flat(store.load())
+    assert flat["t1"].source_dir == "tools/utility-crawlers"
+    assert flat["t2"].source_dir is None
+
+
+def test_user_collection_flag_distinguishes_source(tmp_path):
+    store, _ = _make_two_source_store(tmp_path)
+    flat = _flat(store.load())
+    assert store.is_user_collection(flat["u1"].json_file) is True
+    assert store.is_user_collection(flat["b1"].json_file) is False
+    assert store.is_user_collection(None) is False
+
+
+def test_delete_user_example_writes_back_and_cleans_cache(tmp_path):
+    store, user = _make_two_source_store(tmp_path)
+    flat = _flat(store.load())
+    assert store.ensure_run_status(flat["u1"])  # 预热派生缓存
+    cache_dir = store.cache_dir / "u1"
+    assert cache_dir.is_dir()  # 单文件物化已发生
+
+    assert store.delete_user_example(flat["u1"]) is True
+    data = json.loads((user / "mine.json").read_text(encoding="utf-8"))
+    assert [s["id"] for s in data["examples"]] == ["u2"]
+    assert not cache_dir.exists()  # 物化缓存一并清理
+    assert str(store._run_status.get("u1", "")) == "" or "u1" not in store._run_status
+
+
+def test_delete_refuses_builtin_and_missing(tmp_path):
+    store, _ = _make_two_source_store(tmp_path)
+    flat = _flat(store.load())
+    # 内置集合受保护
+    assert store.delete_user_example(flat["b1"]) is False
+    assert "b1" in (tmp_path / "json_examples" / "builtin.json").read_text(encoding="utf-8")
+    # 集合里已无此条目时返回 False
+    ghost = ExampleItem(
+        name="ghost.py",
+        path=tmp_path / "x.py",
+        is_dir=False,
+        category="json",
+        source="json",
+        code="",
+        json_id="ghost",
+        json_file=tmp_path / "user_examples" / "mine.json",
+    )
+    assert store.delete_user_example(ghost) is False
+
+
+def test_delete_last_example_removes_collection_file(tmp_path):
+    """集合删空后整个集合文件移除，加载侧不再生成空 📦 节点。"""
+    store, user = _make_two_source_store(tmp_path)
+    flat = _flat(store.load())
+    assert store.delete_user_example(flat["u1"]) is True
+    assert store.delete_user_example(flat["u2"]) is True
+    assert not (user / "mine.json").exists()
+    # 重新加载：用户集合节点消失
+    root = store.load()
+    coll_names = [c.name for c in root.children]
+    assert not any("mine" in n for n in coll_names)

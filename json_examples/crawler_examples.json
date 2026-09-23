@@ -1,0 +1,917 @@
+{
+ "name": "爬虫实战",
+ "description": "真实请求链路的爬虫示例（第三批追加）。",
+ "examples": [
+  {
+   "id": "topics_crawler-http-get-basic",
+   "name": "crawler_http-get-basic.py",
+   "category": "topics",
+   "tags": [
+    "爬虫"
+   ],
+   "title": "GET 请求与响应解读",
+   "description": "requests 最小可用抓取：状态码、头、编码、JSON 反序列化。",
+   "requirements": [
+    "requests"
+   ],
+   "code": "\"\"\"GET 请求基础：httpbin 回显服务演示响应各部分。\"\"\"\nimport requests\n\nresp = requests.get(\"https://httpbin.org/get\", params={\"q\": \"python\", \"page\": 1}, timeout=10)\nprint(\"状态码:\", resp.status_code)\nprint(\"响应头 Content-Type:\", resp.headers.get(\"Content-Type\"))\nprint(\"编码:\", resp.encoding)\ndata = resp.json()  # httpbin 返回 JSON\nprint(\"服务端看到的查询参数:\", data[\"args\"])\nprint(\"请求 UA:\", data[\"headers\"].get(\"User-Agent\", \"<未知>\")[:40], \"...\")\n"
+  },
+  {
+   "id": "topics_crawler-http-headers-ua",
+   "name": "crawler_http-headers-ua.py",
+   "category": "topics",
+   "tags": [
+    "爬虫"
+   ],
+   "title": "请求头与 UA 伪装",
+   "description": "构造浏览器级请求头绕过基础 UA 检测（标准反爬第一课）。",
+   "requirements": [
+    "requests"
+   ],
+   "code": "\"\"\"请求头构造：模拟 Chrome 浏览器发起请求。\"\"\"\nimport requests\n\nHEADERS = {\n    \"User-Agent\": \"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 \"\n                  \"(KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36\",\n    \"Accept\": \"text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8\",\n    \"Accept-Language\": \"zh-CN,zh;q=0.9\",\n}\n\nresp = requests.get(\"https://httpbin.org/user-agent\", headers=HEADERS, timeout=10)\nprint(\"服务端收到的 UA:\", resp.json()[\"user-agent\"])\nprint(\"状态码:\", resp.status_code)\n"
+  },
+  {
+   "id": "topics_crawler-http-timeout-retry",
+   "name": "crawler_http-timeout-retry.py",
+   "category": "topics",
+   "tags": [
+    "爬虫"
+   ],
+   "title": "超时与重试退避",
+   "description": "连接/读取超时分离 + 指数退避重试（生产必备）。",
+   "requirements": [
+    "requests"
+   ],
+   "code": "\"\"\"超时与重试：指数退避，最多 4 次。\"\"\"\nimport time\nimport requests\n\nURL = \"https://httpbin.org/status/200,503\"\nfor attempt in range(1, 5):\n    try:\n        resp = requests.get(URL, timeout=(3.05, 10))  # (连接, 读取)\n        if resp.status_code == 200:\n            print(f\"第 {attempt} 次成功\")\n            break\n        print(f\"第 {attempt} 次状态码 {resp.status_code}\")\n    except requests.RequestException as e:\n        print(f\"第 {attempt} 次异常: {type(e).__name__}\")\n    time.sleep(2 ** attempt)  # 1, 2, 4 秒退避\nelse:\n    print(\"重试耗尽，放弃\")\n"
+  },
+  {
+   "id": "topics_crawler-http-session-cookies",
+   "name": "crawler_http-session-cookies.py",
+   "category": "topics",
+   "tags": [
+    "爬虫"
+   ],
+   "title": "会话与 Cookie",
+   "description": "requests.Session 保持登录态，Cookie 自动回传。",
+   "requirements": [
+    "requests"
+   ],
+   "code": "\"\"\"Session 会话：Cookie 在多次请求间自动保持。\"\"\"\nimport requests\n\nwith requests.Session() as s:\n    s.headers[\"User-Agent\"] = \"Mozilla/5.0 (learning-demo)\"\n    s.get(\"https://httpbin.org/cookies/set/token/abc123\", timeout=10)  # 服务端 Set-Cookie\n    data = s.get(\"https://httpbin.org/cookies\", timeout=10).json()\n    print(\"会话内 Cookie:\", data[\"cookies\"])  # token 自动回传\n"
+  },
+  {
+   "id": "topics_crawler-http-post-form",
+   "name": "crawler_http-post-form.py",
+   "category": "topics",
+   "tags": [
+    "爬虫"
+   ],
+   "title": "POST 表单提交",
+   "description": "表单字段与 JSON 体两种提交方式。",
+   "requirements": [
+    "requests"
+   ],
+   "code": "\"\"\"POST 提交：表单 vs JSON。\"\"\"\nimport requests\n\nform = requests.post(\"https://httpbin.org/post\", data={\"user\": \"demo\", \"page\": 2}, timeout=10)\nprint(\"表单字段:\", form.json()[\"form\"])\n\npayload = {\"items\": [1, 2, 3], \"verbose\": True}\njs = requests.post(\"https://httpbin.org/post\", json=payload, timeout=10)\nprint(\"JSON 体:\", js.json()[\"json\"])\n"
+  },
+  {
+   "id": "topics_crawler-http-status-handle",
+   "name": "crawler_http-status-handle.py",
+   "category": "topics",
+   "tags": [
+    "爬虫"
+   ],
+   "title": "状态码分类处理",
+   "description": "2xx/3xx/4xx/5xx 的分支处理与 raise_for_status。",
+   "requirements": [
+    "requests"
+   ],
+   "code": "\"\"\"状态码分类：生产级响应处理骨架。\"\"\"\nimport requests\n\nfor code in (200, 301, 404, 500):\n    resp = requests.get(f\"https://httpbin.org/status/{code}\", timeout=10, allow_redirects=False)\n    kind = (\"成功\" if resp.status_code < 300\n            else \"重定向\" if resp.status_code < 400\n            else \"客户端错误\" if resp.status_code < 500 else \"服务端错误\")\n    print(f\"{code} -> {kind}\")\ntry:\n    requests.get(\"https://httpbin.org/status/404\", timeout=10).raise_for_status()\nexcept requests.HTTPError as e:\n    print(\"raise_for_status:\", e)\n"
+  },
+  {
+   "id": "topics_crawler-http-stream-download",
+   "name": "crawler_http-stream-download.py",
+   "category": "topics",
+   "tags": [
+    "爬虫"
+   ],
+   "title": "流式下载大文件",
+   "description": "chunked 流式写入，内存占用恒定。",
+   "requirements": [
+    "requests"
+   ],
+   "code": "\"\"\"流式下载：逐块写入，适合大文件。\"\"\"\nimport requests\n\nurl = \"https://httpbin.org/bytes/3000\"\ndest = \"download_demo.bin\"\nwith requests.get(url, stream=True, timeout=15) as resp:\n    resp.raise_for_status()\n    total = 0\n    with open(dest, \"wb\") as f:\n        for chunk in resp.iter_content(chunk_size=1024):\n            f.write(chunk)\n            total += len(chunk)\nprint(f\"已下载 {total} 字节 -> {dest}\")\n"
+  },
+  {
+   "id": "topics_crawler-http-proxy",
+   "name": "crawler_http-proxy.py",
+   "category": "topics",
+   "tags": [
+    "爬虫"
+   ],
+   "title": "代理配置",
+   "description": "http/https 代理设置（内网抓取与 IP 轮换的基础）。",
+   "requirements": [
+    "requests"
+   ],
+   "code": "\"\"\"代理：企业内网/爬虫池的接入口径。\"\"\"\nimport requests\n\nproxies = {\n    \"http\": \"http://127.0.0.1:7890\",\n    \"https\": \"http://127.0.0.1:7890\",\n}\ntry:\n    resp = requests.get(\"https://httpbin.org/ip\", proxies=proxies, timeout=5)\n    print(\"出口 IP:\", resp.json())\nexcept requests.RequestException as e:\n    print(\"代理不可达（本机未开 7890 端口属正常）:\", type(e).__name__)\n"
+  },
+  {
+   "id": "topics_crawler-parse-json-api",
+   "name": "crawler_parse-json-api.py",
+   "category": "topics",
+   "tags": [
+    "爬虫"
+   ],
+   "title": "JSON API 解析",
+   "description": "嵌套 JSON 的字段提取、容错与列表推导。",
+   "requirements": [
+    "requests"
+   ],
+   "code": "\"\"\"JSON API 解析：jsonplaceholder 典型列表接口。\"\"\"\nimport requests\n\nresp = requests.get(\"https://jsonplaceholder.typicode.com/users\", timeout=10)\nusers = resp.json()\nfor u in users[:5]:\n    print(f\"{u['id']:>2} {u['name']:<22} {u['email']:<28} {u['address']['city']}\")\nprint(\"共\", len(users), \"个用户；第一个公司:\", users[0][\"company\"][\"name\"])\n"
+  },
+  {
+   "id": "topics_crawler-parse-html-bs4",
+   "name": "crawler_parse-html-bs4.py",
+   "category": "topics",
+   "tags": [
+    "爬虫"
+   ],
+   "title": "BeautifulSoup 解析",
+   "description": "CSS 选择器提取标题/链接/属性。",
+   "requirements": [
+    "requests",
+    "beautifulsoup4"
+   ],
+   "code": "\"\"\"BS4 解析：从 HTML 片段提取结构化数据。\"\"\"\nfrom bs4 import BeautifulSoup\n\nHTML = \"\"\"\n<ul class=\"list\">\n  <li class=\"item\"><a href=\"/p/1\">第一篇</a><span class=\"meta\">2026-09-01</span></li>\n  <li class=\"item\"><a href=\"/p/2\">第二篇</a><span class=\"meta\">2026-09-15</span></li>\n  <li class=\"item hot\"><a href=\"/p/3\">热帖</a><span class=\"meta\">2026-09-22</span></li>\n</ul>\"\"\"\nsoup = BeautifulSoup(HTML, \"html.parser\")\nfor li in soup.select(\"li.item\"):\n    a = li.select_one(\"a\")\n    print(li.get(\"class\"), a[\"href\"], a.text, li.select_one(\".meta\").text)\nprint(\"热帖数:\", len(soup.select(\"li.hot\")))\n"
+  },
+  {
+   "id": "topics_crawler-parse-html-find",
+   "name": "crawler_parse-html-find.py",
+   "category": "topics",
+   "tags": [
+    "爬虫"
+   ],
+   "title": "find/find_all 链式定位",
+   "description": "按属性与文本定位节点，get_text 清洗。",
+   "requirements": [
+    "requests",
+    "beautifulsoup4"
+   ],
+   "code": "\"\"\"find/find_all：属性定位与文本提取。\"\"\"\nfrom bs4 import BeautifulSoup\n\nHTML = '<div class=\"price\"><em>￥</em>129.00<del>￥199.00</del></div>'\nsoup = BeautifulSoup(HTML, \"html.parser\")\nbox = soup.find(\"div\", class_=\"price\")\nprice = box.find(text=True, recursive=False).strip()\nold = box.find(\"del\").get_text(strip=True)\nprint(\"现价:\", price, \"| 原价:\", old, \"| 类型:\", type(price).__name__)\n"
+  },
+  {
+   "id": "topics_crawler-parse-regex-extract",
+   "name": "crawler_parse-regex-extract.py",
+   "category": "topics",
+   "tags": [
+    "爬虫"
+   ],
+   "title": "正则批量提取",
+   "description": "从非结构化文本中提取邮箱/手机号/日期。",
+   "requirements": [
+    "requests"
+   ],
+   "code": "\"\"\"正则提取：抓取结果里的结构化字段。\"\"\"\nimport re\n\nTEXT = \"\"\"\n联系人: alice@example.com / 备用 bob@test.org\n电话: 13812345678，传真 010-88889999\n截止: 2026-10-01 之前\n\"\"\"\nemails = re.findall(r\"[\\w.+-]+@[\\w-]+\\.[\\w.]+\", TEXT)\nphones = re.findall(r\"1[3-9]\\d{9}\", TEXT)\ndates = re.findall(r\"\\d{4}-\\d{2}-\\d{2}\", TEXT)\nprint(\"邮箱:\", emails)\nprint(\"手机:\", phones)\nprint(\"日期:\", dates)\n"
+  },
+  {
+   "id": "topics_crawler-parse-lxml-xpath",
+   "name": "crawler_parse-lxml-xpath.py",
+   "category": "topics",
+   "tags": [
+    "爬虫"
+   ],
+   "title": "lxml XPath",
+   "description": "XPath 轴定位：属性、包含文本、层级跳跃。",
+   "requirements": [
+    "requests",
+    "lxml"
+   ],
+   "code": "\"\"\"lxml XPath：大页面解析的首选（速度优于 bs4）。\"\"\"\nfrom lxml import html\n\nDOC = html.fromstring(\"\"\"\n<div id=\"main\">\n  <h2>商品列表</h2>\n  <a class=\"buy\" data-id=\"1\" href=\"/buy/1\">苹果</a>\n  <a class=\"buy\" data-id=\"2\" href=\"/buy/2\">香蕉</a>\n  <span class=\"sold-out\">售罄</span>\n</div>\"\"\")\nprint(\"标题:\", DOC.xpath(\"//h2/text()\"))\nprint(\"链接:\", DOC.xpath(\"//a[@class='buy']/@href\"))\nprint(\"含'果'的:\", DOC.xpath(\"//a[contains(text(), '果')]/text()\"))\nprint(\"data-id:\", DOC.xpath(\"//a/@data-id\"))\n"
+  },
+  {
+   "id": "topics_crawler-parse-jsonpath-nested",
+   "name": "crawler_parse-jsonpath-nested.py",
+   "category": "topics",
+   "tags": [
+    "爬虫"
+   ],
+   "title": "深层嵌套容错",
+   "description": "dict.get 链式安全取值，避免 KeyError 打断抓取。",
+   "requirements": [
+    "requests"
+   ],
+   "code": "\"\"\"深层嵌套容错：生产爬虫的安全取值习惯。\"\"\"\nimport requests\n\nresp = requests.get(\"https://jsonplaceholder.typicode.com/users/1\", timeout=10)\nu = resp.json()\n# 链式 get + or 默认值：任何一层缺失都不会抛异常\ncity = (u.get(\"address\") or {}).get(\"city\") or \"未知\"\ngeo = (u.get(\"address\") or {}).get(\"geo\") or {}\nlat = geo.get(\"lat\") or \"-\"\nprint(f\"{u.get('name')} @ {city}（lat={lat}）\")\nprint(\"不存在字段:\", (u.get(\"profile\") or {}).get(\"wechat\") or \"<无>\")\n"
+  },
+  {
+   "id": "topics_crawler-crawl-paginate",
+   "name": "crawler_crawl-paginate.py",
+   "category": "topics",
+   "tags": [
+    "爬虫"
+   ],
+   "title": "分页抓取",
+   "description": "page 递增直到空页/达到上限，带礼貌延时。",
+   "requirements": [
+    "requests"
+   ],
+   "code": "\"\"\"分页抓取：jsonplaceholder 分页模式。\"\"\"\nimport time\nimport requests\n\nBASE = \"https://jsonplaceholder.typicode.com/posts\"\nall_items, page, max_page = [], 1, 5\nwhile page <= max_page:\n    resp = requests.get(BASE, params={\"_page\": page, \"_limit\": 20}, timeout=10)\n    items = resp.json()\n    if not items:\n        print(f\"第 {page} 页为空，停止\")\n        break\n    all_items.extend(items)\n    print(f\"第 {page} 页 +{len(items)}\")\n    page += 1\n    time.sleep(0.3)  # 礼貌延时\nprint(\"合计抓取:\", len(all_items))\n"
+  },
+  {
+   "id": "topics_crawler-crawl-rate-limit",
+   "name": "crawler_crawl-rate-limit.py",
+   "category": "topics",
+   "tags": [
+    "爬虫"
+   ],
+   "title": "限速器",
+   "description": "令牌桶式限速，控制 QPS 不触发封禁。",
+   "requirements": [
+    "requests"
+   ],
+   "code": "\"\"\"限速器：装饰器实现最小间隔。\"\"\"\nimport functools\nimport time\n\ndef rate_limit(min_interval):\n    last = [0.0]\n    def deco(func):\n        @functools.wraps(func)\n        def wrapper(*args, **kwargs):\n            wait = min_interval - (time.monotonic() - last[0])\n            if wait > 0:\n                time.sleep(wait)\n            last[0] = time.monotonic()\n            return func(*args, **kwargs)\n        return wrapper\n    return deco\n\n@rate_limit(0.5)\ndef fetch(url):\n    print(\"fetch\", url, \"@\", time.strftime(\"%H:%M:%S\"))\n    return url\n\nfor i in range(4):\n    fetch(f\"https://example.com/item/{i}\")\n"
+  },
+  {
+   "id": "topics_crawler-crawl-thread-pool",
+   "name": "crawler_crawl-thread-pool.py",
+   "category": "topics",
+   "tags": [
+    "爬虫"
+   ],
+   "title": "线程池并发抓取",
+   "description": "ThreadPoolExecutor + as_completed 并发下载。",
+   "requirements": [
+    "requests"
+   ],
+   "code": "\"\"\"并发抓取：线程池 + as_completed 收集结果。\"\"\"\nfrom concurrent.futures import ThreadPoolExecutor, as_completed\nimport requests\n\nurls = [f\"https://httpbin.org/delay/1/{i}\" for i in range(5)]\n\ndef fetch(url):\n    resp = requests.get(url, timeout=15)\n    return url, resp.status_code\n\nwith ThreadPoolExecutor(max_workers=5) as pool:\n    futures = [pool.submit(fetch, u) for u in urls]\n    for fut in as_completed(futures):\n        url, code = fut.result()\n        print(f\"{code} {url[-14:]}\")\n"
+  },
+  {
+   "id": "topics_crawler-crawl-async-aiohttp",
+   "name": "crawler_crawl-async-aiohttp.py",
+   "category": "topics",
+   "tags": [
+    "爬虫"
+   ],
+   "title": "asyncio 异步抓取",
+   "description": "aiohttp + asyncio.gather 高并发异步请求。",
+   "requirements": [
+    "requests",
+    "aiohttp"
+   ],
+   "code": "\"\"\"异步抓取：aiohttp 协程并发（asyncio 入门实战）。\"\"\"\nimport asyncio\n\nimport aiohttp\n\nasync def fetch(session, url):\n    async with session.get(url, timeout=aiohttp.ClientTimeout(total=15)) as resp:\n        return url, resp.status\n\nasync def main():\n    urls = [f\"https://httpbin.org/get?i={i}\" for i in range(6)]\n    async with aiohttp.ClientSession() as session:\n        results = await asyncio.gather(*(fetch(session, u) for u in urls))\n    for url, code in results:\n        print(code, url[-12:])\n\nasyncio.run(main())\n"
+  },
+  {
+   "id": "topics_crawler-crawl-incremental",
+   "name": "crawler_crawl-incremental.py",
+   "category": "topics",
+   "tags": [
+    "爬虫"
+   ],
+   "title": "增量抓取指纹",
+   "description": "内容哈希指纹跳过未更新条目（增量爬虫核心）。",
+   "requirements": [
+    "requests"
+   ],
+   "code": "\"\"\"增量抓取：内容指纹去重，只处理新条目。\"\"\"\nimport hashlib\nimport json\nfrom pathlib import Path\n\nSTATE = Path(\"crawl_state.json\")\nseen = json.loads(STATE.read_text()) if STATE.exists() else {}\n\nfeed = [{\"id\": i, \"title\": f\"文章{i}\", \"body\": f\"内容{i}\" + (\"更新\" if i == 3 else \"\")}\n        for i in range(1, 8)]\nnew_count = 0\nfor item in feed:\n    fp = hashlib.md5((str(item[\"id\"]) + item[\"body\"]).encode()).hexdigest()\n    if seen.get(str(item[\"id\"])) == fp:\n        continue  # 未更新\n    seen[str(item[\"id\"])] = fp\n    new_count += 1\n    print(\"新/更新:\", item[\"title\"])\nSTATE.write_text(json.dumps(seen, ensure_ascii=False, indent=1))\nprint(f\"本次新增/更新 {new_count} 条\")\n"
+  },
+  {
+   "id": "topics_crawler-store-csv-export",
+   "name": "crawler_store-csv-export.py",
+   "category": "topics",
+   "tags": [
+    "爬虫"
+   ],
+   "title": "抓取结果存 CSV",
+   "description": "csv.DictWriter 落盘，utf-8-sig 防 Excel 乱码。",
+   "requirements": [
+    "requests"
+   ],
+   "code": "\"\"\"CSV 存储：utf-8-sig 让 Excel 直接打开不乱码。\"\"\"\nimport csv\n\nrows = [\n    {\"标题\": \"商品A\", \"价格\": 129.0, \"评分\": 4.8},\n    {\"标题\": \"商品B\", \"价格\": 89.5, \"评分\": 4.6},\n    {\"标题\": \"商品C\", \"价格\": 259.0, \"评分\": 4.9},\n]\nwith open(\"crawl_result.csv\", \"w\", newline=\"\", encoding=\"utf-8-sig\") as f:\n    writer = csv.DictWriter(f, fieldnames=[\"标题\", \"价格\", \"评分\"])\n    writer.writeheader()\n    writer.writerows(rows)\nprint(\"已写 crawl_result.csv，\", len(rows), \"行\")\n"
+  },
+  {
+   "id": "topics_crawler-store-jsonl",
+   "name": "crawler_store-jsonl.py",
+   "category": "topics",
+   "tags": [
+    "爬虫"
+   ],
+   "title": "JSONL 追加存储",
+   "description": "每行一个 JSON 对象，追加写适合流式抓取。",
+   "requirements": [
+    "requests"
+   ],
+   "code": "\"\"\"JSONL：流式抓取的标准落盘格式。\"\"\"\nimport json\nfrom pathlib import Path\n\ndest = Path(\"crawl_result.jsonl\")\nwith dest.open(\"a\", encoding=\"utf-8\") as f:\n    for i in range(5):\n        record = {\"id\": i, \"title\": f\"条目{i}\", \"ts\": \"2026-09-23T10:00:00\"}\n        f.write(json.dumps(record, ensure_ascii=False) + \"\\n\")\nprint(\"追加 5 行 ->\", dest)\nprint(\"当前行数:\", sum(1 for _ in dest.open(encoding=\"utf-8\")))\n"
+  },
+  {
+   "id": "topics_crawler-store-sqlite",
+   "name": "crawler_store-sqlite.py",
+   "category": "topics",
+   "tags": [
+    "爬虫"
+   ],
+   "title": "SQLite 入库",
+   "description": "抓取数据写 SQLite：建表、去重、查询。",
+   "requirements": [
+    "requests"
+   ],
+   "code": "\"\"\"SQLite 存储：抓取数据结构化入库。\"\"\"\nimport sqlite3\n\nconn = sqlite3.connect(\"crawl.db\")\nconn.execute(\"\"\"CREATE TABLE IF NOT EXISTS items (\n    id INTEGER PRIMARY KEY, title TEXT, price REAL, crawled_at TEXT)\"\"\")\nconn.executemany(\"INSERT OR REPLACE INTO items VALUES (?, ?, ?, ?)\", [\n    (1, \"商品A\", 129.0, \"2026-09-23\"),\n    (2, \"商品B\", 89.5, \"2026-09-23\"),\n])\nconn.commit()\nfor row in conn.execute(\"SELECT id, title, price FROM items ORDER BY price DESC\"):\n    print(row)\nconn.close()\n"
+  },
+  {
+   "id": "topics_crawler-target-github-api",
+   "name": "crawler_target-github-api.py",
+   "category": "topics",
+   "tags": [
+    "爬虫"
+   ],
+   "title": "GitHub API 实战",
+   "description": "REST API + Rate-Limit 头读取。",
+   "requirements": [
+    "requests"
+   ],
+   "code": "\"\"\"GitHub API：抓取 Python 仓库 star 排行（免认证 60 次/小时）。\"\"\"\nimport requests\n\nheaders = {\"Accept\": \"application/vnd.github+json\"}\nresp = requests.get(\"https://api.github.com/search/repositories\",\n                    params={\"q\": \"language:python\", \"sort\": \"stars\", \"per_page\": 5},\n                    headers=headers, timeout=15)\nprint(\"剩余配额:\", resp.headers.get(\"X-RateLimit-Remaining\"))\nfor repo in resp.json().get(\"items\", []):\n    print(f\"{repo['stargazers_count']:>7}  {repo['full_name']}\")\n"
+  },
+  {
+   "id": "topics_crawler-target-jsonplaceholder-relations",
+   "name": "crawler_target-jsonplaceholder-relations.py",
+   "category": "topics",
+   "tags": [
+    "爬虫"
+   ],
+   "title": "关联资源抓取",
+   "description": "posts→comments 主从关联聚合。",
+   "requirements": [
+    "requests"
+   ],
+   "code": "\"\"\"关联抓取：帖子与其评论的聚合。\"\"\"\nimport requests\n\nposts = requests.get(\"https://jsonplaceholder.typicode.com/posts\",\n                     params={\"_limit\": 3}, timeout=10).json()\nfor post in posts:\n    comments = requests.get(\n        f\"https://jsonplaceholder.typicode.com/posts/{post['id']}/comments\",\n        timeout=10).json()\n    print(f\"[{post['id']}] {post['title'][:20]}… 评论 {len(comments)} 条\")\n"
+  },
+  {
+   "id": "topics_crawler-target-bilibili-view",
+   "name": "crawler_target-bilibili-view.py",
+   "category": "topics",
+   "tags": [
+    "爬虫"
+   ],
+   "title": "B 站视频信息",
+   "description": "B 站 view 接口标准抓取模式（与原库 bili_api 同源）。",
+   "requirements": [
+    "requests"
+   ],
+   "code": "\"\"\"B 站视频信息：公开 view 接口（BV 号解析）。\"\"\"\nimport re\nimport requests\n\nHEADERS = {\"User-Agent\": \"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) \"\n                          \"AppleWebKit/537.36 Chrome/126.0.0.0 Safari/537.36\",\n           \"Referer\": \"https://www.bilibili.com/\"}\n\ndef fetch_bv(bvid):\n    resp = requests.get(\"https://api.bilibili.com/x/web-interface/view\",\n                        params={\"bvid\": bvid}, headers=HEADERS, timeout=10)\n    code = resp.json().get(\"code\")\n    if code != 0:\n        return None\n    d = resp.json()[\"data\"]\n    return {\"标题\": d[\"title\"], \"播放\": d[\"stat\"][\"view\"],\n            \"弹幕\": d[\"stat\"][\"danmaku\"], \"UP主\": d[\"owner\"][\"name\"]}\n\nif __name__ == \"__main__\":\n    url = \"https://www.bilibili.com/video/BV1GJ411x7h7/\"\n    bvid = re.search(r\"(BV[0-9A-Za-z]{10})\", url).group(1)\n    info = fetch_bv(bvid)\n    print(info or \"接口不可达（网络环境限制时属正常）\")\n"
+  },
+  {
+   "id": "topics_crawler-crawl-robots-respect",
+   "name": "crawler_crawl-robots-respect.py",
+   "category": "topics",
+   "tags": [
+    "爬虫"
+   ],
+   "title": "robots.txt 礼仪",
+   "description": "urllib.robotparser 解析抓取许可（合规爬虫第一课）。",
+   "requirements": [
+    "requests"
+   ],
+   "code": "\"\"\"robots.txt：抓取前先读规则。\"\"\"\nfrom urllib.robotparser import RobotFileParser\nfrom urllib.parse import urlparse\n\ndef can_fetch(url, ua=\"*\"):\n    rp = RobotFileParser()\n    rp.set_url(f\"{urlparse(url).scheme}://{urlparse(url).netloc}/robots.txt\")\n    try:\n        rp.read()\n    except Exception as e:\n        print(\"robots.txt 读取失败（默认允许）:\", type(e).__name__)\n        return True\n    return rp.can_fetch(ua, url)\n\nfor u in [\"https://www.baidu.com/s?wd=python\", \"https://httpbin.org/get\"]:\n    print(u[:40], \"可抓取\" if can_fetch(u) else \"被 robots 禁止\")\n"
+  },
+  {
+   "id": "topics_crawler-eng-logging",
+   "name": "crawler_eng-logging.py",
+   "category": "topics",
+   "tags": [
+    "爬虫"
+   ],
+   "title": "抓取日志",
+   "description": "logging 模块记录抓取过程（生产排障必备）。",
+   "requirements": [
+    "requests"
+   ],
+   "code": "\"\"\"日志：控制台 + 文件双输出。\"\"\"\nimport logging\n\nlogging.basicConfig(\n    level=logging.INFO,\n    format=\"%(asctime)s %(levelname)s %(message)s\",\n    handlers=[logging.StreamHandler(), logging.FileHandler(\"crawler.log\", encoding=\"utf-8\")],\n)\nlog = logging.getLogger(\"crawler\")\n\nfor i in range(3):\n    log.info(\"抓取第 %d 页\", i + 1)\n    if i == 1:\n        log.warning(\"第 %d 页响应变慢\", i + 1)\nlog.error(\"模拟一次失败（不影响整体）\")\nprint(\"日志已写入 crawler.log\")\n"
+  },
+  {
+   "id": "topics_crawler-eng-config-dataclass",
+   "name": "crawler_eng-config-dataclass.py",
+   "category": "topics",
+   "tags": [
+    "爬虫"
+   ],
+   "title": "爬虫配置类",
+   "description": "dataclass 集中管理抓取参数。",
+   "requirements": [
+    "requests"
+   ],
+   "code": "\"\"\"配置类：把散落的抓取参数集中管理。\"\"\"\nfrom dataclasses import dataclass, field\n\n\n@dataclass\nclass CrawlerConfig:\n    base_url: str = \"https://httpbin.org\"\n    max_pages: int = 5\n    concurrency: int = 4\n    timeout: float = 10.0\n    headers: dict = field(default_factory=lambda: {\"User-Agent\": \"demo/1.0\"})\n    keywords: list = field(default_factory=lambda: [\"python\", \"爬虫\"])\n\n    def page_url(self, page: int) -> str:\n        return f\"{self.base_url}/get?page={page}\"\n\n\ncfg = CrawlerConfig(max_pages=3, keywords=[\"demo\"])\nprint(cfg)\nprint(cfg.page_url(2), \"| 关键词:\", cfg.keywords)\n"
+  },
+  {
+   "id": "topics_crawler-eng-cli-argparse",
+   "name": "crawler_eng-cli-argparse.py",
+   "category": "topics",
+   "tags": [
+    "爬虫"
+   ],
+   "title": "命令行入口",
+   "description": "argparse 构造可复用的抓取脚本入口。",
+   "requirements": [
+    "requests"
+   ],
+   "code": "\"\"\"CLI：python crawler_cli.py --pages 3 --keyword 爬虫\"\"\"\nimport argparse\n\n\ndef main():\n    parser = argparse.ArgumentParser(description=\"通用抓取脚本骨架\")\n    parser.add_argument(\"--pages\", type=int, default=1, help=\"抓取页数\")\n    parser.add_argument(\"--keyword\", default=\"\", help=\"过滤关键词\")\n    parser.add_argument(\"--output\", default=\"out.jsonl\", help=\"输出文件\")\n    args = parser.parse_args()\n    print(f\"计划抓取 {args.pages} 页，关键词={args.keyword or '无'}，输出={args.output}\")\n    for p in range(1, args.pages + 1):\n        print(f\"  第 {p} 页 …（此处接入真实抓取逻辑）\")\n"
+  },
+  {
+   "id": "topics_crawler-eng-graceful-shutdown",
+   "name": "crawler_eng-graceful-shutdown.py",
+   "category": "topics",
+   "tags": [
+    "爬虫"
+   ],
+   "title": "优雅退出",
+   "description": "KeyboardInterrupt 与 finally 保证状态落盘。",
+   "requirements": [
+    "requests"
+   ],
+   "code": "\"\"\"优雅退出：Ctrl+C 不丢已抓数据。\"\"\"\nimport sys\nimport time\n\nitems = []\n\ndef save():\n    print(f\"落盘 {len(items)} 条已抓数据\")\n\ndef main():\n    try:\n        for i in range(10):\n            items.append(f\"条目{i}\")\n            time.sleep(0.2)\n            if i == 2:\n                raise KeyboardInterrupt  # 模拟 Ctrl+C\n    except KeyboardInterrupt:\n        print(\"收到中断信号\")\n    finally:\n        save()\n        sys.exit(0)\n\nmain()\n"
+  },
+  {
+   "id": "topics_crawler-eng-dedup-queue",
+   "name": "crawler_eng-dedup-queue.py",
+   "category": "topics",
+   "tags": [
+    "爬虫"
+   ],
+   "title": "URL 去重队列",
+   "description": "set + 队列的待抓/已抓管理（爬虫调度核心）。",
+   "requirements": [
+    "requests"
+   ],
+   "code": "\"\"\"URL 队列：待抓/已抓去重 + 深度限制。\"\"\"\nfrom collections import deque\n\nstart = \"https://example.com/\"\nqueue = deque([(start, 0)])\nseen = {start}\nresults = []\nMAX_DEPTH = 2\n\ndef fake_links(url):\n    return [f\"{url}/page{i}\" for i in range(2)]\n\nwhile queue:\n    url, depth = queue.popleft()\n    results.append((url, depth))\n    if depth >= MAX_DEPTH:\n        continue\n    for link in fake_links(url):\n        if link not in seen:\n            seen.add(link)\n            queue.append((link, depth + 1))\n\nprint(f\"共发现 {len(results)} 个 URL，最大深度 {max(d for _, d in results)}\")\nfor u, d in results[:6]:\n    print(\"  \" * d, u[-20:])\n"
+  },
+  {
+   "id": "topics_crawler2-bs4-quote-extract",
+   "name": "crawler2_bs4-quote-extract.py",
+   "category": "topics",
+   "tags": [
+    "爬虫"
+   ],
+   "title": "名言站点解析",
+   "description": "quotes.toscrape 教学站的经典解析链路（CSS 选择器 + 翻页）。",
+   "requirements": [
+    "requests"
+   ],
+   "code": "\"\"\"名言站点：CSS 选择器 + 分页（教学专用站点，允许抓取）。\"\"\"\nimport requests\nfrom bs4 import BeautifulSoup\n\nurl, page, all_quotes = \"https://quotes.toscrape.com/\", 1, []\nwhile url and page <= 3:\n    soup = BeautifulSoup(requests.get(url, timeout=10).text, \"html.parser\")\n    for q in soup.select(\"div.quote\"):\n        all_quotes.append({\n            \"text\": q.select_one(\"span.text\").get_text(strip=True),\n            \"author\": q.select_one(\"small.author\").text,\n            \"tags\": [t.text for t in q.select(\"a.tag\")],\n        })\n    nxt = soup.select_one(\"li.next > a\")\n    url = \"https://quotes.toscrape.com\" + nxt[\"href\"] if nxt else None\n    page += 1\nfor q in all_quotes[:5]:\n    print(q[\"author\"], \"|\", q[\"text\"][:30], \"|\", q[\"tags\"][:2])\nprint(\"合计:\", len(all_quotes))\n"
+  },
+  {
+   "id": "topics_crawler2-bs4-table-parse",
+   "name": "crawler2_bs4-table-parse.py",
+   "category": "topics",
+   "tags": [
+    "爬虫"
+   ],
+   "title": "HTML 表格解析",
+   "description": "把页面表格逐行转成结构化字典列表。",
+   "requirements": [
+    "requests",
+    "beautifulsoup4"
+   ],
+   "code": "\"\"\"表格解析：table → list[dict]。\"\"\"\nfrom bs4 import BeautifulSoup\n\nHTML = \"\"\"\n<table id=\"score\">\n  <tr><th>姓名</th><th>语文</th><th>数学</th></tr>\n  <tr><td>小明</td><td>92</td><td>88</td></tr>\n  <tr><td>小红</td><td>95</td><td>91</td></tr>\n</table>\"\"\"\nsoup = BeautifulSoup(HTML, \"html.parser\")\nheaders = [th.text for th in soup.select(\"#score th\")]\nrows = []\nfor tr in soup.select(\"#score tr\")[1:]:\n    cells = [td.text for td in tr.select(\"td\")]\n    rows.append(dict(zip(headers, cells)))\nprint(rows)\n"
+  },
+  {
+   "id": "topics_crawler2-bs4-attribute-filter",
+   "name": "crawler2_bs4-attribute-filter.py",
+   "category": "topics",
+   "tags": [
+    "爬虫"
+   ],
+   "title": "属性过滤定位",
+   "description": "href 开头匹配、data 属性与多 class 定位。",
+   "requirements": [
+    "requests",
+    "beautifulsoup4"
+   ],
+   "code": "\"\"\"属性过滤：外部链接与自定义属性。\"\"\"\nfrom bs4 import BeautifulSoup\n\nHTML = \"\"\"\n<nav>\n  <a href=\"/internal/1\">站内</a>\n  <a href=\"https://out.com/x\" rel=\"nofollow\">站外</a>\n  <a class=\"btn primary large\" data-track=\"cta\">立即注册</a>\n</nav>\"\"\"\nsoup = BeautifulSoup(HTML, \"html.parser\")\nexternal = [a[\"href\"] for a in soup.find_all(\"a\", href=lambda h: h and h.startswith(\"https://\"))]\ncta = soup.find(\"a\", attrs={\"data-track\": \"cta\"})\nmulti = soup.find(\"a\", class_=[\"primary\", \"large\"])\nprint(\"外链:\", external)\nprint(\"CTA:\", cta.text, \"| 多class:\", multi.text)\n"
+  },
+  {
+   "id": "topics_crawler2-bs4-navigate-tree",
+   "name": "crawler2_bs4-navigate-tree.py",
+   "category": "topics",
+   "tags": [
+    "爬虫"
+   ],
+   "title": "节点树导航",
+   "description": "parent/next_sibling/children 树关系遍历。",
+   "requirements": [
+    "requests",
+    "beautifulsoup4"
+   ],
+   "code": "\"\"\"树导航：相邻节点与父子关系。\"\"\"\nfrom bs4 import BeautifulSoup\n\nHTML = \"<ul><li>A</li><li class='mark'>B</li><li>C</li></ul>\"\nsoup = BeautifulSoup(HTML, \"html.parser\")\nmark = soup.find(\"li\", class_=\"mark\")\nprint(\"前一个:\", mark.find_previous_sibling(\"li\").text)\nprint(\"后一个:\", mark.find_next_sibling(\"li\").text)\nprint(\"父节点:\", mark.parent.name)\nprint(\"全部兄弟:\", [li.text for li in mark.find_parent(\"ul\").children if li.name])\n"
+  },
+  {
+   "id": "topics_crawler2-bs4-regex-class",
+   "name": "crawler2_bs4-regex-class.py",
+   "category": "topics",
+   "tags": [
+    "爬虫"
+   ],
+   "title": "正则 class 匹配",
+   "description": "class_ 含正则模式的模糊定位。",
+   "requirements": [
+    "requests",
+    "beautifulsoup4"
+   ],
+   "code": "\"\"\"class 模糊匹配：re.compile + find_all。\"\"\"\nimport re\nfrom bs4 import BeautifulSoup\n\nHTML = \"\"\"\n<div class=\"post-101 top\">帖101</div>\n<div class=\"post-102\">帖102</div>\n<div class=\"post-103 hot\">帖103</div>\"\"\"\nsoup = BeautifulSoup(HTML, \"html.parser\")\nposts = soup.find_all(\"div\", class_=re.compile(r\"^post-\\d+$\"))\nprint(\"帖子数:\", len(posts), [p.text for p in posts])\nhot = soup.find(\"div\", class_=re.compile(\"hot\"))\nprint(\"热帖:\", hot.text)\n"
+  },
+  {
+   "id": "topics_crawler2-antiban-header-pool",
+   "name": "crawler2_antiban-header-pool.py",
+   "category": "topics",
+   "tags": [
+    "爬虫"
+   ],
+   "title": "UA 池轮换",
+   "description": "随机 UA 池 + 每次请求轮换。",
+   "requirements": [
+    "requests"
+   ],
+   "code": "\"\"\"UA 池：每次请求随机挑一个身份。\"\"\"\nimport random\nimport requests\n\nUA_POOL = [\n    \"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Chrome/126.0.0.0\",\n    \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) Edge/126.0.0.0\",\n    \"Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) Safari/605.1.15\",\n    \"Mozilla/5.0 (Linux; Android 14) Chrome/125.0.0.0 Mobile\",\n]\nfor _ in range(3):\n    ua = random.choice(UA_POOL)\n    resp = requests.get(\"https://httpbin.org/user-agent\",\n                        headers={\"User-Agent\": ua}, timeout=10)\n    print(resp.json()[\"user-agent\"][:44])\n"
+  },
+  {
+   "id": "topics_crawler2-antiban-backoff-jitter",
+   "name": "crawler2_antiban-backoff-jitter.py",
+   "category": "topics",
+   "tags": [
+    "爬虫"
+   ],
+   "title": "退避抖动",
+   "description": "指数退避 + 随机抖动，避免重试风暴。",
+   "requirements": [
+    "requests"
+   ],
+   "code": "\"\"\"退避抖动：base * 2^n + jitter。\"\"\"\nimport random\nimport time\n\ndef backoff(attempt, base=0.5, cap=8.0):\n    return min(cap, base * 2 ** attempt) + random.uniform(0, 0.3)\n\nfor n in range(5):\n    print(f\"第 {n} 次重试等待 {backoff(n):.2f}s\")\n    time.sleep(0.05)  # 演示用缩短\n"
+  },
+  {
+   "id": "topics_crawler2-antiban-cookie-login",
+   "name": "crawler2_antiban-cookie-login.py",
+   "category": "topics",
+   "tags": [
+    "爬虫"
+   ],
+   "title": "Cookie 登录态",
+   "description": "加载浏览器导出的 Cookie 文件恢复登录态。",
+   "requirements": [
+    "requests"
+   ],
+   "code": "\"\"\"Cookie 登录态：从 JSON 文件恢复（配合浏览器导出）。\"\"\"\nimport json\nimport requests\n\n# cookie 文件格式: [{\"name\": \"sessdata\", \"value\": \"...\", \"domain\": \".bilibili.com\"}, ...]\nSAMPLE = [{\"name\": \"demo_session\", \"value\": \"abc123\"}]\ncookie_file = \"cookies.json\"\nwith open(cookie_file, \"w\", encoding=\"utf-8\") as f:\n    json.dump(SAMPLE, f)\n\ns = requests.Session()\nfor ck in json.load(open(cookie_file)):\n    s.cookies.set(ck[\"name\"], ck[\"value\"])\nprint(\"已装载 Cookie:\", [(c.name, c.value) for c in s.cookies])\nresp = s.get(\"https://httpbin.org/cookies\", timeout=10)\nprint(\"服务端视角:\", resp.json()[\"cookies\"])\n"
+  },
+  {
+   "id": "topics_crawler2-antiban-throttle-domain",
+   "name": "crawler2_antiban-throttle-domain.py",
+   "category": "topics",
+   "tags": [
+    "爬虫"
+   ],
+   "title": "分域限速",
+   "description": "多域名独立限速的调度器。",
+   "requirements": [
+    "requests"
+   ],
+   "code": "\"\"\"分域限速：每个域名独立的最小间隔。\"\"\"\nimport time\nfrom collections import defaultdict\nfrom urllib.parse import urlparse\n\n_last = defaultdict(float)\nINTERVALS = {\"api.github.com\": 2.0, \"httpbin.org\": 0.5}\n\ndef throttled(url, fn):\n    host = urlparse(url).netloc\n    wait = INTERVALS.get(host, 1.0) - (time.monotonic() - _last[host])\n    if wait > 0:\n        time.sleep(wait)\n    _last[host] = time.monotonic()\n    return fn(url)\n\nfor u in [\"https://httpbin.org/get?a=1\", \"https://httpbin.org/get?a=2\",\n          \"https://api.github.com/zen\"]:\n    print(\"调度:\", urlparse(u).netloc)\n    throttled(u, lambda x: None)\n"
+  },
+  {
+   "id": "topics_crawler2-store-dataset-clean",
+   "name": "crawler2_store-dataset-clean.py",
+   "category": "topics",
+   "tags": [
+    "爬虫"
+   ],
+   "title": "抓取数据清洗",
+   "description": "空值/去空格/类型转换/异常行剔除流水线。",
+   "requirements": [
+    "requests"
+   ],
+   "code": "\"\"\"数据清洗：抓取结果的标准化流水线。\"\"\"\nraw = [\n    {\"name\": \" 商品A \", \"price\": \"129.00\", \"stock\": \"12\"},\n    {\"name\": \"\", \"price\": \"89.5\", \"stock\": \"3\"},\n    {\"name\": \"商品B\", \"price\": \"暂无\", \"stock\": \"0\"},\n    {\"name\": \"商品C\", \"price\": \" 259 \", \"stock\": \"7\"},\n]\nclean = []\nfor r in raw:\n    name = (r.get(\"name\") or \"\").strip()\n    try:\n        price = float(r[\"price\"])\n        stock = int(r[\"stock\"])\n    except ValueError:\n        continue  # 坏数据丢弃并记录（生产中打日志）\n    if not name or price <= 0:\n        continue\n    clean.append({\"name\": name, \"price\": price, \"stock\": stock})\nprint(clean)\n"
+  },
+  {
+   "id": "topics_crawler2-store-export-excel-like",
+   "name": "crawler2_store-export-excel-like.py",
+   "category": "topics",
+   "tags": [
+    "爬虫"
+   ],
+   "title": "汇总报表输出",
+   "description": "分组聚合 + 格式化输出（抓取 → 报表）。",
+   "requirements": [
+    "requests"
+   ],
+   "code": "\"\"\"汇总报表：按类目聚合抓取结果。\"\"\"\nfrom collections import defaultdict\n\nitems = [\n    {\"cat\": \"数码\", \"name\": \"键盘\", \"amount\": 299},\n    {\"cat\": \"数码\", \"name\": \"鼠标\", \"amount\": 99},\n    {\"cat\": \"图书\", \"name\": \"Python Cookbook\", \"amount\": 128},\n    {\"cat\": \"图书\", \"name\": \"算法图解\", \"amount\": 78},\n]\nby_cat = defaultdict(list)\nfor it in items:\n    by_cat[it[\"cat\"]].append(it)\nprint(f\"{'类目':<6}{'条数':>4}{'金额合计':>10}\")\nfor cat, rows in by_cat.items():\n    total = sum(r[\"amount\"] for r in rows)\n    print(f\"{cat:<6}{len(rows):>4}{total:>10}\")\n"
+  },
+  {
+   "id": "topics_crawler2-target-rss-parse",
+   "name": "crawler2_target-rss-parse.py",
+   "category": "topics",
+   "tags": [
+    "爬虫"
+   ],
+   "title": "RSS 订阅解析",
+   "description": "xml.etree 解析 RSS feed（博客/新闻订阅）。",
+   "requirements": [
+    "requests"
+   ],
+   "code": "\"\"\"RSS 解析：标准库解析订阅源结构。\"\"\"\nimport xml.etree.ElementTree as ET\n\nRSS = \"\"\"<?xml version=\"1.0\"?>\n<rss version=\"2.0\"><channel>\n  <title>技术博客</title>\n  <item><title>爬虫入门</title><pubDate>Mon, 21 Sep 2026</pubDate><link>/p/1</link></item>\n  <item><title>办公自动化</title><pubDate>Tue, 22 Sep 2026</pubDate><link>/p/2</link></item>\n</channel></rss>\"\"\"\nroot = ET.fromstring(RSS)\nprint(\"频道:\", root.find(\"channel/title\").text)\nfor item in root.findall(\"channel/item\"):\n    print(f\"  {item.find('pubDate').text}  {item.find('title').text}  {item.find('link').text}\")\n"
+  },
+  {
+   "id": "topics_crawler2-target-xml-namespaces",
+   "name": "crawler2_target-xml-namespaces.py",
+   "category": "topics",
+   "tags": [
+    "爬虫"
+   ],
+   "title": "带命名空间的 XML",
+   "description": "namespace 感知的 Atom feed 解析。",
+   "requirements": [
+    "requests"
+   ],
+   "code": "\"\"\"Atom feed：命名空间写法。\"\"\"\nimport xml.etree.ElementTree as ET\n\nATOM = \"\"\"<?xml version=\"1.0\"?>\n<feed xmlns=\"http://www.w3.org/2005/Atom\">\n  <entry><title>条目一</title><id>urn:1</id></entry>\n  <entry><title>条目二</title><id>urn:2</id></entry>\n</feed>\"\"\"\nns = {\"a\": \"http://www.w3.org/2005/Atom\"}\nroot = ET.fromstring(ATOM)\nfor entry in root.findall(\"a:entry\", ns):\n    print(entry.find(\"a:title\", ns).text, \"|\", entry.find(\"a:id\", ns).text)\n"
+  },
+  {
+   "id": "topics_crawler2-eng-checkpoint-resume",
+   "name": "crawler2_eng-checkpoint-resume.py",
+   "category": "topics",
+   "tags": [
+    "爬虫"
+   ],
+   "title": "断点续抓",
+   "description": "游标落盘，重启后从断点继续。",
+   "requirements": [
+    "requests"
+   ],
+   "code": "\"\"\"断点续抓：游标状态持久化。\"\"\"\nimport json\nfrom pathlib import Path\n\nSTATE = Path(\"cursor.json\")\ncursor = json.loads(STATE.read_text())[\"cursor\"] if STATE.exists() else 0\nTOTAL = 10\nprint(f\"从游标 {cursor} 继续\")\nfor page in range(cursor, TOTAL):\n    print(f\"处理页 {page}\")\n    cursor = page + 1\n    if page == 5:  # 模拟中断\n        break\nSTATE.write_text(json.dumps({\"cursor\": cursor}))\nprint(f\"游标已存至 {cursor}，重跑将继续\")\n"
+  },
+  {
+   "id": "topics_crawler2-eng-structure-project",
+   "name": "crawler2_eng-structure-project.py",
+   "category": "topics",
+   "tags": [
+    "爬虫"
+   ],
+   "title": "爬虫项目结构",
+   "description": "配置/调度/解析/存储 分层的最小项目骨架。",
+   "requirements": [
+    "requests"
+   ],
+   "code": "\"\"\"项目分层：一个可维护爬虫的最小骨架。\"\"\"\nfrom dataclasses import dataclass, field\nfrom typing import Callable\n\n\n@dataclass\nclass Spider:\n    name: str\n    start_urls: list\n    parser: Callable  # 解析函数注入：结构与逻辑分离\n    pipeline: list = field(default_factory=list)  # 存储/清洗管道\n\n    def run(self):\n        items = []\n        for url in self.start_urls:\n            items.extend(self.parser(url))  # 真实场景替换为 HTTP 请求\n        for stage in self.pipeline:\n            items = [x for x in (stage(it) for it in items) if x is not None]\n        return items\n\n\ndef parse(url):\n    return [{\"source\": url, \"value\": 1}]\n\n\ndef drop_zero(item):\n    return item if item[\"value\"] > 0 else None\n\n\nspider = Spider(\"demo\", [\"https://a.com\", \"https://b.com\"], parse, [drop_zero])\nprint(spider.run())\n"
+  },
+  {
+   "id": "topics_crawler2-eng-test-spider",
+   "name": "crawler2_eng-test-spider.py",
+   "category": "topics",
+   "tags": [
+    "爬虫"
+   ],
+   "title": "爬虫单测",
+   "description": "用固定 HTML 样本对解析函数做单元测试（不入网络）。",
+   "requirements": [
+    "requests",
+    "beautifulsoup4"
+   ],
+   "code": "\"\"\"解析函数单测：离线样本测试（pytest 风格）。\"\"\"\nfrom bs4 import BeautifulSoup\n\ndef parse_items(html: str) -> list:\n    soup = BeautifulSoup(html, \"html.parser\")\n    return [{\"title\": q.select_one(\"h3\").text,\n             \"link\": q.select_one(\"a\")[\"href\"]} for q in soup.select(\"div.item\")]\n\nSAMPLE = \"\"\"<div class=\"item\"><h3>标题一</h3><a href=\"/1\"></a></div>\n<div class=\"item\"><h3>标题二</h3><a href=\"/2\"></a></div>\"\"\"\n\ndef test_parse_items():\n    got = parse_items(SAMPLE)\n    assert len(got) == 2\n    assert got[0] == {\"title\": \"标题一\", \"link\": \"/1\"}\n\ntest_parse_items()\nprint(\"解析单测通过（离线，无网络）\")\n"
+  },
+  {
+   "id": "topics_crawler3-etag-conditional",
+   "name": "crawler3_etag-conditional.py",
+   "category": "topics",
+   "tags": [
+    "爬虫",
+    "进阶"
+   ],
+   "title": "ETag 条件请求",
+   "description": "If-None-Match / 304 未变更跳过（增量抓取标准做法）。",
+   "requirements": [
+    "requests"
+   ],
+   "code": "\"\"\"ETag 条件请求：内容未变时 304，省流量。\"\"\"\nimport requests\n\ncache = {\"etag\": None, \"body\": None}\nurl = \"https://httpbin.org/etag/w3s4all\"\nheaders = {\"If-None-Match\": cache[\"etag\"]} if cache[\"etag\"] else {}\nresp = requests.get(url, headers=headers, timeout=10)\nif resp.status_code == 304:\n    print(\"内容未变（304），使用缓存\")\nelse:\n    cache[\"etag\"] = resp.headers.get(\"ETag\")\n    cache[\"body\"] = resp.text\n    print(\"新内容已缓存，ETag =\", cache[\"etag\"])\n"
+  },
+  {
+   "id": "topics_crawler3-last-modified",
+   "name": "crawler3_last-modified.py",
+   "category": "topics",
+   "tags": [
+    "爬虫",
+    "进阶"
+   ],
+   "title": "Last-Modified 增量",
+   "description": "If-Modified-Since 时间戳增量。",
+   "requirements": [
+    "requests"
+   ],
+   "code": "\"\"\"Last-Modified：按修改时间增量抓取。\"\"\"\nimport requests\n\nsince = \"Sat, 20 Sep 2026 00:00:00 GMT\"\nresp = requests.get(\"https://httpbin.org/response-headers\",\n                    params={\"Last-Modified\": since}, timeout=10)\nprint(\"响应 Last-Modified:\", resp.headers.get(\"Last-Modified\"))\nprint(\"真实场景：本地存时间戳，未变更则跳过解析\")\n"
+  },
+  {
+   "id": "topics_crawler3-open-meteo-weather",
+   "name": "crawler3_open-meteo-weather.py",
+   "category": "topics",
+   "tags": [
+    "爬虫",
+    "进阶"
+   ],
+   "title": "开放天气 API",
+   "description": "Open-Meteo 免费无 key 天气接口（真实可运行）。",
+   "requirements": [
+    "requests"
+   ],
+   "code": "\"\"\"Open-Meteo：上海 7 天天气预报（免费无需 key）。\"\"\"\nimport requests\n\nresp = requests.get(\"https://api.open-meteo.com/v1/forecast\",\n                    params={\"latitude\": 31.23, \"longitude\": 121.47,\n                            \"daily\": \"temperature_2m_max,temperature_2m_min\",\n                            \"timezone\": \"Asia/Shanghai\"}, timeout=10)\ndaily = resp.json()[\"daily\"]\nfor d, tmax, tmin in zip(daily[\"time\"], daily[\"temperature_2m_max\"], daily[\"temperature_2m_min\"]):\n    print(f\"{d}  {tmin}~{tmax}°C\")\n"
+  },
+  {
+   "id": "topics_crawler3-exchange-rate-api",
+   "name": "crawler3_exchange-rate-api.py",
+   "category": "topics",
+   "tags": [
+    "爬虫",
+    "进阶"
+   ],
+   "title": "汇率 API 抓取",
+   "description": "open.er-api 实时汇率（免费无 key）。",
+   "requirements": [
+    "requests"
+   ],
+   "code": "\"\"\"汇率抓取：open.er-api.com 实时牌价。\"\"\"\nimport requests\n\nresp = requests.get(\"https://open.er-api.com/v6/latest/USD\", timeout=10)\nrates = resp.json()[\"rates\"]\nfor cur in (\"CNY\", \"EUR\", \"JPY\", \"HKD\"):\n    print(f\"1 USD = {rates.get(cur, '?')} {cur}\")\nprint(\"更新时间:\", resp.json().get(\"time_last_update_utc\"))\n"
+  },
+  {
+   "id": "topics_crawler3-wikipedia-api",
+   "name": "crawler3_wikipedia-api.py",
+   "category": "topics",
+   "tags": [
+    "爬虫",
+    "进阶"
+   ],
+   "title": "Wikipedia API",
+   "description": "维基百科 REST 摘要接口（免 key）。",
+   "requirements": [
+    "requests"
+   ],
+   "code": "\"\"\"Wikipedia 摘要接口：词条概要抓取。\"\"\"\nimport requests\n\nresp = requests.get(\"https://zh.wikipedia.org/api/rest_v1/page/summary/Python\",\n                    headers={\"User-Agent\": \"learning-demo/1.0\"}, timeout=10)\ndata = resp.json()\nprint(\"标题:\", data.get(\"title\"))\nprint(\"摘要:\", (data.get(\"extract\") or \"\")[:80], \"...\")\n"
+  },
+  {
+   "id": "topics_crawler3-api-sign-hmac",
+   "name": "crawler3_api-sign-hmac.py",
+   "category": "topics",
+   "tags": [
+    "爬虫",
+    "进阶"
+   ],
+   "title": "API 签名（HMAC）",
+   "description": "timestamp + HMAC-SHA256 请求签名的标准构造。",
+   "requirements": [
+    "requests"
+   ],
+   "code": "\"\"\"API 签名：私有接口的标准鉴权构造。\"\"\"\nimport hashlib\nimport hmac\nimport time\nfrom urllib.parse import urlencode\n\nAPI_KEY, SECRET = \"demo-key\", \"demo-secret\"\nparams = {\"symbol\": \"BTCUSDT\", \"timestamp\": int(time.time() * 1000)}\nquery = urlencode(params)\nsign = hmac.new(SECRET.encode(), query.encode(), hashlib.sha256).hexdigest()\nprint(\"待签名串:\", query)\nprint(\"签名:\", sign[:32], \"...\")\nprint(\"完整请求: /api/v1/order?\" + query + \"&signature=\" + sign[:16] + \"…\")\n"
+  },
+  {
+   "id": "topics_crawler3-websocket-stream",
+   "name": "crawler3_websocket-stream.py",
+   "category": "topics",
+   "tags": [
+    "爬虫",
+    "进阶"
+   ],
+   "title": "WebSocket 行情流",
+   "description": "websocket-client 订阅实时推送（连接管理 + 心跳）。",
+   "requirements": [
+    "requests"
+   ],
+   "code": "\"\"\"WebSocket 订阅：实时数据流消费模式。\"\"\"\nimport json\n\n# 同步演示：真实连接替换 ws.connect(...) 的目标地址\nSAMPLE_MSGS = [\n    {\"channel\": \"trades\", \"data\": {\"price\": 64500.1, \"side\": \"buy\"}},\n    {\"channel\": \"trades\", \"data\": {\"price\": 64501.5, \"side\": \"sell\"}},\n]\nprint(\"订阅 trades 频道 → 消费 2 条演示消息\")\nfor msg in SAMPLE_MSGS:\n    print(json.dumps(msg, ensure_ascii=False))\n# 真实写法:\n# from websocket import create_app  # pip install websocket-client\n# ws = create_app(\"wss://stream.example.com/ws\")\n# ws.send(json.dumps({\"op\": \"subscribe\", \"channel\": \"trades\"}))\n# while True: handle(json.loads(ws.recv()))\n"
+  },
+  {
+   "id": "topics_crawler3-playwright-browser",
+   "name": "crawler3_playwright-browser.py",
+   "category": "topics",
+   "tags": [
+    "爬虫",
+    "进阶"
+   ],
+   "title": "浏览器自动化（Playwright）",
+   "description": "JS 渲染页面的标准解法：无头浏览器截图与取值。",
+   "requirements": [
+    "requests",
+    "playwright"
+   ],
+   "code": "\"\"\"Playwright：JS 渲染页面的抓取（需 pip install playwright && playwright install chromium）。\"\"\"\nfrom playwright.sync_api import sync_playwright\n\nwith sync_playwright() as p:\n    browser = p.chromium.launch(headless=True)\n    page = browser.new_page()\n    page.goto(\"https://example.com\", wait_until=\"domcontentloaded\")\n    print(\"标题:\", page.title())\n    page.screenshot(path=\"page.png\", full_page=True)\n    browser.close()\nprint(\"截图已保存 page.png（本机未装浏览器时此脚本报缺依赖，属正常）\")\n"
+  },
+  {
+   "id": "topics_crawler3-selenium-login-pattern",
+   "name": "crawler3_selenium-login-pattern.py",
+   "category": "topics",
+   "tags": [
+    "爬虫",
+    "进阶"
+   ],
+   "title": "Selenium 登录模式",
+   "description": "显式等待 + 表单填写 + Cookie 导出的标准流程。",
+   "requirements": [
+    "requests",
+    "selenium"
+   ],
+   "code": "\"\"\"Selenium：显式等待的登录流程骨架。\"\"\"\n# 需 pip install selenium 并配置浏览器驱动\nfrom selenium import webdriver\nfrom selenium.webdriver.common.by import By\nfrom selenium.webdriver.support.ui import WebDriverWait\n\nprint(\"\"\"Selenium 登录骨架（伪代码演示，实际需浏览器环境）:\n    driver = webdriver.Chrome()\n    wait = WebDriverWait(driver, 10)\n    driver.get(\"https://example.com/login\")\n    wait.until(lambda d: d.find_element(By.ID, \"username\")).send_keys(\"user\")\n    driver.find_element(By.ID, \"password\").send_keys(\"pass\")\n    driver.find_element(By.CSS_SELECTOR, \"button[type=submit]\").click()\n    cookies = driver.get_cookies()   # 导出后供 requests 会话使用\n\"\"\")\n"
+  },
+  {
+   "id": "topics_crawler3-mini-scrapy-framework",
+   "name": "crawler3_mini-scrapy-framework.py",
+   "category": "topics",
+   "tags": [
+    "爬虫",
+    "进阶"
+   ],
+   "title": "迷你爬虫框架",
+   "description": "调度器+下载器+解析器+管道的 40 行微型框架。",
+   "requirements": [
+    "requests"
+   ],
+   "code": "\"\"\"迷你框架：理解 Scrapy 的核心抽象。\"\"\"\nfrom collections import deque\n\n\nclass Scheduler:\n    def __init__(self):\n        self.queue = deque()\n        self.seen = set()\n\n    def push(self, url):\n        if url not in self.seen:\n            self.seen.add(url)\n            self.queue.append(url)\n\n    def pop(self):\n        return self.queue.popleft() if self.queue else None\n\n\ndef download(url):  # 下载器（真实场景替换为 requests）\n    return f\"<html of {url}>\"\n\n\ndef parse(response):  # 解析器：产出条目与新链接\n    return [{\"url\": response}], []\n\n\ndef pipeline(items):  # 管道：存储\n    for it in items:\n        print(\"入库:\", it[\"url\"][-10:])\n\n\nspider = Scheduler()\nspider.push(\"https://a.com\")\nspider.push(\"https://b.com\")\nwhile (url := spider.pop()):\n    items, links = parse(download(url))\n    pipeline(items)\n    for link in links:\n        spider.push(link)\nprint(\"框架演示完成\")\n"
+  },
+  {
+   "id": "topics_crawler3-data-pandas-clean",
+   "name": "crawler3_data-pandas-clean.py",
+   "category": "topics",
+   "tags": [
+    "爬虫",
+    "进阶"
+   ],
+   "title": "pandas 数据清洗",
+   "description": "read_json + 去空/去重/类型转换（DataFrame 版）。",
+   "requirements": [
+    "requests",
+    "pandas"
+   ],
+   "code": "\"\"\"pandas 清洗：抓取数据标准化。\"\"\"\nimport pandas as pd\n\nraw = pd.DataFrame([\n    {\"name\": \" 商品A \", \"price\": \"129.00\", \"stock\": 12},\n    {\"name\": None, \"price\": \"89.5\", \"stock\": 3},\n    {\"name\": \"商品B\", \"price\": None, \"stock\": 0},\n    {\"name\": \"商品A \", \"price\": \"129.00\", \"stock\": 12},\n])\ndf = raw.assign(name=raw[\"name\"].str.strip(), price=pd.to_numeric(raw[\"price\"], errors=\"coerce\"))\ndf = df.dropna(subset=[\"name\", \"price\"]).drop_duplicates(subset=[\"name\"])\ndf[\"stock\"] = df[\"stock\"].astype(int)\nprint(df)\nprint(\"清洗后:\", len(df), \"/\", len(raw))\n"
+  },
+  {
+   "id": "topics_crawler3-scheduler-apscheduler",
+   "name": "crawler3_scheduler-apscheduler.py",
+   "category": "topics",
+   "tags": [
+    "爬虫",
+    "进阶"
+   ],
+   "title": "apscheduler 定时抓取",
+   "description": "BackgroundScheduler 每小时任务（生产调度）。",
+   "requirements": [
+    "requests",
+    "apscheduler"
+   ],
+   "code": "\"\"\"apscheduler：后台定时抓取（演示跑一轮即退出）。\"\"\"\nfrom apscheduler.schedulers.background import BackgroundScheduler\n\nruns = []\n\ndef hourly_fetch():\n    runs.append(\"fetch\")\n\nsched = BackgroundScheduler()\nsched.add_job(hourly_fetch, \"interval\", seconds=1, id=\"hourly\")\nsched.start()\nimport time\ntime.sleep(2.5)\nsched.shutdown()\nprint(f\"2.5 秒内触发 {len(runs)} 次（真实场景设 hours=1）\")\n"
+  },
+  {
+   "id": "topics_crawler3-health-check",
+   "name": "crawler3_health-check.py",
+   "category": "topics",
+   "tags": [
+    "爬虫",
+    "进阶"
+   ],
+   "title": "抓取健康监控",
+   "description": "多目标可用性探测 + 汇总报告。",
+   "requirements": [
+    "requests"
+   ],
+   "code": "\"\"\"健康检查：多目标探测与报告。\"\"\"\nimport time\nimport requests\n\nTARGETS = [\n    (\"httpbin\", \"https://httpbin.org/status/200\"),\n    (\"jsonplaceholder\", \"https://jsonplaceholder.typicode.com/posts/1\"),\n    (\"github\", \"https://api.github.com\"),\n]\nreport = []\nfor name, url in TARGETS:\n    t0 = time.monotonic()\n    try:\n        code = requests.get(url, timeout=8).status_code\n        ok = code < 400\n    except requests.RequestException:\n        code, ok = 0, False\n    report.append((name, code, (time.monotonic() - t0) * 1000, ok))\nfor name, code, ms, ok in report:\n    print(f\"{'✓' if ok else '✗'} {name:<16} {code or '-':>3}  {ms:6.0f}ms\")\n"
+  },
+  {
+   "id": "topics_crawler3-image-batch-download",
+   "name": "crawler3_image-batch-download.py",
+   "category": "topics",
+   "tags": [
+    "爬虫",
+    "进阶"
+   ],
+   "title": "图片批量下载",
+   "description": "URL 列表 → 并发落盘 + 扩展名推断。",
+   "requirements": [
+    "requests"
+   ],
+   "code": "\"\"\"图片批量下载：内容类型决定扩展名。\"\"\"\nfrom concurrent.futures import ThreadPoolExecutor\nfrom pathlib import Path\nimport requests\n\nIMAGES = [\"https://httpbin.org/image/png\", \"https://httpbin.org/image/jpeg\"]\ndest = Path(\"images\")\ndest.mkdir(exist_ok=True)\n\ndef download(url):\n    resp = requests.get(url, timeout=15)\n    ctype = resp.headers.get(\"Content-Type\", \"\")\n    ext = \".png\" if \"png\" in ctype else \".jpg\" if \"jpeg\" in ctype else \".bin\"\n    p = dest / f\"img_{abs(hash(url)) % 10000}{ext}\"\n    p.write_bytes(resp.content)\n    return p.name, len(resp.content)\n\nwith ThreadPoolExecutor(4) as pool:\n    for name, size in pool.map(download, IMAGES):\n        print(f\"{name} {size // 1024}KB\")\n"
+  },
+  {
+   "id": "topics_crawler3-m3u8-pattern",
+   "name": "crawler3_m3u8-pattern.py",
+   "category": "topics",
+   "tags": [
+    "爬虫",
+    "进阶"
+   ],
+   "title": "m3u8 视频分段模式",
+   "description": "HLS 分段索引解析与顺序下载（标准模式演示）。",
+   "requirements": [
+    "requests"
+   ],
+   "code": "\"\"\"m3u8：HLS 视频的分段索引与下载模式（演示解析）。\"\"\"\nM3U8 = \"\"\"#EXTM3U\n#EXT-X-TARGETDURATION:10\n#EXTINF:9.5,\nseg_0.ts\n#EXTINF:9.2,\nseg_1.ts\n#EXTINF:8.8,\nseg_2.ts\n#EXT-X-ENDLIST\"\"\"\nsegments = []\nfor line in M3U8.splitlines():\n    line = line.strip()\n    if line and not line.startswith(\"#\"):\n        segments.append(line)\ntotal = 10.0  # 真实场景解析 EXTINF 累加\nprint(f\"共 {len(segments)} 段: {segments}\")\nprint(\"真实抓取：requests 逐段下载 → 二进制拼接 → ffmpeg 合并转封装\")\n"
+  },
+  {
+   "id": "topics_crawler3-headers-order-honesty",
+   "name": "crawler3_headers-order-honesty.py",
+   "category": "topics",
+   "tags": [
+    "爬虫",
+    "进阶"
+   ],
+   "title": "请求指纹与自报家门",
+   "description": "为什么爬虫要诚实声明身份 + 合规清单。",
+   "requirements": [
+    "requests"
+   ],
+   "code": "\"\"\"合规清单：真实项目的自我要求。\"\"\"\nCHECKLIST = \"\"\"\n□ 遵守 robots.txt 与站点条款\n□ 控制 QPS，加礼貌延时（≥1s 对小型站点）\n□ 填写真实 Contact 的 UA，便于站长联系\n□ 只抓公开数据，绝不绕过鉴权\n□ 数据不转售、不侵犯隐私（个人信息保护法）\n□ 失败重试有上限，避免打挂对方\n\"\"\"\nprint(CHECKLIST)\nprint(\"爬虫的合法边界：公开数据 + 非垄断用途 + 尊重站点意愿\")\n"
+  }
+ ]
+}

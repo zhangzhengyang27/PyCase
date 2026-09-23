@@ -1,0 +1,161 @@
+<h2>布局与信息架构：三个重构方向</h2>
+<p class="subtitle">同样的「示例画廊」内容，三种不同的骨架。灰色线框只表达结构，不代表最终配色。点击选择你倾向的方向。</p>
+
+<div class="cards">
+
+  <!-- 方案 A -->
+  <div class="card" data-choice="a-refine" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding:12px;background:#1a1b1e;">
+      <div style="display:flex;height:150px;border-radius:6px;overflow:hidden;font-size:8px;color:#9aa0a8;border:1px solid #33353a;background:#111214;">
+        <!-- 侧栏 -->
+        <div style="width:52px;border-right:1px solid #2a2c31;padding:6px 4px;display:flex;flex-direction:column;gap:4px;background:#141518;">
+          <div style="height:8px;width:36px;border-radius:2px;background:#3a3d44;"></div>
+          <div style="height:10px;border-radius:3px;background:#2a2c31;margin-top:4px;"></div>
+          <div style="height:10px;border-radius:3px;background:#4b4fd4;"></div>
+          <div style="height:10px;border-radius:3px;background:#2a2c31;"></div>
+          <div style="margin-top:auto;">
+            <div style="height:10px;border-radius:3px;background:#2a2c31;"></div>
+            <div style="height:10px;border-radius:3px;background:#2a2c31;margin-top:4px;"></div>
+          </div>
+        </div>
+        <!-- 主区：落地页分区 -->
+        <div style="flex:1;display:flex;flex-direction:column;">
+          <div style="height:16px;border-bottom:1px solid #2a2c31;display:flex;align-items:center;padding:0 8px;gap:4px;">
+            <div style="width:60px;height:6px;border-radius:2px;background:#3a3d44;"></div>
+            <div style="width:40px;height:6px;border-radius:2px;background:#26282d;margin-left:auto;"></div>
+          </div>
+          <div style="flex:1;padding:8px;display:flex;flex-direction:column;gap:6px;">
+            <div style="display:flex;gap:6px;">
+              <div style="flex:2.2;height:34px;border-radius:4px;background:linear-gradient(135deg,#23253a,#1b1c22);border:1px solid #2e3040;"></div>
+              <div style="flex:1;height:34px;border-radius:4px;background:#1d1f23;border:1px solid #2a2c31;"></div>
+              <div style="flex:1;height:34px;border-radius:4px;background:#1d1f23;border:1px solid #2a2c31;"></div>
+            </div>
+            <div style="font-size:7px;color:#6b7078;">分类分区 × 4（横向卡片，点进去才出现筛选侧栏）</div>
+            <div style="display:flex;gap:6px;">
+              <div style="flex:1;height:26px;border-radius:4px;background:#1d1f23;border:1px solid #2a2c31;"></div>
+              <div style="flex:1;height:26px;border-radius:4px;background:#1d1f23;border:1px solid #2a2c31;"></div>
+              <div style="flex:1;height:26px;border-radius:4px;background:#1d1f23;border:1px solid #2a2c31;"></div>
+              <div style="flex:1;height:26px;border-radius:4px;background:#1d1f23;border:1px solid #2a2c31;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A · 精修现有三视图</h3>
+      <p>保留「画廊 / 工具箱 / 运行器」三个平级视图与分区落地页，但把落地页做实：每个分区变成可扫读的精选橱窗，下钻后筛选侧栏常驻、返回路径清晰。改动最稳，风险最低。</p>
+      <p style="color:#8a8f98;font-size:12px;">✔ 迁移成本低　✔ 心智不变　✘ 三次跳转才能跑到一个示例</p>
+    </div>
+  </div>
+
+  <!-- 方案 B -->
+  <div class="card" data-choice="b-workbench" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding:12px;background:#1a1b1e;">
+      <div style="display:flex;height:150px;border-radius:6px;overflow:hidden;font-size:8px;color:#9aa0a8;border:1px solid #33353a;background:#111214;">
+        <!-- 图标栏 -->
+        <div style="width:26px;border-right:1px solid #2a2c31;display:flex;flex-direction:column;align-items:center;gap:5px;padding:6px 0;background:#141518;">
+          <div style="width:14px;height:14px;border-radius:4px;background:#4b4fd4;"></div>
+          <div style="width:14px;height:14px;border-radius:4px;background:#26282d;"></div>
+          <div style="width:14px;height:14px;border-radius:4px;background:#26282d;"></div>
+          <div style="width:14px;height:14px;border-radius:4px;background:#26282d;margin-top:auto;"></div>
+        </div>
+        <!-- 筛选栏（常驻） -->
+        <div style="width:56px;border-right:1px solid #2a2c31;padding:6px 4px;background:#141518;">
+          <div style="height:8px;width:80%;border-radius:2px;background:#3a3d44;margin-bottom:6px;"></div>
+          <div style="height:7px;border-radius:2px;background:#26282d;margin-bottom:4px;"></div>
+          <div style="height:7px;border-radius:2px;background:#26282d;margin-bottom:4px;"></div>
+          <div style="height:7px;border-radius:2px;background:#26282d;margin-bottom:4px;"></div>
+          <div style="height:7px;border-radius:2px;background:#26282d;margin-bottom:4px;"></div>
+          <div style="height:7px;border-radius:2px;background:#26282d;"></div>
+        </div>
+        <!-- 结果区 + 右侧详情抽屉 -->
+        <div style="flex:1;display:flex;flex-direction:column;">
+          <div style="height:16px;border-bottom:1px solid #2a2c31;display:flex;align-items:center;padding:0 8px;gap:4px;">
+            <div style="width:70px;height:8px;border-radius:3px;background:#26282d;"></div>
+            <div style="width:36px;height:6px;border-radius:2px;background:#26282d;"></div>
+            <div style="width:30px;height:6px;border-radius:2px;background:#2f6640;margin-left:auto;"></div>
+          </div>
+          <div style="flex:1;display:flex;">
+            <div style="flex:1.4;padding:8px;display:grid;grid-template-columns:1fr 1fr;gap:6px;align-content:start;">
+              <div style="height:38px;border-radius:4px;background:#1d1f23;border:1px solid #4b4fd4;"></div>
+              <div style="height:38px;border-radius:4px;background:#1d1f23;border:1px solid #2a2c31;"></div>
+              <div style="height:38px;border-radius:4px;background:#1d1f23;border:1px solid #2a2c31;"></div>
+              <div style="height:38px;border-radius:4px;background:#1d1f23;border:1px solid #2a2c31;"></div>
+            </div>
+            <div style="flex:1;border-left:1px solid #2a2c31;background:#16171a;padding:8px;">
+              <div style="height:8px;width:70%;border-radius:2px;background:#3a3d44;margin-bottom:5px;"></div>
+              <div style="height:6px;width:90%;border-radius:2px;background:#26282d;margin-bottom:4px;"></div>
+              <div style="height:6px;width:60%;border-radius:2px;background:#26282d;margin-bottom:6px;"></div>
+              <div style="height:22px;border-radius:4px;background:#0c0d0f;border:1px solid #26282d;margin-bottom:5px;"></div>
+              <div style="display:flex;gap:4px;">
+                <div style="width:30px;height:10px;border-radius:3px;background:#4b4fd4;"></div>
+                <div style="width:30px;height:10px;border-radius:3px;background:#26282d;"></div>
+              </div>
+              <div style="font-size:7px;color:#6b7078;margin-top:6px;">右侧详情抽屉：代码 / 参数 / 运行 一屏完成</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B · 一体化工作台（推荐）</h3>
+      <p>导航收窄成图标栏，筛选常驻左侧，结果网格居中；点卡片从右侧滑出「详情抽屉」——代码、参数、运行输出都在同一屏完成，浏览不打断。参考 Hugging Face Hub + Linear 侧栏检视器的混合体。</p>
+      <p style="color:#8a8f98;font-size:12px;">✔ 浏览→运行零跳转　✔ 信息密度高　✘ 改动面较大，抽屉内空间有限</p>
+    </div>
+  </div>
+
+  <!-- 方案 C -->
+  <div class="card" data-choice="c-threecol" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding:12px;background:#1a1b1e;">
+      <div style="display:flex;height:150px;border-radius:6px;overflow:hidden;font-size:8px;color:#9aa0a8;border:1px solid #33353a;background:#111214;">
+        <!-- 图标栏 -->
+        <div style="width:26px;border-right:1px solid #2a2c31;display:flex;flex-direction:column;align-items:center;gap:5px;padding:6px 0;background:#141518;">
+          <div style="width:14px;height:14px;border-radius:4px;background:#4b4fd4;"></div>
+          <div style="width:14px;height:14px;border-radius:4px;background:#26282d;"></div>
+          <div style="width:14px;height:14px;border-radius:4px;background:#26282d;margin-top:auto;"></div>
+        </div>
+        <!-- 树栏 -->
+        <div style="width:64px;border-right:1px solid #2a2c31;padding:6px 4px;background:#141518;">
+          <div style="height:7px;width:90%;border-radius:2px;background:#3a3d44;margin-bottom:6px;"></div>
+          <div style="height:7px;border-radius:2px;background:#26282d;margin-bottom:4px;"></div>
+          <div style="height:7px;border-radius:2px;background:#26282d;margin-bottom:4px;"></div>
+          <div style="height:7px;border-radius:2px;background:#26282d;margin-bottom:4px;"></div>
+          <div style="height:7px;border-radius:2px;background:#26282d;margin-bottom:4px;"></div>
+          <div style="height:7px;border-radius:2px;background:#26282d;margin-bottom:4px;"></div>
+          <div style="height:7px;border-radius:2px;background:#26282d;margin-bottom:4px;"></div>
+          <div style="height:7px;border-radius:2px;background:#26282d;"></div>
+        </div>
+        <!-- 列表栏 -->
+        <div style="width:84px;border-right:1px solid #2a2c31;padding:5px 4px;background:#111214;">
+          <div style="height:18px;border-radius:3px;background:#2a2c31;margin-bottom:4px;border:1px solid #4b4fd4;"></div>
+          <div style="height:18px;border-radius:3px;background:#1a1c20;margin-bottom:4px;"></div>
+          <div style="height:18px;border-radius:3px;background:#1a1c20;margin-bottom:4px;"></div>
+          <div style="height:18px;border-radius:3px;background:#1a1c20;margin-bottom:4px;"></div>
+          <div style="height:18px;border-radius:3px;background:#1a1c20;"></div>
+        </div>
+        <!-- 预览栏 -->
+        <div style="flex:1;padding:8px;background:#16171a;">
+          <div style="height:9px;width:60%;border-radius:2px;background:#3a3d44;margin-bottom:5px;"></div>
+          <div style="height:6px;width:90%;border-radius:2px;background:#26282d;margin-bottom:4px;"></div>
+          <div style="height:6px;width:75%;border-radius:2px;background:#26282d;margin-bottom:6px;"></div>
+          <div style="height:44px;border-radius:4px;background:#0c0d0f;border:1px solid #26282d;margin-bottom:6px;"></div>
+          <div style="display:flex;gap:4px;">
+            <div style="width:32px;height:10px;border-radius:3px;background:#4b4fd4;"></div>
+            <div style="width:32px;height:10px;border-radius:3px;background:#26282d;"></div>
+          </div>
+          <div style="font-size:7px;color:#6b7078;margin-top:6px;">邮件客户端式三栏：树 / 列表 / 预览</div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C · 三栏资源管理器</h3>
+      <p>「分类树 → 紧凑列表 → 详情预览」三栏全部常驻，像邮件客户端 / VS Code 资源管理器。单屏信息密度最高、零跳转，但每栏都窄，示例卡片的展示性变弱，更像工具而非橱窗。</p>
+      <p style="color:#8a8f98;font-size:12px;">✔ 键盘流利度最高　✔ 单屏看全　✘ 展示性弱、学习成本高</p>
+    </div>
+  </div>
+
+</div>
+
+<div class="section">
+  <p class="subtitle">我的推荐是 <strong>B</strong>：你选的三个痛点（布局跳转感、卡片粗糙、质感）在 B 里都能被正面解决，而且它最接近同类产品（HF Hub / Raycast / Linear）的成熟形态。也可以告诉我你想混搭的点，比如「B 的抽屉 + A 的落地页」。</p>
+</div>

@@ -1,0 +1,204 @@
+/* Vue 渲染层样式入口：复用与旧渲染层同一份 Tailwind 4 令牌层 */
+@import "./src/theme.css";
+
+/* Vue 页面精简 reset（与旧渲染层 reset 对齐，置于 base 层让工具类可覆盖） */
+@layer base {
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  /* rem 基准修复：根字号曾为 13px，全部 rem 计工具类（间距/尺寸）整体缩水 19%；
+     恢复 16px 根基准让 h-10=40px、p-4=16px 等回到设计值，正文仍为 13px */
+  html {
+    font-size: 16px;
+  }
+
+  html,
+  body {
+    height: 100%;
+    overflow: hidden;
+    font-family: var(--font-sans);
+    font-size: var(--text-body-size);
+    font-weight: 400;
+    color: var(--text-primary);
+    background: var(--bg-marketing);
+    -webkit-font-smoothing: antialiased;
+    letter-spacing: -0.005em;
+  }
+
+  /* 键盘可达性：仅键盘导航时显示焦点环（设计规范 v1） */
+  :focus-visible {
+    outline: none;
+    box-shadow: var(--elevation-focus);
+  }
+
+  /* 前庭安全：系统请求减弱动态时，终止全部循环动画并把过渡压到近零
+     （状态点呼吸 / spinner / 不确定进度条 / 弹窗与 toast 过渡全部覆盖） */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-delay: 0s !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      transition-delay: 0s !important;
+    }
+  }
+
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--border-secondary);
+    border-radius: 4px;
+  }
+}
+
+/* Electron 无边框窗口拖拽区（与旧渲染层 style.css 同名工具类保持一致） */
+.app-drag {
+  -webkit-app-region: drag;
+}
+.app-no-drag {
+  -webkit-app-region: no-drag;
+}
+
+/* ===== 深邃层次：公共表面类（specs §3；放 components 层让 utilities 可覆盖） ===== */
+@layer components {
+  /* 卡片：渐变表面 + 顶部受光高边 + hover 抬升。
+     边框/圆角/阴影由本类全权负责，消费方不要再叠加 border/rounded/shadow 静态工具类 */
+  .surface-card {
+    background: linear-gradient(180deg, var(--card-grad-top), var(--card-grad-bottom));
+    border: 1px solid var(--border-card);
+    border-top-color: var(--card-highlight);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-card);
+    transition:
+      box-shadow 160ms var(--ease-standard),
+      border-color 160ms var(--ease-standard),
+      transform 160ms var(--ease-standard);
+  }
+  .surface-card:hover {
+    transform: translateY(-1px);
+    border-top-color: var(--card-highlight-hover);
+    box-shadow: var(--shadow-card-hover);
+  }
+  [data-theme='light'] .surface-card {
+    background: #ffffff;
+  }
+  /* 焦点环恢复：.surface-card/.surface-raised 的静置阴影在 components 层
+     压过 base 层全局 :focus-visible 的 box-shadow，键盘焦点需在本层显式恢复；
+     选中态的工具类阴影（utilities 层）仍优先于本规则 */
+  .surface-card:focus-visible,
+  .surface-raised:focus-visible {
+    box-shadow: var(--elevation-focus);
+  }
+
+  /* 无 hover 抬升的凸起表面：导航激活胶囊 / 分段控件激活段 */
+  .surface-raised {
+    background: linear-gradient(180deg, #1e2030, #181a24);
+    border: 1px solid rgba(133, 132, 255, 0.22);
+    border-top-color: rgba(255, 255, 255, 0.14);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+  }
+  [data-theme='light'] .surface-raised {
+    background: #f3f4f5;
+    border-color: #d0d6e0;
+    border-top-color: #d0d6e0;
+    box-shadow: 0 1px 2px rgba(24, 28, 34, 0.06);
+  }
+
+  /* 色相徽章：--hue 由消费方内联注入（specs §3.2 分类/分区色相体系） */
+  .hue-chip {
+    background: color-mix(in srgb, var(--hue, var(--accent-strong)) 14%, transparent);
+    border: 1px solid color-mix(in srgb, var(--hue, var(--accent-strong)) 35%, transparent);
+    color: color-mix(in srgb, var(--hue, var(--accent-strong)) 70%, white 30%);
+  }
+  [data-theme='light'] .hue-chip {
+    color: color-mix(in srgb, var(--hue, var(--accent-strong)) 55%, black 45%);
+  }
+
+  /* 总览统计 chips（specs §3.6） */
+  .stat-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 7px;
+    border-radius: var(--radius-control);
+    background: rgba(255, 255, 255, 0.045);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    font-size: var(--text-caption-size);
+    color: var(--text-quaternary);
+  }
+  .stat-chip b {
+    font-weight: 590;
+    color: var(--text-secondary);
+  }
+  [data-theme='light'] .stat-chip {
+    background: rgba(0, 0, 0, 0.035);
+    border-color: rgba(0, 0, 0, 0.08);
+  }
+  /* ok 变体（叠加在 .stat-chip 上使用） */
+  .stat-chip-ok {
+    background: color-mix(in srgb, var(--status-green) 10%, transparent);
+    border-color: color-mix(in srgb, var(--status-green) 25%, transparent);
+    color: var(--status-green);
+  }
+  .stat-chip-ok b {
+    color: var(--status-green);
+  }
+  [data-theme='light'] .stat-chip-ok {
+    background: color-mix(in srgb, var(--status-green) 10%, transparent);
+    border-color: color-mix(in srgb, var(--status-green) 25%, transparent);
+  }
+
+  /* 主按钮「深邃层次」变体（BaseButton variant=primary 消费） */
+  .btn-primary-deep {
+    background: linear-gradient(180deg, #6a79e0, #5662c8);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-top-color: rgba(255, 255, 255, 0.3);
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(94, 106, 210, 0.35);
+  }
+  .btn-primary-deep:hover {
+    background: linear-gradient(180deg, #7484e8, #5e6ad2);
+    box-shadow: 0 2px 10px rgba(94, 106, 210, 0.45);
+  }
+  [data-theme='light'] .btn-primary-deep {
+    background: #4f51c0;
+    border-color: #4f51c0;
+    border-top-color: #5a5cd0;
+    box-shadow: 0 2px 6px rgba(79, 81, 192, 0.25);
+  }
+  [data-theme='light'] .btn-primary-deep:hover {
+    background: #4547b3;
+    box-shadow: 0 2px 8px rgba(79, 81, 192, 0.32);
+  }
+
+  /* 画廊总览 hero 极光（浅色降为 6%/3%） */
+  .aurora-hero {
+    background:
+      radial-gradient(600px 130px at 18% 0%, rgba(94, 106, 210, 0.13), transparent 65%),
+      radial-gradient(500px 120px at 85% -20%, rgba(133, 132, 255, 0.07), transparent 60%);
+  }
+  [data-theme='light'] .aurora-hero {
+    background:
+      radial-gradient(600px 130px at 18% 0%, rgba(94, 106, 210, 0.06), transparent 65%),
+      radial-gradient(500px 120px at 85% -20%, rgba(94, 106, 210, 0.03), transparent 60%);
+  }
+}
+
+/* 顶边高光：必须置于层级之外——面板同时携带 utilities 层的 border-line-subtle，
+   其 border-color 简写展开会覆盖 border-top-color；无层级样式可胜过全部 @layer（同 .app-drag 惯例） */
+.edge-highlight-top {
+  border-top-color: rgba(255, 255, 255, 0.14);
+}
+[data-theme='light'] .edge-highlight-top {
+  border-top-color: rgba(0, 0, 0, 0.06);
+}

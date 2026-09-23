@@ -1,0 +1,412 @@
+{
+  "examples": [
+    {
+      "id": "topics_python-basics_pillow-gradient-generator.py",
+      "name": "gradient-generator.py",
+      "category": "topics",
+      "tags": [
+        "图像生成",
+        "渐变"
+      ],
+      "title": "RGB 渐变图",
+      "description": "水平/垂直/对角三向 RGB 渐变图，演示 Pillow 从零创建图像与像素写入。",
+      "requirements": [
+        "pillow",
+        "numpy",
+        "matplotlib"
+      ],
+      "code": "\"\"\"渐变图像生成器：程序化创建 RGB 渐变图\"\"\"\nfrom PIL import Image\nimport numpy as np\nimport matplotlib.pyplot as plt\n# 尝试设置中文字体（找不到时中文显示为方块但不影响运行）\ntry:\n    from matplotlib import font_manager\n    _zh_fonts = [f.name for f in font_manager.fontManager.ttflist if any(\n        k in f.name for k in (\"PingFang\", \"Heiti\", \"Songti\", \"Hiragino\", \"YaHei\", \"SimHei\", \"Arial Unicode\"))]\n    if _zh_fonts:\n        plt.rcParams[\"font.sans-serif\"] = [_zh_fonts[0]]\n    plt.rcParams[\"axes.unicode_minus\"] = False\nexcept Exception:\n    pass\n\n\nW, H = 400, 300\n\n# 水平渐变：R 从左到右 0->255\nx = np.linspace(0, 255, W, dtype=np.uint8)\nhoriz = np.tile(x, (H, 1))\n\n# 垂直渐变：G 从上到下 0->255\ny = np.linspace(0, 255, H, dtype=np.uint8).reshape(-1, 1)\nvert = np.tile(y, (1, W))\n\n# 对角渐变：B 从 (0,0) 到 (W,H)\ndiag = np.linspace(0, 255, W + H, dtype=np.uint8)\ndiag_map = np.array([[diag[i + j] for j in range(W)] for i in range(H)])\n\nrgb = np.stack([horiz, vert, diag_map], axis=-1).astype(np.uint8)\nimg = Image.fromarray(rgb, \"RGB\")\n\nplt.figure(figsize=(8, 6))\nplt.imshow(img)\nplt.axis(\"off\")\nplt.title(\"RGB 渐变图：R 水平 / G 垂直 / B 对角\")\nplt.savefig(\"gradient-generator_preview.png\", bbox_inches=\"tight\", dpi=110)\nplt.close(\"all\")\nimg.save(\"gradient_demo.png\")\nprint(\"已保存 gradient_demo.png\")"
+    },
+    {
+      "id": "topics_python-basics_pillow-resize-thumbnail.py",
+      "name": "resize-thumbnail.py",
+      "category": "topics",
+      "tags": [
+        "缩放",
+        "重采样"
+      ],
+      "title": "缩放与缩略图",
+      "description": "棋盘图用最近邻、双线性、双三次算法缩放并生成缩略图，对比插值效果差异。",
+      "requirements": [
+        "pillow",
+        "numpy",
+        "matplotlib"
+      ],
+      "code": "\"\"\"缩放与缩略图：不同重采样算法对比\"\"\"\nfrom PIL import Image, ImageDraw\nimport matplotlib.pyplot as plt\n# 尝试设置中文字体（找不到时中文显示为方块但不影响运行）\ntry:\n    from matplotlib import font_manager\n    _zh_fonts = [f.name for f in font_manager.fontManager.ttflist if any(\n        k in f.name for k in (\"PingFang\", \"Heiti\", \"Songti\", \"Hiragino\", \"YaHei\", \"SimHei\", \"Arial Unicode\"))]\n    if _zh_fonts:\n        plt.rcParams[\"font.sans-serif\"] = [_zh_fonts[0]]\n    plt.rcParams[\"axes.unicode_minus\"] = False\nexcept Exception:\n    pass\n\n\n# 程序化生成 320x320 棋盘格\nW = 320\nimg = Image.new(\"RGB\", (W, W), \"white\")\nd = ImageDraw.Draw(img)\nfor i in range(8):\n    for j in range(8):\n        if (i + j) % 2 == 0:\n            d.rectangle([i * 40, j * 40, i * 40 + 40, j * 40 + 40], fill=(30, 144, 255))\n\nfig, axes = plt.subplots(2, 2, figsize=(10, 10))\naxes[0, 0].imshow(img)\naxes[0, 0].set_title(\"原图 320x320\")\naxes[0, 0].axis(\"off\")\n\nmodes = [(\"最近邻\", Image.Resampling.NEAREST), (\"双线性\", Image.Resampling.BILINEAR),\n         (\"双三次\", Image.Resampling.BICUBIC)]\nfor ax, (label, mode) in zip(axes.flat[1:], modes):\n    small = img.resize((100, 100), mode).resize((320, 320), mode)\n    ax.imshow(small)\n    ax.set_title(label)\n    ax.axis(\"off\")\n\nplt.suptitle(\"缩放算法对比：先缩到 1/3 再放大回原尺寸\")\nplt.tight_layout()\nplt.savefig(\"resize-thumbnail_preview.png\", bbox_inches=\"tight\", dpi=110)\nplt.close(\"all\")\n\nthumb = img.copy()\nthumb.thumbnail((96, 96))\nprint(\"缩略图尺寸:\", thumb.size)\nthumb.save(\"thumbnail_demo.png\")"
+    },
+    {
+      "id": "topics_python-basics_pillow-crop-paste.py",
+      "name": "crop-paste.py",
+      "category": "topics",
+      "tags": [
+        "裁剪",
+        "合成"
+      ],
+      "title": "裁剪与粘贴合成",
+      "description": "拼色图案的裁剪、旋转与多图粘贴拼接，演示 crop、paste 与画布合成。",
+      "requirements": [
+        "pillow",
+        "numpy",
+        "matplotlib"
+      ],
+      "code": "\"\"\"裁剪与粘贴合成：拼贴画效果\"\"\"\nfrom PIL import Image, ImageDraw\nimport matplotlib.pyplot as plt\n# 尝试设置中文字体（找不到时中文显示为方块但不影响运行）\ntry:\n    from matplotlib import font_manager\n    _zh_fonts = [f.name for f in font_manager.fontManager.ttflist if any(\n        k in f.name for k in (\"PingFang\", \"Heiti\", \"Songti\", \"Hiragino\", \"YaHei\", \"SimHei\", \"Arial Unicode\"))]\n    if _zh_fonts:\n        plt.rcParams[\"font.sans-serif\"] = [_zh_fonts[0]]\n    plt.rcParams[\"axes.unicode_minus\"] = False\nexcept Exception:\n    pass\n\n\n# 生成 300x300 渐变底图\nimport numpy as np\nxx = np.linspace(0, 255, 300, dtype=np.uint8)\nbase = Image.fromarray(np.tile(xx, (300, 1)).astype(np.uint8), \"L\").convert(\"RGB\")\n\n# 生成黄色圆\nyellow = Image.new(\"RGB\", (150, 150), \"white\")\nd = ImageDraw.Draw(yellow)\nd.ellipse([10, 10, 140, 140], fill=(255, 215, 0))\n# 生成青色方块\ncyan = Image.new(\"RGB\", (150, 150), \"white\")\nd2 = ImageDraw.Draw(cyan)\nd2.rectangle([30, 30, 120, 120], fill=(0, 200, 200))\n\n# 裁剪渐变图左上 150x150\ncrop = base.crop((0, 0, 150, 150))\n\n# 拼贴：底图 + 四角元素\ncanvas = Image.new(\"RGB\", (450, 450), \"lightgray\")\ncanvas.paste(base, (0, 0))\ncanvas.paste(yellow, (150, 0))\ncanvas.paste(cyan, (300, 0))\ncanvas.paste(crop.rotate(180), (0, 150))\ncanvas.paste(crop.rotate(90), (150, 150))\ncanvas.paste(crop.rotate(270), (300, 150))\n\nplt.figure(figsize=(8, 8))\nplt.imshow(canvas)\nplt.axis(\"off\")\nplt.title(\"裁剪与粘贴合成拼贴画\")\nplt.savefig(\"crop-paste_preview.png\", bbox_inches=\"tight\", dpi=110)\nplt.close(\"all\")\ncanvas.save(\"crop_paste_demo.png\")"
+    },
+    {
+      "id": "topics_python-basics_pillow-rotate-flip.py",
+      "name": "rotate-flip.py",
+      "category": "topics",
+      "tags": [
+        "旋转",
+        "翻转"
+      ],
+      "title": "旋转与翻转",
+      "description": "方向图多角度旋转与水平/垂直翻转对比，演示 rotate 的 expand 扩展画布用法。",
+      "requirements": [
+        "pillow",
+        "numpy",
+        "matplotlib"
+      ],
+      "code": "\"\"\"旋转与翻转：方向图的多种变换\"\"\"\nfrom PIL import Image, ImageDraw\nimport matplotlib.pyplot as plt\n# 尝试设置中文字体（找不到时中文显示为方块但不影响运行）\ntry:\n    from matplotlib import font_manager\n    _zh_fonts = [f.name for f in font_manager.fontManager.ttflist if any(\n        k in f.name for k in (\"PingFang\", \"Heiti\", \"Songti\", \"Hiragino\", \"YaHei\", \"SimHei\", \"Arial Unicode\"))]\n    if _zh_fonts:\n        plt.rcParams[\"font.sans-serif\"] = [_zh_fonts[0]]\n    plt.rcParams[\"axes.unicode_minus\"] = False\nexcept Exception:\n    pass\n\n\n# 生成 240x240 方向图：白底 + 蓝色箭头 + 红色圆点\nimg = Image.new(\"RGB\", (240, 240), \"white\")\nd = ImageDraw.Draw(img)\nd.polygon([(120, 20), (200, 100), (150, 100), (150, 220), (90, 220), (90, 100), (40, 100)], fill=(30, 144, 255))\nd.ellipse([100, 100, 140, 140], fill=(255, 80, 80))\n\nfig, axes = plt.subplots(2, 3, figsize=(12, 8))\ntitles = [\"原图\", \"旋转 45°\", \"旋转 45°+扩展画布\", \"水平翻转\", \"垂直翻转\", \"旋转 90°\"]\nimages = [img,\n          img.rotate(45),\n          img.rotate(45, expand=True),\n          img.transpose(Image.Transpose.FLIP_LEFT_RIGHT),\n          img.transpose(Image.Transpose.FLIP_TOP_BOTTOM),\n          img.transpose(Image.Transpose.ROTATE_90)]\nfor ax, t, im in zip(axes.flat, titles, images):\n    ax.imshow(im)\n    ax.set_title(t)\n    ax.axis(\"off\")\nplt.suptitle(\"旋转与翻转：expand 会扩展画布适应新角度\")\nplt.tight_layout()\nplt.savefig(\"rotate-flip_preview.png\", bbox_inches=\"tight\", dpi=110)\nplt.close(\"all\")"
+    },
+    {
+      "id": "topics_python-basics_pillow-grayscale-sepia.py",
+      "name": "grayscale-sepia.py",
+      "category": "topics",
+      "tags": [
+        "灰度",
+        "复古"
+      ],
+      "title": "灰度与老照片效果",
+      "description": "彩色风景图的灰度转换与棕褐色老照片风格处理，演示 L 模式转换与像素运算。",
+      "requirements": [
+        "pillow",
+        "numpy",
+        "matplotlib"
+      ],
+      "code": "\"\"\"灰度化与老照片：彩色图 → 灰度 → 棕褐色调\"\"\"\nfrom PIL import Image, ImageDraw\nimport numpy as np\nimport matplotlib.pyplot as plt\n# 尝试设置中文字体（找不到时中文显示为方块但不影响运行）\ntry:\n    from matplotlib import font_manager\n    _zh_fonts = [f.name for f in font_manager.fontManager.ttflist if any(\n        k in f.name for k in (\"PingFang\", \"Heiti\", \"Songti\", \"Hiragino\", \"YaHei\", \"SimHei\", \"Arial Unicode\"))]\n    if _zh_fonts:\n        plt.rcParams[\"font.sans-serif\"] = [_zh_fonts[0]]\n    plt.rcParams[\"axes.unicode_minus\"] = False\nexcept Exception:\n    pass\n\n\n# 程序化生成\"风景\"：天空渐变 + 绿色山丘 + 橙色太阳\nW, H = 400, 300\nsky = np.linspace(135, 206, H, dtype=np.uint8).reshape(-1, 1)\narr = np.zeros((H, W, 3), dtype=np.uint8)\narr[:, :, 0] = np.tile(sky, (1, W))\narr[:, :, 1] = 180\narr[:, :, 2] = 235\narr[H // 2:, :, 0] = 60\narr[H // 2:, :, 1] = 160\narr[H // 2:, :, 2] = 80\nsun = Image.fromarray(arr, \"RGB\")\nd = ImageDraw.Draw(sun)\nd.ellipse([150, 80, 250, 180], fill=(255, 160, 40))\n\ngray = sun.convert(\"L\")\n\n# 棕褐色：L -> (R,G,B) = (L*1.05, L*0.87, L*0.58)\ng = np.asarray(gray).astype(np.float32)\nsepia = np.stack([g * 1.05, g * 0.87, g * 0.58], axis=-1)\nsepia = np.clip(sepia, 0, 255).astype(np.uint8)\nsepia = Image.fromarray(sepia)\n\nfig, axes = plt.subplots(1, 3, figsize=(14, 5))\nfor ax, im, t in zip(axes, [sun, gray, sepia], [\"原图\", \"灰度\", \"老照片棕褐\"]):\n    ax.imshow(im, cmap=\"gray\" if im.mode == \"L\" else None)\n    ax.set_title(t)\n    ax.axis(\"off\")\nplt.tight_layout()\nplt.savefig(\"grayscale-sepia_preview.png\", bbox_inches=\"tight\", dpi=110)\nplt.close(\"all\")"
+    },
+    {
+      "id": "topics_python-basics_pillow-color-channels.py",
+      "name": "color-channels.py",
+      "category": "topics",
+      "tags": [
+        "色彩",
+        "通道"
+      ],
+      "title": "RGB 通道分离",
+      "description": "三色圆分离出 R/G/B 单通道并分别染色显示，演示通道拆分与合并。",
+      "requirements": [
+        "pillow",
+        "numpy",
+        "matplotlib"
+      ],
+      "code": "\"\"\"RGB 通道分离与合并\"\"\"\nfrom PIL import Image, ImageDraw\nimport numpy as np\nimport matplotlib.pyplot as plt\n# 尝试设置中文字体（找不到时中文显示为方块但不影响运行）\ntry:\n    from matplotlib import font_manager\n    _zh_fonts = [f.name for f in font_manager.fontManager.ttflist if any(\n        k in f.name for k in (\"PingFang\", \"Heiti\", \"Songti\", \"Hiragino\", \"YaHei\", \"SimHei\", \"Arial Unicode\"))]\n    if _zh_fonts:\n        plt.rcParams[\"font.sans-serif\"] = [_zh_fonts[0]]\n    plt.rcParams[\"axes.unicode_minus\"] = False\nexcept Exception:\n    pass\n\n\n# 程序化生成 300x300 三色圆\nimg = Image.new(\"RGB\", (300, 300), \"black\")\nd = ImageDraw.Draw(img)\nd.ellipse([50, 50, 250, 250], fill=(255, 0, 0))\nd.ellipse([80, 80, 220, 220], fill=(0, 255, 0))\nd.ellipse([110, 110, 190, 190], fill=(0, 0, 255))\n\nr, g, b = img.split()\n\n# 把单通道染回对应颜色\ndef tint(channel, color):\n    black = Image.new(\"RGB\", channel.size, (0, 0, 0))\n    black.paste(color, (0, 0), channel)\n    return black\n\nfig, axes = plt.subplots(2, 2, figsize=(10, 10))\naxes[0, 0].imshow(img)\naxes[0, 0].set_title(\"原图\")\naxes[0, 1].imshow(tint(r, (255, 0, 0)))\naxes[0, 1].set_title(\"R 通道\")\naxes[1, 0].imshow(tint(g, (0, 255, 0)))\naxes[1, 0].set_title(\"G 通道\")\naxes[1, 1].imshow(tint(b, (0, 0, 255)))\naxes[1, 1].set_title(\"B 通道\")\nfor ax in axes.flat:\n    ax.axis(\"off\")\nplt.tight_layout()\nplt.savefig(\"color-channels_preview.png\", bbox_inches=\"tight\", dpi=110)\nplt.close(\"all\")"
+    },
+    {
+      "id": "topics_python-basics_pillow-pixel-art.py",
+      "name": "pixel-art.py",
+      "category": "topics",
+      "tags": [
+        "特效",
+        "像素风"
+      ],
+      "title": "像素风马赛克",
+      "description": "渐变圆降采样后最近邻放大形成像素风，演示重采样与低分辨率艺术效果。",
+      "requirements": [
+        "pillow",
+        "numpy",
+        "matplotlib"
+      ],
+      "code": "\"\"\"像素风马赛克：降采样 + 最近邻放大\"\"\"\nfrom PIL import Image\nimport numpy as np\nimport matplotlib.pyplot as plt\n# 尝试设置中文字体（找不到时中文显示为方块但不影响运行）\ntry:\n    from matplotlib import font_manager\n    _zh_fonts = [f.name for f in font_manager.fontManager.ttflist if any(\n        k in f.name for k in (\"PingFang\", \"Heiti\", \"Songti\", \"Hiragino\", \"YaHei\", \"SimHei\", \"Arial Unicode\"))]\n    if _zh_fonts:\n        plt.rcParams[\"font.sans-serif\"] = [_zh_fonts[0]]\n    plt.rcParams[\"axes.unicode_minus\"] = False\nexcept Exception:\n    pass\n\n\n# 程序化生成 400x400 渐变圆\nW = 400\nxx, yy = np.meshgrid(np.linspace(-1, 1, W), np.linspace(-1, 1, W))\nr = np.sqrt(xx ** 2 + yy ** 2)\nhue = np.arctan2(yy, xx)\n# HSV 转简易 RGB 彩虹圆\nhsv = np.stack([(hue + np.pi) / (2 * np.pi), np.ones_like(r), 1 - r], axis=-1)\nimport colorsys\nrgb = np.zeros((W, W, 3))\nfor i in range(0, W, 25):\n    for j in range(0, W, 25):\n        h, s, v = hsv[i, j]\n        rgb[i:i + 25, j:j + 25] = colorsys.hsv_to_rgb(h, s, v)\nimg = Image.fromarray((rgb * 255).astype(np.uint8))\n\n# 马赛克：先缩到 40x40 再放大回 400x400\npixel = img.resize((40, 40), Image.Resampling.NEAREST).resize((W, W), Image.Resampling.NEAREST)\n\nfig, axes = plt.subplots(1, 2, figsize=(12, 6))\naxes[0].imshow(img)\naxes[0].set_title(\"原图 400x400\")\naxes[0].axis(\"off\")\naxes[1].imshow(pixel)\naxes[1].set_title(\"像素风 40x40 马赛克\")\naxes[1].axis(\"off\")\nplt.tight_layout()\nplt.savefig(\"pixel-art_preview.png\", bbox_inches=\"tight\", dpi=110)\nplt.close(\"all\")"
+    },
+    {
+      "id": "topics_python-basics_pillow-point-operations.py",
+      "name": "point-operations.py",
+      "category": "topics",
+      "tags": [
+        "色彩",
+        "点运算"
+      ],
+      "title": "点运算与均衡化",
+      "description": "反色、自动对比度、直方图均衡化与色调分离的效果对比，演示 ImageOps 点运算。",
+      "requirements": [
+        "pillow",
+        "numpy",
+        "matplotlib"
+      ],
+      "code": "\"\"\"点运算：反色 / 自动对比度 / 直方图均衡化 / 色调分离\"\"\"\nfrom PIL import Image, ImageDraw, ImageOps\nimport numpy as np\nimport matplotlib.pyplot as plt\n# 尝试设置中文字体（找不到时中文显示为方块但不影响运行）\ntry:\n    from matplotlib import font_manager\n    _zh_fonts = [f.name for f in font_manager.fontManager.ttflist if any(\n        k in f.name for k in (\"PingFang\", \"Heiti\", \"Songti\", \"Hiragino\", \"YaHei\", \"SimHei\", \"Arial Unicode\"))]\n    if _zh_fonts:\n        plt.rcParams[\"font.sans-serif\"] = [_zh_fonts[0]]\n    plt.rcParams[\"axes.unicode_minus\"] = False\nexcept Exception:\n    pass\n\n\n# 程序化生成低对比度渐变图（模拟欠曝照片）\nW, H = 300, 300\nv = np.linspace(60, 120, W, dtype=np.uint8)  # 低动态范围\nlow = Image.fromarray(np.tile(v, (H, 1)), \"L\")\nlow = low.convert(\"RGB\")\n\nd = ImageDraw.Draw(low)\nd.ellipse([80, 80, 220, 220], outline=(255, 255, 255), width=3)\nd.line([(0, 150), (300, 150)], fill=(255, 255, 255), width=2)\nd.line([(150, 0), (150, 300)], fill=(255, 255, 255), width=2)\n\nresults = {\n    \"原图\": low,\n    \"反色 invert\": ImageOps.invert(low),\n    \"自动对比度\": ImageOps.autocontrast(low, cutoff=2),\n    \"直方图均衡\": ImageOps.equalize(low),\n    \"色调分离 4 级\": ImageOps.posterize(low, 4),\n    \"灰度化\": low.convert(\"L\"),\n}\n\nfig, axes = plt.subplots(2, 3, figsize=(13, 9))\nfor ax, (t, im) in zip(axes.flat, results.items()):\n    ax.imshow(im, cmap=\"gray\" if im.mode == \"L\" else None)\n    ax.set_title(t)\n    ax.axis(\"off\")\nplt.tight_layout()\nplt.savefig(\"point-operations_preview.png\", bbox_inches=\"tight\", dpi=110)\nplt.close(\"all\")"
+    },
+    {
+      "id": "topics_python-basics_pillow-filter-gallery.py",
+      "name": "filter-gallery.py",
+      "category": "topics",
+      "tags": [
+        "滤镜",
+        "效果"
+      ],
+      "title": "内置滤镜效果画廊",
+      "description": "同一图像应用模糊、轮廓、浮雕、锐化等 8 种内置滤镜，直观对比滤镜效果。",
+      "requirements": [
+        "pillow",
+        "numpy",
+        "matplotlib"
+      ],
+      "code": "from PIL import Image, ImageDraw\n\"\"\"滤镜效果画廊：8 种内置滤镜对比\"\"\"\nfrom PIL import Image, ImageFilter\nimport numpy as np\nimport matplotlib.pyplot as plt\n# 尝试设置中文字体（找不到时中文显示为方块但不影响运行）\ntry:\n    from matplotlib import font_manager\n    _zh_fonts = [f.name for f in font_manager.fontManager.ttflist if any(\n        k in f.name for k in (\"PingFang\", \"Heiti\", \"Songti\", \"Hiragino\", \"YaHei\", \"SimHei\", \"Arial Unicode\"))]\n    if _zh_fonts:\n        plt.rcParams[\"font.sans-serif\"] = [_zh_fonts[0]]\n    plt.rcParams[\"axes.unicode_minus\"] = False\nexcept Exception:\n    pass\n\n\n# 程序化生成测试图：几何图形 + 渐变背景\nW, H = 300, 300\nxx = np.linspace(0, 255, W, dtype=np.uint8)\nbg = Image.fromarray(np.tile(xx, (H, 1)), \"L\").convert(\"RGB\")\nd = ImageDraw.Draw(bg)\nd.ellipse([40, 40, 260, 260], fill=(255, 220, 100), outline=(255, 80, 80), width=6)\nd.rectangle([90, 90, 210, 210], outline=(40, 120, 255), width=6)\nd.line([(30, 270), (270, 30)], fill=(80, 200, 80), width=8)\n\nfilters = [\n    (\"原图\", None),\n    (\"BLUR 模糊\", ImageFilter.BLUR),\n    (\"CONTOUR 轮廓\", ImageFilter.CONTOUR),\n    (\"DETAIL 细节\", ImageFilter.DETAIL),\n    (\"EMBOSS 浮雕\", ImageFilter.EMBOSS),\n    (\"EDGE_ENHANCE 边缘增强\", ImageFilter.EDGE_ENHANCE),\n    (\"FIND_EDGES 查找边缘\", ImageFilter.FIND_EDGES),\n    (\"SHARPEN 锐化\", ImageFilter.SHARPEN),\n    (\"SMOOTH 平滑\", ImageFilter.SMOOTH),\n]\n\nfig, axes = plt.subplots(3, 3, figsize=(12, 12))\nfor ax, (t, f) in zip(axes.flat, filters):\n    im = bg.filter(f) if f else bg\n    ax.imshow(im)\n    ax.set_title(t, fontsize=10)\n    ax.axis(\"off\")\nplt.suptitle(\"Pillow 内置滤镜效果\")\nplt.tight_layout()\nplt.savefig(\"filter-gallery_preview.png\", bbox_inches=\"tight\", dpi=110)\nplt.close(\"all\")"
+    },
+    {
+      "id": "topics_python-basics_pillow-custom-kernel.py",
+      "name": "custom-kernel.py",
+      "category": "topics",
+      "tags": [
+        "滤镜",
+        "卷积"
+      ],
+      "title": "自定义卷积核滤镜",
+      "description": "3x3 卷积核实现锐化、浮雕与高斯模糊，演示 ImageFilter.Kernel 自定义滤波。",
+      "requirements": [
+        "pillow",
+        "numpy",
+        "matplotlib"
+      ],
+      "code": "from PIL import Image, ImageDraw\n\"\"\"自定义卷积核：3x3 锐化 / 浮雕 / 模糊\"\"\"\nfrom PIL import Image, ImageFilter\nimport numpy as np\nimport matplotlib.pyplot as plt\n# 尝试设置中文字体（找不到时中文显示为方块但不影响运行）\ntry:\n    from matplotlib import font_manager\n    _zh_fonts = [f.name for f in font_manager.fontManager.ttflist if any(\n        k in f.name for k in (\"PingFang\", \"Heiti\", \"Songti\", \"Hiragino\", \"YaHei\", \"SimHei\", \"Arial Unicode\"))]\n    if _zh_fonts:\n        plt.rcParams[\"font.sans-serif\"] = [_zh_fonts[0]]\n    plt.rcParams[\"axes.unicode_minus\"] = False\nexcept Exception:\n    pass\n\n\n# 程序化生成测试图\nW, H = 280, 280\nimg = Image.new(\"RGB\", (W, H), \"white\")\nd = ImageDraw.Draw(img)\nd.ellipse([40, 40, 240, 240], fill=(255, 170, 60), outline=(120, 60, 200), width=5)\nfor i in range(0, 280, 20):\n    d.line([(i, 0), (i, 280)], fill=(200, 200, 220), width=1)\n    d.line([(0, i), (280, i)], fill=(200, 200, 220), width=1)\n\nkernels = [\n    (\"锐化\", (0, -1, 0, -1, 5, -1, 0, -1, 0), 1.0),\n    (\"浮雕\", (-1, -1, 0, -1, 0, 1, 0, 1, 1), 1.0),\n    (\"高斯模糊\", (1, 2, 1, 2, 4, 2, 1, 2, 1), 16.0),\n]\n\nfig, axes = plt.subplots(2, 2, figsize=(10, 10))\naxes[0, 0].imshow(img)\naxes[0, 0].set_title(\"原图\")\naxes[0, 0].axis(\"off\")\nfor ax, (t, kern, scale) in zip(axes.flat[1:], kernels):\n    out = img.filter(ImageFilter.Kernel((3, 3), kern, scale=scale, offset=128 if \"浮雕\" in t else 0))\n    ax.imshow(out)\n    ax.set_title(f\"{t}（3x3 卷积核）\")\n    ax.axis(\"off\")\nplt.tight_layout()\nplt.savefig(\"custom-kernel_preview.png\", bbox_inches=\"tight\", dpi=110)\nplt.close(\"all\")"
+    },
+    {
+      "id": "topics_python-basics_pillow-edge-detect.py",
+      "name": "edge-detect.py",
+      "category": "topics",
+      "tags": [
+        "滤镜",
+        "边缘检测"
+      ],
+      "title": "边缘检测流水线",
+      "description": "高斯降噪、查找边缘与自动对比度增强的处理流程，提取图像轮廓。",
+      "requirements": [
+        "pillow",
+        "numpy",
+        "matplotlib"
+      ],
+      "code": "from PIL import Image, ImageDraw\n\"\"\"边缘检测流水线：降噪 → 找边缘 → 增强\"\"\"\nfrom PIL import Image, ImageFilter, ImageOps\nimport numpy as np\nimport matplotlib.pyplot as plt\n# 尝试设置中文字体（找不到时中文显示为方块但不影响运行）\ntry:\n    from matplotlib import font_manager\n    _zh_fonts = [f.name for f in font_manager.fontManager.ttflist if any(\n        k in f.name for k in (\"PingFang\", \"Heiti\", \"Songti\", \"Hiragino\", \"YaHei\", \"SimHei\", \"Arial Unicode\"))]\n    if _zh_fonts:\n        plt.rcParams[\"font.sans-serif\"] = [_zh_fonts[0]]\n    plt.rcParams[\"axes.unicode_minus\"] = False\nexcept Exception:\n    pass\n\n\n# 程序化生成带噪点的几何图\nW, H = 300, 300\nimg = Image.new(\"RGB\", (W, H), (245, 245, 245))\nd = ImageDraw.Draw(img)\nd.rectangle([40, 40, 260, 260], outline=(40, 40, 40), width=4)\nd.ellipse([90, 90, 210, 210], outline=(40, 40, 40), width=4)\nd.line([(40, 260), (260, 40)], fill=(40, 40, 40), width=4)\n\n# 加椒盐噪点\narr = np.asarray(img).copy()\nrng = np.random.default_rng(7)\nmask = rng.random((H, W)) < 0.03\narr[mask] = [0, 0, 0]\nnoisy = Image.fromarray(arr)\n\n# 流水线\ndenoised = noisy.filter(ImageFilter.GaussianBlur(1.2))\nedges = denoised.filter(ImageFilter.FIND_EDGES).convert(\"L\")\nedges_enhanced = ImageOps.autocontrast(edges)\n\nfig, axes = plt.subplots(2, 2, figsize=(10, 10))\nfor ax, im, t in zip(axes.flat,\n                     [noisy, denoised, edges, edges_enhanced],\n                     [\"带噪原图\", \"高斯降噪\", \"查找边缘\", \"自动对比度增强\"]):\n    ax.imshow(im, cmap=\"gray\" if im.mode == \"L\" else None)\n    ax.set_title(t)\n    ax.axis(\"off\")\nplt.tight_layout()\nplt.savefig(\"edge-detect_preview.png\", bbox_inches=\"tight\", dpi=110)\nplt.close(\"all\")"
+    },
+    {
+      "id": "topics_python-basics_pillow-draw-shapes.py",
+      "name": "draw-shapes.py",
+      "category": "topics",
+      "tags": [
+        "绘制",
+        "几何"
+      ],
+      "title": "ImageDraw 几何绘制",
+      "description": "线条、矩形、椭圆、圆弧、扇形与多边形的综合绘制，覆盖 ImageDraw 基础 API。",
+      "requirements": [
+        "pillow",
+        "numpy",
+        "matplotlib"
+      ],
+      "code": "from PIL import Image, ImageDraw\n\"\"\"ImageDraw 几何绘制：基础图形全家福\"\"\"\nfrom PIL import Image, ImageDraw\nimport matplotlib.pyplot as plt\n# 尝试设置中文字体（找不到时中文显示为方块但不影响运行）\ntry:\n    from matplotlib import font_manager\n    _zh_fonts = [f.name for f in font_manager.fontManager.ttflist if any(\n        k in f.name for k in (\"PingFang\", \"Heiti\", \"Songti\", \"Hiragino\", \"YaHei\", \"SimHei\", \"Arial Unicode\"))]\n    if _zh_fonts:\n        plt.rcParams[\"font.sans-serif\"] = [_zh_fonts[0]]\n    plt.rcParams[\"axes.unicode_minus\"] = False\nexcept Exception:\n    pass\n\n\nimg = Image.new(\"RGB\", (420, 320), \"white\")\nd = ImageDraw.Draw(img)\n\nd.line([(20, 40), (120, 40)], fill=(0, 0, 0), width=3)\nd.rectangle([150, 20, 260, 90], outline=(30, 144, 255), width=3)\nd.ellipse([290, 20, 400, 90], outline=(255, 80, 80), width=3)\nd.arc([20, 120, 130, 230], start=30, end=300, fill=(0, 160, 80), width=3)\nd.chord([160, 120, 270, 230], start=0, end=120, fill=(255, 215, 0), outline=(0, 0, 0))\nd.pieslice([300, 120, 410, 230], start=0, end=270, fill=(200, 100, 255), outline=(0, 0, 0))\nd.polygon([(20, 260), (80, 300), (60, 240), (120, 260)], fill=(100, 200, 255))\nd.rounded_rectangle([170, 250, 300, 310], radius=20, fill=(255, 150, 100))\n\nplt.figure(figsize=(9, 7))\nplt.imshow(img)\nplt.axis(\"off\")\nplt.title(\"ImageDraw 几何绘制\")\nplt.savefig(\"draw-shapes_preview.png\", bbox_inches=\"tight\", dpi=110)\nplt.close(\"all\")\nimg.save(\"draw_shapes_demo.png\")"
+    },
+    {
+      "id": "topics_python-basics_pillow-draw-text-watermark.py",
+      "name": "draw-text-watermark.py",
+      "category": "topics",
+      "tags": [
+        "文字",
+        "水印"
+      ],
+      "title": "文字与水印",
+      "description": "图中文字与半透明平铺水印的叠加，演示 ImageFont 与 RGBA 合成。",
+      "requirements": [
+        "pillow",
+        "numpy",
+        "matplotlib"
+      ],
+      "code": "from PIL import Image, ImageDraw\n\"\"\"文字与水印：标题文字 + 半透明水印\"\"\"\nfrom PIL import Image, ImageDraw, ImageFont\nimport matplotlib.pyplot as plt\n# 尝试设置中文字体（找不到时中文显示为方块但不影响运行）\ntry:\n    from matplotlib import font_manager\n    _zh_fonts = [f.name for f in font_manager.fontManager.ttflist if any(\n        k in f.name for k in (\"PingFang\", \"Heiti\", \"Songti\", \"Hiragino\", \"YaHei\", \"SimHei\", \"Arial Unicode\"))]\n    if _zh_fonts:\n        plt.rcParams[\"font.sans-serif\"] = [_zh_fonts[0]]\n    plt.rcParams[\"axes.unicode_minus\"] = False\nexcept Exception:\n    pass\n\n\n# 生成渐变底图\nimport numpy as np\nxx = np.linspace(180, 120, 360, dtype=np.uint8)\nimg = Image.fromarray(np.tile(xx, (240, 1)), \"L\").convert(\"RGB\")\nd = ImageDraw.Draw(img)\n\n# 尝试加载系统中文字体（找不到则用默认字体）\nfont_paths = [\"/System/Library/Fonts/PingFang.ttc\", \"/System/Library/Fonts/STHeiti Light.ttc\",\n              \"/System/Library/Fonts/Supplemental/Songti.ttc\", \"C:/Windows/Fonts/msyh.ttc\"]\nfont = None\nfor fp in font_paths:\n    try:\n        font = ImageFont.truetype(fp, 28)\n        break\n    except Exception:\n        continue\nif font is None:\n    font = ImageFont.load_default()\n\nd.text((24, 90), \"示例管理器 DEMO\", font=font, fill=(255, 255, 255))\n\n# 半透明水印（平铺）\nwm = Image.new(\"RGBA\", img.size, (0, 0, 0, 0))\nwd = ImageDraw.Draw(wm)\nfor x in range(0, 360, 130):\n    for y in range(0, 240, 80):\n        wd.text((x, y), \"WATERMARK\", font=font, fill=(255, 255, 255, 60))\nimg = Image.alpha_composite(img.convert(\"RGBA\"), wm)\n\nplt.figure(figsize=(9, 6))\nplt.imshow(img)\nplt.axis(\"off\")\nplt.title(\"文字与水印效果\")\nplt.savefig(\"draw-text-watermark_preview.png\", bbox_inches=\"tight\", dpi=110)\nplt.close(\"all\")\nimg.save(\"watermark_demo.png\")"
+    },
+    {
+      "id": "topics_python-basics_pillow-captcha-generator.py",
+      "name": "captcha-generator.py",
+      "category": "topics",
+      "tags": [
+        "验证码",
+        "随机"
+      ],
+      "title": "验证码生成",
+      "description": "随机字符、旋转、干扰线与噪点组合的验证码图片，演示综合绘图应用。",
+      "requirements": [
+        "pillow",
+        "numpy",
+        "matplotlib"
+      ],
+      "code": "from PIL import Image, ImageDraw\n\"\"\"验证码生成器：随机字符 + 干扰线 + 噪点\"\"\"\nfrom PIL import Image, ImageDraw, ImageFont\nimport random\nimport string\n\nW, H = 180, 60\nchars = \"\".join(random.choices(string.ascii_uppercase + string.digits, k=4))\n\nimg = Image.new(\"RGB\", (W, H), (245, 245, 245))\nd = ImageDraw.Draw(img)\n\n# 背景噪点\nfor _ in range(120):\n    x, y = random.randint(0, W), random.randint(0, H)\n    d.point((x, y), fill=(random.randint(120, 220),) * 3)\n\n# 干扰线\nfor _ in range(4):\n    d.line([(random.randint(0, W), random.randint(0, H)),\n            (random.randint(0, W), random.randint(0, H))],\n           fill=(random.randint(80, 200),) * 3, width=1)\n\n# 字符（旋转）\ntry:\n    font = ImageFont.truetype(\"/System/Library/Fonts/Supplemental/Arial Bold.ttf\", 32)\nexcept Exception:\n    font = ImageFont.load_default()\nfor i, c in enumerate(chars):\n    layer = Image.new(\"RGBA\", (40, 50), (0, 0, 0, 0))\n    ld = ImageDraw.Draw(layer)\n    ld.text((4, 6), c, font=font, fill=(random.randint(0, 120), random.randint(0, 120), random.randint(0, 150)))\n    layer = layer.rotate(random.randint(-25, 25), expand=True, resample=Image.Resampling.BICUBIC)\n    img.paste(layer, (10 + i * 42, 8), layer)\n\nprint(\"验证码:\", chars)\nimg.save(\"captcha_demo.png\")\nprint(\"已保存 captcha_demo.png\")"
+    },
+    {
+      "id": "topics_python-basics_pillow-image-blend.py",
+      "name": "image-blend.py",
+      "category": "topics",
+      "tags": [
+        "合成",
+        "融合"
+      ],
+      "title": "图像融合渐变",
+      "description": "两张图像按 0 到 1 的权重梯度融合，演示 Image.blend 过渡效果。",
+      "requirements": [
+        "pillow",
+        "numpy",
+        "matplotlib"
+      ],
+      "code": "\"\"\"图像融合：Image.blend 权重渐变\"\"\"\nfrom PIL import Image, ImageDraw\nimport numpy as np\nimport matplotlib.pyplot as plt\n# 尝试设置中文字体（找不到时中文显示为方块但不影响运行）\ntry:\n    from matplotlib import font_manager\n    _zh_fonts = [f.name for f in font_manager.fontManager.ttflist if any(\n        k in f.name for k in (\"PingFang\", \"Heiti\", \"Songti\", \"Hiragino\", \"YaHei\", \"SimHei\", \"Arial Unicode\"))]\n    if _zh_fonts:\n        plt.rcParams[\"font.sans-serif\"] = [_zh_fonts[0]]\n    plt.rcParams[\"axes.unicode_minus\"] = False\nexcept Exception:\n    pass\n\n\n# 生成两张对比图\nW, H = 300, 300\nimg1 = Image.new(\"RGB\", (W, H), (30, 144, 255))\nimg2 = Image.new(\"RGB\", (W, H), (255, 165, 0))\nd1 = ImageDraw.Draw(img1)\nd2 = ImageDraw.Draw(img2)\nd1.ellipse([60, 60, 240, 240], fill=(255, 255, 255))\nd2.polygon([(150, 40), (260, 240), (40, 240)], fill=(255, 255, 255))\n\nalphas = [0.0, 0.25, 0.5, 0.75, 1.0]\nfig, axes = plt.subplots(1, 5, figsize=(16, 4))\nfor ax, a in zip(axes, alphas):\n    blended = Image.blend(img1, img2, a)\n    ax.imshow(blended)\n    ax.set_title(f\"alpha={a:.2f}\")\n    ax.axis(\"off\")\nplt.suptitle(\"Image.blend 图像融合\")\nplt.tight_layout()\nplt.savefig(\"image-blend_preview.png\", bbox_inches=\"tight\", dpi=110)\nplt.close(\"all\")"
+    },
+    {
+      "id": "topics_python-basics_pillow-paste-mask.py",
+      "name": "paste-mask.py",
+      "category": "topics",
+      "tags": [
+        "合成",
+        "蒙版"
+      ],
+      "title": "蒙版粘贴合成",
+      "description": "径向渐变蒙版让前景图与星空底图无缝融合，演示 paste 的 mask 用法。",
+      "requirements": [
+        "pillow",
+        "numpy",
+        "matplotlib"
+      ],
+      "code": "\"\"\"蒙版粘贴合成：径向渐变无缝融合\"\"\"\nfrom PIL import Image, ImageDraw\nimport numpy as np\nimport matplotlib.pyplot as plt\n# 尝试设置中文字体（找不到时中文显示为方块但不影响运行）\ntry:\n    from matplotlib import font_manager\n    _zh_fonts = [f.name for f in font_manager.fontManager.ttflist if any(\n        k in f.name for k in (\"PingFang\", \"Heiti\", \"Songti\", \"Hiragino\", \"YaHei\", \"SimHei\", \"Arial Unicode\"))]\n    if _zh_fonts:\n        plt.rcParams[\"font.sans-serif\"] = [_zh_fonts[0]]\n    plt.rcParams[\"axes.unicode_minus\"] = False\nexcept Exception:\n    pass\n\n\nW, H = 320, 320\n\n# 底图：深蓝星空 + 随机亮点\nbg = Image.new(\"RGB\", (W, H), (8, 16, 48))\nrng = np.random.default_rng(3)\nd = ImageDraw.Draw(bg)\nfor _ in range(220):\n    d.point((rng.integers(0, W), rng.integers(0, H)), fill=(255, 255, 255))\n\n# 前景：暖色圆（模拟太阳/花朵）\nfg = Image.new(\"RGB\", (W, H), (255, 220, 60))\nfd = ImageDraw.Draw(bg)\nfd.ellipse([80, 80, 240, 240], fill=(255, 140, 40))\n\n# 径向渐变蒙版：中心不透明 → 边缘透明\nyy, xx = np.mgrid[0:H, 0:W]\ndist = np.sqrt((xx - W / 2) ** 2 + (yy - H / 2) ** 2) / (W / 2)\nmask = np.clip(1 - dist, 0, 1)\nmask_img = Image.fromarray((mask * 255).astype(np.uint8), \"L\")\n\nresult = bg.copy()\nresult.paste(fg, (0, 0), mask_img)\n\nplt.figure(figsize=(8, 8))\nplt.imshow(result)\nplt.axis(\"off\")\nplt.title(\"蒙版粘贴：径向渐变合成\")\nplt.savefig(\"paste-mask_preview.png\", bbox_inches=\"tight\", dpi=110)\nplt.close(\"all\")\nresult.save(\"paste_mask_demo.png\")"
+    },
+    {
+      "id": "topics_python-basics_pillow-ascii-art.py",
+      "name": "ascii-art.py",
+      "category": "topics",
+      "tags": [
+        "特效",
+        "字符画"
+      ],
+      "title": "ASCII 字符画",
+      "description": "图像亮度映射为字符集输出控制台字符画，演示像素读取与字符可视化。",
+      "requirements": [
+        "pillow",
+        "numpy",
+        "matplotlib"
+      ],
+      "code": "from PIL import Image, ImageDraw\n\"\"\"ASCII 艺术：图像亮度 → 字符画\"\"\"\nfrom PIL import Image, ImageDraw, ImageFont\nimport numpy as np\n\n# 程序化生成爱心图案\nW, H = 120, 60\nimg = Image.new(\"L\", (W, H), 0)\nd = ImageDraw.Draw(img)\nfor i in range(1, 24, 2):\n    d.arc([(W // 2 - i * 3, H // 2 - i * 2), (W // 2 + i * 3, H // 2 + i * 2)],\n          start=0, end=180, fill=255 - i * 10)\n    d.arc([(W // 2 - i * 3, H // 2 - i * 2), (W // 2 + i * 3, H // 2 + i * 2)],\n          start=180, end=360, fill=255 - i * 10)\n\n# 缩到字符画分辨率\nsmall = img.resize((64, 32))\ngray = np.asarray(small)\n\nchars = \" .:-=+*#%@\"\nout_lines = []\nfor row in gray:\n    line = \"\".join(chars[min(len(chars) - 1, int(v) * (len(chars) - 1) // 255)] for v in row)\n    out_lines.append(line)\nprint(\"\\n\".join(out_lines))\n# 将字符画渲染为图片（供前端预览）\n_img = Image.new(\"RGB\", (64 * 9, 32 * 17), \"white\")\n_draw = ImageDraw.Draw(_img)\ntry:\n    _font = ImageFont.load_default(size=16)\nexcept TypeError:\n    _font = ImageFont.load_default()\nfor _y, _line in enumerate(out_lines):\n    _draw.text((4, _y * 16), _line, fill=\"black\", font=_font)\n_img.save(\"ascii_demo.png\")\nprint(\"[输出] 字符画图片已保存: ascii_demo.png\")\n"
+    },
+    {
+      "id": "topics_python-basics_pillow-vintage-filter.py",
+      "name": "vintage-filter.py",
+      "category": "topics",
+      "tags": [
+        "特效",
+        "复古"
+      ],
+      "title": "复古滤镜与暗角",
+      "description": "棕褐色调、四周暗角与胶片噪点的组合处理，实现老照片风格滤镜。",
+      "requirements": [
+        "pillow",
+        "numpy",
+        "matplotlib"
+      ],
+      "code": "\"\"\"复古滤镜：棕褐调 + 暗角 + 噪点\"\"\"\nfrom PIL import Image, ImageDraw\nimport numpy as np\nimport matplotlib.pyplot as plt\n# 尝试设置中文字体（找不到时中文显示为方块但不影响运行）\ntry:\n    from matplotlib import font_manager\n    _zh_fonts = [f.name for f in font_manager.fontManager.ttflist if any(\n        k in f.name for k in (\"PingFang\", \"Heiti\", \"Songti\", \"Hiragino\", \"YaHei\", \"SimHei\", \"Arial Unicode\"))]\n    if _zh_fonts:\n        plt.rcParams[\"font.sans-serif\"] = [_zh_fonts[0]]\n    plt.rcParams[\"axes.unicode_minus\"] = False\nexcept Exception:\n    pass\n\n\n# 程序化生成\"照片\"素材\nW, H = 360, 260\nimg = Image.new(\"RGB\", (W, H), (140, 190, 140))\nd = ImageDraw.Draw(img)\nd.rectangle([0, 160, W, H], fill=(90, 140, 90))          # 草地\nd.rectangle([140, 120, 220, 180], fill=(200, 150, 120))  # 小房子\nd.polygon([(120, 120), (180, 70), (240, 120)], fill=(150, 90, 70))  # 屋顶\nd.ellipse([60, 40, 130, 90], fill=(255, 220, 90))        # 太阳\n\narr = np.asarray(img).astype(np.float32)\n\n# 1) 棕褐色调\ngray = arr.mean(axis=2, keepdims=True)\narr = arr * 0.55 + gray * 0.45\narr[..., 0] = np.clip(arr[..., 0] * 1.12, 0, 255)   # R 偏暖\narr[..., 2] = np.clip(arr[..., 2] * 0.88, 0, 255)   # B 偏冷\n\n# 2) 暗角\nyy, xx = np.mgrid[0:H, 0:W]\ndist = np.sqrt(((xx - W / 2) / (W / 2)) ** 2 + ((yy - H / 2) / (H / 2)) ** 2)\nvignette = np.clip(1 - dist * 0.55, 0, 1)[..., None]\narr = arr * vignette\n\n# 3) 胶片噪点\nrng = np.random.default_rng(11)\narr = arr + rng.normal(0, 6, arr.shape)\n\nout = Image.fromarray(np.clip(arr, 0, 255).astype(np.uint8))\n\nfig, axes = plt.subplots(1, 2, figsize=(12, 6))\naxes[0].imshow(img)\naxes[0].set_title(\"原图\")\naxes[0].axis(\"off\")\naxes[1].imshow(out)\naxes[1].set_title(\"复古滤镜效果\")\naxes[1].axis(\"off\")\nplt.tight_layout()\nplt.savefig(\"vintage-filter_preview.png\", bbox_inches=\"tight\", dpi=110)\nplt.close(\"all\")"
+    },
+    {
+      "id": "topics_python-basics_pillow-glow-effect.py",
+      "name": "glow-effect.py",
+      "category": "topics",
+      "tags": [
+        "特效",
+        "发光"
+      ],
+      "title": "霓虹发光效果",
+      "description": "边缘提取与多层高斯模糊叠加的发光特效，模拟霓虹灯管效果。",
+      "requirements": [
+        "pillow",
+        "numpy",
+        "matplotlib"
+      ],
+      "code": "from PIL import Image, ImageDraw\n\"\"\"霓虹发光：边缘 + 高斯模糊叠光\"\"\"\nfrom PIL import Image, ImageFilter, ImageChops\nimport matplotlib.pyplot as plt\n# 尝试设置中文字体（找不到时中文显示为方块但不影响运行）\ntry:\n    from matplotlib import font_manager\n    _zh_fonts = [f.name for f in font_manager.fontManager.ttflist if any(\n        k in f.name for k in (\"PingFang\", \"Heiti\", \"Songti\", \"Hiragino\", \"YaHei\", \"SimHei\", \"Arial Unicode\"))]\n    if _zh_fonts:\n        plt.rcParams[\"font.sans-serif\"] = [_zh_fonts[0]]\n    plt.rcParams[\"axes.unicode_minus\"] = False\nexcept Exception:\n    pass\n\n\n# 程序化生成简单图形\nW, H = 360, 240\nimg = Image.new(\"RGB\", (W, H), (10, 10, 25))\nd = ImageDraw.Draw(img)\nd.ellipse([70, 50, 290, 190], outline=(255, 255, 255), width=3)\nd.line([(60, 40), (300, 200)], fill=(255, 255, 255), width=3)\n\n# 提取轮廓（发光源）\nedges = img.convert(\"L\").filter(ImageFilter.FIND_EDGES).point(lambda p: 255 if p > 40 else 0)\nglow_src = Image.merge(\"RGB\", [edges] * 3)\n\n# 多层高斯模糊叠加发光\nglow = Image.new(\"RGB\", (W, H), (0, 0, 0))\nfor radius, color in [(12, (30, 40, 255)), (7, (120, 140, 255)), (3, (230, 240, 255))]:\n    layer = glow_src.filter(ImageFilter.GaussianBlur(radius))\n    layer = ImageChops.multiply(layer, Image.new(\"RGB\", (W, H), color))\n    glow = ImageChops.add(glow, layer)\n\n# 合成\nresult = ImageChops.add(img, glow)\n\nplt.figure(figsize=(9, 6))\nplt.imshow(result)\nplt.axis(\"off\")\nplt.title(\"霓虹发光效果\")\nplt.savefig(\"glow-effect_preview.png\", bbox_inches=\"tight\", dpi=110)\nplt.close(\"all\")\nresult.save(\"glow_demo.png\")"
+    },
+    {
+      "id": "topics_python-basics_pillow-gif-animation.py",
+      "name": "gif-animation.py",
+      "category": "topics",
+      "tags": [
+        "GIF",
+        "动画"
+      ],
+      "title": "GIF 动画生成",
+      "description": "多帧旋转渐变圆合成动态 GIF，演示 save_all 与 append_images 动画制作。",
+      "requirements": [
+        "pillow",
+        "numpy",
+        "matplotlib"
+      ],
+      "code": "from PIL import Image, ImageDraw\n\"\"\"GIF 动画生成：旋转渐变圆\"\"\"\nfrom PIL import Image, ImageDraw\nimport math\n\nW, H = 200, 200\nframes = []\nfor angle in range(0, 360, 15):\n    frame = Image.new(\"RGB\", (W, H), (20, 20, 40))\n    d = ImageDraw.Draw(frame)\n    # 彩色扇区\n    for i in range(8):\n        a0 = math.radians(angle + i * 45)\n        a1 = math.radians(angle + (i + 1) * 45)\n        color = [(255, 60, 60), (255, 170, 40), (255, 240, 60), (120, 230, 80),\n                 (60, 200, 200), (80, 130, 255), (170, 90, 255), (255, 100, 200)][i]\n        d.pieslice([30, 30, 170, 170], a0, a1, fill=color)\n    d.ellipse([78, 78, 122, 122], fill=(20, 20, 40))\n    frames.append(frame)\n\nframes[0].save(\"rotation_demo.gif\", save_all=True, append_images=frames[1:],\n               duration=90, loop=0)\nprint(\"已保存 rotation_demo.gif，共\", len(frames), \"帧\")"
+    },
+    {
+      "id": "topics_python-basics_pillow-histogram-equalize.py",
+      "name": "histogram-equalize.py",
+      "category": "topics",
+      "tags": [
+        "直方图",
+        "增强"
+      ],
+      "title": "直方图与均衡化",
+      "description": "低对比度图像的直方图分析与均衡化前后对比，提升图像对比度。",
+      "requirements": [
+        "pillow",
+        "numpy",
+        "matplotlib"
+      ],
+      "code": "\"\"\"直方图与均衡化：低对比度图像增强\"\"\"\nfrom PIL import Image, ImageDraw, ImageOps\nimport numpy as np\nimport matplotlib.pyplot as plt\n# 尝试设置中文字体（找不到时中文显示为方块但不影响运行）\ntry:\n    from matplotlib import font_manager\n    _zh_fonts = [f.name for f in font_manager.fontManager.ttflist if any(\n        k in f.name for k in (\"PingFang\", \"Heiti\", \"Songti\", \"Hiragino\", \"YaHei\", \"SimHei\", \"Arial Unicode\"))]\n    if _zh_fonts:\n        plt.rcParams[\"font.sans-serif\"] = [_zh_fonts[0]]\n    plt.rcParams[\"axes.unicode_minus\"] = False\nexcept Exception:\n    pass\n\n\n# 程序化生成低对比度图\nW, H = 300, 300\nv = np.linspace(60, 130, W, dtype=np.uint8)\nimg = Image.fromarray(np.tile(v, (H, 1)), \"L\")\nd = ImageDraw.Draw(img)\nd.ellipse([80, 80, 220, 220], outline=255, width=3)\n\neq = ImageOps.equalize(img)\n\nfig, axes = plt.subplots(2, 2, figsize=(10, 9))\naxes[0, 0].imshow(img, cmap=\"gray\")\naxes[0, 0].set_title(\"原图（低对比度）\")\naxes[0, 0].axis(\"off\")\naxes[0, 1].hist(np.asarray(img).ravel(), bins=64, color=\"#2e86de\")\naxes[0, 1].set_title(\"原图直方图（集中在窄范围）\")\naxes[1, 0].imshow(eq, cmap=\"gray\")\naxes[1, 0].set_title(\"均衡化后\")\naxes[1, 0].axis(\"off\")\naxes[1, 1].hist(np.asarray(eq).ravel(), bins=64, color=\"#e17055\")\naxes[1, 1].set_title(\"均衡化直方图（分布更均匀）\")\nplt.tight_layout()\nplt.savefig(\"histogram-equalize_preview.png\", bbox_inches=\"tight\", dpi=110)\nplt.close(\"all\")"
+    },
+    {
+      "id": "topics_python-basics_pillow-nine-grid-split.py",
+      "name": "nine-grid-split.py",
+      "category": "topics",
+      "tags": [
+        "裁剪",
+        "切片"
+      ],
+      "title": "九宫格切图",
+      "description": "图像按 3x3 均匀切分为九张子图，演示 crop 批量切片。",
+      "requirements": [
+        "pillow",
+        "numpy",
+        "matplotlib"
+      ],
+      "code": "\"\"\"九宫格切图：3x3 批量切片\"\"\"\nfrom PIL import Image, ImageDraw\nimport numpy as np\nimport matplotlib.pyplot as plt\n# 尝试设置中文字体（找不到时中文显示为方块但不影响运行）\ntry:\n    from matplotlib import font_manager\n    _zh_fonts = [f.name for f in font_manager.fontManager.ttflist if any(\n        k in f.name for k in (\"PingFang\", \"Heiti\", \"Songti\", \"Hiragino\", \"YaHei\", \"SimHei\", \"Arial Unicode\"))]\n    if _zh_fonts:\n        plt.rcParams[\"font.sans-serif\"] = [_zh_fonts[0]]\n    plt.rcParams[\"axes.unicode_minus\"] = False\nexcept Exception:\n    pass\n\n\n# 程序化生成 300x300 编号渐变图\nW = 300\nxx = np.linspace(0, 255, W, dtype=np.uint8)\nimg = Image.fromarray(np.tile(xx, (W, 1)), \"L\").convert(\"RGB\")\nd = ImageDraw.Draw(img)\nfor i in range(9):\n    r, c = divmod(i, 3)\n    d.rectangle([c * 100, r * 100, c * 100 + 98, r * 100 + 98], outline=(255, 255, 255), width=4)\n\nstep = W // 3\ntiles = []\nfor r in range(3):\n    for c in range(3):\n        tiles.append(img.crop((c * step, r * step, (c + 1) * step, (r + 1) * step)))\n\nfig, axes = plt.subplots(3, 3, figsize=(9, 9))\nfor ax, tile in zip(axes.flat, tiles):\n    ax.imshow(tile)\n    ax.axis(\"off\")\nplt.suptitle(\"九宫格切图：3x3 切片\")\nplt.tight_layout()\nplt.savefig(\"nine-grid-split_preview.png\", bbox_inches=\"tight\", dpi=110)\nplt.close(\"all\")"
+    },
+    {
+      "id": "topics_python-basics_pillow-image-diff.py",
+      "name": "image-diff.py",
+      "category": "topics",
+      "tags": [
+        "差异检测",
+        "比对"
+      ],
+      "title": "图像差异检测",
+      "description": "两张相似图像用像素差找出差异区域并高亮框出，演示 ImageChops 比对。",
+      "requirements": [
+        "pillow",
+        "numpy",
+        "matplotlib"
+      ],
+      "code": "from PIL import Image, ImageDraw\n\"\"\"图像差异检测：找不同\"\"\"\nfrom PIL import Image, ImageChops\nimport numpy as np\nimport matplotlib.pyplot as plt\n# 尝试设置中文字体（找不到时中文显示为方块但不影响运行）\ntry:\n    from matplotlib import font_manager\n    _zh_fonts = [f.name for f in font_manager.fontManager.ttflist if any(\n        k in f.name for k in (\"PingFang\", \"Heiti\", \"Songti\", \"Hiragino\", \"YaHei\", \"SimHei\", \"Arial Unicode\"))]\n    if _zh_fonts:\n        plt.rcParams[\"font.sans-serif\"] = [_zh_fonts[0]]\n    plt.rcParams[\"axes.unicode_minus\"] = False\nexcept Exception:\n    pass\n\n\n# 程序化生成两张\"几乎相同\"的图\nW, H = 320, 220\nbase = Image.new(\"RGB\", (W, H), (240, 240, 245))\nd = ImageDraw.Draw(base)\nfor i in range(0, W, 40):\n    d.line([(i, 0), (i, H)], fill=(200, 200, 210), width=1)\nfor j in range(0, H, 40):\n    d.line([(0, j), (W, j)], fill=(200, 200, 210), width=1)\nd.rectangle([40, 40, 120, 100], fill=(255, 200, 100))\nd.ellipse([200, 60, 280, 140], fill=(120, 220, 255))\n\nimg2 = base.copy()\nd2 = ImageDraw.Draw(img2)\nd2.rectangle([40, 40, 120, 100], fill=(255, 80, 80))     # 颜色不同\nd2.ellipse([200, 60, 280, 140], fill=(120, 220, 255))    # 原样\nd2.polygon([(150, 150), (170, 190), (130, 190)], fill=(0, 160, 0))  # 新增\n\ndiff = ImageChops.difference(base, img2).convert(\"L\")\n# 差异区域放大显示\nmark = base.copy()\nmd = ImageDraw.Draw(base)\narr = np.asarray(diff)\nys, xs = np.where(arr > 20)\nif len(xs):\n    md.rectangle([xs.min() - 6, ys.min() - 6, xs.max() + 6, ys.max() + 6],\n                 outline=(255, 0, 0), width=3)\n\nfig, axes = plt.subplots(1, 3, figsize=(14, 5))\nfor ax, im, t in zip(axes, [base, img2, mark], [\"图 A\", \"图 B\", \"差异高亮\"]):\n    ax.imshow(im)\n    ax.set_title(t)\n    ax.axis(\"off\")\nplt.tight_layout()\nplt.savefig(\"image-diff_preview.png\", bbox_inches=\"tight\", dpi=110)\nplt.close(\"all\")"
+    },
+    {
+      "id": "topics_python-basics_pillow-collage-grid.py",
+      "name": "collage-grid.py",
+      "category": "topics",
+      "tags": [
+        "拼接",
+        "批量"
+      ],
+      "title": "缩略图墙",
+      "description": "多张缩略图按 2x3 网格拼成拼图墙，演示批量处理与拼接。",
+      "requirements": [
+        "pillow",
+        "numpy",
+        "matplotlib"
+      ],
+      "code": "\"\"\"缩略图墙：多图拼接 2x3\"\"\"\nfrom PIL import Image, ImageDraw\nimport numpy as np\nimport matplotlib.pyplot as plt\n# 尝试设置中文字体（找不到时中文显示为方块但不影响运行）\ntry:\n    from matplotlib import font_manager\n    _zh_fonts = [f.name for f in font_manager.fontManager.ttflist if any(\n        k in f.name for k in (\"PingFang\", \"Heiti\", \"Songti\", \"Hiragino\", \"YaHei\", \"SimHei\", \"Arial Unicode\"))]\n    if _zh_fonts:\n        plt.rcParams[\"font.sans-serif\"] = [_zh_fonts[0]]\n    plt.rcParams[\"axes.unicode_minus\"] = False\nexcept Exception:\n    pass\n\n\n# 程序化生成 6 张不同色调的渐变图\nthumbs = []\nfor hue_base in range(0, 360, 60):\n    W, H = 120, 120\n    v = np.linspace(0, 255, W, dtype=np.uint8)\n    img = Image.new(\"RGB\", (W, H), (0, 0, 0))\n    d = ImageDraw.Draw(img)\n    # 简化的 HSV 色调色板\n    r = int(128 + 127 * np.sin(np.radians(hue_base)))\n    g = int(128 + 127 * np.sin(np.radians(hue_base + 120)))\n    b = int(128 + 127 * np.sin(np.radians(hue_base + 240)))\n    d.ellipse([10, 10, 110, 110], fill=(r, g, b))\n    thumb = img.resize((100, 100), Image.Resampling.LANCZOS)\n    thumbs.append(thumb)\n\nwall = Image.new(\"RGB\", (100 * 3 + 40, 100 * 2 + 30), \"white\")\nfor i, t in enumerate(thumbs):\n    r, c = divmod(i, 3)\n    wall.paste(t, (10 + c * 110, 10 + r * 110))\n\nplt.figure(figsize=(8, 6))\nplt.imshow(wall)\nplt.axis(\"off\")\nplt.title(\"缩略图墙 2x3\")\nplt.savefig(\"collage-grid_preview.png\", bbox_inches=\"tight\", dpi=110)\nplt.close(\"all\")\nwall.save(\"collage_demo.png\")"
+    }
+  ]
+}

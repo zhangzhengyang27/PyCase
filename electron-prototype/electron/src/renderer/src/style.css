@@ -1,0 +1,163 @@
+@import "./theme.css"; /* Tailwind 4：令牌/@theme 共享层（原 @tailwind 三行指令已废弃） */
+
+/* ============================================================
+   Linear Inspired Design System — Dark Mode（设计令牌层）
+   ------------------------------------------------------------
+   组件样式已全量迁移为 Tailwind 工具类（index.html + 各 TS 模板），
+   本文件只保留三类内容：
+     1. 设计令牌（CSS 变量，dark/light 双主题，tailwind.config.js 引用）
+     2. 全局 reset / 选区 / 滚动条
+     3. JS 切换的状态变体与 Electron 拖拽区工具类（文件末尾）
+   令牌中的字体/字号等仅保留仍被引用的项（html,body 与 Monaco 取色）。
+   ============================================================ */
+
+:root {
+  /* 1. 背景表面 */
+  --bg-marketing: #08090a;
+  --bg-panel: #0f1011;
+  --bg-level3: #191a1b;
+  --bg-secondary: #28282c;
+  --bg-hover: rgba(255, 255, 255, 0.04);
+  --bg-inset: #0a0b0c;
+
+  /* 2. 文字 */
+  --text-primary: #f7f8f8;
+  --text-secondary: #d0d6e0;
+  --text-tertiary: #8a8f98;
+  --text-quaternary: #62666d;
+
+  /* 3. 品牌与强调 */
+  --brand-indigo: #5e6ad2;
+  --accent-violet: #7170ff;
+  --accent-hover: #828fff;
+  --accent-ring: rgba(94, 106, 210, 0.4);
+
+  /* 4. 状态 */
+  --status-green: #27a644;
+  --status-red: #e5484d;
+  --status-amber: #f5a524;
+
+  /* 5. 边框分隔线 */
+  --border-primary: #23252a;
+  --border-secondary: #34343a;
+  --border-tertiary: #3e3e44;
+  --line-tint: #141516;
+  --border-subtle: rgba(255, 255, 255, 0.05);
+  --border-standard: rgba(255, 255, 255, 0.08);
+
+  /* 6. 字体 */
+  --font-sans: "Inter Variable", "Inter", -apple-system, BlinkMacSystemFont,
+    "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  --font-mono: "Berkeley Mono", "JetBrains Mono", "Fira Code", "SF Mono",
+    Consolas, monospace;
+
+  /* 7. 阴影层级（tailwind.config.js boxShadow 引用） */
+  --elevation-1: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --elevation-2: 0 2px 8px rgba(0, 0, 0, 0.4);
+  --elevation-3: 0 8px 24px rgba(0, 0, 0, 0.5);
+  --elevation-focus: 0 0 0 2px var(--accent-ring);
+  --elevation-inset: inset 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+/* Light 主题：仅覆盖表面/文字/边框/阴影，品牌色与状态色双主题共用 */
+[data-theme="light"] {
+  --bg-marketing: #f7f8f8;
+  --bg-panel: #ffffff;
+  --bg-level3: #f3f4f5;
+  --bg-secondary: #f3f4f5;
+  --bg-hover: rgba(0, 0, 0, 0.04);
+  --bg-inset: #f3f4f5;
+
+  --text-primary: #08090a;
+  --text-secondary: #28282c;
+  --text-tertiary: #62666d;
+  --text-quaternary: #8a8f98;
+
+  --border-primary: #d0d6e0;
+  --border-secondary: #e6e6e6;
+  --border-tertiary: #e6e6e6;
+  --line-tint: #e6e6e6;
+  --border-subtle: rgba(0, 0, 0, 0.05);
+  --border-standard: rgba(0, 0, 0, 0.08);
+
+  --elevation-1: 0 1px 2px rgba(0, 0, 0, 0.06);
+  --elevation-2: 0 2px 8px rgba(0, 0, 0, 0.08);
+  --elevation-3: 0 8px 24px rgba(0, 0, 0, 0.12);
+  --elevation-inset: inset 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+/* ============================================================
+   RESET（tailwind preflight 保持关闭，沿用精简 reset）
+   v4 注意：必须放进 @layer base——v4 工具类位于 @layer utilities，
+   未分层的 `* { margin:0; padding:0 }` 会无条件压过所有
+   margin/padding 工具类（级联层优先级高于选择器优先级）。
+   ============================================================ */
+@layer base {
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  html,
+  body {
+    height: 100%;
+    overflow: hidden;
+    font-family: var(--font-sans);
+    font-size: 13px;
+    font-weight: 400;
+    color: var(--text-primary);
+    background: var(--bg-marketing);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    letter-spacing: -0.005em;
+  }
+
+  /* 全局选区与滚动条 */
+  ::selection {
+    background: rgba(94, 106, 210, 0.3);
+    color: var(--text-primary);
+  }
+
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--border-secondary);
+    border-radius: 4px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--border-tertiary);
+  }
+  ::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+}
+
+/* ============================================================
+   Tailwind 迁移补充层（置于末尾以覆盖工具类）
+   JS 切换的状态变体无法用静态工具类表达，统一收敛在此；
+   组件基础样式已迁移到 index.html / 各 TS 模板的 Tailwind 工具类。
+   ============================================================ */
+
+/* Electron 无边框窗口拖拽区 */
+.app-drag { -webkit-app-region: drag; }
+.app-no-drag { -webkit-app-region: no-drag; }
+
+/* 导航/筛选 chip 的激活态（JS 只切换 .active 类） */
+.nav-segment.active { background: var(--bg-level3); color: var(--text-primary); box-shadow: var(--elevation-1); font-weight: 590; }
+.facet-chip.active { background: var(--brand-indigo); border-color: var(--brand-indigo); color: #fff; }
+
+/* 操作栏收藏按钮点亮 */
+#btn-fav-toggle.is-faved { color: #e3a008; }
+
+/* AI 解释状态错误提示 */
+#ai-status.ai-error { color: #d9534f; }
+
+/* 参数面板折叠态：图标旋转 + 收起表单 */
+.args-panel.collapsed .args-toggle-icon { transform: rotate(-90deg); }
+.args-panel.collapsed .args-form { display: none; }

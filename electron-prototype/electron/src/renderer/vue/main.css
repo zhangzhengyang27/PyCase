@@ -1,0 +1,43 @@
+/* Vue 渲染层样式入口：复用与旧渲染层同一份 Tailwind 4 令牌层 */
+@import "../src/theme.css";
+
+/* Vue 页面精简 reset（与旧渲染层 reset 对齐，置于 base 层让工具类可覆盖） */
+@layer base {
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  html,
+  body {
+    height: 100%;
+    overflow: hidden;
+    font-family: var(--font-sans);
+    font-size: 13px;
+    font-weight: 400;
+    color: var(--text-primary);
+    background: var(--bg-marketing);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--border-secondary);
+    border-radius: 4px;
+  }
+}
+
+/* Electron 无边框窗口拖拽区（与旧渲染层 style.css 同名工具类保持一致） */
+.app-drag {
+  -webkit-app-region: drag;
+}
+.app-no-drag {
+  -webkit-app-region: no-drag;
+}

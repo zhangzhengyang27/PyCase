@@ -1,0 +1,2166 @@
+{
+ "name": "PIL 图像集",
+ "description": "参数化生成的 Pillow 图像处理示例：程序化生成源图自包含，输出结果图到运行目录。",
+ "examples": [
+  {
+   "id": "topics_pil-gaussian-v1",
+   "name": "gaussian_v1.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "高斯模糊·变体1",
+   "description": "不同半径的高斯模糊对比。（参数组 1）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_gaussian_v1'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (420, 300), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (420 - 60) // 7\ndr.rectangle([420 // 2 - 70, 300 // 2, 420 // 2 + 70, 300 - 30], outline=\"#e8e8e8\", width=3)\n\nresult = base.filter(ImageFilter.GaussianBlur(radius=0 + 1))\nresult.save(\"pil_gaussian_v1_preview.png\")\nprint(\"已生成 pil_gaussian_v1_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-gaussian-v2",
+   "name": "gaussian_v2.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "高斯模糊·变体2",
+   "description": "不同半径的高斯模糊对比。（参数组 2）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_gaussian_v2'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (444, 312), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (444 - 60) // 7\ndr.rectangle([444 // 2 - 70, 312 // 2, 444 // 2 + 70, 312 - 30], outline=\"#e8e8e8\", width=3)\n\nresult = base.filter(ImageFilter.GaussianBlur(radius=1 + 1))\nresult.save(\"pil_gaussian_v2_preview.png\")\nprint(\"已生成 pil_gaussian_v2_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-gaussian-v3",
+   "name": "gaussian_v3.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "高斯模糊·变体3",
+   "description": "不同半径的高斯模糊对比。（参数组 3）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_gaussian_v3'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (468, 324), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (468 - 60) // 7\ndr.rectangle([468 // 2 - 70, 324 // 2, 468 // 2 + 70, 324 - 30], outline=\"#e8e8e8\", width=3)\n\nresult = base.filter(ImageFilter.GaussianBlur(radius=2 + 1))\nresult.save(\"pil_gaussian_v3_preview.png\")\nprint(\"已生成 pil_gaussian_v3_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-gaussian-v4",
+   "name": "gaussian_v4.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "高斯模糊·变体4",
+   "description": "不同半径的高斯模糊对比。（参数组 4）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_gaussian_v4'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (492, 336), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (492 - 60) // 7\ndr.rectangle([492 // 2 - 70, 336 // 2, 492 // 2 + 70, 336 - 30], outline=\"#e8e8e8\", width=3)\n\nresult = base.filter(ImageFilter.GaussianBlur(radius=3 + 1))\nresult.save(\"pil_gaussian_v4_preview.png\")\nprint(\"已生成 pil_gaussian_v4_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-gaussian-v5",
+   "name": "gaussian_v5.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "高斯模糊·变体5",
+   "description": "不同半径的高斯模糊对比。（参数组 5）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_gaussian_v5'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (516, 348), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (516 - 60) // 7\ndr.rectangle([516 // 2 - 70, 348 // 2, 516 // 2 + 70, 348 - 30], outline=\"#e8e8e8\", width=3)\n\nresult = base.filter(ImageFilter.GaussianBlur(radius=4 + 1))\nresult.save(\"pil_gaussian_v5_preview.png\")\nprint(\"已生成 pil_gaussian_v5_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-gaussian-v6",
+   "name": "gaussian_v6.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "高斯模糊·变体6",
+   "description": "不同半径的高斯模糊对比。（参数组 6）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_gaussian_v6'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (540, 360), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (540 - 60) // 7\ndr.rectangle([540 // 2 - 70, 360 // 2, 540 // 2 + 70, 360 - 30], outline=\"#e8e8e8\", width=3)\n\nresult = base.filter(ImageFilter.GaussianBlur(radius=5 + 1))\nresult.save(\"pil_gaussian_v6_preview.png\")\nprint(\"已生成 pil_gaussian_v6_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-gaussian-v7",
+   "name": "gaussian_v7.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "高斯模糊·变体7",
+   "description": "不同半径的高斯模糊对比。（参数组 7）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_gaussian_v7'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (564, 372), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (564 - 60) // 7\ndr.rectangle([564 // 2 - 70, 372 // 2, 564 // 2 + 70, 372 - 30], outline=\"#e8e8e8\", width=3)\n\nresult = base.filter(ImageFilter.GaussianBlur(radius=6 + 1))\nresult.save(\"pil_gaussian_v7_preview.png\")\nprint(\"已生成 pil_gaussian_v7_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-gaussian-v8",
+   "name": "gaussian_v8.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "高斯模糊·变体8",
+   "description": "不同半径的高斯模糊对比。（参数组 8）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_gaussian_v8'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (588, 384), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (588 - 60) // 7\ndr.rectangle([588 // 2 - 70, 384 // 2, 588 // 2 + 70, 384 - 30], outline=\"#e8e8e8\", width=3)\n\nresult = base.filter(ImageFilter.GaussianBlur(radius=7 + 1))\nresult.save(\"pil_gaussian_v8_preview.png\")\nprint(\"已生成 pil_gaussian_v8_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-gaussian-v9",
+   "name": "gaussian_v9.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "高斯模糊·变体9",
+   "description": "不同半径的高斯模糊对比。（参数组 9）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_gaussian_v9'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (612, 396), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (612 - 60) // 7\ndr.rectangle([612 // 2 - 70, 396 // 2, 612 // 2 + 70, 396 - 30], outline=\"#e8e8e8\", width=3)\n\nresult = base.filter(ImageFilter.GaussianBlur(radius=8 + 1))\nresult.save(\"pil_gaussian_v9_preview.png\")\nprint(\"已生成 pil_gaussian_v9_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-gaussian-v10",
+   "name": "gaussian_v10.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "高斯模糊·变体10",
+   "description": "不同半径的高斯模糊对比。（参数组 10）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_gaussian_v10'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (636, 408), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (636 - 60) // 7\ndr.rectangle([636 // 2 - 70, 408 // 2, 636 // 2 + 70, 408 - 30], outline=\"#e8e8e8\", width=3)\n\nresult = base.filter(ImageFilter.GaussianBlur(radius=9 + 1))\nresult.save(\"pil_gaussian_v10_preview.png\")\nprint(\"已生成 pil_gaussian_v10_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-gaussian-v11",
+   "name": "gaussian_v11.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "高斯模糊·变体11",
+   "description": "不同半径的高斯模糊对比。（参数组 11）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_gaussian_v11'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (660, 420), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (660 - 60) // 7\ndr.rectangle([660 // 2 - 70, 420 // 2, 660 // 2 + 70, 420 - 30], outline=\"#e8e8e8\", width=3)\n\nresult = base.filter(ImageFilter.GaussianBlur(radius=10 + 1))\nresult.save(\"pil_gaussian_v11_preview.png\")\nprint(\"已生成 pil_gaussian_v11_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-gaussian-v12",
+   "name": "gaussian_v12.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "高斯模糊·变体12",
+   "description": "不同半径的高斯模糊对比。（参数组 12）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_gaussian_v12'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (684, 432), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (684 - 60) // 7\ndr.rectangle([684 // 2 - 70, 432 // 2, 684 // 2 + 70, 432 - 30], outline=\"#e8e8e8\", width=3)\n\nresult = base.filter(ImageFilter.GaussianBlur(radius=11 + 1))\nresult.save(\"pil_gaussian_v12_preview.png\")\nprint(\"已生成 pil_gaussian_v12_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-contour-v1",
+   "name": "contour_v1.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "轮廓提取·变体1",
+   "description": "ImageFilter.CONTOUR 边缘轮廓。（参数组 1）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_contour_v1'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (420, 300), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (420 - 60) // 7\ndr.rectangle([420 // 2 - 70, 300 // 2, 420 // 2 + 70, 300 - 30], outline=\"#e8e8e8\", width=3)\n\nresult = base.filter(ImageFilter.CONTOUR)\nresult.save(\"pil_contour_v1_preview.png\")\nprint(\"已生成 pil_contour_v1_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-contour-v2",
+   "name": "contour_v2.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "轮廓提取·变体2",
+   "description": "ImageFilter.CONTOUR 边缘轮廓。（参数组 2）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_contour_v2'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (444, 312), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (444 - 60) // 7\ndr.rectangle([444 // 2 - 70, 312 // 2, 444 // 2 + 70, 312 - 30], outline=\"#e8e8e8\", width=3)\n\nresult = base.filter(ImageFilter.CONTOUR)\nresult.save(\"pil_contour_v2_preview.png\")\nprint(\"已生成 pil_contour_v2_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-contour-v3",
+   "name": "contour_v3.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "轮廓提取·变体3",
+   "description": "ImageFilter.CONTOUR 边缘轮廓。（参数组 3）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_contour_v3'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (468, 324), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (468 - 60) // 7\ndr.rectangle([468 // 2 - 70, 324 // 2, 468 // 2 + 70, 324 - 30], outline=\"#e8e8e8\", width=3)\n\nresult = base.filter(ImageFilter.CONTOUR)\nresult.save(\"pil_contour_v3_preview.png\")\nprint(\"已生成 pil_contour_v3_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-contour-v4",
+   "name": "contour_v4.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "轮廓提取·变体4",
+   "description": "ImageFilter.CONTOUR 边缘轮廓。（参数组 4）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_contour_v4'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (492, 336), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (492 - 60) // 7\ndr.rectangle([492 // 2 - 70, 336 // 2, 492 // 2 + 70, 336 - 30], outline=\"#e8e8e8\", width=3)\n\nresult = base.filter(ImageFilter.CONTOUR)\nresult.save(\"pil_contour_v4_preview.png\")\nprint(\"已生成 pil_contour_v4_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-contour-v5",
+   "name": "contour_v5.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "轮廓提取·变体5",
+   "description": "ImageFilter.CONTOUR 边缘轮廓。（参数组 5）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_contour_v5'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (516, 348), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (516 - 60) // 7\ndr.rectangle([516 // 2 - 70, 348 // 2, 516 // 2 + 70, 348 - 30], outline=\"#e8e8e8\", width=3)\n\nresult = base.filter(ImageFilter.CONTOUR)\nresult.save(\"pil_contour_v5_preview.png\")\nprint(\"已生成 pil_contour_v5_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-contour-v6",
+   "name": "contour_v6.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "轮廓提取·变体6",
+   "description": "ImageFilter.CONTOUR 边缘轮廓。（参数组 6）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_contour_v6'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (540, 360), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (540 - 60) // 7\ndr.rectangle([540 // 2 - 70, 360 // 2, 540 // 2 + 70, 360 - 30], outline=\"#e8e8e8\", width=3)\n\nresult = base.filter(ImageFilter.CONTOUR)\nresult.save(\"pil_contour_v6_preview.png\")\nprint(\"已生成 pil_contour_v6_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-contour-v7",
+   "name": "contour_v7.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "轮廓提取·变体7",
+   "description": "ImageFilter.CONTOUR 边缘轮廓。（参数组 7）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_contour_v7'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (564, 372), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (564 - 60) // 7\ndr.rectangle([564 // 2 - 70, 372 // 2, 564 // 2 + 70, 372 - 30], outline=\"#e8e8e8\", width=3)\n\nresult = base.filter(ImageFilter.CONTOUR)\nresult.save(\"pil_contour_v7_preview.png\")\nprint(\"已生成 pil_contour_v7_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-contour-v8",
+   "name": "contour_v8.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "轮廓提取·变体8",
+   "description": "ImageFilter.CONTOUR 边缘轮廓。（参数组 8）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_contour_v8'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (588, 384), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (588 - 60) // 7\ndr.rectangle([588 // 2 - 70, 384 // 2, 588 // 2 + 70, 384 - 30], outline=\"#e8e8e8\", width=3)\n\nresult = base.filter(ImageFilter.CONTOUR)\nresult.save(\"pil_contour_v8_preview.png\")\nprint(\"已生成 pil_contour_v8_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-contour-v9",
+   "name": "contour_v9.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "轮廓提取·变体9",
+   "description": "ImageFilter.CONTOUR 边缘轮廓。（参数组 9）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_contour_v9'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (612, 396), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (612 - 60) // 7\ndr.rectangle([612 // 2 - 70, 396 // 2, 612 // 2 + 70, 396 - 30], outline=\"#e8e8e8\", width=3)\n\nresult = base.filter(ImageFilter.CONTOUR)\nresult.save(\"pil_contour_v9_preview.png\")\nprint(\"已生成 pil_contour_v9_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-contour-v10",
+   "name": "contour_v10.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "轮廓提取·变体10",
+   "description": "ImageFilter.CONTOUR 边缘轮廓。（参数组 10）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_contour_v10'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (636, 408), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (636 - 60) // 7\ndr.rectangle([636 // 2 - 70, 408 // 2, 636 // 2 + 70, 408 - 30], outline=\"#e8e8e8\", width=3)\n\nresult = base.filter(ImageFilter.CONTOUR)\nresult.save(\"pil_contour_v10_preview.png\")\nprint(\"已生成 pil_contour_v10_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-contour-v11",
+   "name": "contour_v11.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "轮廓提取·变体11",
+   "description": "ImageFilter.CONTOUR 边缘轮廓。（参数组 11）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_contour_v11'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (660, 420), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (660 - 60) // 7\ndr.rectangle([660 // 2 - 70, 420 // 2, 660 // 2 + 70, 420 - 30], outline=\"#e8e8e8\", width=3)\n\nresult = base.filter(ImageFilter.CONTOUR)\nresult.save(\"pil_contour_v11_preview.png\")\nprint(\"已生成 pil_contour_v11_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-contour-v12",
+   "name": "contour_v12.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "轮廓提取·变体12",
+   "description": "ImageFilter.CONTOUR 边缘轮廓。（参数组 12）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_contour_v12'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (684, 432), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (684 - 60) // 7\ndr.rectangle([684 // 2 - 70, 432 // 2, 684 // 2 + 70, 432 - 30], outline=\"#e8e8e8\", width=3)\n\nresult = base.filter(ImageFilter.CONTOUR)\nresult.save(\"pil_contour_v12_preview.png\")\nprint(\"已生成 pil_contour_v12_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-emboss-v1",
+   "name": "emboss_v1.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "浮雕效果·变体1",
+   "description": "EMBOSS 滤镜的立体浮雕感。（参数组 1）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_emboss_v1'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (420, 300), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (420 - 60) // 7\ndr.rectangle([420 // 2 - 70, 300 // 2, 420 // 2 + 70, 300 - 30], outline=\"#e8e8e8\", width=3)\n\nresult = base.filter(ImageFilter.EMBOSS)\nresult.save(\"pil_emboss_v1_preview.png\")\nprint(\"已生成 pil_emboss_v1_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-emboss-v2",
+   "name": "emboss_v2.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "浮雕效果·变体2",
+   "description": "EMBOSS 滤镜的立体浮雕感。（参数组 2）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_emboss_v2'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (444, 312), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (444 - 60) // 7\ndr.rectangle([444 // 2 - 70, 312 // 2, 444 // 2 + 70, 312 - 30], outline=\"#e8e8e8\", width=3)\n\nresult = base.filter(ImageFilter.EMBOSS)\nresult.save(\"pil_emboss_v2_preview.png\")\nprint(\"已生成 pil_emboss_v2_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-emboss-v3",
+   "name": "emboss_v3.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "浮雕效果·变体3",
+   "description": "EMBOSS 滤镜的立体浮雕感。（参数组 3）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_emboss_v3'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (468, 324), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (468 - 60) // 7\ndr.rectangle([468 // 2 - 70, 324 // 2, 468 // 2 + 70, 324 - 30], outline=\"#e8e8e8\", width=3)\n\nresult = base.filter(ImageFilter.EMBOSS)\nresult.save(\"pil_emboss_v3_preview.png\")\nprint(\"已生成 pil_emboss_v3_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-emboss-v4",
+   "name": "emboss_v4.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "浮雕效果·变体4",
+   "description": "EMBOSS 滤镜的立体浮雕感。（参数组 4）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_emboss_v4'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (492, 336), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (492 - 60) // 7\ndr.rectangle([492 // 2 - 70, 336 // 2, 492 // 2 + 70, 336 - 30], outline=\"#e8e8e8\", width=3)\n\nresult = base.filter(ImageFilter.EMBOSS)\nresult.save(\"pil_emboss_v4_preview.png\")\nprint(\"已生成 pil_emboss_v4_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-emboss-v5",
+   "name": "emboss_v5.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "浮雕效果·变体5",
+   "description": "EMBOSS 滤镜的立体浮雕感。（参数组 5）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_emboss_v5'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (516, 348), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (516 - 60) // 7\ndr.rectangle([516 // 2 - 70, 348 // 2, 516 // 2 + 70, 348 - 30], outline=\"#e8e8e8\", width=3)\n\nresult = base.filter(ImageFilter.EMBOSS)\nresult.save(\"pil_emboss_v5_preview.png\")\nprint(\"已生成 pil_emboss_v5_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-emboss-v6",
+   "name": "emboss_v6.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "浮雕效果·变体6",
+   "description": "EMBOSS 滤镜的立体浮雕感。（参数组 6）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_emboss_v6'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (540, 360), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (540 - 60) // 7\ndr.rectangle([540 // 2 - 70, 360 // 2, 540 // 2 + 70, 360 - 30], outline=\"#e8e8e8\", width=3)\n\nresult = base.filter(ImageFilter.EMBOSS)\nresult.save(\"pil_emboss_v6_preview.png\")\nprint(\"已生成 pil_emboss_v6_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-emboss-v7",
+   "name": "emboss_v7.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "浮雕效果·变体7",
+   "description": "EMBOSS 滤镜的立体浮雕感。（参数组 7）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_emboss_v7'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (564, 372), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (564 - 60) // 7\ndr.rectangle([564 // 2 - 70, 372 // 2, 564 // 2 + 70, 372 - 30], outline=\"#e8e8e8\", width=3)\n\nresult = base.filter(ImageFilter.EMBOSS)\nresult.save(\"pil_emboss_v7_preview.png\")\nprint(\"已生成 pil_emboss_v7_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-emboss-v8",
+   "name": "emboss_v8.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "浮雕效果·变体8",
+   "description": "EMBOSS 滤镜的立体浮雕感。（参数组 8）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_emboss_v8'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (588, 384), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (588 - 60) // 7\ndr.rectangle([588 // 2 - 70, 384 // 2, 588 // 2 + 70, 384 - 30], outline=\"#e8e8e8\", width=3)\n\nresult = base.filter(ImageFilter.EMBOSS)\nresult.save(\"pil_emboss_v8_preview.png\")\nprint(\"已生成 pil_emboss_v8_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-emboss-v9",
+   "name": "emboss_v9.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "浮雕效果·变体9",
+   "description": "EMBOSS 滤镜的立体浮雕感。（参数组 9）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_emboss_v9'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (612, 396), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (612 - 60) // 7\ndr.rectangle([612 // 2 - 70, 396 // 2, 612 // 2 + 70, 396 - 30], outline=\"#e8e8e8\", width=3)\n\nresult = base.filter(ImageFilter.EMBOSS)\nresult.save(\"pil_emboss_v9_preview.png\")\nprint(\"已生成 pil_emboss_v9_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-emboss-v10",
+   "name": "emboss_v10.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "浮雕效果·变体10",
+   "description": "EMBOSS 滤镜的立体浮雕感。（参数组 10）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_emboss_v10'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (636, 408), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (636 - 60) // 7\ndr.rectangle([636 // 2 - 70, 408 // 2, 636 // 2 + 70, 408 - 30], outline=\"#e8e8e8\", width=3)\n\nresult = base.filter(ImageFilter.EMBOSS)\nresult.save(\"pil_emboss_v10_preview.png\")\nprint(\"已生成 pil_emboss_v10_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-emboss-v11",
+   "name": "emboss_v11.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "浮雕效果·变体11",
+   "description": "EMBOSS 滤镜的立体浮雕感。（参数组 11）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_emboss_v11'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (660, 420), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (660 - 60) // 7\ndr.rectangle([660 // 2 - 70, 420 // 2, 660 // 2 + 70, 420 - 30], outline=\"#e8e8e8\", width=3)\n\nresult = base.filter(ImageFilter.EMBOSS)\nresult.save(\"pil_emboss_v11_preview.png\")\nprint(\"已生成 pil_emboss_v11_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-emboss-v12",
+   "name": "emboss_v12.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "浮雕效果·变体12",
+   "description": "EMBOSS 滤镜的立体浮雕感。（参数组 12）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_emboss_v12'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (684, 432), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (684 - 60) // 7\ndr.rectangle([684 // 2 - 70, 432 // 2, 684 // 2 + 70, 432 - 30], outline=\"#e8e8e8\", width=3)\n\nresult = base.filter(ImageFilter.EMBOSS)\nresult.save(\"pil_emboss_v12_preview.png\")\nprint(\"已生成 pil_emboss_v12_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-grayscale-v1",
+   "name": "grayscale_v1.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "灰度化·变体1",
+   "description": "convert('L') 灰度 + 自动对比度。（参数组 1）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_grayscale_v1'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (420, 300), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (420 - 60) // 7\ndr.rectangle([420 // 2 - 70, 300 // 2, 420 // 2 + 70, 300 - 30], outline=\"#e8e8e8\", width=3)\n\nresult = ImageOps.autocontrast(base.convert('L'))\nresult.save(\"pil_grayscale_v1_preview.png\")\nprint(\"已生成 pil_grayscale_v1_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-grayscale-v2",
+   "name": "grayscale_v2.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "灰度化·变体2",
+   "description": "convert('L') 灰度 + 自动对比度。（参数组 2）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_grayscale_v2'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (444, 312), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (444 - 60) // 7\ndr.rectangle([444 // 2 - 70, 312 // 2, 444 // 2 + 70, 312 - 30], outline=\"#e8e8e8\", width=3)\n\nresult = ImageOps.autocontrast(base.convert('L'))\nresult.save(\"pil_grayscale_v2_preview.png\")\nprint(\"已生成 pil_grayscale_v2_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-grayscale-v3",
+   "name": "grayscale_v3.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "灰度化·变体3",
+   "description": "convert('L') 灰度 + 自动对比度。（参数组 3）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_grayscale_v3'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (468, 324), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (468 - 60) // 7\ndr.rectangle([468 // 2 - 70, 324 // 2, 468 // 2 + 70, 324 - 30], outline=\"#e8e8e8\", width=3)\n\nresult = ImageOps.autocontrast(base.convert('L'))\nresult.save(\"pil_grayscale_v3_preview.png\")\nprint(\"已生成 pil_grayscale_v3_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-grayscale-v4",
+   "name": "grayscale_v4.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "灰度化·变体4",
+   "description": "convert('L') 灰度 + 自动对比度。（参数组 4）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_grayscale_v4'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (492, 336), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (492 - 60) // 7\ndr.rectangle([492 // 2 - 70, 336 // 2, 492 // 2 + 70, 336 - 30], outline=\"#e8e8e8\", width=3)\n\nresult = ImageOps.autocontrast(base.convert('L'))\nresult.save(\"pil_grayscale_v4_preview.png\")\nprint(\"已生成 pil_grayscale_v4_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-grayscale-v5",
+   "name": "grayscale_v5.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "灰度化·变体5",
+   "description": "convert('L') 灰度 + 自动对比度。（参数组 5）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_grayscale_v5'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (516, 348), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (516 - 60) // 7\ndr.rectangle([516 // 2 - 70, 348 // 2, 516 // 2 + 70, 348 - 30], outline=\"#e8e8e8\", width=3)\n\nresult = ImageOps.autocontrast(base.convert('L'))\nresult.save(\"pil_grayscale_v5_preview.png\")\nprint(\"已生成 pil_grayscale_v5_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-grayscale-v6",
+   "name": "grayscale_v6.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "灰度化·变体6",
+   "description": "convert('L') 灰度 + 自动对比度。（参数组 6）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_grayscale_v6'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (540, 360), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (540 - 60) // 7\ndr.rectangle([540 // 2 - 70, 360 // 2, 540 // 2 + 70, 360 - 30], outline=\"#e8e8e8\", width=3)\n\nresult = ImageOps.autocontrast(base.convert('L'))\nresult.save(\"pil_grayscale_v6_preview.png\")\nprint(\"已生成 pil_grayscale_v6_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-grayscale-v7",
+   "name": "grayscale_v7.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "灰度化·变体7",
+   "description": "convert('L') 灰度 + 自动对比度。（参数组 7）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_grayscale_v7'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (564, 372), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (564 - 60) // 7\ndr.rectangle([564 // 2 - 70, 372 // 2, 564 // 2 + 70, 372 - 30], outline=\"#e8e8e8\", width=3)\n\nresult = ImageOps.autocontrast(base.convert('L'))\nresult.save(\"pil_grayscale_v7_preview.png\")\nprint(\"已生成 pil_grayscale_v7_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-grayscale-v8",
+   "name": "grayscale_v8.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "灰度化·变体8",
+   "description": "convert('L') 灰度 + 自动对比度。（参数组 8）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_grayscale_v8'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (588, 384), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (588 - 60) // 7\ndr.rectangle([588 // 2 - 70, 384 // 2, 588 // 2 + 70, 384 - 30], outline=\"#e8e8e8\", width=3)\n\nresult = ImageOps.autocontrast(base.convert('L'))\nresult.save(\"pil_grayscale_v8_preview.png\")\nprint(\"已生成 pil_grayscale_v8_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-grayscale-v9",
+   "name": "grayscale_v9.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "灰度化·变体9",
+   "description": "convert('L') 灰度 + 自动对比度。（参数组 9）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_grayscale_v9'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (612, 396), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (612 - 60) // 7\ndr.rectangle([612 // 2 - 70, 396 // 2, 612 // 2 + 70, 396 - 30], outline=\"#e8e8e8\", width=3)\n\nresult = ImageOps.autocontrast(base.convert('L'))\nresult.save(\"pil_grayscale_v9_preview.png\")\nprint(\"已生成 pil_grayscale_v9_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-grayscale-v10",
+   "name": "grayscale_v10.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "灰度化·变体10",
+   "description": "convert('L') 灰度 + 自动对比度。（参数组 10）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_grayscale_v10'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (636, 408), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (636 - 60) // 7\ndr.rectangle([636 // 2 - 70, 408 // 2, 636 // 2 + 70, 408 - 30], outline=\"#e8e8e8\", width=3)\n\nresult = ImageOps.autocontrast(base.convert('L'))\nresult.save(\"pil_grayscale_v10_preview.png\")\nprint(\"已生成 pil_grayscale_v10_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-grayscale-v11",
+   "name": "grayscale_v11.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "灰度化·变体11",
+   "description": "convert('L') 灰度 + 自动对比度。（参数组 11）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_grayscale_v11'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (660, 420), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (660 - 60) // 7\ndr.rectangle([660 // 2 - 70, 420 // 2, 660 // 2 + 70, 420 - 30], outline=\"#e8e8e8\", width=3)\n\nresult = ImageOps.autocontrast(base.convert('L'))\nresult.save(\"pil_grayscale_v11_preview.png\")\nprint(\"已生成 pil_grayscale_v11_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-grayscale-v12",
+   "name": "grayscale_v12.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "灰度化·变体12",
+   "description": "convert('L') 灰度 + 自动对比度。（参数组 12）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_grayscale_v12'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (684, 432), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (684 - 60) // 7\ndr.rectangle([684 // 2 - 70, 432 // 2, 684 // 2 + 70, 432 - 30], outline=\"#e8e8e8\", width=3)\n\nresult = ImageOps.autocontrast(base.convert('L'))\nresult.save(\"pil_grayscale_v12_preview.png\")\nprint(\"已生成 pil_grayscale_v12_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-invert-v1",
+   "name": "invert_v1.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "反色·变体1",
+   "description": "ImageOps.invert 颜色反转。（参数组 1）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_invert_v1'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (420, 300), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (420 - 60) // 7\ndr.rectangle([420 // 2 - 70, 300 // 2, 420 // 2 + 70, 300 - 30], outline=\"#e8e8e8\", width=3)\n\nresult = ImageOps.invert(base)\nresult.save(\"pil_invert_v1_preview.png\")\nprint(\"已生成 pil_invert_v1_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-invert-v2",
+   "name": "invert_v2.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "反色·变体2",
+   "description": "ImageOps.invert 颜色反转。（参数组 2）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_invert_v2'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (444, 312), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (444 - 60) // 7\ndr.rectangle([444 // 2 - 70, 312 // 2, 444 // 2 + 70, 312 - 30], outline=\"#e8e8e8\", width=3)\n\nresult = ImageOps.invert(base)\nresult.save(\"pil_invert_v2_preview.png\")\nprint(\"已生成 pil_invert_v2_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-invert-v3",
+   "name": "invert_v3.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "反色·变体3",
+   "description": "ImageOps.invert 颜色反转。（参数组 3）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_invert_v3'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (468, 324), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (468 - 60) // 7\ndr.rectangle([468 // 2 - 70, 324 // 2, 468 // 2 + 70, 324 - 30], outline=\"#e8e8e8\", width=3)\n\nresult = ImageOps.invert(base)\nresult.save(\"pil_invert_v3_preview.png\")\nprint(\"已生成 pil_invert_v3_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-invert-v4",
+   "name": "invert_v4.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "反色·变体4",
+   "description": "ImageOps.invert 颜色反转。（参数组 4）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_invert_v4'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (492, 336), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (492 - 60) // 7\ndr.rectangle([492 // 2 - 70, 336 // 2, 492 // 2 + 70, 336 - 30], outline=\"#e8e8e8\", width=3)\n\nresult = ImageOps.invert(base)\nresult.save(\"pil_invert_v4_preview.png\")\nprint(\"已生成 pil_invert_v4_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-invert-v5",
+   "name": "invert_v5.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "反色·变体5",
+   "description": "ImageOps.invert 颜色反转。（参数组 5）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_invert_v5'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (516, 348), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (516 - 60) // 7\ndr.rectangle([516 // 2 - 70, 348 // 2, 516 // 2 + 70, 348 - 30], outline=\"#e8e8e8\", width=3)\n\nresult = ImageOps.invert(base)\nresult.save(\"pil_invert_v5_preview.png\")\nprint(\"已生成 pil_invert_v5_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-invert-v6",
+   "name": "invert_v6.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "反色·变体6",
+   "description": "ImageOps.invert 颜色反转。（参数组 6）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_invert_v6'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (540, 360), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (540 - 60) // 7\ndr.rectangle([540 // 2 - 70, 360 // 2, 540 // 2 + 70, 360 - 30], outline=\"#e8e8e8\", width=3)\n\nresult = ImageOps.invert(base)\nresult.save(\"pil_invert_v6_preview.png\")\nprint(\"已生成 pil_invert_v6_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-invert-v7",
+   "name": "invert_v7.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "反色·变体7",
+   "description": "ImageOps.invert 颜色反转。（参数组 7）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_invert_v7'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (564, 372), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (564 - 60) // 7\ndr.rectangle([564 // 2 - 70, 372 // 2, 564 // 2 + 70, 372 - 30], outline=\"#e8e8e8\", width=3)\n\nresult = ImageOps.invert(base)\nresult.save(\"pil_invert_v7_preview.png\")\nprint(\"已生成 pil_invert_v7_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-invert-v8",
+   "name": "invert_v8.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "反色·变体8",
+   "description": "ImageOps.invert 颜色反转。（参数组 8）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_invert_v8'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (588, 384), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (588 - 60) // 7\ndr.rectangle([588 // 2 - 70, 384 // 2, 588 // 2 + 70, 384 - 30], outline=\"#e8e8e8\", width=3)\n\nresult = ImageOps.invert(base)\nresult.save(\"pil_invert_v8_preview.png\")\nprint(\"已生成 pil_invert_v8_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-invert-v9",
+   "name": "invert_v9.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "反色·变体9",
+   "description": "ImageOps.invert 颜色反转。（参数组 9）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_invert_v9'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (612, 396), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (612 - 60) // 7\ndr.rectangle([612 // 2 - 70, 396 // 2, 612 // 2 + 70, 396 - 30], outline=\"#e8e8e8\", width=3)\n\nresult = ImageOps.invert(base)\nresult.save(\"pil_invert_v9_preview.png\")\nprint(\"已生成 pil_invert_v9_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-invert-v10",
+   "name": "invert_v10.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "反色·变体10",
+   "description": "ImageOps.invert 颜色反转。（参数组 10）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_invert_v10'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (636, 408), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (636 - 60) // 7\ndr.rectangle([636 // 2 - 70, 408 // 2, 636 // 2 + 70, 408 - 30], outline=\"#e8e8e8\", width=3)\n\nresult = ImageOps.invert(base)\nresult.save(\"pil_invert_v10_preview.png\")\nprint(\"已生成 pil_invert_v10_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-invert-v11",
+   "name": "invert_v11.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "反色·变体11",
+   "description": "ImageOps.invert 颜色反转。（参数组 11）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_invert_v11'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (660, 420), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (660 - 60) // 7\ndr.rectangle([660 // 2 - 70, 420 // 2, 660 // 2 + 70, 420 - 30], outline=\"#e8e8e8\", width=3)\n\nresult = ImageOps.invert(base)\nresult.save(\"pil_invert_v11_preview.png\")\nprint(\"已生成 pil_invert_v11_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-invert-v12",
+   "name": "invert_v12.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "反色·变体12",
+   "description": "ImageOps.invert 颜色反转。（参数组 12）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_invert_v12'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (684, 432), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (684 - 60) // 7\ndr.rectangle([684 // 2 - 70, 432 // 2, 684 // 2 + 70, 432 - 30], outline=\"#e8e8e8\", width=3)\n\nresult = ImageOps.invert(base)\nresult.save(\"pil_invert_v12_preview.png\")\nprint(\"已生成 pil_invert_v12_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-solarize-v1",
+   "name": "solarize_v1.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "曝光过度·变体1",
+   "description": "ImageOps.solarize 阈值翻转。（参数组 1）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_solarize_v1'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (420, 300), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (420 - 60) // 7\ndr.rectangle([420 // 2 - 70, 300 // 2, 420 // 2 + 70, 300 - 30], outline=\"#e8e8e8\", width=3)\n\nresult = ImageOps.solarize(base, threshold=0 * 30 + 90)\nresult.save(\"pil_solarize_v1_preview.png\")\nprint(\"已生成 pil_solarize_v1_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-solarize-v2",
+   "name": "solarize_v2.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "曝光过度·变体2",
+   "description": "ImageOps.solarize 阈值翻转。（参数组 2）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_solarize_v2'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (444, 312), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (444 - 60) // 7\ndr.rectangle([444 // 2 - 70, 312 // 2, 444 // 2 + 70, 312 - 30], outline=\"#e8e8e8\", width=3)\n\nresult = ImageOps.solarize(base, threshold=1 * 30 + 90)\nresult.save(\"pil_solarize_v2_preview.png\")\nprint(\"已生成 pil_solarize_v2_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-solarize-v3",
+   "name": "solarize_v3.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "曝光过度·变体3",
+   "description": "ImageOps.solarize 阈值翻转。（参数组 3）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_solarize_v3'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (468, 324), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (468 - 60) // 7\ndr.rectangle([468 // 2 - 70, 324 // 2, 468 // 2 + 70, 324 - 30], outline=\"#e8e8e8\", width=3)\n\nresult = ImageOps.solarize(base, threshold=2 * 30 + 90)\nresult.save(\"pil_solarize_v3_preview.png\")\nprint(\"已生成 pil_solarize_v3_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-solarize-v4",
+   "name": "solarize_v4.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "曝光过度·变体4",
+   "description": "ImageOps.solarize 阈值翻转。（参数组 4）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_solarize_v4'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (492, 336), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (492 - 60) // 7\ndr.rectangle([492 // 2 - 70, 336 // 2, 492 // 2 + 70, 336 - 30], outline=\"#e8e8e8\", width=3)\n\nresult = ImageOps.solarize(base, threshold=3 * 30 + 90)\nresult.save(\"pil_solarize_v4_preview.png\")\nprint(\"已生成 pil_solarize_v4_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-solarize-v5",
+   "name": "solarize_v5.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "曝光过度·变体5",
+   "description": "ImageOps.solarize 阈值翻转。（参数组 5）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_solarize_v5'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (516, 348), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (516 - 60) // 7\ndr.rectangle([516 // 2 - 70, 348 // 2, 516 // 2 + 70, 348 - 30], outline=\"#e8e8e8\", width=3)\n\nresult = ImageOps.solarize(base, threshold=4 * 30 + 90)\nresult.save(\"pil_solarize_v5_preview.png\")\nprint(\"已生成 pil_solarize_v5_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-solarize-v6",
+   "name": "solarize_v6.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "曝光过度·变体6",
+   "description": "ImageOps.solarize 阈值翻转。（参数组 6）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_solarize_v6'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (540, 360), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (540 - 60) // 7\ndr.rectangle([540 // 2 - 70, 360 // 2, 540 // 2 + 70, 360 - 30], outline=\"#e8e8e8\", width=3)\n\nresult = ImageOps.solarize(base, threshold=5 * 30 + 90)\nresult.save(\"pil_solarize_v6_preview.png\")\nprint(\"已生成 pil_solarize_v6_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-solarize-v7",
+   "name": "solarize_v7.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "曝光过度·变体7",
+   "description": "ImageOps.solarize 阈值翻转。（参数组 7）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_solarize_v7'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (564, 372), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (564 - 60) // 7\ndr.rectangle([564 // 2 - 70, 372 // 2, 564 // 2 + 70, 372 - 30], outline=\"#e8e8e8\", width=3)\n\nresult = ImageOps.solarize(base, threshold=6 * 30 + 90)\nresult.save(\"pil_solarize_v7_preview.png\")\nprint(\"已生成 pil_solarize_v7_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-solarize-v8",
+   "name": "solarize_v8.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "曝光过度·变体8",
+   "description": "ImageOps.solarize 阈值翻转。（参数组 8）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_solarize_v8'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (588, 384), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (588 - 60) // 7\ndr.rectangle([588 // 2 - 70, 384 // 2, 588 // 2 + 70, 384 - 30], outline=\"#e8e8e8\", width=3)\n\nresult = ImageOps.solarize(base, threshold=7 * 30 + 90)\nresult.save(\"pil_solarize_v8_preview.png\")\nprint(\"已生成 pil_solarize_v8_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-solarize-v9",
+   "name": "solarize_v9.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "曝光过度·变体9",
+   "description": "ImageOps.solarize 阈值翻转。（参数组 9）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_solarize_v9'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (612, 396), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (612 - 60) // 7\ndr.rectangle([612 // 2 - 70, 396 // 2, 612 // 2 + 70, 396 - 30], outline=\"#e8e8e8\", width=3)\n\nresult = ImageOps.solarize(base, threshold=8 * 30 + 90)\nresult.save(\"pil_solarize_v9_preview.png\")\nprint(\"已生成 pil_solarize_v9_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-solarize-v10",
+   "name": "solarize_v10.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "曝光过度·变体10",
+   "description": "ImageOps.solarize 阈值翻转。（参数组 10）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_solarize_v10'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (636, 408), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (636 - 60) // 7\ndr.rectangle([636 // 2 - 70, 408 // 2, 636 // 2 + 70, 408 - 30], outline=\"#e8e8e8\", width=3)\n\nresult = ImageOps.solarize(base, threshold=9 * 30 + 90)\nresult.save(\"pil_solarize_v10_preview.png\")\nprint(\"已生成 pil_solarize_v10_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-solarize-v11",
+   "name": "solarize_v11.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "曝光过度·变体11",
+   "description": "ImageOps.solarize 阈值翻转。（参数组 11）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_solarize_v11'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (660, 420), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (660 - 60) // 7\ndr.rectangle([660 // 2 - 70, 420 // 2, 660 // 2 + 70, 420 - 30], outline=\"#e8e8e8\", width=3)\n\nresult = ImageOps.solarize(base, threshold=10 * 30 + 90)\nresult.save(\"pil_solarize_v11_preview.png\")\nprint(\"已生成 pil_solarize_v11_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-solarize-v12",
+   "name": "solarize_v12.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "曝光过度·变体12",
+   "description": "ImageOps.solarize 阈值翻转。（参数组 12）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_solarize_v12'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (684, 432), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (684 - 60) // 7\ndr.rectangle([684 // 2 - 70, 432 // 2, 684 // 2 + 70, 432 - 30], outline=\"#e8e8e8\", width=3)\n\nresult = ImageOps.solarize(base, threshold=11 * 30 + 90)\nresult.save(\"pil_solarize_v12_preview.png\")\nprint(\"已生成 pil_solarize_v12_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-posterize-v1",
+   "name": "posterize_v1.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "色调分离·变体1",
+   "description": "posterize 减少每通道位数。（参数组 1）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_posterize_v1'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (420, 300), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (420 - 60) // 7\ndr.rectangle([420 // 2 - 70, 300 // 2, 420 // 2 + 70, 300 - 30], outline=\"#e8e8e8\", width=3)\n\nresult = ImageOps.posterize(base, bits=0 + 2)\nresult.save(\"pil_posterize_v1_preview.png\")\nprint(\"已生成 pil_posterize_v1_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-posterize-v2",
+   "name": "posterize_v2.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "色调分离·变体2",
+   "description": "posterize 减少每通道位数。（参数组 2）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_posterize_v2'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (444, 312), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (444 - 60) // 7\ndr.rectangle([444 // 2 - 70, 312 // 2, 444 // 2 + 70, 312 - 30], outline=\"#e8e8e8\", width=3)\n\nresult = ImageOps.posterize(base, bits=1 + 2)\nresult.save(\"pil_posterize_v2_preview.png\")\nprint(\"已生成 pil_posterize_v2_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-posterize-v3",
+   "name": "posterize_v3.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "色调分离·变体3",
+   "description": "posterize 减少每通道位数。（参数组 3）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_posterize_v3'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (468, 324), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (468 - 60) // 7\ndr.rectangle([468 // 2 - 70, 324 // 2, 468 // 2 + 70, 324 - 30], outline=\"#e8e8e8\", width=3)\n\nresult = ImageOps.posterize(base, bits=2 + 2)\nresult.save(\"pil_posterize_v3_preview.png\")\nprint(\"已生成 pil_posterize_v3_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-posterize-v4",
+   "name": "posterize_v4.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "色调分离·变体4",
+   "description": "posterize 减少每通道位数。（参数组 4）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_posterize_v4'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (492, 336), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (492 - 60) // 7\ndr.rectangle([492 // 2 - 70, 336 // 2, 492 // 2 + 70, 336 - 30], outline=\"#e8e8e8\", width=3)\n\nresult = ImageOps.posterize(base, bits=3 + 2)\nresult.save(\"pil_posterize_v4_preview.png\")\nprint(\"已生成 pil_posterize_v4_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-posterize-v5",
+   "name": "posterize_v5.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "色调分离·变体5",
+   "description": "posterize 减少每通道位数。（参数组 5）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_posterize_v5'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (516, 348), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (516 - 60) // 7\ndr.rectangle([516 // 2 - 70, 348 // 2, 516 // 2 + 70, 348 - 30], outline=\"#e8e8e8\", width=3)\n\nresult = ImageOps.posterize(base, bits=4 + 2)\nresult.save(\"pil_posterize_v5_preview.png\")\nprint(\"已生成 pil_posterize_v5_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-posterize-v6",
+   "name": "posterize_v6.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "色调分离·变体6",
+   "description": "posterize 减少每通道位数。（参数组 6）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_posterize_v6'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (540, 360), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (540 - 60) // 7\ndr.rectangle([540 // 2 - 70, 360 // 2, 540 // 2 + 70, 360 - 30], outline=\"#e8e8e8\", width=3)\n\nresult = ImageOps.posterize(base, bits=5 + 2)\nresult.save(\"pil_posterize_v6_preview.png\")\nprint(\"已生成 pil_posterize_v6_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-posterize-v7",
+   "name": "posterize_v7.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "色调分离·变体7",
+   "description": "posterize 减少每通道位数。（参数组 7）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_posterize_v7'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (564, 372), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (564 - 60) // 7\ndr.rectangle([564 // 2 - 70, 372 // 2, 564 // 2 + 70, 372 - 30], outline=\"#e8e8e8\", width=3)\n\nresult = ImageOps.posterize(base, bits=6 + 2)\nresult.save(\"pil_posterize_v7_preview.png\")\nprint(\"已生成 pil_posterize_v7_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-posterize-v8",
+   "name": "posterize_v8.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "色调分离·变体8",
+   "description": "posterize 减少每通道位数。（参数组 8）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_posterize_v8'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (588, 384), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (588 - 60) // 7\ndr.rectangle([588 // 2 - 70, 384 // 2, 588 // 2 + 70, 384 - 30], outline=\"#e8e8e8\", width=3)\n\nresult = ImageOps.posterize(base, bits=7 + 2)\nresult.save(\"pil_posterize_v8_preview.png\")\nprint(\"已生成 pil_posterize_v8_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-posterize-v9",
+   "name": "posterize_v9.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "色调分离·变体9",
+   "description": "posterize 减少每通道位数。（参数组 9）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_posterize_v9'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (612, 396), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (612 - 60) // 7\ndr.rectangle([612 // 2 - 70, 396 // 2, 612 // 2 + 70, 396 - 30], outline=\"#e8e8e8\", width=3)\n\nresult = ImageOps.posterize(base, bits=8 + 2)\nresult.save(\"pil_posterize_v9_preview.png\")\nprint(\"已生成 pil_posterize_v9_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-posterize-v10",
+   "name": "posterize_v10.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "色调分离·变体10",
+   "description": "posterize 减少每通道位数。（参数组 10）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_posterize_v10'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (636, 408), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (636 - 60) // 7\ndr.rectangle([636 // 2 - 70, 408 // 2, 636 // 2 + 70, 408 - 30], outline=\"#e8e8e8\", width=3)\n\nresult = ImageOps.posterize(base, bits=9 + 2)\nresult.save(\"pil_posterize_v10_preview.png\")\nprint(\"已生成 pil_posterize_v10_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-posterize-v11",
+   "name": "posterize_v11.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "色调分离·变体11",
+   "description": "posterize 减少每通道位数。（参数组 11）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_posterize_v11'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (660, 420), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (660 - 60) // 7\ndr.rectangle([660 // 2 - 70, 420 // 2, 660 // 2 + 70, 420 - 30], outline=\"#e8e8e8\", width=3)\n\nresult = ImageOps.posterize(base, bits=10 + 2)\nresult.save(\"pil_posterize_v11_preview.png\")\nprint(\"已生成 pil_posterize_v11_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-posterize-v12",
+   "name": "posterize_v12.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "色调分离·变体12",
+   "description": "posterize 减少每通道位数。（参数组 12）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_posterize_v12'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (684, 432), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (684 - 60) // 7\ndr.rectangle([684 // 2 - 70, 432 // 2, 684 // 2 + 70, 432 - 30], outline=\"#e8e8e8\", width=3)\n\nresult = ImageOps.posterize(base, bits=11 + 2)\nresult.save(\"pil_posterize_v12_preview.png\")\nprint(\"已生成 pil_posterize_v12_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-mirror-v1",
+   "name": "mirror_v1.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "镜像拼贴·变体1",
+   "description": "水平镜像后与原图并排。（参数组 1）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_mirror_v1'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (420, 300), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (420 - 60) // 7\ndr.rectangle([420 // 2 - 70, 300 // 2, 420 // 2 + 70, 300 - 30], outline=\"#e8e8e8\", width=3)\n\nresult = Image.new('RGB', (base.width * 2, base.height))\nresult.paste(base, (0, 0))\nresult.paste(ImageOps.mirror(base), (base.width, 0))\nresult.save(\"pil_mirror_v1_preview.png\")\nprint(\"已生成 pil_mirror_v1_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-mirror-v2",
+   "name": "mirror_v2.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "镜像拼贴·变体2",
+   "description": "水平镜像后与原图并排。（参数组 2）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_mirror_v2'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (444, 312), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (444 - 60) // 7\ndr.rectangle([444 // 2 - 70, 312 // 2, 444 // 2 + 70, 312 - 30], outline=\"#e8e8e8\", width=3)\n\nresult = Image.new('RGB', (base.width * 2, base.height))\nresult.paste(base, (0, 0))\nresult.paste(ImageOps.mirror(base), (base.width, 0))\nresult.save(\"pil_mirror_v2_preview.png\")\nprint(\"已生成 pil_mirror_v2_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-mirror-v3",
+   "name": "mirror_v3.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "镜像拼贴·变体3",
+   "description": "水平镜像后与原图并排。（参数组 3）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_mirror_v3'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (468, 324), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (468 - 60) // 7\ndr.rectangle([468 // 2 - 70, 324 // 2, 468 // 2 + 70, 324 - 30], outline=\"#e8e8e8\", width=3)\n\nresult = Image.new('RGB', (base.width * 2, base.height))\nresult.paste(base, (0, 0))\nresult.paste(ImageOps.mirror(base), (base.width, 0))\nresult.save(\"pil_mirror_v3_preview.png\")\nprint(\"已生成 pil_mirror_v3_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-mirror-v4",
+   "name": "mirror_v4.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "镜像拼贴·变体4",
+   "description": "水平镜像后与原图并排。（参数组 4）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_mirror_v4'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (492, 336), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (492 - 60) // 7\ndr.rectangle([492 // 2 - 70, 336 // 2, 492 // 2 + 70, 336 - 30], outline=\"#e8e8e8\", width=3)\n\nresult = Image.new('RGB', (base.width * 2, base.height))\nresult.paste(base, (0, 0))\nresult.paste(ImageOps.mirror(base), (base.width, 0))\nresult.save(\"pil_mirror_v4_preview.png\")\nprint(\"已生成 pil_mirror_v4_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-mirror-v5",
+   "name": "mirror_v5.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "镜像拼贴·变体5",
+   "description": "水平镜像后与原图并排。（参数组 5）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_mirror_v5'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (516, 348), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (516 - 60) // 7\ndr.rectangle([516 // 2 - 70, 348 // 2, 516 // 2 + 70, 348 - 30], outline=\"#e8e8e8\", width=3)\n\nresult = Image.new('RGB', (base.width * 2, base.height))\nresult.paste(base, (0, 0))\nresult.paste(ImageOps.mirror(base), (base.width, 0))\nresult.save(\"pil_mirror_v5_preview.png\")\nprint(\"已生成 pil_mirror_v5_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-mirror-v6",
+   "name": "mirror_v6.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "镜像拼贴·变体6",
+   "description": "水平镜像后与原图并排。（参数组 6）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_mirror_v6'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (540, 360), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (540 - 60) // 7\ndr.rectangle([540 // 2 - 70, 360 // 2, 540 // 2 + 70, 360 - 30], outline=\"#e8e8e8\", width=3)\n\nresult = Image.new('RGB', (base.width * 2, base.height))\nresult.paste(base, (0, 0))\nresult.paste(ImageOps.mirror(base), (base.width, 0))\nresult.save(\"pil_mirror_v6_preview.png\")\nprint(\"已生成 pil_mirror_v6_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-mirror-v7",
+   "name": "mirror_v7.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "镜像拼贴·变体7",
+   "description": "水平镜像后与原图并排。（参数组 7）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_mirror_v7'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (564, 372), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (564 - 60) // 7\ndr.rectangle([564 // 2 - 70, 372 // 2, 564 // 2 + 70, 372 - 30], outline=\"#e8e8e8\", width=3)\n\nresult = Image.new('RGB', (base.width * 2, base.height))\nresult.paste(base, (0, 0))\nresult.paste(ImageOps.mirror(base), (base.width, 0))\nresult.save(\"pil_mirror_v7_preview.png\")\nprint(\"已生成 pil_mirror_v7_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-mirror-v8",
+   "name": "mirror_v8.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "镜像拼贴·变体8",
+   "description": "水平镜像后与原图并排。（参数组 8）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_mirror_v8'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (588, 384), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (588 - 60) // 7\ndr.rectangle([588 // 2 - 70, 384 // 2, 588 // 2 + 70, 384 - 30], outline=\"#e8e8e8\", width=3)\n\nresult = Image.new('RGB', (base.width * 2, base.height))\nresult.paste(base, (0, 0))\nresult.paste(ImageOps.mirror(base), (base.width, 0))\nresult.save(\"pil_mirror_v8_preview.png\")\nprint(\"已生成 pil_mirror_v8_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-mirror-v9",
+   "name": "mirror_v9.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "镜像拼贴·变体9",
+   "description": "水平镜像后与原图并排。（参数组 9）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_mirror_v9'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (612, 396), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (612 - 60) // 7\ndr.rectangle([612 // 2 - 70, 396 // 2, 612 // 2 + 70, 396 - 30], outline=\"#e8e8e8\", width=3)\n\nresult = Image.new('RGB', (base.width * 2, base.height))\nresult.paste(base, (0, 0))\nresult.paste(ImageOps.mirror(base), (base.width, 0))\nresult.save(\"pil_mirror_v9_preview.png\")\nprint(\"已生成 pil_mirror_v9_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-mirror-v10",
+   "name": "mirror_v10.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "镜像拼贴·变体10",
+   "description": "水平镜像后与原图并排。（参数组 10）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_mirror_v10'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (636, 408), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (636 - 60) // 7\ndr.rectangle([636 // 2 - 70, 408 // 2, 636 // 2 + 70, 408 - 30], outline=\"#e8e8e8\", width=3)\n\nresult = Image.new('RGB', (base.width * 2, base.height))\nresult.paste(base, (0, 0))\nresult.paste(ImageOps.mirror(base), (base.width, 0))\nresult.save(\"pil_mirror_v10_preview.png\")\nprint(\"已生成 pil_mirror_v10_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-mirror-v11",
+   "name": "mirror_v11.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "镜像拼贴·变体11",
+   "description": "水平镜像后与原图并排。（参数组 11）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_mirror_v11'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (660, 420), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (660 - 60) // 7\ndr.rectangle([660 // 2 - 70, 420 // 2, 660 // 2 + 70, 420 - 30], outline=\"#e8e8e8\", width=3)\n\nresult = Image.new('RGB', (base.width * 2, base.height))\nresult.paste(base, (0, 0))\nresult.paste(ImageOps.mirror(base), (base.width, 0))\nresult.save(\"pil_mirror_v11_preview.png\")\nprint(\"已生成 pil_mirror_v11_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-mirror-v12",
+   "name": "mirror_v12.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "镜像拼贴·变体12",
+   "description": "水平镜像后与原图并排。（参数组 12）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_mirror_v12'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (684, 432), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (684 - 60) // 7\ndr.rectangle([684 // 2 - 70, 432 // 2, 684 // 2 + 70, 432 - 30], outline=\"#e8e8e8\", width=3)\n\nresult = Image.new('RGB', (base.width * 2, base.height))\nresult.paste(base, (0, 0))\nresult.paste(ImageOps.mirror(base), (base.width, 0))\nresult.save(\"pil_mirror_v12_preview.png\")\nprint(\"已生成 pil_mirror_v12_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-rotate-crop-v1",
+   "name": "rotate-crop_v1.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "旋转裁剪·变体1",
+   "description": "旋转 45 度后中心裁剪。（参数组 1）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_rotate-crop_v1'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (420, 300), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (420 - 60) // 7\ndr.rectangle([420 // 2 - 70, 300 // 2, 420 // 2 + 70, 300 - 30], outline=\"#e8e8e8\", width=3)\n\nrotated = base.rotate(45, expand=True, fillcolor='#111')\nw, h = rotated.size\nresult = rotated.crop(((w - base.width) // 2, (h - base.height) // 2,\n                       (w + base.width) // 2, (h + base.height) // 2))\nresult.save(\"pil_rotate-crop_v1_preview.png\")\nprint(\"已生成 pil_rotate-crop_v1_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-rotate-crop-v2",
+   "name": "rotate-crop_v2.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "旋转裁剪·变体2",
+   "description": "旋转 45 度后中心裁剪。（参数组 2）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_rotate-crop_v2'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (444, 312), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (444 - 60) // 7\ndr.rectangle([444 // 2 - 70, 312 // 2, 444 // 2 + 70, 312 - 30], outline=\"#e8e8e8\", width=3)\n\nrotated = base.rotate(45, expand=True, fillcolor='#111')\nw, h = rotated.size\nresult = rotated.crop(((w - base.width) // 2, (h - base.height) // 2,\n                       (w + base.width) // 2, (h + base.height) // 2))\nresult.save(\"pil_rotate-crop_v2_preview.png\")\nprint(\"已生成 pil_rotate-crop_v2_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-rotate-crop-v3",
+   "name": "rotate-crop_v3.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "旋转裁剪·变体3",
+   "description": "旋转 45 度后中心裁剪。（参数组 3）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_rotate-crop_v3'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (468, 324), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (468 - 60) // 7\ndr.rectangle([468 // 2 - 70, 324 // 2, 468 // 2 + 70, 324 - 30], outline=\"#e8e8e8\", width=3)\n\nrotated = base.rotate(45, expand=True, fillcolor='#111')\nw, h = rotated.size\nresult = rotated.crop(((w - base.width) // 2, (h - base.height) // 2,\n                       (w + base.width) // 2, (h + base.height) // 2))\nresult.save(\"pil_rotate-crop_v3_preview.png\")\nprint(\"已生成 pil_rotate-crop_v3_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-rotate-crop-v4",
+   "name": "rotate-crop_v4.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "旋转裁剪·变体4",
+   "description": "旋转 45 度后中心裁剪。（参数组 4）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_rotate-crop_v4'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (492, 336), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (492 - 60) // 7\ndr.rectangle([492 // 2 - 70, 336 // 2, 492 // 2 + 70, 336 - 30], outline=\"#e8e8e8\", width=3)\n\nrotated = base.rotate(45, expand=True, fillcolor='#111')\nw, h = rotated.size\nresult = rotated.crop(((w - base.width) // 2, (h - base.height) // 2,\n                       (w + base.width) // 2, (h + base.height) // 2))\nresult.save(\"pil_rotate-crop_v4_preview.png\")\nprint(\"已生成 pil_rotate-crop_v4_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-rotate-crop-v5",
+   "name": "rotate-crop_v5.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "旋转裁剪·变体5",
+   "description": "旋转 45 度后中心裁剪。（参数组 5）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_rotate-crop_v5'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (516, 348), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (516 - 60) // 7\ndr.rectangle([516 // 2 - 70, 348 // 2, 516 // 2 + 70, 348 - 30], outline=\"#e8e8e8\", width=3)\n\nrotated = base.rotate(45, expand=True, fillcolor='#111')\nw, h = rotated.size\nresult = rotated.crop(((w - base.width) // 2, (h - base.height) // 2,\n                       (w + base.width) // 2, (h + base.height) // 2))\nresult.save(\"pil_rotate-crop_v5_preview.png\")\nprint(\"已生成 pil_rotate-crop_v5_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-rotate-crop-v6",
+   "name": "rotate-crop_v6.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "旋转裁剪·变体6",
+   "description": "旋转 45 度后中心裁剪。（参数组 6）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_rotate-crop_v6'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (540, 360), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (540 - 60) // 7\ndr.rectangle([540 // 2 - 70, 360 // 2, 540 // 2 + 70, 360 - 30], outline=\"#e8e8e8\", width=3)\n\nrotated = base.rotate(45, expand=True, fillcolor='#111')\nw, h = rotated.size\nresult = rotated.crop(((w - base.width) // 2, (h - base.height) // 2,\n                       (w + base.width) // 2, (h + base.height) // 2))\nresult.save(\"pil_rotate-crop_v6_preview.png\")\nprint(\"已生成 pil_rotate-crop_v6_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-rotate-crop-v7",
+   "name": "rotate-crop_v7.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "旋转裁剪·变体7",
+   "description": "旋转 45 度后中心裁剪。（参数组 7）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_rotate-crop_v7'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (564, 372), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (564 - 60) // 7\ndr.rectangle([564 // 2 - 70, 372 // 2, 564 // 2 + 70, 372 - 30], outline=\"#e8e8e8\", width=3)\n\nrotated = base.rotate(45, expand=True, fillcolor='#111')\nw, h = rotated.size\nresult = rotated.crop(((w - base.width) // 2, (h - base.height) // 2,\n                       (w + base.width) // 2, (h + base.height) // 2))\nresult.save(\"pil_rotate-crop_v7_preview.png\")\nprint(\"已生成 pil_rotate-crop_v7_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-rotate-crop-v8",
+   "name": "rotate-crop_v8.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "旋转裁剪·变体8",
+   "description": "旋转 45 度后中心裁剪。（参数组 8）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_rotate-crop_v8'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (588, 384), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (588 - 60) // 7\ndr.rectangle([588 // 2 - 70, 384 // 2, 588 // 2 + 70, 384 - 30], outline=\"#e8e8e8\", width=3)\n\nrotated = base.rotate(45, expand=True, fillcolor='#111')\nw, h = rotated.size\nresult = rotated.crop(((w - base.width) // 2, (h - base.height) // 2,\n                       (w + base.width) // 2, (h + base.height) // 2))\nresult.save(\"pil_rotate-crop_v8_preview.png\")\nprint(\"已生成 pil_rotate-crop_v8_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-rotate-crop-v9",
+   "name": "rotate-crop_v9.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "旋转裁剪·变体9",
+   "description": "旋转 45 度后中心裁剪。（参数组 9）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_rotate-crop_v9'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (612, 396), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (612 - 60) // 7\ndr.rectangle([612 // 2 - 70, 396 // 2, 612 // 2 + 70, 396 - 30], outline=\"#e8e8e8\", width=3)\n\nrotated = base.rotate(45, expand=True, fillcolor='#111')\nw, h = rotated.size\nresult = rotated.crop(((w - base.width) // 2, (h - base.height) // 2,\n                       (w + base.width) // 2, (h + base.height) // 2))\nresult.save(\"pil_rotate-crop_v9_preview.png\")\nprint(\"已生成 pil_rotate-crop_v9_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-rotate-crop-v10",
+   "name": "rotate-crop_v10.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "旋转裁剪·变体10",
+   "description": "旋转 45 度后中心裁剪。（参数组 10）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_rotate-crop_v10'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (636, 408), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (636 - 60) // 7\ndr.rectangle([636 // 2 - 70, 408 // 2, 636 // 2 + 70, 408 - 30], outline=\"#e8e8e8\", width=3)\n\nrotated = base.rotate(45, expand=True, fillcolor='#111')\nw, h = rotated.size\nresult = rotated.crop(((w - base.width) // 2, (h - base.height) // 2,\n                       (w + base.width) // 2, (h + base.height) // 2))\nresult.save(\"pil_rotate-crop_v10_preview.png\")\nprint(\"已生成 pil_rotate-crop_v10_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-rotate-crop-v11",
+   "name": "rotate-crop_v11.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "旋转裁剪·变体11",
+   "description": "旋转 45 度后中心裁剪。（参数组 11）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_rotate-crop_v11'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (660, 420), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (660 - 60) // 7\ndr.rectangle([660 // 2 - 70, 420 // 2, 660 // 2 + 70, 420 - 30], outline=\"#e8e8e8\", width=3)\n\nrotated = base.rotate(45, expand=True, fillcolor='#111')\nw, h = rotated.size\nresult = rotated.crop(((w - base.width) // 2, (h - base.height) // 2,\n                       (w + base.width) // 2, (h + base.height) // 2))\nresult.save(\"pil_rotate-crop_v11_preview.png\")\nprint(\"已生成 pil_rotate-crop_v11_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-rotate-crop-v12",
+   "name": "rotate-crop_v12.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "旋转裁剪·变体12",
+   "description": "旋转 45 度后中心裁剪。（参数组 12）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_rotate-crop_v12'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (684, 432), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (684 - 60) // 7\ndr.rectangle([684 // 2 - 70, 432 // 2, 684 // 2 + 70, 432 - 30], outline=\"#e8e8e8\", width=3)\n\nrotated = base.rotate(45, expand=True, fillcolor='#111')\nw, h = rotated.size\nresult = rotated.crop(((w - base.width) // 2, (h - base.height) // 2,\n                       (w + base.width) // 2, (h + base.height) // 2))\nresult.save(\"pil_rotate-crop_v12_preview.png\")\nprint(\"已生成 pil_rotate-crop_v12_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-enhance-quad-v1",
+   "name": "enhance-quad_v1.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "四合一增强·变体1",
+   "description": "锐化/平滑/边缘/原色四宫格。（参数组 1）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_enhance-quad_v1'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (420, 300), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (420 - 60) // 7\ndr.rectangle([420 // 2 - 70, 300 // 2, 420 // 2 + 70, 300 - 30], outline=\"#e8e8e8\", width=3)\n\nw, h = base.size\nresult = Image.new('RGB', (w * 2 + 8, h * 2 + 8), '#111')\nfor idx, im in enumerate([base, base.filter(ImageFilter.SHARPEN),\n                          base.filter(ImageFilter.SMOOTH_MORE), base.filter(ImageFilter.FIND_EDGES)]):\n    result.paste(im, ((idx % 2) * (w + 8), (idx // 2) * (h + 8)))\nresult.save(\"pil_enhance-quad_v1_preview.png\")\nprint(\"已生成 pil_enhance-quad_v1_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-enhance-quad-v2",
+   "name": "enhance-quad_v2.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "四合一增强·变体2",
+   "description": "锐化/平滑/边缘/原色四宫格。（参数组 2）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_enhance-quad_v2'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (444, 312), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (444 - 60) // 7\ndr.rectangle([444 // 2 - 70, 312 // 2, 444 // 2 + 70, 312 - 30], outline=\"#e8e8e8\", width=3)\n\nw, h = base.size\nresult = Image.new('RGB', (w * 2 + 8, h * 2 + 8), '#111')\nfor idx, im in enumerate([base, base.filter(ImageFilter.SHARPEN),\n                          base.filter(ImageFilter.SMOOTH_MORE), base.filter(ImageFilter.FIND_EDGES)]):\n    result.paste(im, ((idx % 2) * (w + 8), (idx // 2) * (h + 8)))\nresult.save(\"pil_enhance-quad_v2_preview.png\")\nprint(\"已生成 pil_enhance-quad_v2_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-enhance-quad-v3",
+   "name": "enhance-quad_v3.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "四合一增强·变体3",
+   "description": "锐化/平滑/边缘/原色四宫格。（参数组 3）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_enhance-quad_v3'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (468, 324), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (468 - 60) // 7\ndr.rectangle([468 // 2 - 70, 324 // 2, 468 // 2 + 70, 324 - 30], outline=\"#e8e8e8\", width=3)\n\nw, h = base.size\nresult = Image.new('RGB', (w * 2 + 8, h * 2 + 8), '#111')\nfor idx, im in enumerate([base, base.filter(ImageFilter.SHARPEN),\n                          base.filter(ImageFilter.SMOOTH_MORE), base.filter(ImageFilter.FIND_EDGES)]):\n    result.paste(im, ((idx % 2) * (w + 8), (idx // 2) * (h + 8)))\nresult.save(\"pil_enhance-quad_v3_preview.png\")\nprint(\"已生成 pil_enhance-quad_v3_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-enhance-quad-v4",
+   "name": "enhance-quad_v4.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "四合一增强·变体4",
+   "description": "锐化/平滑/边缘/原色四宫格。（参数组 4）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_enhance-quad_v4'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (492, 336), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (492 - 60) // 7\ndr.rectangle([492 // 2 - 70, 336 // 2, 492 // 2 + 70, 336 - 30], outline=\"#e8e8e8\", width=3)\n\nw, h = base.size\nresult = Image.new('RGB', (w * 2 + 8, h * 2 + 8), '#111')\nfor idx, im in enumerate([base, base.filter(ImageFilter.SHARPEN),\n                          base.filter(ImageFilter.SMOOTH_MORE), base.filter(ImageFilter.FIND_EDGES)]):\n    result.paste(im, ((idx % 2) * (w + 8), (idx // 2) * (h + 8)))\nresult.save(\"pil_enhance-quad_v4_preview.png\")\nprint(\"已生成 pil_enhance-quad_v4_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-enhance-quad-v5",
+   "name": "enhance-quad_v5.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "四合一增强·变体5",
+   "description": "锐化/平滑/边缘/原色四宫格。（参数组 5）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_enhance-quad_v5'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (516, 348), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (516 - 60) // 7\ndr.rectangle([516 // 2 - 70, 348 // 2, 516 // 2 + 70, 348 - 30], outline=\"#e8e8e8\", width=3)\n\nw, h = base.size\nresult = Image.new('RGB', (w * 2 + 8, h * 2 + 8), '#111')\nfor idx, im in enumerate([base, base.filter(ImageFilter.SHARPEN),\n                          base.filter(ImageFilter.SMOOTH_MORE), base.filter(ImageFilter.FIND_EDGES)]):\n    result.paste(im, ((idx % 2) * (w + 8), (idx // 2) * (h + 8)))\nresult.save(\"pil_enhance-quad_v5_preview.png\")\nprint(\"已生成 pil_enhance-quad_v5_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-enhance-quad-v6",
+   "name": "enhance-quad_v6.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "四合一增强·变体6",
+   "description": "锐化/平滑/边缘/原色四宫格。（参数组 6）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_enhance-quad_v6'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (540, 360), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (540 - 60) // 7\ndr.rectangle([540 // 2 - 70, 360 // 2, 540 // 2 + 70, 360 - 30], outline=\"#e8e8e8\", width=3)\n\nw, h = base.size\nresult = Image.new('RGB', (w * 2 + 8, h * 2 + 8), '#111')\nfor idx, im in enumerate([base, base.filter(ImageFilter.SHARPEN),\n                          base.filter(ImageFilter.SMOOTH_MORE), base.filter(ImageFilter.FIND_EDGES)]):\n    result.paste(im, ((idx % 2) * (w + 8), (idx // 2) * (h + 8)))\nresult.save(\"pil_enhance-quad_v6_preview.png\")\nprint(\"已生成 pil_enhance-quad_v6_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-enhance-quad-v7",
+   "name": "enhance-quad_v7.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "四合一增强·变体7",
+   "description": "锐化/平滑/边缘/原色四宫格。（参数组 7）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_enhance-quad_v7'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (564, 372), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (564 - 60) // 7\ndr.rectangle([564 // 2 - 70, 372 // 2, 564 // 2 + 70, 372 - 30], outline=\"#e8e8e8\", width=3)\n\nw, h = base.size\nresult = Image.new('RGB', (w * 2 + 8, h * 2 + 8), '#111')\nfor idx, im in enumerate([base, base.filter(ImageFilter.SHARPEN),\n                          base.filter(ImageFilter.SMOOTH_MORE), base.filter(ImageFilter.FIND_EDGES)]):\n    result.paste(im, ((idx % 2) * (w + 8), (idx // 2) * (h + 8)))\nresult.save(\"pil_enhance-quad_v7_preview.png\")\nprint(\"已生成 pil_enhance-quad_v7_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-enhance-quad-v8",
+   "name": "enhance-quad_v8.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "四合一增强·变体8",
+   "description": "锐化/平滑/边缘/原色四宫格。（参数组 8）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_enhance-quad_v8'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (588, 384), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (588 - 60) // 7\ndr.rectangle([588 // 2 - 70, 384 // 2, 588 // 2 + 70, 384 - 30], outline=\"#e8e8e8\", width=3)\n\nw, h = base.size\nresult = Image.new('RGB', (w * 2 + 8, h * 2 + 8), '#111')\nfor idx, im in enumerate([base, base.filter(ImageFilter.SHARPEN),\n                          base.filter(ImageFilter.SMOOTH_MORE), base.filter(ImageFilter.FIND_EDGES)]):\n    result.paste(im, ((idx % 2) * (w + 8), (idx // 2) * (h + 8)))\nresult.save(\"pil_enhance-quad_v8_preview.png\")\nprint(\"已生成 pil_enhance-quad_v8_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-enhance-quad-v9",
+   "name": "enhance-quad_v9.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "四合一增强·变体9",
+   "description": "锐化/平滑/边缘/原色四宫格。（参数组 9）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_enhance-quad_v9'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (612, 396), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (612 - 60) // 7\ndr.rectangle([612 // 2 - 70, 396 // 2, 612 // 2 + 70, 396 - 30], outline=\"#e8e8e8\", width=3)\n\nw, h = base.size\nresult = Image.new('RGB', (w * 2 + 8, h * 2 + 8), '#111')\nfor idx, im in enumerate([base, base.filter(ImageFilter.SHARPEN),\n                          base.filter(ImageFilter.SMOOTH_MORE), base.filter(ImageFilter.FIND_EDGES)]):\n    result.paste(im, ((idx % 2) * (w + 8), (idx // 2) * (h + 8)))\nresult.save(\"pil_enhance-quad_v9_preview.png\")\nprint(\"已生成 pil_enhance-quad_v9_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-enhance-quad-v10",
+   "name": "enhance-quad_v10.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "四合一增强·变体10",
+   "description": "锐化/平滑/边缘/原色四宫格。（参数组 10）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_enhance-quad_v10'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (636, 408), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (636 - 60) // 7\ndr.rectangle([636 // 2 - 70, 408 // 2, 636 // 2 + 70, 408 - 30], outline=\"#e8e8e8\", width=3)\n\nw, h = base.size\nresult = Image.new('RGB', (w * 2 + 8, h * 2 + 8), '#111')\nfor idx, im in enumerate([base, base.filter(ImageFilter.SHARPEN),\n                          base.filter(ImageFilter.SMOOTH_MORE), base.filter(ImageFilter.FIND_EDGES)]):\n    result.paste(im, ((idx % 2) * (w + 8), (idx // 2) * (h + 8)))\nresult.save(\"pil_enhance-quad_v10_preview.png\")\nprint(\"已生成 pil_enhance-quad_v10_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-enhance-quad-v11",
+   "name": "enhance-quad_v11.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "四合一增强·变体11",
+   "description": "锐化/平滑/边缘/原色四宫格。（参数组 11）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_enhance-quad_v11'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (660, 420), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (660 - 60) // 7\ndr.rectangle([660 // 2 - 70, 420 // 2, 660 // 2 + 70, 420 - 30], outline=\"#e8e8e8\", width=3)\n\nw, h = base.size\nresult = Image.new('RGB', (w * 2 + 8, h * 2 + 8), '#111')\nfor idx, im in enumerate([base, base.filter(ImageFilter.SHARPEN),\n                          base.filter(ImageFilter.SMOOTH_MORE), base.filter(ImageFilter.FIND_EDGES)]):\n    result.paste(im, ((idx % 2) * (w + 8), (idx // 2) * (h + 8)))\nresult.save(\"pil_enhance-quad_v11_preview.png\")\nprint(\"已生成 pil_enhance-quad_v11_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-enhance-quad-v12",
+   "name": "enhance-quad_v12.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "四合一增强·变体12",
+   "description": "锐化/平滑/边缘/原色四宫格。（参数组 12）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_enhance-quad_v12'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (684, 432), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (684 - 60) // 7\ndr.rectangle([684 // 2 - 70, 432 // 2, 684 // 2 + 70, 432 - 30], outline=\"#e8e8e8\", width=3)\n\nw, h = base.size\nresult = Image.new('RGB', (w * 2 + 8, h * 2 + 8), '#111')\nfor idx, im in enumerate([base, base.filter(ImageFilter.SHARPEN),\n                          base.filter(ImageFilter.SMOOTH_MORE), base.filter(ImageFilter.FIND_EDGES)]):\n    result.paste(im, ((idx % 2) * (w + 8), (idx // 2) * (h + 8)))\nresult.save(\"pil_enhance-quad_v12_preview.png\")\nprint(\"已生成 pil_enhance-quad_v12_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-gradient-mask-v1",
+   "name": "gradient-mask_v1.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "渐隐蒙版·变体1",
+   "description": "按渐变蒙版向纯色渐隐。（参数组 1）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_gradient-mask_v1'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (420, 300), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (420 - 60) // 7\ndr.rectangle([420 // 2 - 70, 300 // 2, 420 // 2 + 70, 300 - 30], outline=\"#e8e8e8\", width=3)\n\nmask = Image.linear_gradient('L').resize(base.size)\nsolid = Image.new('RGB', base.size, '#ff6b6b')\nresult = Image.composite(base, solid, mask)\nresult.save(\"pil_gradient-mask_v1_preview.png\")\nprint(\"已生成 pil_gradient-mask_v1_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-gradient-mask-v2",
+   "name": "gradient-mask_v2.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "渐隐蒙版·变体2",
+   "description": "按渐变蒙版向纯色渐隐。（参数组 2）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_gradient-mask_v2'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (444, 312), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (444 - 60) // 7\ndr.rectangle([444 // 2 - 70, 312 // 2, 444 // 2 + 70, 312 - 30], outline=\"#e8e8e8\", width=3)\n\nmask = Image.linear_gradient('L').resize(base.size)\nsolid = Image.new('RGB', base.size, '#feca57')\nresult = Image.composite(base, solid, mask)\nresult.save(\"pil_gradient-mask_v2_preview.png\")\nprint(\"已生成 pil_gradient-mask_v2_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-gradient-mask-v3",
+   "name": "gradient-mask_v3.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "渐隐蒙版·变体3",
+   "description": "按渐变蒙版向纯色渐隐。（参数组 3）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_gradient-mask_v3'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (468, 324), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (468 - 60) // 7\ndr.rectangle([468 // 2 - 70, 324 // 2, 468 // 2 + 70, 324 - 30], outline=\"#e8e8e8\", width=3)\n\nmask = Image.linear_gradient('L').resize(base.size)\nsolid = Image.new('RGB', base.size, '#48dbfb')\nresult = Image.composite(base, solid, mask)\nresult.save(\"pil_gradient-mask_v3_preview.png\")\nprint(\"已生成 pil_gradient-mask_v3_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-gradient-mask-v4",
+   "name": "gradient-mask_v4.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "渐隐蒙版·变体4",
+   "description": "按渐变蒙版向纯色渐隐。（参数组 4）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_gradient-mask_v4'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (492, 336), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (492 - 60) // 7\ndr.rectangle([492 // 2 - 70, 336 // 2, 492 // 2 + 70, 336 - 30], outline=\"#e8e8e8\", width=3)\n\nmask = Image.linear_gradient('L').resize(base.size)\nsolid = Image.new('RGB', base.size, '#1dd1a1')\nresult = Image.composite(base, solid, mask)\nresult.save(\"pil_gradient-mask_v4_preview.png\")\nprint(\"已生成 pil_gradient-mask_v4_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-gradient-mask-v5",
+   "name": "gradient-mask_v5.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "渐隐蒙版·变体5",
+   "description": "按渐变蒙版向纯色渐隐。（参数组 5）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_gradient-mask_v5'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (516, 348), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (516 - 60) // 7\ndr.rectangle([516 // 2 - 70, 348 // 2, 516 // 2 + 70, 348 - 30], outline=\"#e8e8e8\", width=3)\n\nmask = Image.linear_gradient('L').resize(base.size)\nsolid = Image.new('RGB', base.size, '#f368e0')\nresult = Image.composite(base, solid, mask)\nresult.save(\"pil_gradient-mask_v5_preview.png\")\nprint(\"已生成 pil_gradient-mask_v5_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-gradient-mask-v6",
+   "name": "gradient-mask_v6.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "渐隐蒙版·变体6",
+   "description": "按渐变蒙版向纯色渐隐。（参数组 6）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_gradient-mask_v6'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (540, 360), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (540 - 60) // 7\ndr.rectangle([540 // 2 - 70, 360 // 2, 540 // 2 + 70, 360 - 30], outline=\"#e8e8e8\", width=3)\n\nmask = Image.linear_gradient('L').resize(base.size)\nsolid = Image.new('RGB', base.size, '#54a0ff')\nresult = Image.composite(base, solid, mask)\nresult.save(\"pil_gradient-mask_v6_preview.png\")\nprint(\"已生成 pil_gradient-mask_v6_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-gradient-mask-v7",
+   "name": "gradient-mask_v7.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "渐隐蒙版·变体7",
+   "description": "按渐变蒙版向纯色渐隐。（参数组 7）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_gradient-mask_v7'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (564, 372), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (564 - 60) // 7\ndr.rectangle([564 // 2 - 70, 372 // 2, 564 // 2 + 70, 372 - 30], outline=\"#e8e8e8\", width=3)\n\nmask = Image.linear_gradient('L').resize(base.size)\nsolid = Image.new('RGB', base.size, '#ff6b6b')\nresult = Image.composite(base, solid, mask)\nresult.save(\"pil_gradient-mask_v7_preview.png\")\nprint(\"已生成 pil_gradient-mask_v7_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-gradient-mask-v8",
+   "name": "gradient-mask_v8.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "渐隐蒙版·变体8",
+   "description": "按渐变蒙版向纯色渐隐。（参数组 8）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_gradient-mask_v8'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (588, 384), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (588 - 60) // 7\ndr.rectangle([588 // 2 - 70, 384 // 2, 588 // 2 + 70, 384 - 30], outline=\"#e8e8e8\", width=3)\n\nmask = Image.linear_gradient('L').resize(base.size)\nsolid = Image.new('RGB', base.size, '#feca57')\nresult = Image.composite(base, solid, mask)\nresult.save(\"pil_gradient-mask_v8_preview.png\")\nprint(\"已生成 pil_gradient-mask_v8_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-gradient-mask-v9",
+   "name": "gradient-mask_v9.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "渐隐蒙版·变体9",
+   "description": "按渐变蒙版向纯色渐隐。（参数组 9）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_gradient-mask_v9'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (612, 396), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (612 - 60) // 7\ndr.rectangle([612 // 2 - 70, 396 // 2, 612 // 2 + 70, 396 - 30], outline=\"#e8e8e8\", width=3)\n\nmask = Image.linear_gradient('L').resize(base.size)\nsolid = Image.new('RGB', base.size, '#48dbfb')\nresult = Image.composite(base, solid, mask)\nresult.save(\"pil_gradient-mask_v9_preview.png\")\nprint(\"已生成 pil_gradient-mask_v9_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-gradient-mask-v10",
+   "name": "gradient-mask_v10.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "渐隐蒙版·变体10",
+   "description": "按渐变蒙版向纯色渐隐。（参数组 10）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_gradient-mask_v10'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (636, 408), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (636 - 60) // 7\ndr.rectangle([636 // 2 - 70, 408 // 2, 636 // 2 + 70, 408 - 30], outline=\"#e8e8e8\", width=3)\n\nmask = Image.linear_gradient('L').resize(base.size)\nsolid = Image.new('RGB', base.size, '#1dd1a1')\nresult = Image.composite(base, solid, mask)\nresult.save(\"pil_gradient-mask_v10_preview.png\")\nprint(\"已生成 pil_gradient-mask_v10_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-gradient-mask-v11",
+   "name": "gradient-mask_v11.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "渐隐蒙版·变体11",
+   "description": "按渐变蒙版向纯色渐隐。（参数组 11）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_gradient-mask_v11'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (660, 420), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (660 - 60) // 7\ndr.rectangle([660 // 2 - 70, 420 // 2, 660 // 2 + 70, 420 - 30], outline=\"#e8e8e8\", width=3)\n\nmask = Image.linear_gradient('L').resize(base.size)\nsolid = Image.new('RGB', base.size, '#f368e0')\nresult = Image.composite(base, solid, mask)\nresult.save(\"pil_gradient-mask_v11_preview.png\")\nprint(\"已生成 pil_gradient-mask_v11_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-gradient-mask-v12",
+   "name": "gradient-mask_v12.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "渐隐蒙版·变体12",
+   "description": "按渐变蒙版向纯色渐隐。（参数组 12）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_gradient-mask_v12'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (684, 432), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (684 - 60) // 7\ndr.rectangle([684 // 2 - 70, 432 // 2, 684 // 2 + 70, 432 - 30], outline=\"#e8e8e8\", width=3)\n\nmask = Image.linear_gradient('L').resize(base.size)\nsolid = Image.new('RGB', base.size, '#54a0ff')\nresult = Image.composite(base, solid, mask)\nresult.save(\"pil_gradient-mask_v12_preview.png\")\nprint(\"已生成 pil_gradient-mask_v12_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-pixelate-v1",
+   "name": "pixelate_v1.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "像素化·变体1",
+   "description": "缩小再放大的马赛克。（参数组 1）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_pixelate_v1'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (420, 300), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (420 - 60) // 7\ndr.rectangle([420 // 2 - 70, 300 // 2, 420 // 2 + 70, 300 - 30], outline=\"#e8e8e8\", width=3)\n\nsmall = base.resize((base.width // 0 - 6, base.height // 0 - 8))\nresult = small.resize(base.size, Image.NEAREST)\nresult.save(\"pil_pixelate_v1_preview.png\")\nprint(\"已生成 pil_pixelate_v1_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-pixelate-v2",
+   "name": "pixelate_v2.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "像素化·变体2",
+   "description": "缩小再放大的马赛克。（参数组 2）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_pixelate_v2'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (444, 312), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (444 - 60) // 7\ndr.rectangle([444 // 2 - 70, 312 // 2, 444 // 2 + 70, 312 - 30], outline=\"#e8e8e8\", width=3)\n\nsmall = base.resize((base.width // 1 - 6, base.height // 1 - 8))\nresult = small.resize(base.size, Image.NEAREST)\nresult.save(\"pil_pixelate_v2_preview.png\")\nprint(\"已生成 pil_pixelate_v2_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-pixelate-v3",
+   "name": "pixelate_v3.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "像素化·变体3",
+   "description": "缩小再放大的马赛克。（参数组 3）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_pixelate_v3'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (468, 324), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (468 - 60) // 7\ndr.rectangle([468 // 2 - 70, 324 // 2, 468 // 2 + 70, 324 - 30], outline=\"#e8e8e8\", width=3)\n\nsmall = base.resize((base.width // 2 - 6, base.height // 2 - 8))\nresult = small.resize(base.size, Image.NEAREST)\nresult.save(\"pil_pixelate_v3_preview.png\")\nprint(\"已生成 pil_pixelate_v3_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-pixelate-v4",
+   "name": "pixelate_v4.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "像素化·变体4",
+   "description": "缩小再放大的马赛克。（参数组 4）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_pixelate_v4'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (492, 336), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (492 - 60) // 7\ndr.rectangle([492 // 2 - 70, 336 // 2, 492 // 2 + 70, 336 - 30], outline=\"#e8e8e8\", width=3)\n\nsmall = base.resize((base.width // 3 - 6, base.height // 3 - 8))\nresult = small.resize(base.size, Image.NEAREST)\nresult.save(\"pil_pixelate_v4_preview.png\")\nprint(\"已生成 pil_pixelate_v4_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-pixelate-v5",
+   "name": "pixelate_v5.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "像素化·变体5",
+   "description": "缩小再放大的马赛克。（参数组 5）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_pixelate_v5'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (516, 348), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (516 - 60) // 7\ndr.rectangle([516 // 2 - 70, 348 // 2, 516 // 2 + 70, 348 - 30], outline=\"#e8e8e8\", width=3)\n\nsmall = base.resize((base.width // 4 - 6, base.height // 4 - 8))\nresult = small.resize(base.size, Image.NEAREST)\nresult.save(\"pil_pixelate_v5_preview.png\")\nprint(\"已生成 pil_pixelate_v5_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-pixelate-v6",
+   "name": "pixelate_v6.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "像素化·变体6",
+   "description": "缩小再放大的马赛克。（参数组 6）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_pixelate_v6'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (540, 360), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (540 - 60) // 7\ndr.rectangle([540 // 2 - 70, 360 // 2, 540 // 2 + 70, 360 - 30], outline=\"#e8e8e8\", width=3)\n\nsmall = base.resize((base.width // 5 - 6, base.height // 5 - 8))\nresult = small.resize(base.size, Image.NEAREST)\nresult.save(\"pil_pixelate_v6_preview.png\")\nprint(\"已生成 pil_pixelate_v6_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-pixelate-v7",
+   "name": "pixelate_v7.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "像素化·变体7",
+   "description": "缩小再放大的马赛克。（参数组 7）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_pixelate_v7'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (564, 372), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (564 - 60) // 7\ndr.rectangle([564 // 2 - 70, 372 // 2, 564 // 2 + 70, 372 - 30], outline=\"#e8e8e8\", width=3)\n\nsmall = base.resize((base.width // 6 - 6, base.height // 6 - 8))\nresult = small.resize(base.size, Image.NEAREST)\nresult.save(\"pil_pixelate_v7_preview.png\")\nprint(\"已生成 pil_pixelate_v7_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-pixelate-v8",
+   "name": "pixelate_v8.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "像素化·变体8",
+   "description": "缩小再放大的马赛克。（参数组 8）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_pixelate_v8'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (588, 384), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (588 - 60) // 7\ndr.rectangle([588 // 2 - 70, 384 // 2, 588 // 2 + 70, 384 - 30], outline=\"#e8e8e8\", width=3)\n\nsmall = base.resize((base.width // 7 - 6, base.height // 7 - 8))\nresult = small.resize(base.size, Image.NEAREST)\nresult.save(\"pil_pixelate_v8_preview.png\")\nprint(\"已生成 pil_pixelate_v8_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-pixelate-v9",
+   "name": "pixelate_v9.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "像素化·变体9",
+   "description": "缩小再放大的马赛克。（参数组 9）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_pixelate_v9'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (612, 396), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (612 - 60) // 7\ndr.rectangle([612 // 2 - 70, 396 // 2, 612 // 2 + 70, 396 - 30], outline=\"#e8e8e8\", width=3)\n\nsmall = base.resize((base.width // 8 - 6, base.height // 8 - 8))\nresult = small.resize(base.size, Image.NEAREST)\nresult.save(\"pil_pixelate_v9_preview.png\")\nprint(\"已生成 pil_pixelate_v9_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-pixelate-v10",
+   "name": "pixelate_v10.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "像素化·变体10",
+   "description": "缩小再放大的马赛克。（参数组 10）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_pixelate_v10'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (636, 408), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (636 - 60) // 7\ndr.rectangle([636 // 2 - 70, 408 // 2, 636 // 2 + 70, 408 - 30], outline=\"#e8e8e8\", width=3)\n\nsmall = base.resize((base.width // 9 - 6, base.height // 9 - 8))\nresult = small.resize(base.size, Image.NEAREST)\nresult.save(\"pil_pixelate_v10_preview.png\")\nprint(\"已生成 pil_pixelate_v10_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-pixelate-v11",
+   "name": "pixelate_v11.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "像素化·变体11",
+   "description": "缩小再放大的马赛克。（参数组 11）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_pixelate_v11'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (660, 420), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (660 - 60) // 7\ndr.rectangle([660 // 2 - 70, 420 // 2, 660 // 2 + 70, 420 - 30], outline=\"#e8e8e8\", width=3)\n\nsmall = base.resize((base.width // 10 - 6, base.height // 10 - 8))\nresult = small.resize(base.size, Image.NEAREST)\nresult.save(\"pil_pixelate_v11_preview.png\")\nprint(\"已生成 pil_pixelate_v11_preview.png\")\n"
+  },
+  {
+   "id": "topics_pil-pixelate-v12",
+   "name": "pixelate_v12.py",
+   "category": "topics",
+   "tags": [
+    "Pillow",
+    "图像"
+   ],
+   "title": "像素化·变体12",
+   "description": "缩小再放大的马赛克。（参数组 12）。",
+   "requirements": [
+    "pillow"
+   ],
+   "code": "\"\"\"{title}\nPillow 图像处理示例。{desc}\n运行后在当前目录生成 'pil_pixelate_v12'_preview.png。\n\"\"\"\nimport numpy as np\nfrom PIL import Image, ImageDraw, ImageFilter, ImageOps\n\nbase = Image.new(\"RGB\", (684, 432), \"#20242c\")\ndr = ImageDraw.Draw(base)\nfor i in range(7):\n    x0 = 20 + i * (684 - 60) // 7\ndr.rectangle([684 // 2 - 70, 432 // 2, 684 // 2 + 70, 432 - 30], outline=\"#e8e8e8\", width=3)\n\nsmall = base.resize((base.width // 11 - 6, base.height // 11 - 8))\nresult = small.resize(base.size, Image.NEAREST)\nresult.save(\"pil_pixelate_v12_preview.png\")\nprint(\"已生成 pil_pixelate_v12_preview.png\")\n"
+  }
+ ]
+}

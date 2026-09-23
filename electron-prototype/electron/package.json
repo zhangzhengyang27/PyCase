@@ -1,0 +1,78 @@
+{
+  "name": "python-example-manager-electron",
+  "version": "0.10.0",
+  "description": "Electron 壳 + Python sidecar（vite + TypeScript + tailwindcss）",
+  "main": "out/main/index.js",
+  "scripts": {
+    "dev": "electron-vite dev",
+    "build": "electron-vite build",
+    "typecheck": "tsc --noEmit -p tsconfig.node.json && vue-tsc --noEmit -p tsconfig.web.json",
+    "start": "electron-vite dev",
+    "smoke": "electron-vite build && SMOKE_TEST=1 electron .",
+    "dist": "electron-vite build && electron-builder",
+    "dist:dir": "electron-vite build && electron-builder --dir"
+  },
+  "build": {
+    "appId": "com.example.python-example-manager",
+    "productName": "Python示例管理器",
+    "files": [
+      "out/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "sidecar-dist/sidecar",
+        "to": "sidecar/sidecar"
+      },
+      {
+        "from": "../../requirements.txt",
+        "to": "requirements.txt"
+      },
+      {
+        "from": "../../json_examples",
+        "to": "json_examples"
+      },
+      {
+        "from": "../../topics",
+        "to": "topics"
+      },
+      {
+        "from": "../../tools",
+        "to": "tools"
+      },
+      {
+        "from": "../../projects",
+        "to": "projects"
+      }
+    ],
+    "mac": {
+      "category": "public.app-category.developer-tools",
+      "target": [
+        "dir",
+        "zip",
+        "dmg"
+      ],
+      "identity": null
+    },
+    "directories": {
+      "output": "dist"
+    }
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.3.3",
+    "@types/node": "^22.20.1",
+    "@vitejs/plugin-vue": "^6.0.8",
+    "electron": "^33.0.0",
+    "electron-builder": "^26.15.3",
+    "electron-vite": "^3.1.0",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^5.9.3",
+    "vite": "^6.4.3",
+    "vue-tsc": "^3.3.11"
+  },
+  "dependencies": {
+    "element-plus": "^2.14.6",
+    "lucide-vue-next": "^0.544.0",
+    "monaco-editor": "^0.56.0",
+    "vue": "^3.5.42"
+  }
+}

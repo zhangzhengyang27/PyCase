@@ -1,0 +1,515 @@
+{
+  "name": "新建示例集",
+  "description": "2026-09-22 数据重建：五大主题精选示例。",
+  "examples": [
+    {
+      "id": "hello_world",
+      "name": "hello_world.py",
+      "category": "topics",
+      "tags": [
+        "基础",
+        "入门"
+      ],
+      "title": "你好，世界",
+      "description": "最经典的入门示例：打印问候语，演示 print 与 f-string 基础。",
+      "requirements": [],
+      "code": "\"\"\"你好，世界 —— 每个程序员的第一个脚本。\"\"\"\nname = \"Python\"\nversion = 3.12\nprint(f\"Hello, {name} {version}!\")\nprint(\"你好，世界！\")\n\n# 多行输出与简单运算\nfor i in range(1, 4):\n    print(f\"第 {i} 行：{i} x {i} = {i * i}\")\n"
+    },
+    {
+      "id": "topics_basics_string-format",
+      "name": "string_format.py",
+      "category": "topics",
+      "tags": [
+        "基础",
+        "字符串"
+      ],
+      "title": "字符串格式化大全",
+      "description": "演示 %、format、f-string 三代格式化方式与对齐、填充、进制转换。",
+      "requirements": [],
+      "code": "\"\"\"字符串格式化：三代语法对照。\"\"\"\npi = 3.14159265\nname, score = \"小明\", 92.5\n\n# 1) %-格式化（C 风格）\nprint(\"%s 的成绩是 %.1f\" % (name, score))\n# 2) str.format\nprint(\"{} 的成绩是 {:.2f}，百分比 {:.0%}\".format(name, score, score / 100))\n# 3) f-string（推荐）：表达式、对齐、填充、进制\nprint(f\"{name:=^10} 的成绩 {score:*>8.2f}\")\nprint(f\"圆周率保留三位: {pi:.3f}，十六进制: {255:x}，二进制: {5:b}\")\nprint(f\"大数分隔: {1234567890:,}\")\n\n# 三引号多行模板\nreport = f\"\"\"\n=== 成绩单 ===\n姓名: {name}\n成绩: {score}\n等级: {'优秀' if score >= 90 else '良好'}\n\"\"\"\nprint(report)\n"
+    },
+    {
+      "id": "topics_basics-comprehension",
+      "name": "comprehension.py",
+      "category": "topics",
+      "tags": [
+        "基础",
+        "推导式"
+      ],
+      "title": "列表/字典/集合推导式",
+      "description": "用推导式替换循环：过滤、映射、嵌套、条件表达式与生成器表达式。",
+      "requirements": [],
+      "code": "\"\"\"推导式：Pythonic 数据变换的核心写法。\"\"\"\nnums = range(1, 21)\n\n# 列表推导：平方 + 过滤\nsquares = [n * n for n in nums if n % 2 == 0]\nprint(\"偶数的平方:\", squares)\n\n# 字典推导：单词 -> 长度\nwords = [\"apple\", \"banana\", \"cherry\", \"avocado\"]\nlengths = {w: len(w) for w in words}\nprint(\"词长字典:\", lengths)\n\n# 集合推导：去重首字母\nfirsts = {w[0] for w in words}\nprint(\"首字母集合:\", firsts)\n\n# 嵌套推导：九九乘法表上三角\ntable = [(i, j, i * j) for i in range(1, 6) for j in range(i, 6)]\nprint(\"乘法组合数:\", len(table))\n\n# 生成器表达式：惰性求值省内存\ntotal = sum(n * n for n in nums)\nprint(\"1~20 平方和:\", total)\n"
+    },
+    {
+      "id": "topics_basics-decorator",
+      "name": "decorator.py",
+      "category": "topics",
+      "tags": [
+        "基础",
+        "装饰器",
+        "函数"
+      ],
+      "title": "装饰器：计时器与重试",
+      "description": "用 functools.wraps 实现函数计时器与失败重试装饰器，理解闭包与语法糖。",
+      "requirements": [],
+      "code": "\"\"\"装饰器实战：计时 + 重试。\"\"\"\nimport functools\nimport time\nimport random\n\n\ndef timer(func):\n    @functools.wraps(func)\n    def wrapper(*args, **kwargs):\n        start = time.perf_counter()\n        result = func(*args, **kwargs)\n        cost = (time.perf_counter() - start) * 1000\n        print(f\"[timer] {func.__name__} 耗时 {cost:.2f}ms\")\n        return result\n    return wrapper\n\n\ndef retry(times=3, delay=0.1):\n    \"\"\"失败自动重试的参数化装饰器。\"\"\"\n    def deco(func):\n        @functools.wraps(func)\n        def wrapper(*args, **kwargs):\n            for attempt in range(1, times + 1):\n                try:\n                    return func(*args, **kwargs)\n                except Exception as e:\n                    print(f\"[retry] 第 {attempt} 次失败: {e}\")\n                    if attempt == times:\n                        raise\n                    time.sleep(delay)\n        return wrapper\n    return deco\n\n\n@timer\ndef slow_add(a, b):\n    time.sleep(0.05)\n    return a + b\n\n\n@retry(times=4)\ndef flaky():\n    \"\"\"30% 概率失败，演示重试。\"\"\"\n    if random.random() < 0.3:\n        raise RuntimeError(\"随机故障\")\n    return \"成功\"\n\n\nprint(slow_add(1, 2))\nprint(flaky())\n"
+    },
+    {
+      "id": "topics_basics-generator",
+      "name": "generator.py",
+      "category": "topics",
+      "tags": [
+        "基础",
+        "生成器",
+        "迭代"
+      ],
+      "title": "生成器与 yield",
+      "description": "用生成器惰性产出斐波那契与素数，演示 yield、send 与内存优势。",
+      "requirements": [],
+      "code": "\"\"\"生成器：惰性序列。\"\"\"\nimport itertools\n\n\ndef fibonacci():\n    a, b = 0, 1\n    while True:\n        yield a\n        a, b = b, a + b\n\n\ndef primes(limit):\n    \"\"\"埃拉托斯特尼筛法的生成器版本。\"\"\"\n    sieve = [True] * (limit + 1)\n    for n in range(2, limit + 1):\n        if sieve[n]:\n            yield n\n            for m in range(n * n, limit + 1, n):\n                sieve[m] = False\n\n\n# 取前 10 个斐波那契数（无限序列只按需计算）\nfib = itertools.islice(fibonacci(), 10)\nprint(\"斐波那契:\", list(fib))\n\nprint(\"100 以内素数:\", list(primes(100)))\n\n# 生成器表达式与 sum/all 组合\nsquares = (n * n for n in range(10))\nprint(\"平方和:\", sum(squares))\nprint(\"全为正:\", all(x > 0 for x in [1, 2, 3]))\n"
+    },
+    {
+      "id": "topics_basics-dataclass",
+      "name": "dataclass_demo.py",
+      "category": "topics",
+      "tags": [
+        "基础",
+        "OOP",
+        "dataclass"
+      ],
+      "title": "dataclass 数据类",
+      "description": "用 @dataclass 声明不可变记录与默认排序，对比手写 __init__ 的样板代码。",
+      "requirements": [],
+      "code": "\"\"\"dataclass：声明式数据模型。\"\"\"\nfrom dataclasses import dataclass, field\n\n\n@dataclass(order=True, frozen=True)\nclass Student:\n    sort_index: float = field(init=False, repr=False)\n    name: str\n    score: float\n\n    def __post_init__(self):\n        object.__setattr__(self, \"sort_index\", -self.score)  # 分数降序\n\n\nstudents = [\n    Student(\"小明\", 92.5),\n    Student(\"小红\", 88.0),\n    Student(\"小刚\", 95.0),\n]\nfor rank, s in enumerate(sorted(students), 1):\n    print(f\"第{rank}名 {s.name} {s.score}\")\n\n# frozen=True 不可变：修改会抛 FrozenInstanceError\ntry:\n    students[0].score = 0\nexcept Exception as e:\n    print(\"不可变校验:\", type(e).__name__)\n"
+    },
+    {
+      "id": "topics_basics-pathlib",
+      "name": "pathlib_demo.py",
+      "category": "topics",
+      "tags": [
+        "基础",
+        "文件",
+        "pathlib"
+      ],
+      "title": "pathlib 文件操作",
+      "description": "用 pathlib 完成遍历、过滤、读写、重命名与临时目录操作，替代 os.path 拼接。",
+      "requirements": [],
+      "code": "\"\"\"pathlib：现代文件路径操作。\"\"\"\nfrom pathlib import Path\nimport tempfile\n\nbase = Path(tempfile.mkdtemp(prefix=\"pathlib_demo_\"))\n(base / \"docs\").mkdir()\n(base / \"logs\").mkdir()\n(base / \"docs\" / \"a.txt\").write_text(\"hello\", encoding=\"utf-8\")\n(base / \"docs\" / \"b.md\").write_text(\"# hi\", encoding=\"utf-8\")\n(base / \"logs\" / \"run.log\").write_text(\"INFO ok\", encoding=\"utf-8\")\n\n# glob 遍历\nprint(\"全部文件:\", sorted(p.name for p in base.rglob(\"*\") if p.is_file()))\nprint(\"markdown:\", [p.name for p in base.rglob(\"*.md\")])\n\n# 读写与属性\ndoc = base / \"docs\" / \"a.txt\"\nprint(\"内容:\", doc.read_text(encoding=\"utf-8\"), \"| 大小:\", doc.stat().st_size)\n\n# 重命名 + 目录树\ndoc.rename(doc.with_name(\"renamed.txt\"))\nfor p in sorted(base.rglob(\"*\")):\n    print(\"  \" * (len(p.relative_to(base).parts) - 1), p.name)\n"
+    },
+    {
+      "id": "topics_basics-regex",
+      "name": "regex_demo.py",
+      "category": "topics",
+      "tags": [
+        "基础",
+        "正则",
+        "re"
+      ],
+      "title": "正则表达式实战",
+      "description": "用 re 完成提取邮箱/日期、分组替换与贪婪非贪婪，附常用模式速查。",
+      "requirements": [],
+      "code": "\"\"\"正则表达式：提取、分组与替换。\"\"\"\nimport re\n\ntext = \"\"\"\n联系人: alice@example.com, 备用: bob.smith@mail.org\n会议时间: 2026-09-22 14:30 ~ 2026-09-23 09:00\n订单号: ORD-2026-0922-001, 金额: ￥1,299.00\n\"\"\"\n\n# 邮箱提取\nemails = re.findall(r\"[\\w.+-]+@[\\w-]+\\.[\\w.]+\", text)\nprint(\"邮箱:\", emails)\n\n# 命名分组解析日期\nfor m in re.finditer(r\"(?P<y>\\d{4})-(?P<m>\\d{2})-(?P<d>\\d{2})\", text):\n    print(\"日期:\", m.groupdict())\n\n# 分组替换：订单号脱敏\nmasked = re.sub(r\"(ORD-\\d{4})-\\d{4}-(\\d+)\", r\"\\1-****-\\2\", text)\nprint(\"脱敏:\", masked.strip().splitlines()[-1])\n\n# 贪婪 vs 非贪婪\nprint(\"贪婪:\", re.findall(r\"时间: .*?\\d\", text)[0][:20])\n"
+    },
+    {
+      "id": "topics_basics-error-handling",
+      "name": "error_handling.py",
+      "category": "topics",
+      "tags": [
+        "基础",
+        "异常"
+      ],
+      "title": "异常处理与自定义异常",
+      "description": "演示 try/except/else/finally、异常链与自定义业务异常的最佳实践。",
+      "requirements": [],
+      "code": "\"\"\"异常处理：分层捕获与自定义异常。\"\"\"\nimport json\n\n\nclass AppError(Exception):\n    \"\"\"业务异常基类。\"\"\"\n\n\nclass ConfigNotFound(AppError):\n    pass\n\n\nclass BadConfigValue(AppError):\n    pass\n\n\ndef load_config(text: str) -> dict:\n    try:\n        data = json.loads(text)\n    except json.JSONDecodeError as e:\n        raise ConfigNotFound(f\"配置解析失败: {e}\") from e\n    if \"retries\" not in data:\n        raise BadConfigValue(\"缺少 retries 字段\")\n    if not isinstance(data[\"retries\"], int):\n        raise BadConfigValue(\"retries 必须是整数\")\n    return data\n\n\n# 正常路径\nprint(load_config('{\"retries\": 3}'))\n\n# 两种失败路径\nfor bad in ['{\"name\": \"x\"}', \"not-json\"]:\n    try:\n        load_config(bad)\n    except ConfigNotFound as e:\n        print(\"配置错误:\", e)\n    except BadConfigValue as e:\n        print(\"字段错误:\", e)\n    finally:\n        print(\"  (finally 总会执行)\")\n"
+    },
+    {
+      "id": "topics_turtle-spiral",
+      "name": "turtle_spiral.py",
+      "category": "topics",
+      "tags": [
+        "Turtle",
+        "图形"
+      ],
+      "title": "彩色螺旋线",
+      "description": "用循环改变边长与颜色绘制渐变螺旋，演示 turtle 基本循环绘图。",
+      "requirements": [],
+      "code": "\"\"\"{title}\nTurtle 图形：{desc}\n运行后弹出画布窗口，绘制完成后点击窗口关闭。\n\"\"\"\nimport turtle\n\nt = turtle.Turtle()\nt.speed(0)\nturtle.bgcolor(\"black\")\ncolors = [\"red\", \"orange\", \"yellow\", \"green\", \"cyan\", \"purple\"]\n\nfor i in range(120):\n    t.pencolor(colors[i % 6])\n    t.width(i // 20 + 1)\n    t.forward(i * 2)\n    t.left(59)\n\nt.hideturtle()\nturtle.done()\n"
+    },
+    {
+      "id": "topics_turtle-rose",
+      "name": "turtle_rose.py",
+      "category": "topics",
+      "tags": [
+        "Turtle",
+        "数学"
+      ],
+      "title": "数学玫瑰线",
+      "description": "参数方程 petals 瓣玫瑰线，体会极坐标与循环角度的对应关系。",
+      "requirements": [],
+      "code": "\"\"\"{title}\nTurtle 图形：{desc}\n运行后弹出画布窗口，绘制完成后点击窗口关闭。\n\"\"\"\nimport turtle\n\nimport math\n\nt = turtle.Turtle()\nt.speed(0)\nt.pensize(2)\npetals = 5\n\nfor i in range(361):\n    rad = math.radians(i)\n    r = 150 * math.sin(petals * rad)\n    x, y = r * math.cos(rad), r * math.sin(rad)\n    t.goto(x, y)\n\nt.hideturtle()\nturtle.done()\n"
+    },
+    {
+      "id": "topics_turtle-fractal-tree",
+      "name": "turtle_fractal_tree.py",
+      "category": "topics",
+      "tags": [
+        "Turtle",
+        "递归",
+        "分形"
+      ],
+      "title": "递归分形树",
+      "description": "递归绘制二叉分形树，随深度改变枝干粗细与颜色，理解递归图形。",
+      "requirements": [],
+      "code": "\"\"\"{title}\nTurtle 图形：{desc}\n运行后弹出画布窗口，绘制完成后点击窗口关闭。\n\"\"\"\nimport turtle\n\nt = turtle.Turtle()\nt.left(90)\nt.speed(0)\n\n\ndef tree(length: float, depth: int):\n    if depth == 0:\n        return\n    t.width(depth)\n    t.pencolor(\"brown\" if depth > 3 else \"green\")\n    t.forward(length)\n    t.left(25)\n    tree(length * 0.72, depth - 1)\n    t.right(50)\n    tree(length * 0.72, depth - 1)\n    t.left(25)\n    t.backward(length)\n\n\ntree(90, 8)\nt.hideturtle()\nturtle.done()\n"
+    },
+    {
+      "id": "topics_turtle-koch",
+      "name": "turtle_koch_snowflake.py",
+      "category": "topics",
+      "tags": [
+        "Turtle",
+        "分形"
+      ],
+      "title": "科赫雪花",
+      "description": "经典分形：三段科赫曲线组成雪花，观察迭代次数与复杂度的关系。",
+      "requirements": [],
+      "code": "\"\"\"{title}\nTurtle 图形：{desc}\n运行后弹出画布窗口，绘制完成后点击窗口关闭。\n\"\"\"\nimport turtle\n\nt = turtle.Turtle()\nt.speed(0)\nt.pensize(2)\nt.pencolor(\"#1e6fd9\")\n\n\ndef koch(length: float, depth: int):\n    if depth == 0:\n        t.forward(length)\n        return\n    length /= 3\n    koch(length, depth - 1)\n    t.left(60)\n    koch(length, depth - 1)\n    t.right(120)\n    koch(length, depth - 1)\n    t.left(60)\n    koch(length, depth - 1)\n\n\nfor _ in range(3):\n    koch(240, 3)\n    t.right(120)\n\nt.hideturtle()\nturtle.done()\n"
+    },
+    {
+      "id": "topics_turtle-rainbow-circles",
+      "name": "turtle_rainbow_circles.py",
+      "category": "topics",
+      "tags": [
+        "Turtle",
+        "颜色"
+      ],
+      "title": "彩虹同心圆",
+      "description": "HSV 颜色空间渐变填充同心圆，演示 colorsys 与 begin_fill/end_fill。",
+      "requirements": [],
+      "code": "\"\"\"{title}\nTurtle 图形：{desc}\n运行后弹出画布窗口，绘制完成后点击窗口关闭。\n\"\"\"\nimport turtle\n\nimport colorsys\n\nt = turtle.Turtle()\nt.speed(0)\nt.penup()\n\nfor i in range(36):\n    r, g, b = colorsys.hsv_to_rgb(i / 36, 0.9, 1.0)\n    t.pencolor(r, g, b)\n    t.fillcolor(r, g, b)\n    t.sety(-i * 4)\n    t.pendown()\n    t.begin_fill()\n    t.circle(20 + i * 4)\n    t.end_fill()\n    t.penup()\n\nt.hideturtle()\nturtle.done()\n"
+    },
+    {
+      "id": "topics_turtle-starfield",
+      "name": "turtle_starfield.py",
+      "category": "topics",
+      "tags": [
+        "Turtle",
+        "随机"
+      ],
+      "title": "随机星空",
+      "description": "随机位置与大小绘制五角星，练习 random 与封装的 draw_star 函数。",
+      "requirements": [],
+      "code": "\"\"\"{title}\nTurtle 图形：{desc}\n运行后弹出画布窗口，绘制完成后点击窗口关闭。\n\"\"\"\nimport turtle\n\nimport random\n\nt = turtle.Turtle()\nt.speed(0)\nturtle.bgcolor(\"#0b1026\")\nt.penup()\n\n\ndef draw_star(x, y, size, color):\n    t.penup()\n    t.goto(x, y)\n    t.setheading(random.randint(0, 360))\n    t.pendown()\n    t.pencolor(color)\n    t.fillcolor(color)\n    t.begin_fill()\n    for _ in range(5):\n        t.forward(size)\n        t.right(144)\n    t.end_fill()\n\n\npalette = [\"#ffd76e\", \"#ffffff\", \"#9fd8ff\", \"#ffb3c6\"]\nfor _ in range(40):\n    draw_star(random.randint(-280, 280), random.randint(-220, 220),\n              random.randint(6, 18), random.choice(palette))\n\nt.hideturtle()\nturtle.done()\n"
+    },
+    {
+      "id": "topics_turtle-kaleidoscope",
+      "name": "turtle_kaleidoscope.py",
+      "category": "topics",
+      "tags": [
+        "Turtle",
+        "图案"
+      ],
+      "title": "万花筒",
+      "description": "外层旋转复制内层花纹，两层循环构成对称图案，体会坐标变换叠加。",
+      "requirements": [],
+      "code": "\"\"\"{title}\nTurtle 图形：{desc}\n运行后弹出画布窗口，绘制完成后点击窗口关闭。\n\"\"\"\nimport turtle\n\nt = turtle.Turtle()\nt.speed(0)\nturtle.bgcolor(\"black\")\ncolors = [\"#ff6b6b\", \"#feca57\", \"#48dbfb\", \"#1dd1a1\", \"#f368e0\"]\n\n\ndef petal():\n    for _ in range(6):\n        t.forward(60)\n        t.right(60)\n    t.forward(30)\n\n\nfor ring in range(6):\n    t.pencolor(colors[ring % 5])\n    for _ in range(12):\n        petal()\n        t.right(30)\n    t.right(10)\n    t.forward(8)\n\nt.hideturtle()\nturtle.done()\n"
+    },
+    {
+      "id": "topics_turtle-maze-walk",
+      "name": "turtle_maze_walk.py",
+      "category": "topics",
+      "tags": [
+        "Turtle",
+        "随机"
+      ],
+      "title": "随机游走轨迹",
+      "description": "带边界反弹的随机游走并留下渐变轨迹，演示状态机式循环与取模变色。",
+      "requirements": [],
+      "code": "\"\"\"{title}\nTurtle 图形：{desc}\n运行后弹出画布窗口，绘制完成后点击窗口关闭。\n\"\"\"\nimport turtle\n\nimport random\n\nt = turtle.Turtle()\nt.speed(0)\nturtle.bgcolor(\"#101418\")\nt.penup()\nt.goto(0, 0)\nt.pendown()\n\nsteps = 300\nfor i in range(steps):\n    t.pencolor((i / steps, 1 - i / steps, 0.5 + 0.5 * (i % 20 < 10)))\n    t.setheading(random.choice([0, 90, 180, 270]))\n    t.forward(12)\n    x, y = t.position()\n    if abs(x) > 280 or abs(y) > 220:  # 越界回中\n        t.penup()\n        t.goto(0, 0)\n        t.pendown()\n\nt.hideturtle()\nturtle.done()\n"
+    },
+    {
+      "id": "topics_turtle-sunflower",
+      "name": "turtle_sunflower.py",
+      "category": "topics",
+      "tags": [
+        "Turtle",
+        "数学",
+        "自然"
+      ],
+      "title": "向日葵花盘",
+      "description": "按黄金角 137.5 度排布种子点，用斐波那契螺线模拟真实向日葵排布。",
+      "requirements": [],
+      "code": "\"\"\"{title}\nTurtle 图形：{desc}\n运行后弹出画布窗口，绘制完成后点击窗口关闭。\n\"\"\"\nimport turtle\n\nimport math\n\nt = turtle.Turtle()\nt.speed(0)\nt.penup()\nturtle.bgcolor(\"#22251f\")\n\nGOLDEN_ANGLE = 137.507764\nfor i in range(400):\n    r = 4.2 * math.sqrt(i)\n    theta = i * GOLDEN_ANGLE\n    x, y = r * math.cos(math.radians(theta)), r * math.sin(math.radians(theta))\n    t.goto(x, y)\n    size = 2 + i / 60\n    ratio = i / 400\n    t.pencolor(0.9, 0.75 - 0.4 * ratio, 0.1)\n    t.dot(size)\n\nt.hideturtle()\nturtle.done()\n"
+    },
+    {
+      "id": "topics_turtle-city-skyline",
+      "name": "turtle_city_skyline.py",
+      "category": "topics",
+      "tags": [
+        "Turtle",
+        "图案",
+        "随机"
+      ],
+      "title": "像素城市天际线",
+      "description": "随机楼层拼贴城市剪影并点亮点亮窗口，练习矩形填充与分层构图。",
+      "requirements": [],
+      "code": "\"\"\"{title}\nTurtle 图形：{desc}\n运行后弹出画布窗口，绘制完成后点击窗口关闭。\n\"\"\"\nimport turtle\n\nimport random\n\nt = turtle.Turtle()\nt.speed(0)\nturtle.bgcolor(\"#0d1b2a\")\nt.penup()\n\nx = -300\nwhile x < 300:\n    width = random.randint(30, 60)\n    height = random.randint(60, 180)\n    t.goto(x, -180)\n    t.pencolor(\"#1b263b\")\n    t.fillcolor(\"#1b263b\")\n    t.setheading(0)\n    t.pendown()\n    t.begin_fill()\n    for side, dist in [(90, height), (0, width), (-90, height), (180, width)]:\n        t.setheading(side)\n        t.forward(dist)\n    t.end_fill()\n    # 亮窗\n    for _ in range(random.randint(3, 8)):\n        wx = x + random.randint(6, width - 10)\n        wy = -180 + random.randint(10, height - 12)\n        t.penup()\n        t.goto(wx, wy)\n        t.dot(3, \"#ffd166\")\n    x += width + 6\n\nt.hideturtle()\nturtle.done()\n"
+    },
+    {
+      "id": "topics_pygame-snake",
+      "name": "pygame_snake.py",
+      "category": "topics",
+      "tags": [
+        "Pygame",
+        "游戏"
+      ],
+      "title": "贪吃蛇",
+      "description": "方向键控制贪吃蛇吃食物变长，撞墙或咬到自己结束，网格逻辑 + 事件循环入门。",
+      "requirements": [
+        "pygame"
+      ],
+      "code": "\"\"\"贪吃蛇：网格移动 + 事件循环。运行后弹出游戏窗口，按窗口关闭键或 ESC 退出。\"\"\"\nimport random\nimport sys\n\nimport pygame\n\nCELL, COLS, ROWS = 24, 26, 20\npygame.init()\nscreen = pygame.display.set_mode((COLS * CELL, ROWS * CELL))\npygame.display.set_caption(\"贪吃蛇\")\nclock = pygame.time.Clock()\nfont = pygame.font.SysFont(None, 28)\n\nsnake = [(COLS // 2, ROWS // 2)]\ndirection = (1, 0)\nfood = (random.randrange(COLS), random.randrange(ROWS))\nscore = 0\n\nwhile True:\n    for event in pygame.event.get():\n        if event.type == pygame.QUIT or (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE):\n            pygame.quit()\n            sys.exit()\n        if event.type == pygame.KEYDOWN:\n            turn = {pygame.K_UP: (0, -1), pygame.K_DOWN: (0, 1),\n                     pygame.K_LEFT: (-1, 0), pygame.K_RIGHT: (1, 0)}.get(event.key)\n            if turn and (turn[0] != -direction[0] or turn[1] != -direction[1]):\n                direction = turn\n\n    head = (snake[0][0] + direction[0], snake[0][1] + direction[1])\n    if (head[0] < 0 or head[0] >= COLS or head[1] < 0 or head[1] >= ROWS\n            or head in snake):\n        print(f\"游戏结束，得分 {score}\")\n        break\n    snake.insert(0, head)\n    if head == food:\n        score += 1\n        food = (random.randrange(COLS), random.randrange(ROWS))\n    else:\n        snake.pop()\n\n    screen.fill((18, 18, 24))\n    for x, y in snake:\n        pygame.draw.rect(screen, (80, 220, 120), (x * CELL, y * CELL, CELL - 2, CELL - 2), border_radius=4)\n    pygame.draw.rect(screen, (230, 90, 90), (food[0] * CELL, food[1] * CELL, CELL - 2, CELL - 2), border_radius=8)\n    screen.blit(font.render(f\"Score: {score}\", True, (240, 240, 240)), (8, 6))\n    pygame.display.flip()\n    clock.tick(8)\n"
+    },
+    {
+      "id": "topics_pygame-pong",
+      "name": "pygame_pong.py",
+      "category": "topics",
+      "tags": [
+        "Pygame",
+        "游戏"
+      ],
+      "title": "双人弹球对战",
+      "description": "W/S 与方向键分别控制两侧球拍，先得 5 分者胜，演示碰撞反弹与双输入。",
+      "requirements": [
+        "pygame"
+      ],
+      "code": "\"\"\"Pong：双人弹球。运行后弹出游戏窗口，按窗口关闭键或 ESC 退出。\"\"\"\nimport sys\n\nimport pygame\n\nW, H = 720, 440\npygame.init()\nscreen = pygame.display.set_mode((W, H))\npygame.display.set_caption(\"Pong\")\nclock = pygame.font.Clock if False else pygame.time.Clock()\nfont = pygame.font.SysFont(None, 32)\n\npaddle_h, speed = 84, 6\nleft = pygame.Rect(16, H // 2 - paddle_h // 2, 12, paddle_h)\nright = pygame.Rect(W - 28, H // 2 - paddle_h // 2, 12, paddle_h)\nball = pygame.Rect(W // 2 - 6, H // 2 - 6, 12, 12)\nball_v = [4.2, 3.1]\nscore = [0, 0]\n\nwhile True:\n    for event in pygame.event.get():\n        if event.type == pygame.QUIT or (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE):\n            pygame.quit()\n            sys.exit()\n\n    keys = pygame.key.get_pressed()\n    if keys[pygame.K_w]:\n        left.y -= speed\n    if keys[pygame.K_s]:\n        left.y += speed\n    if keys[pygame.K_UP]:\n        right.y -= speed\n    if keys[pygame.K_DOWN]:\n        right.y += speed\n    left.clamp_ip((0, 0, W, H))\n    right.clamp_ip((0, 0, W, H))\n\n    ball.x += int(ball_v[0])\n    ball.y += int(ball_v[1])\n    if ball.top <= 0 or ball.bottom >= H:\n        ball_v[1] *= -1\n    if ball.colliderect(left) or ball.colliderect(right):\n        ball_v[0] *= -1.05\n    if ball.left <= 0:\n        score[1] += 1\n        ball.center = (W // 2, H // 2)\n    if ball.right >= W:\n        score[0] += 1\n        ball.center = (W // 2, H // 2)\n\n    screen.fill((16, 20, 28))\n    pygame.draw.rect(screen, (240, 240, 240), left)\n    pygame.draw.rect(screen, (240, 240, 240), right)\n    pygame.draw.rect(screen, (255, 200, 80), ball)\n    screen.blit(font.render(f\"{score[0]} : {score[1]}\", True, (240, 240, 240)), (W // 2 - 40, 10))\n    pygame.display.flip()\n    clock.tick(60)\n    if 5 in score:\n        print(f\"比赛结束 {score[0]}:{score[1]}\")\n        break\n"
+    },
+    {
+      "id": "topics_pygame-catch",
+      "name": "pygame_catch_fruit.py",
+      "category": "topics",
+      "tags": [
+        "Pygame",
+        "游戏"
+      ],
+      "title": "接水果",
+      "description": "左右移动篮子接住下落水果，漏接扣命，随机生成 + AABB 碰撞入门。",
+      "requirements": [
+        "pygame"
+      ],
+      "code": "\"\"\"接水果：移动与碰撞。运行后弹出游戏窗口，按窗口关闭键或 ESC 退出。\"\"\"\nimport random\nimport sys\n\nimport pygame\n\nW, H = 560, 480\npygame.init()\nscreen = pygame.display.set_mode((W, H))\npygame.display.set_caption(\"接水果\")\nclock = pygame.time.Clock()\nfont = pygame.font.SysFont(None, 30)\n\nbasket = pygame.Rect(W // 2 - 44, H - 60, 88, 26)\nfruits = []\nlives, caught, spawn_ms = 3, 0, 0\n\nwhile True:\n    dt = clock.tick(60)\n    for event in pygame.event.get():\n        if event.type == pygame.QUIT or (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE):\n            pygame.quit()\n            sys.exit()\n\n    keys = pygame.key.get_pressed()\n    if keys[pygame.K_LEFT]:\n        basket.x -= 7\n    if keys[pygame.K_RIGHT]:\n        basket.x += 7\n    basket.clamp_ip((0, 0, W, basket.height))\n\n    spawn_ms += dt\n    if spawn_ms > 520:\n        spawn_ms = 0\n        fruits.append(pygame.Rect(random.randint(0, W - 22), -22, 22, 22))\n\n    for f in fruits[:]:\n        f.y += 4\n        if f.colliderect(basket):\n            fruits.remove(f)\n            caught += 1\n        elif f.y > H:\n            fruits.remove(f)\n            lives -= 1\n\n    screen.fill((24, 28, 36))\n    pygame.draw.rect(screen, (120, 200, 250), basket, border_radius=6)\n    for f in fruits:\n        pygame.draw.circle(screen, (240, 120, 120), f.center, 11)\n    screen.blit(font.render(f\"接住 {caught}  生命 {lives}\", True, (240, 240, 240)), (10, 8))\n    pygame.display.flip()\n    if lives <= 0:\n        print(f\"游戏结束，接住 {caught} 个\")\n        break\n"
+    },
+    {
+      "id": "topics_pygame-breakout",
+      "name": "pygame_breakout.py",
+      "category": "topics",
+      "tags": [
+        "Pygame",
+        "游戏"
+      ],
+      "title": "打砖块",
+      "description": "挡板反弹消除整排砖块，砖块阵生成 + 多目标碰撞 + 胜负判定。",
+      "requirements": [
+        "pygame"
+      ],
+      "code": "\"\"\"打砖块 Breakout。运行后弹出游戏窗口，按窗口关闭键或 ESC 退出。\"\"\"\nimport sys\n\nimport pygame\n\nW, H = 560, 480\npygame.init()\nscreen = pygame.display.set_mode((W, H))\npygame.display.set_caption(\"打砖块\")\nclock = pygame.time.Clock()\nfont = pygame.font.SysFont(None, 30)\n\npaddle = pygame.Rect(W // 2 - 40, H - 40, 80, 12)\nball = pygame.Rect(W // 2 - 6, H // 2, 12, 12)\nball_v = [3.6, -3.8]\n\nbricks = []\nfor row in range(5):\n    for col in range(9):\n        bricks.append(pygame.Rect(24 + col * 58, 50 + row * 26, 52, 20))\n\nwhile True:\n    for event in pygame.event.get():\n        if event.type == pygame.QUIT or (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE):\n            pygame.quit()\n            sys.exit()\n\n    keys = pygame.key.get_pressed()\n    if keys[pygame.K_LEFT]:\n        paddle.x -= 6\n    if keys[pygame.K_RIGHT]:\n        paddle.x += 6\n    paddle.clamp_ip((0, 0, W, H))\n\n    ball.x += int(ball_v[0])\n    ball.y += int(ball_v[1])\n    if ball.left <= 0 or ball.right >= W:\n        ball_v[0] *= -1\n    if ball.top <= 0:\n        ball_v[1] *= -1\n    if ball.colliderect(paddle) and ball_v[1] > 0:\n        ball_v[1] *= -1\n    for b in bricks[:]:\n        if ball.colliderect(b):\n            bricks.remove(b)\n            ball_v[1] *= -1\n            break\n\n    screen.fill((20, 22, 30))\n    colors = [(230, 90, 90), (240, 160, 70), (250, 210, 90), (120, 210, 130), (110, 170, 250)]\n    for i, b in enumerate(bricks):\n        pygame.draw.rect(screen, colors[i // 9], b, border_radius=4)\n    pygame.draw.rect(screen, (240, 240, 240), paddle, border_radius=6)\n    pygame.draw.circle(screen, (255, 210, 120), ball.center, 6)\n    pygame.display.flip()\n    clock.tick(60)\n\n    if not bricks:\n        print(\"全部消除，你赢了！\")\n        break\n    if ball.top > H:\n        print(\"球落底，游戏结束\")\n        break\n"
+    },
+    {
+      "id": "topics_pygame-memory",
+      "name": "pygame_memory.py",
+      "category": "topics",
+      "tags": [
+        "Pygame",
+        "游戏"
+      ],
+      "title": "记忆翻牌",
+      "description": "4x4 翻牌配对游戏，用数字代替图案，演示状态机（翻开/比较/回退）。",
+      "requirements": [
+        "pygame"
+      ],
+      "code": "\"\"\"记忆翻牌：状态机小游戏。运行后弹出游戏窗口，按窗口关闭键或 ESC 退出。\"\"\"\nimport random\nimport sys\n\nimport pygame\n\nCOLS, ROWS = 4, 4\nCELL = 92\npygame.init()\nscreen = pygame.display.set_mode((COLS * CELL, ROWS * CELL))\npygame.display.set_caption(\"记忆翻牌\")\nclock = pygame.time.Clock()\nfont = pygame.font.SysFont(None, 52)\n\ndeck = list(range(1, 9)) * 2\nrandom.shuffle(deck)\ncards = {\"value\": deck, \"open\": [False] * 16, \"matched\": [False] * 16}\nfirst_pick = None\n\nwhile True:\n    for event in pygame.event.get():\n        if event.type == pygame.QUIT or (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE):\n            pygame.quit()\n            sys.exit()\n        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:\n            pos = pygame.mouse.get_pos()\n            idx = pos[1] // CELL * COLS + pos[0] // CELL\n            o, m = cards[\"open\"], cards[\"matched\"]\n            if not o[idx] and not m[idx] and first_pick is None:\n                o[idx] = True\n                first_pick = idx\n            elif not o[idx] and not m[idx] and first_pick is not None:\n                o[idx] = True\n                if cards[\"value\"][idx] == cards[\"value\"][first_pick]:\n                    m[idx] = m[first_pick] = True\n                first_pick = None\n\n    screen.fill((30, 34, 44))\n    for i in range(16):\n        rect = pygame.Rect(i % COLS * CELL + 6, i // COLS * CELL + 6, CELL - 12, CELL - 12)\n        if cards[\"open\"][i] or cards[\"matched\"][i]:\n            pygame.draw.rect(screen, (70, 110, 90) if cards[\"matched\"][i] else (90, 130, 200), rect, border_radius=8)\n            img = font.render(str(cards[\"value\"][i]), True, (245, 245, 245))\n            screen.blit(img, img.get_rect(center=rect.center))\n        else:\n            pygame.draw.rect(screen, (60, 64, 78), rect, border_radius=8)\n    pygame.display.flip()\n    clock.tick(30)\n\n    if all(cards[\"matched\"]):\n        print(\"全部配对完成！\")\n        break\n"
+    },
+    {
+      "id": "topics_opencv-edge",
+      "name": "opencv_edge_detect.py",
+      "category": "topics",
+      "tags": [
+        "OpenCV",
+        "边缘检测"
+      ],
+      "title": "Canny 边缘检测",
+      "description": "合成场景图上对比 Sobel 与 Canny 两种边缘提取效果。",
+      "requirements": [
+        "opencv-python",
+        "numpy"
+      ],
+      "code": "\"\"\"Canny 边缘检测\nOpenCV 图像处理：梯度与双阈值边缘提取。\n示例用 numpy 程序化生成图像，自包含无需素材文件；运行后弹出结果窗口，按任意键退出。\n\"\"\"\nimport cv2\nimport numpy as np\n\n\nimg = np.zeros((360, 480), dtype=np.uint8)\ncv2.rectangle(img, (60, 60), (200, 200), 200, -1)\ncv2.circle(img, (340, 140), 80, 140, -1)\ncv2.line(img, (40, 300), (440, 320), 220, 6)\ncv2.GaussianBlur(img, (5, 5), 0, dst=img)\n\nsobel = cv2.Sobel(img, cv2.CV_64F, 1, 1, ksize=3)\nsobel = np.clip(np.abs(sobel), 0, 255).astype(np.uint8)\ncanny = cv2.Canny(img, 60, 150)\n\ncv2.imshow(\"original\", img)\ncv2.imshow(\"sobel\", sobel)\ncv2.imshow(\"canny\", canny)\ncv2.waitKey(0)\ncv2.destroyAllWindows()\n"
+    },
+    {
+      "id": "topics_opencv-colorspace",
+      "name": "opencv_colorspace.py",
+      "category": "topics",
+      "tags": [
+        "OpenCV",
+        "颜色"
+      ],
+      "title": "颜色空间与通道",
+      "description": "BGR/HSV/灰度互转，并按 HSV 阈值提取红色物体掩膜。",
+      "requirements": [
+        "opencv-python",
+        "numpy"
+      ],
+      "code": "\"\"\"颜色空间\nOpenCV 图像处理：HSV 阈值分割红色区域。\n示例用 numpy 程序化生成图像，自包含无需素材文件；运行后弹出结果窗口，按任意键退出。\n\"\"\"\nimport cv2\nimport numpy as np\n\n\ncanvas = np.zeros((320, 480, 3), dtype=np.uint8)\ncv2.circle(canvas, (120, 160), 70, (60, 60, 230), -1)     # 红色圆\ncv2.rectangle(canvas, (260, 90), (420, 230), (90, 200, 90), -1)  # 绿色方块\n\nhsv = cv2.cvtColor(canvas, cv2.COLOR_BGR2HSV)\ngray = cv2.cvtColor(canvas, cv2.COLOR_BGR2GRAY)\n\n# HSV 中红色的两段阈值\nmask1 = cv2.inRange(hsv, (0, 120, 120), (8, 255, 255))\nmask2 = cv2.inRange(hsv, (170, 120, 120), (180, 255, 255))\nred_mask = cv2.bitwise_or(mask1, mask2)\nred_only = cv2.bitwise_and(canvas, canvas, mask=red_mask)\n\ncv2.imshow(\"original\", canvas)\ncv2.imshow(\"gray\", gray)\ncv2.imshow(\"red_mask\", red_mask)\ncv2.imshow(\"red_only\", red_only)\ncv2.waitKey(0)\ncv2.destroyAllWindows()\n"
+    },
+    {
+      "id": "topics_opencv-geometric",
+      "name": "opencv_geometric.py",
+      "category": "topics",
+      "tags": [
+        "OpenCV",
+        "几何"
+      ],
+      "title": "几何变换",
+      "description": "平移、旋转、缩放与仿射变换，理解变换矩阵与插值参数。",
+      "requirements": [
+        "opencv-python",
+        "numpy"
+      ],
+      "code": "\"\"\"几何变换\nOpenCV 图像处理：warpAffine 变换矩阵。\n示例用 numpy 程序化生成图像，自包含无需素材文件；运行后弹出结果窗口，按任意键退出。\n\"\"\"\nimport cv2\nimport numpy as np\n\n\nimg = np.zeros((360, 480, 3), dtype=np.uint8)\ncv2.putText(img, \"CV\", (120, 240), cv2.FONT_HERSHEY_SIMPLEX, 5, (180, 220, 255), 14)\n\nrows, cols = img.shape[:2]\nM_shift = np.float32([[1, 0, 60], [0, 1, 30]])\nshifted = cv2.warpAffine(img, M_shift, (cols, rows))\n\nM_rot = cv2.getRotationMatrix2D((cols / 2, rows / 2), 30, 0.8)\nrotated = cv2.warpAffine(img, M_rot, (cols, rows))\n\nresized = cv2.resize(img, None, fx=0.6, fy=0.6, interpolation=cv2.INTER_AREA)\n\ncv2.imshow(\"shifted\", shifted)\ncv2.imshow(\"rotated\", rotated)\ncv2.imshow(\"resized\", resized)\ncv2.waitKey(0)\ncv2.destroyAllWindows()\n"
+    },
+    {
+      "id": "topics_opencv-threshold",
+      "name": "opencv_threshold.py",
+      "category": "topics",
+      "tags": [
+        "OpenCV",
+        "分割"
+      ],
+      "title": "阈值分割与自适应",
+      "description": "全局 Otsu 与自适应阈值对比，光照不均场景的分割选择。",
+      "requirements": [
+        "opencv-python",
+        "numpy"
+      ],
+      "code": "\"\"\"阈值分割\nOpenCV 图像处理：Otsu 与自适应阈值。\n示例用 numpy 程序化生成图像，自包含无需素材文件；运行后弹出结果窗口，按任意键退出。\n\"\"\"\nimport cv2\nimport numpy as np\n\n\n# 合成光照不均的渐变背景 + 字符\nimg = np.zeros((300, 480), dtype=np.uint8)\ngrad = np.linspace(40, 200, 480, dtype=np.uint8)[None, :]\nimg[:] = grad\ncv2.putText(img, \"THRESHOLD\", (30, 180), cv2.FONT_HERSHEY_SIMPLEX, 2.2, 255, 10)\nnoise = np.random.randint(0, 12, img.shape, dtype=np.uint8)\nimg = cv2.add(img, noise)\n\n_, otsu = cv2.threshold(img, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)\nadaptive = cv2.adaptiveThreshold(img, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C,\n                                 cv2.THRESH_BINARY, 25, 8)\n\ncv2.imshow(\"original\", img)\ncv2.imshow(\"otsu\", otsu)\ncv2.imshow(\"adaptive\", adaptive)\ncv2.waitKey(0)\ncv2.destroyAllWindows()\n"
+    },
+    {
+      "id": "topics_opencv-histogram",
+      "name": "opencv_histogram.py",
+      "category": "topics",
+      "tags": [
+        "OpenCV",
+        "增强"
+      ],
+      "title": "直方图均衡",
+      "description": "用均衡化增强低对比度图像，并用 calcHist 对比前后分布。",
+      "requirements": [
+        "opencv-python",
+        "numpy"
+      ],
+      "code": "\"\"\"直方图均衡\nOpenCV 图像处理：对比度增强。\n示例用 numpy 程序化生成图像，自包含无需素材文件；运行后弹出结果窗口，按任意键退出。\n\"\"\"\nimport cv2\nimport numpy as np\n\n\n# 低对比度图像\nimg = np.zeros((300, 480), dtype=np.uint8)\ncv2.circle(img, (150, 150), 90, 110, -1)\ncv2.rectangle(img, (280, 80), (420, 230), 150, -1)\nimg = (img * 0.35 + 60).astype(np.uint8)\n\nequalized = cv2.equalizeHist(img)\n\nhist_before = cv2.calcHist([img], [0], None, [256], [0, 256])\nhist_after = cv2.calcHist([equalized], [0], None, [256], [0, 256])\nprint(\"原图标准差: %.1f -> 均衡后: %.1f\" % (img.std(), equalized.std()))\n\ncv2.imshow(\"before\", img)\ncv2.imshow(\"after\", equalized)\ncv2.waitKey(0)\ncv2.destroyAllWindows()\n"
+    },
+    {
+      "id": "topics_opencv-contours",
+      "name": "opencv_contours.py",
+      "category": "topics",
+      "tags": [
+        "OpenCV",
+        "轮廓"
+      ],
+      "title": "轮廓检测与面积筛选",
+      "description": "findContours 提取轮廓，按面积过滤并标注质心，形状识别的基础流程。",
+      "requirements": [
+        "opencv-python",
+        "numpy"
+      ],
+      "code": "\"\"\"轮廓检测\nOpenCV 图像处理：面积过滤 + 质心标注。\n示例用 numpy 程序化生成图像，自包含无需素材文件；运行后弹出结果窗口，按任意键退出。\n\"\"\"\nimport cv2\nimport numpy as np\n\n\nimg = np.zeros((360, 480), dtype=np.uint8)\ncv2.circle(img, (110, 110), 62, 255, -1)\ncv2.rectangle(img, (260, 60), (380, 180), 255, -1)\ncv2.ellipse(img, (150, 280), (70, 34), 20, 0, 360, 255, -1)\ncv2.circle(img, (360, 280), 18, 255, -1)\n\ncontours, _ = cv2.findContours(img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)\nresult = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)\nfor c in contours:\n    area = cv2.contourArea(c)\n    if area < 800:  # 过滤小噪声\n        continue\n    M = cv2.moments(c)\n    cx, cy = int(M[\"m10\"] / M[\"m00\"]), int(M[\"m01\"] / M[\"m00\"])\n    cv2.drawContours(result, [c], -1, (80, 220, 120), 3)\n    cv2.circle(result, (cx, cy), 4, (60, 90, 255), -1)\n    cv2.putText(result, f\"{int(area)}\", (cx - 24, cy - 12),\n                cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)\n    print(\"轮廓面积:\", int(area))\n\ncv2.imshow(\"contours\", result)\ncv2.waitKey(0)\ncv2.destroyAllWindows()\n"
+    },
+    {
+      "id": "tools_files-batch-rename",
+      "name": "batch_rename.py",
+      "category": "tools",
+      "tags": [
+        "工具",
+        "文件"
+      ],
+      "title": "批量重命名工具",
+      "description": "按前缀 + 序号批量重命名目录内文件，dry-run 预览防止误操作。",
+      "requirements": [],
+      "code": "\"\"\"批量重命名：dry-run 预览 + 执行。\"\"\"\nimport argparse\nfrom pathlib import Path\n\n\ndef main():\n    parser = argparse.ArgumentParser(description=\"目录内文件批量重命名\")\n    parser.add_argument(\"directory\", nargs=\"?\", default=\".\", help=\"目标目录\")\n    parser.add_argument(\"--prefix\", default=\"file\", help=\"新文件名前缀\")\n    parser.add_argument(\"--ext\", default=\"\", help=\"仅处理指定扩展名，如 .txt\")\n    parser.add_argument(\"--apply\", action=\"store_true\", help=\"真正执行（默认只预览）\")\n    args = parser.parse_args()\n\n    target = Path(args.directory)\n    files = sorted(p for p in target.iterdir()\n                   if p.is_file() and (not args.ext or p.suffix == args.ext))\n    plan = []\n    for i, p in enumerate(files, 1):\n        new_name = f\"{args.prefix}_{i:03d}{p.suffix}\"\n        plan.append((p, p.with_name(new_name)))\n\n    for old, new in plan:\n        print(f\"{old.name} -> {new.name}\")\n    if args.apply:\n        for old, new in plan:\n            old.rename(new)\n        print(f\"已重命名 {len(plan)} 个文件\")\n    else:\n        print(f\"（预览模式，共 {len(plan)} 个文件；加 --apply 执行）\")\n\n\nif __name__ == \"__main__\":\n    main()\n"
+    },
+    {
+      "id": "tools_csv-stats",
+      "name": "csv_stats.py",
+      "category": "tools",
+      "tags": [
+        "工具",
+        "CSV",
+        "数据"
+      ],
+      "title": "CSV 列统计工具",
+      "description": "纯标准库解析 CSV 并输出数值列的计数/均值/最值，快速数据体检。",
+      "requirements": [],
+      "code": "\"\"\"CSV 数值列统计：纯标准库实现。\"\"\"\nimport argparse\nimport csv\nfrom pathlib import Path\n\n\ndef main():\n    parser = argparse.ArgumentParser()\n    parser.add_argument(\"csvfile\", nargs=\"?\", default=\"demo.csv\")\n    args = parser.parse_args()\n\n    path = Path(args.csvfile)\n    if not path.exists():\n        path.write_text(\n            \"name,score,age\\n小明,92,14\\n小红,88,13\\n小刚,95,15\\n小丽,79,14\\n\",\n            encoding=\"utf-8\",\n        )\n\n    with path.open(encoding=\"utf-8\", newline=\"\") as f:\n        rows = list(csv.DictReader(f))\n    if not rows:\n        print(\"空表格\")\n        return\n\n    print(f\"行数: {len(rows)}，列: {list(rows[0])}\")\n    for col in rows[0]:\n        values = []\n        for r in rows:\n            try:\n                values.append(float(r[col]))\n            except ValueError:\n                break\n        if len(values) == len(rows):\n            print(f\"  [{col}] 计数={len(values)} 均值={sum(values)/len(values):.2f} \"\n                  f\"最小={min(values)} 最大={max(values)}\")\n\n\nif __name__ == \"__main__\":\n    main()\n"
+    },
+    {
+      "id": "tools_log-analyzer",
+      "name": "log_analyzer.py",
+      "category": "tools",
+      "tags": [
+        "工具",
+        "日志",
+        "正则"
+      ],
+      "title": "日志等级统计",
+      "description": "解析日志行并统计各级别条数与错误明细，含正则解析与 Counter 应用。",
+      "requirements": [],
+      "code": "\"\"\"日志分析：等级统计 + 错误明细。\"\"\"\nimport re\nfrom collections import Counter\n\nSAMPLE = \"\"\"2026-09-22 10:00:01 INFO 服务启动 port=8000\n2026-09-22 10:00:03 DEBUG 缓存预热 128 项\n2026-09-22 10:01:22 WARN 响应超时 3.2s /api/list\n2026-09-22 10:02:45 ERROR 数据库连接失败 retry=1\n2026-09-22 10:03:10 INFO 请求 /health 200\n2026-09-22 10:04:01 ERROR 数据库连接失败 retry=2\n2026-09-22 10:05:33 WARN 慢查询 1.8s\n\"\"\"\n\npattern = re.compile(r\"^(?P<time>[\\d-]+ [\\d:]+) (?P<level>[A-Z]+) (?P<msg>.+)$\")\ncounter = Counter()\nerrors = []\n\nfor line in SAMPLE.strip().splitlines():\n    m = pattern.match(line)\n    if not m:\n        continue\n    counter[m[\"level\"]] += 1\n    if m[\"level\"] == \"ERROR\":\n        errors.append((m[\"time\"], m[\"msg\"]))\n\nprint(\"等级分布:\", dict(counter))\nprint(\"错误明细:\")\nfor t, msg in errors:\n    print(f\"  {t}  {msg}\")\n"
+    },
+    {
+      "id": "tools_image-compress",
+      "name": "image_compress.py",
+      "category": "tools",
+      "tags": [
+        "工具",
+        "图片",
+        "Pillow"
+      ],
+      "title": "图片批量压缩",
+      "description": "用 Pillow 批量缩放并压缩目录内图片，保留比例与质量控制。",
+      "requirements": [
+        "pillow"
+      ],
+      "code": "\"\"\"图片批量压缩：等比缩放 + 质量控制。\"\"\"\nimport argparse\nfrom pathlib import Path\n\nfrom PIL import Image\n\n\ndef compress(path: Path, out: Path, max_side: int, quality: int) -> None:\n    with Image.open(path) as im:\n        im = im.convert(\"RGB\")\n        w, h = im.size\n        scale = min(1.0, max_side / max(w, h))\n        if scale < 1.0:\n            im = im.resize((int(w * scale), int(h * scale)), Image.LANCZOS)\n        im.save(out, \"JPEG\", quality=quality, optimize=True)\n\n\ndef main():\n    parser = argparse.ArgumentParser()\n    parser.add_argument(\"directory\", nargs=\"?\", default=\".\")\n    parser.add_argument(\"--max-side\", type=int, default=1280)\n    parser.add_argument(\"--quality\", type=int, default=82)\n    args = parser.parse_args()\n\n    out_dir = Path(args.directory) / \"compressed\"\n    out_dir.mkdir(exist_ok=True)\n    for p in sorted(Path(args.directory).glob(\"*\")):\n        if p.suffix.lower() not in {\".jpg\", \".jpeg\", \".png\", \".bmp\"} or not p.is_file():\n            continue\n        out = out_dir / (p.stem + \".jpg\")\n        compress(p, out, args.max_side, args.quality)\n        print(f\"{p.name}: {p.stat().st_size // 1024}KB -> {out.stat().st_size // 1024}KB\")\n\n\nif __name__ == \"__main__\":\n    main()\n"
+    },
+    {
+      "id": "tools_password-generator",
+      "name": "password_generator.py",
+      "category": "tools",
+      "tags": [
+        "工具",
+        "安全"
+      ],
+      "title": "密码生成器",
+      "description": "按长度与字符集策略生成强密码，secrets 模块保证密码学安全随机。",
+      "requirements": [],
+      "code": "\"\"\"密码生成器：secrets 安全随机。\"\"\"\nimport argparse\nimport secrets\nimport string\n\n\ndef generate(length: int, symbols: bool) -> str:\n    pool = string.ascii_letters + string.digits\n    if symbols:\n        pool += \"!@#$%^&*\"\n    while True:\n        pwd = \"\".join(secrets.choice(pool) for _ in range(length))\n        # 保证至少含小写、大写、数字\n        if (any(c.islower() for c in pwd) and any(c.isupper() for c in pwd)\n                and any(c.isdigit() for c in pwd)):\n            return pwd\n\n\ndef main():\n    parser = argparse.ArgumentParser()\n    parser.add_argument(\"-n\", type=int, default=16, help=\"密码长度\")\n    parser.add_argument(\"--symbols\", action=\"store_true\", help=\"包含特殊符号\")\n    args = parser.parse_args()\n    for _ in range(3):\n        print(generate(args.n, args.symbols))\n\n\nif __name__ == \"__main__\":\n    main()\n"
+    },
+    {
+      "id": "tools_timer-tomato",
+      "name": "tomato_timer.py",
+      "category": "tools",
+      "tags": [
+        "工具",
+        "效率"
+      ],
+      "title": "命令行番茄钟",
+      "description": "25 分钟专注 + 5 分钟休息的终端计时器，演示 time 循环与跨平台响铃提示。",
+      "requirements": [],
+      "code": "\"\"\"番茄钟：终端倒计时。\"\"\"\nimport argparse\nimport sys\nimport time\n\n\ndef countdown(minutes: int, label: str) -> None:\n    total = minutes * 60\n    for remain in range(total, 0, -1):\n        mm, ss = divmod(remain, 60)\n        sys.stdout.write(f\"\\r{label} 剩余 {mm:02d}:{ss:02d} \")\n        sys.stdout.flush()\n        time.sleep(1)\n    print(f\"\\r{label} 完成！\\a\")\n\n\ndef main():\n    parser = argparse.ArgumentParser()\n    parser.add_argument(\"--focus\", type=int, default=1, help=\"专注时长(分钟)，演示用默认 1\")\n    parser.add_argument(\"--break-mins\", type=int, default=1)\n    parser.add_argument(\"--rounds\", type=int, default=2)\n    args = parser.parse_args()\n\n    for i in range(1, args.rounds + 1):\n        print(f\"—— 第 {i}/{args.rounds} 轮 ——\")\n        countdown(args.focus, \"专注\")\n        if i < args.rounds:\n            countdown(args.break_mins, \"休息\")\n\n\nif __name__ == \"__main__\":\n    main()\n"
+    }
+  ]
+}

@@ -1,0 +1,5 @@
+{
+  "name": "python-example-manager-prototype",
+  "private": true,
+  "description": "Electron 原型层；正式工程在 electron/ 子目录（electron-vite + Vue3 + Tailwind）"
+}

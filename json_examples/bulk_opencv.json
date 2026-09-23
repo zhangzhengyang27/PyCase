@@ -1,0 +1,2406 @@
+{
+ "name": "OpenCV 视觉集",
+ "description": "参数化生成的 OpenCV 图像处理示例：合成场景自包含，无需素材文件，输出结果图到运行目录。",
+ "examples": [
+  {
+   "id": "topics_opencv-canny-s1",
+   "name": "canny_s1.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "Canny 边缘（几何场景）",
+   "description": "高斯去噪 + 双阈值边缘提取。输入场景：几何场景。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"Canny 边缘（几何场景）\nOpenCV 图像处理示例。高斯去噪 + 双阈值边缘提取。\n合成输入图像自包含，运行后在当前目录生成 cv_canny__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.zeros((360, 480), dtype=np.uint8)\ncv2.rectangle(img, (60, 60), (200, 200), 200, -1)\ncv2.circle(img, (340, 140), 80, 140, -1)\ncv2.line(img, (40, 300), (440, 320), 220, 6)\n\nblur = cv2.GaussianBlur(img, (5, 5), 0)\nresult = cv2.Canny(blur, {{t1}}, {{t2}})\ncv2.imwrite(\"cv_canny__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_canny__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-canny-s2",
+   "name": "canny_s2.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "Canny 边缘（渐变场景）",
+   "description": "高斯去噪 + 双阈值边缘提取。输入场景：渐变场景。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"Canny 边缘（渐变场景）\nOpenCV 图像处理示例。高斯去噪 + 双阈值边缘提取。\n合成输入图像自包含，运行后在当前目录生成 cv_canny__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.tile(np.linspace(30, 220, 480, dtype=np.uint8), (360, 1))\ncv2.putText(img, \"CV\", (150, 240), cv2.FONT_HERSHEY_SIMPLEX, 4, 255, 12)\n\nblur = cv2.GaussianBlur(img, (5, 5), 0)\nresult = cv2.Canny(blur, {{t1}}, {{t2}})\ncv2.imwrite(\"cv_canny__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_canny__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-canny-s3",
+   "name": "canny_s3.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "Canny 边缘（噪声场景）",
+   "description": "高斯去噪 + 双阈值边缘提取。输入场景：噪声场景。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"Canny 边缘（噪声场景）\nOpenCV 图像处理示例。高斯去噪 + 双阈值边缘提取。\n合成输入图像自包含，运行后在当前目录生成 cv_canny__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nrng = np.random.default_rng(13)\nimg = rng.integers(60, 200, (360, 480), dtype=np.uint8)\ncv2.circle(img, (240, 180), 110, 255, -1)\n\nblur = cv2.GaussianBlur(img, (5, 5), 0)\nresult = cv2.Canny(blur, {{t1}}, {{t2}})\ncv2.imwrite(\"cv_canny__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_canny__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-canny-s4",
+   "name": "canny_s4.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "Canny 边缘（棋盘场景）",
+   "description": "高斯去噪 + 双阈值边缘提取。输入场景：棋盘场景。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"Canny 边缘（棋盘场景）\nOpenCV 图像处理示例。高斯去噪 + 双阈值边缘提取。\n合成输入图像自包含，运行后在当前目录生成 cv_canny__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.kron(np.indices((9, 12)).sum(0) % 2, np.uint8(255))[:360, :480].astype(np.uint8) * 0\nimg[::40, :] = 120; img[:, ::40] = 120\ncv2.rectangle(img, (100, 100), (380, 260), 255, -1)\n\nblur = cv2.GaussianBlur(img, (5, 5), 0)\nresult = cv2.Canny(blur, {{t1}}, {{t2}})\ncv2.imwrite(\"cv_canny__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_canny__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-canny-s5",
+   "name": "canny_s5.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "Canny 边缘（混合场景）",
+   "description": "高斯去噪 + 双阈值边缘提取。输入场景：混合场景。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"Canny 边缘（混合场景）\nOpenCV 图像处理示例。高斯去噪 + 双阈值边缘提取。\n合成输入图像自包含，运行后在当前目录生成 cv_canny__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nrng = np.random.default_rng(15)\nimg = rng.integers(40, 120, (360, 480), dtype=np.uint8)\ncv2.ellipse(img, (240, 180), (180, 90), 25, 0, 360, 230, -1)\ncv2.rectangle(img, (60, 60), (160, 160), 255, 4)\n\nblur = cv2.GaussianBlur(img, (5, 5), 0)\nresult = cv2.Canny(blur, {{t1}}, {{t2}})\ncv2.imwrite(\"cv_canny__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_canny__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-canny-s6",
+   "name": "canny_s6.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "Canny 边缘（点阵圆环）",
+   "description": "高斯去噪 + 双阈值边缘提取。输入场景：点阵圆环。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"Canny 边缘（点阵圆环）\nOpenCV 图像处理示例。高斯去噪 + 双阈值边缘提取。\n合成输入图像自包含，运行后在当前目录生成 cv_canny__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.zeros((360, 480), dtype=np.uint8)\nfor r in range(40, 200, 24):\n    cv2.circle(img, (240, 180), r, 200, 3)\nfor a in range(0, 360, 15):\n    cv2.circle(img, (int(240 + 120 * np.cos(np.radians(a))), int(180 + 120 * np.sin(np.radians(a)))), 5, 255, -1)\n\nblur = cv2.GaussianBlur(img, (5, 5), 0)\nresult = cv2.Canny(blur, {{t1}}, {{t2}})\ncv2.imwrite(\"cv_canny__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_canny__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-canny-s7",
+   "name": "canny_s7.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "Canny 边缘（竖条纹）",
+   "description": "高斯去噪 + 双阈值边缘提取。输入场景：竖条纹。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"Canny 边缘（竖条纹）\nOpenCV 图像处理示例。高斯去噪 + 双阈值边缘提取。\n合成输入图像自包含，运行后在当前目录生成 cv_canny__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.zeros((360, 480), dtype=np.uint8)\nfor x in range(0, 480, 24):\n    cv2.rectangle(img, (x, 0), (x + 10, 360), 220, -1)\ncv2.circle(img, (240, 180), 70, 90, -1)\n\nblur = cv2.GaussianBlur(img, (5, 5), 0)\nresult = cv2.Canny(blur, {{t1}}, {{t2}})\ncv2.imwrite(\"cv_canny__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_canny__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-canny-s8",
+   "name": "canny_s8.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "Canny 边缘（大字报）",
+   "description": "高斯去噪 + 双阈值边缘提取。输入场景：大字报。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"Canny 边缘（大字报）\nOpenCV 图像处理示例。高斯去噪 + 双阈值边缘提取。\n合成输入图像自包含，运行后在当前目录生成 cv_canny__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.zeros((360, 480), dtype=np.uint8)\ncv2.putText(img, \"OPEN CV\", (40, 210), cv2.FONT_HERSHEY_SIMPLEX, 2.6, 220, 12)\ncv2.rectangle(img, (30, 30), (450, 330), 160, 5)\n\nblur = cv2.GaussianBlur(img, (5, 5), 0)\nresult = cv2.Canny(blur, {{t1}}, {{t2}})\ncv2.imwrite(\"cv_canny__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_canny__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-threshold-s1",
+   "name": "threshold_s1.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "阈值分割（几何场景）",
+   "description": "Otsu 全局阈值二值化。输入场景：几何场景。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"阈值分割（几何场景）\nOpenCV 图像处理示例。Otsu 全局阈值二值化。\n合成输入图像自包含，运行后在当前目录生成 cv_threshold__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.zeros((360, 480), dtype=np.uint8)\ncv2.rectangle(img, (60, 60), (200, 200), 200, -1)\ncv2.circle(img, (340, 140), 80, 140, -1)\ncv2.line(img, (40, 300), (440, 320), 220, 6)\n\nblur = cv2.GaussianBlur(img, (7, 7), 0)\n_, result = cv2.threshold(blur, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)\ncv2.imwrite(\"cv_threshold__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_threshold__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-threshold-s2",
+   "name": "threshold_s2.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "阈值分割（渐变场景）",
+   "description": "Otsu 全局阈值二值化。输入场景：渐变场景。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"阈值分割（渐变场景）\nOpenCV 图像处理示例。Otsu 全局阈值二值化。\n合成输入图像自包含，运行后在当前目录生成 cv_threshold__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.tile(np.linspace(30, 220, 480, dtype=np.uint8), (360, 1))\ncv2.putText(img, \"CV\", (150, 240), cv2.FONT_HERSHEY_SIMPLEX, 4, 255, 12)\n\nblur = cv2.GaussianBlur(img, (7, 7), 0)\n_, result = cv2.threshold(blur, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)\ncv2.imwrite(\"cv_threshold__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_threshold__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-threshold-s3",
+   "name": "threshold_s3.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "阈值分割（噪声场景）",
+   "description": "Otsu 全局阈值二值化。输入场景：噪声场景。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"阈值分割（噪声场景）\nOpenCV 图像处理示例。Otsu 全局阈值二值化。\n合成输入图像自包含，运行后在当前目录生成 cv_threshold__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nrng = np.random.default_rng(13)\nimg = rng.integers(60, 200, (360, 480), dtype=np.uint8)\ncv2.circle(img, (240, 180), 110, 255, -1)\n\nblur = cv2.GaussianBlur(img, (7, 7), 0)\n_, result = cv2.threshold(blur, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)\ncv2.imwrite(\"cv_threshold__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_threshold__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-threshold-s4",
+   "name": "threshold_s4.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "阈值分割（棋盘场景）",
+   "description": "Otsu 全局阈值二值化。输入场景：棋盘场景。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"阈值分割（棋盘场景）\nOpenCV 图像处理示例。Otsu 全局阈值二值化。\n合成输入图像自包含，运行后在当前目录生成 cv_threshold__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.kron(np.indices((9, 12)).sum(0) % 2, np.uint8(255))[:360, :480].astype(np.uint8) * 0\nimg[::40, :] = 120; img[:, ::40] = 120\ncv2.rectangle(img, (100, 100), (380, 260), 255, -1)\n\nblur = cv2.GaussianBlur(img, (7, 7), 0)\n_, result = cv2.threshold(blur, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)\ncv2.imwrite(\"cv_threshold__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_threshold__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-threshold-s5",
+   "name": "threshold_s5.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "阈值分割（混合场景）",
+   "description": "Otsu 全局阈值二值化。输入场景：混合场景。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"阈值分割（混合场景）\nOpenCV 图像处理示例。Otsu 全局阈值二值化。\n合成输入图像自包含，运行后在当前目录生成 cv_threshold__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nrng = np.random.default_rng(15)\nimg = rng.integers(40, 120, (360, 480), dtype=np.uint8)\ncv2.ellipse(img, (240, 180), (180, 90), 25, 0, 360, 230, -1)\ncv2.rectangle(img, (60, 60), (160, 160), 255, 4)\n\nblur = cv2.GaussianBlur(img, (7, 7), 0)\n_, result = cv2.threshold(blur, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)\ncv2.imwrite(\"cv_threshold__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_threshold__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-threshold-s6",
+   "name": "threshold_s6.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "阈值分割（点阵圆环）",
+   "description": "Otsu 全局阈值二值化。输入场景：点阵圆环。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"阈值分割（点阵圆环）\nOpenCV 图像处理示例。Otsu 全局阈值二值化。\n合成输入图像自包含，运行后在当前目录生成 cv_threshold__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.zeros((360, 480), dtype=np.uint8)\nfor r in range(40, 200, 24):\n    cv2.circle(img, (240, 180), r, 200, 3)\nfor a in range(0, 360, 15):\n    cv2.circle(img, (int(240 + 120 * np.cos(np.radians(a))), int(180 + 120 * np.sin(np.radians(a)))), 5, 255, -1)\n\nblur = cv2.GaussianBlur(img, (7, 7), 0)\n_, result = cv2.threshold(blur, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)\ncv2.imwrite(\"cv_threshold__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_threshold__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-threshold-s7",
+   "name": "threshold_s7.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "阈值分割（竖条纹）",
+   "description": "Otsu 全局阈值二值化。输入场景：竖条纹。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"阈值分割（竖条纹）\nOpenCV 图像处理示例。Otsu 全局阈值二值化。\n合成输入图像自包含，运行后在当前目录生成 cv_threshold__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.zeros((360, 480), dtype=np.uint8)\nfor x in range(0, 480, 24):\n    cv2.rectangle(img, (x, 0), (x + 10, 360), 220, -1)\ncv2.circle(img, (240, 180), 70, 90, -1)\n\nblur = cv2.GaussianBlur(img, (7, 7), 0)\n_, result = cv2.threshold(blur, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)\ncv2.imwrite(\"cv_threshold__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_threshold__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-threshold-s8",
+   "name": "threshold_s8.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "阈值分割（大字报）",
+   "description": "Otsu 全局阈值二值化。输入场景：大字报。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"阈值分割（大字报）\nOpenCV 图像处理示例。Otsu 全局阈值二值化。\n合成输入图像自包含，运行后在当前目录生成 cv_threshold__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.zeros((360, 480), dtype=np.uint8)\ncv2.putText(img, \"OPEN CV\", (40, 210), cv2.FONT_HERSHEY_SIMPLEX, 2.6, 220, 12)\ncv2.rectangle(img, (30, 30), (450, 330), 160, 5)\n\nblur = cv2.GaussianBlur(img, (7, 7), 0)\n_, result = cv2.threshold(blur, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)\ncv2.imwrite(\"cv_threshold__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_threshold__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-adaptive-s1",
+   "name": "adaptive_s1.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "自适应阈值（几何场景）",
+   "description": "局部均值自适应阈值（光照不均友好）。输入场景：几何场景。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"自适应阈值（几何场景）\nOpenCV 图像处理示例。局部均值自适应阈值（光照不均友好）。\n合成输入图像自包含，运行后在当前目录生成 cv_adaptive__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.zeros((360, 480), dtype=np.uint8)\ncv2.rectangle(img, (60, 60), (200, 200), 200, -1)\ncv2.circle(img, (340, 140), 80, 140, -1)\ncv2.line(img, (40, 300), (440, 320), 220, 6)\n\nblur = cv2.medianBlur(img, 5)\nresult = cv2.adaptiveThreshold(blur, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 21, 6)\ncv2.imwrite(\"cv_adaptive__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_adaptive__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-adaptive-s2",
+   "name": "adaptive_s2.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "自适应阈值（渐变场景）",
+   "description": "局部均值自适应阈值（光照不均友好）。输入场景：渐变场景。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"自适应阈值（渐变场景）\nOpenCV 图像处理示例。局部均值自适应阈值（光照不均友好）。\n合成输入图像自包含，运行后在当前目录生成 cv_adaptive__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.tile(np.linspace(30, 220, 480, dtype=np.uint8), (360, 1))\ncv2.putText(img, \"CV\", (150, 240), cv2.FONT_HERSHEY_SIMPLEX, 4, 255, 12)\n\nblur = cv2.medianBlur(img, 5)\nresult = cv2.adaptiveThreshold(blur, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 21, 6)\ncv2.imwrite(\"cv_adaptive__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_adaptive__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-adaptive-s3",
+   "name": "adaptive_s3.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "自适应阈值（噪声场景）",
+   "description": "局部均值自适应阈值（光照不均友好）。输入场景：噪声场景。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"自适应阈值（噪声场景）\nOpenCV 图像处理示例。局部均值自适应阈值（光照不均友好）。\n合成输入图像自包含，运行后在当前目录生成 cv_adaptive__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nrng = np.random.default_rng(13)\nimg = rng.integers(60, 200, (360, 480), dtype=np.uint8)\ncv2.circle(img, (240, 180), 110, 255, -1)\n\nblur = cv2.medianBlur(img, 5)\nresult = cv2.adaptiveThreshold(blur, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 21, 6)\ncv2.imwrite(\"cv_adaptive__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_adaptive__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-adaptive-s4",
+   "name": "adaptive_s4.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "自适应阈值（棋盘场景）",
+   "description": "局部均值自适应阈值（光照不均友好）。输入场景：棋盘场景。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"自适应阈值（棋盘场景）\nOpenCV 图像处理示例。局部均值自适应阈值（光照不均友好）。\n合成输入图像自包含，运行后在当前目录生成 cv_adaptive__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.kron(np.indices((9, 12)).sum(0) % 2, np.uint8(255))[:360, :480].astype(np.uint8) * 0\nimg[::40, :] = 120; img[:, ::40] = 120\ncv2.rectangle(img, (100, 100), (380, 260), 255, -1)\n\nblur = cv2.medianBlur(img, 5)\nresult = cv2.adaptiveThreshold(blur, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 21, 6)\ncv2.imwrite(\"cv_adaptive__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_adaptive__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-adaptive-s5",
+   "name": "adaptive_s5.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "自适应阈值（混合场景）",
+   "description": "局部均值自适应阈值（光照不均友好）。输入场景：混合场景。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"自适应阈值（混合场景）\nOpenCV 图像处理示例。局部均值自适应阈值（光照不均友好）。\n合成输入图像自包含，运行后在当前目录生成 cv_adaptive__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nrng = np.random.default_rng(15)\nimg = rng.integers(40, 120, (360, 480), dtype=np.uint8)\ncv2.ellipse(img, (240, 180), (180, 90), 25, 0, 360, 230, -1)\ncv2.rectangle(img, (60, 60), (160, 160), 255, 4)\n\nblur = cv2.medianBlur(img, 5)\nresult = cv2.adaptiveThreshold(blur, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 21, 6)\ncv2.imwrite(\"cv_adaptive__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_adaptive__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-adaptive-s6",
+   "name": "adaptive_s6.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "自适应阈值（点阵圆环）",
+   "description": "局部均值自适应阈值（光照不均友好）。输入场景：点阵圆环。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"自适应阈值（点阵圆环）\nOpenCV 图像处理示例。局部均值自适应阈值（光照不均友好）。\n合成输入图像自包含，运行后在当前目录生成 cv_adaptive__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.zeros((360, 480), dtype=np.uint8)\nfor r in range(40, 200, 24):\n    cv2.circle(img, (240, 180), r, 200, 3)\nfor a in range(0, 360, 15):\n    cv2.circle(img, (int(240 + 120 * np.cos(np.radians(a))), int(180 + 120 * np.sin(np.radians(a)))), 5, 255, -1)\n\nblur = cv2.medianBlur(img, 5)\nresult = cv2.adaptiveThreshold(blur, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 21, 6)\ncv2.imwrite(\"cv_adaptive__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_adaptive__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-adaptive-s7",
+   "name": "adaptive_s7.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "自适应阈值（竖条纹）",
+   "description": "局部均值自适应阈值（光照不均友好）。输入场景：竖条纹。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"自适应阈值（竖条纹）\nOpenCV 图像处理示例。局部均值自适应阈值（光照不均友好）。\n合成输入图像自包含，运行后在当前目录生成 cv_adaptive__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.zeros((360, 480), dtype=np.uint8)\nfor x in range(0, 480, 24):\n    cv2.rectangle(img, (x, 0), (x + 10, 360), 220, -1)\ncv2.circle(img, (240, 180), 70, 90, -1)\n\nblur = cv2.medianBlur(img, 5)\nresult = cv2.adaptiveThreshold(blur, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 21, 6)\ncv2.imwrite(\"cv_adaptive__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_adaptive__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-adaptive-s8",
+   "name": "adaptive_s8.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "自适应阈值（大字报）",
+   "description": "局部均值自适应阈值（光照不均友好）。输入场景：大字报。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"自适应阈值（大字报）\nOpenCV 图像处理示例。局部均值自适应阈值（光照不均友好）。\n合成输入图像自包含，运行后在当前目录生成 cv_adaptive__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.zeros((360, 480), dtype=np.uint8)\ncv2.putText(img, \"OPEN CV\", (40, 210), cv2.FONT_HERSHEY_SIMPLEX, 2.6, 220, 12)\ncv2.rectangle(img, (30, 30), (450, 330), 160, 5)\n\nblur = cv2.medianBlur(img, 5)\nresult = cv2.adaptiveThreshold(blur, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 21, 6)\ncv2.imwrite(\"cv_adaptive__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_adaptive__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-morph-open-s1",
+   "name": "morph-open_s1.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "形态学开运算（几何场景）",
+   "description": "腐蚀再膨胀，去小白噪点。输入场景：几何场景。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"形态学开运算（几何场景）\nOpenCV 图像处理示例。腐蚀再膨胀，去小白噪点。\n合成输入图像自包含，运行后在当前目录生成 cv_morph-open__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.zeros((360, 480), dtype=np.uint8)\ncv2.rectangle(img, (60, 60), (200, 200), 200, -1)\ncv2.circle(img, (340, 140), 80, 140, -1)\ncv2.line(img, (40, 300), (440, 320), 220, 6)\n\nkernel = np.ones(({{k}}, {{k}}), np.uint8)\nresult = cv2.morphologyEx(img, cv2.MORPH_OPEN, kernel)\ncv2.imwrite(\"cv_morph-open__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_morph-open__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-morph-open-s2",
+   "name": "morph-open_s2.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "形态学开运算（渐变场景）",
+   "description": "腐蚀再膨胀，去小白噪点。输入场景：渐变场景。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"形态学开运算（渐变场景）\nOpenCV 图像处理示例。腐蚀再膨胀，去小白噪点。\n合成输入图像自包含，运行后在当前目录生成 cv_morph-open__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.tile(np.linspace(30, 220, 480, dtype=np.uint8), (360, 1))\ncv2.putText(img, \"CV\", (150, 240), cv2.FONT_HERSHEY_SIMPLEX, 4, 255, 12)\n\nkernel = np.ones(({{k}}, {{k}}), np.uint8)\nresult = cv2.morphologyEx(img, cv2.MORPH_OPEN, kernel)\ncv2.imwrite(\"cv_morph-open__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_morph-open__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-morph-open-s3",
+   "name": "morph-open_s3.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "形态学开运算（噪声场景）",
+   "description": "腐蚀再膨胀，去小白噪点。输入场景：噪声场景。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"形态学开运算（噪声场景）\nOpenCV 图像处理示例。腐蚀再膨胀，去小白噪点。\n合成输入图像自包含，运行后在当前目录生成 cv_morph-open__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nrng = np.random.default_rng(13)\nimg = rng.integers(60, 200, (360, 480), dtype=np.uint8)\ncv2.circle(img, (240, 180), 110, 255, -1)\n\nkernel = np.ones(({{k}}, {{k}}), np.uint8)\nresult = cv2.morphologyEx(img, cv2.MORPH_OPEN, kernel)\ncv2.imwrite(\"cv_morph-open__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_morph-open__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-morph-open-s4",
+   "name": "morph-open_s4.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "形态学开运算（棋盘场景）",
+   "description": "腐蚀再膨胀，去小白噪点。输入场景：棋盘场景。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"形态学开运算（棋盘场景）\nOpenCV 图像处理示例。腐蚀再膨胀，去小白噪点。\n合成输入图像自包含，运行后在当前目录生成 cv_morph-open__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.kron(np.indices((9, 12)).sum(0) % 2, np.uint8(255))[:360, :480].astype(np.uint8) * 0\nimg[::40, :] = 120; img[:, ::40] = 120\ncv2.rectangle(img, (100, 100), (380, 260), 255, -1)\n\nkernel = np.ones(({{k}}, {{k}}), np.uint8)\nresult = cv2.morphologyEx(img, cv2.MORPH_OPEN, kernel)\ncv2.imwrite(\"cv_morph-open__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_morph-open__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-morph-open-s5",
+   "name": "morph-open_s5.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "形态学开运算（混合场景）",
+   "description": "腐蚀再膨胀，去小白噪点。输入场景：混合场景。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"形态学开运算（混合场景）\nOpenCV 图像处理示例。腐蚀再膨胀，去小白噪点。\n合成输入图像自包含，运行后在当前目录生成 cv_morph-open__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nrng = np.random.default_rng(15)\nimg = rng.integers(40, 120, (360, 480), dtype=np.uint8)\ncv2.ellipse(img, (240, 180), (180, 90), 25, 0, 360, 230, -1)\ncv2.rectangle(img, (60, 60), (160, 160), 255, 4)\n\nkernel = np.ones(({{k}}, {{k}}), np.uint8)\nresult = cv2.morphologyEx(img, cv2.MORPH_OPEN, kernel)\ncv2.imwrite(\"cv_morph-open__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_morph-open__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-morph-open-s6",
+   "name": "morph-open_s6.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "形态学开运算（点阵圆环）",
+   "description": "腐蚀再膨胀，去小白噪点。输入场景：点阵圆环。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"形态学开运算（点阵圆环）\nOpenCV 图像处理示例。腐蚀再膨胀，去小白噪点。\n合成输入图像自包含，运行后在当前目录生成 cv_morph-open__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.zeros((360, 480), dtype=np.uint8)\nfor r in range(40, 200, 24):\n    cv2.circle(img, (240, 180), r, 200, 3)\nfor a in range(0, 360, 15):\n    cv2.circle(img, (int(240 + 120 * np.cos(np.radians(a))), int(180 + 120 * np.sin(np.radians(a)))), 5, 255, -1)\n\nkernel = np.ones(({{k}}, {{k}}), np.uint8)\nresult = cv2.morphologyEx(img, cv2.MORPH_OPEN, kernel)\ncv2.imwrite(\"cv_morph-open__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_morph-open__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-morph-open-s7",
+   "name": "morph-open_s7.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "形态学开运算（竖条纹）",
+   "description": "腐蚀再膨胀，去小白噪点。输入场景：竖条纹。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"形态学开运算（竖条纹）\nOpenCV 图像处理示例。腐蚀再膨胀，去小白噪点。\n合成输入图像自包含，运行后在当前目录生成 cv_morph-open__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.zeros((360, 480), dtype=np.uint8)\nfor x in range(0, 480, 24):\n    cv2.rectangle(img, (x, 0), (x + 10, 360), 220, -1)\ncv2.circle(img, (240, 180), 70, 90, -1)\n\nkernel = np.ones(({{k}}, {{k}}), np.uint8)\nresult = cv2.morphologyEx(img, cv2.MORPH_OPEN, kernel)\ncv2.imwrite(\"cv_morph-open__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_morph-open__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-morph-open-s8",
+   "name": "morph-open_s8.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "形态学开运算（大字报）",
+   "description": "腐蚀再膨胀，去小白噪点。输入场景：大字报。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"形态学开运算（大字报）\nOpenCV 图像处理示例。腐蚀再膨胀，去小白噪点。\n合成输入图像自包含，运行后在当前目录生成 cv_morph-open__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.zeros((360, 480), dtype=np.uint8)\ncv2.putText(img, \"OPEN CV\", (40, 210), cv2.FONT_HERSHEY_SIMPLEX, 2.6, 220, 12)\ncv2.rectangle(img, (30, 30), (450, 330), 160, 5)\n\nkernel = np.ones(({{k}}, {{k}}), np.uint8)\nresult = cv2.morphologyEx(img, cv2.MORPH_OPEN, kernel)\ncv2.imwrite(\"cv_morph-open__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_morph-open__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-morph-close-s1",
+   "name": "morph-close_s1.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "形态学闭运算（几何场景）",
+   "description": "膨胀再腐蚀，补小黑洞。输入场景：几何场景。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"形态学闭运算（几何场景）\nOpenCV 图像处理示例。膨胀再腐蚀，补小黑洞。\n合成输入图像自包含，运行后在当前目录生成 cv_morph-close__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.zeros((360, 480), dtype=np.uint8)\ncv2.rectangle(img, (60, 60), (200, 200), 200, -1)\ncv2.circle(img, (340, 140), 80, 140, -1)\ncv2.line(img, (40, 300), (440, 320), 220, 6)\n\nkernel = np.ones(({{k}}, {{k}}), np.uint8)\nresult = cv2.morphologyEx(img, cv2.MORPH_CLOSE, kernel)\ncv2.imwrite(\"cv_morph-close__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_morph-close__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-morph-close-s2",
+   "name": "morph-close_s2.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "形态学闭运算（渐变场景）",
+   "description": "膨胀再腐蚀，补小黑洞。输入场景：渐变场景。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"形态学闭运算（渐变场景）\nOpenCV 图像处理示例。膨胀再腐蚀，补小黑洞。\n合成输入图像自包含，运行后在当前目录生成 cv_morph-close__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.tile(np.linspace(30, 220, 480, dtype=np.uint8), (360, 1))\ncv2.putText(img, \"CV\", (150, 240), cv2.FONT_HERSHEY_SIMPLEX, 4, 255, 12)\n\nkernel = np.ones(({{k}}, {{k}}), np.uint8)\nresult = cv2.morphologyEx(img, cv2.MORPH_CLOSE, kernel)\ncv2.imwrite(\"cv_morph-close__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_morph-close__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-morph-close-s3",
+   "name": "morph-close_s3.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "形态学闭运算（噪声场景）",
+   "description": "膨胀再腐蚀，补小黑洞。输入场景：噪声场景。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"形态学闭运算（噪声场景）\nOpenCV 图像处理示例。膨胀再腐蚀，补小黑洞。\n合成输入图像自包含，运行后在当前目录生成 cv_morph-close__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nrng = np.random.default_rng(13)\nimg = rng.integers(60, 200, (360, 480), dtype=np.uint8)\ncv2.circle(img, (240, 180), 110, 255, -1)\n\nkernel = np.ones(({{k}}, {{k}}), np.uint8)\nresult = cv2.morphologyEx(img, cv2.MORPH_CLOSE, kernel)\ncv2.imwrite(\"cv_morph-close__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_morph-close__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-morph-close-s4",
+   "name": "morph-close_s4.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "形态学闭运算（棋盘场景）",
+   "description": "膨胀再腐蚀，补小黑洞。输入场景：棋盘场景。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"形态学闭运算（棋盘场景）\nOpenCV 图像处理示例。膨胀再腐蚀，补小黑洞。\n合成输入图像自包含，运行后在当前目录生成 cv_morph-close__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.kron(np.indices((9, 12)).sum(0) % 2, np.uint8(255))[:360, :480].astype(np.uint8) * 0\nimg[::40, :] = 120; img[:, ::40] = 120\ncv2.rectangle(img, (100, 100), (380, 260), 255, -1)\n\nkernel = np.ones(({{k}}, {{k}}), np.uint8)\nresult = cv2.morphologyEx(img, cv2.MORPH_CLOSE, kernel)\ncv2.imwrite(\"cv_morph-close__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_morph-close__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-morph-close-s5",
+   "name": "morph-close_s5.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "形态学闭运算（混合场景）",
+   "description": "膨胀再腐蚀，补小黑洞。输入场景：混合场景。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"形态学闭运算（混合场景）\nOpenCV 图像处理示例。膨胀再腐蚀，补小黑洞。\n合成输入图像自包含，运行后在当前目录生成 cv_morph-close__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nrng = np.random.default_rng(15)\nimg = rng.integers(40, 120, (360, 480), dtype=np.uint8)\ncv2.ellipse(img, (240, 180), (180, 90), 25, 0, 360, 230, -1)\ncv2.rectangle(img, (60, 60), (160, 160), 255, 4)\n\nkernel = np.ones(({{k}}, {{k}}), np.uint8)\nresult = cv2.morphologyEx(img, cv2.MORPH_CLOSE, kernel)\ncv2.imwrite(\"cv_morph-close__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_morph-close__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-morph-close-s6",
+   "name": "morph-close_s6.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "形态学闭运算（点阵圆环）",
+   "description": "膨胀再腐蚀，补小黑洞。输入场景：点阵圆环。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"形态学闭运算（点阵圆环）\nOpenCV 图像处理示例。膨胀再腐蚀，补小黑洞。\n合成输入图像自包含，运行后在当前目录生成 cv_morph-close__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.zeros((360, 480), dtype=np.uint8)\nfor r in range(40, 200, 24):\n    cv2.circle(img, (240, 180), r, 200, 3)\nfor a in range(0, 360, 15):\n    cv2.circle(img, (int(240 + 120 * np.cos(np.radians(a))), int(180 + 120 * np.sin(np.radians(a)))), 5, 255, -1)\n\nkernel = np.ones(({{k}}, {{k}}), np.uint8)\nresult = cv2.morphologyEx(img, cv2.MORPH_CLOSE, kernel)\ncv2.imwrite(\"cv_morph-close__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_morph-close__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-morph-close-s7",
+   "name": "morph-close_s7.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "形态学闭运算（竖条纹）",
+   "description": "膨胀再腐蚀，补小黑洞。输入场景：竖条纹。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"形态学闭运算（竖条纹）\nOpenCV 图像处理示例。膨胀再腐蚀，补小黑洞。\n合成输入图像自包含，运行后在当前目录生成 cv_morph-close__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.zeros((360, 480), dtype=np.uint8)\nfor x in range(0, 480, 24):\n    cv2.rectangle(img, (x, 0), (x + 10, 360), 220, -1)\ncv2.circle(img, (240, 180), 70, 90, -1)\n\nkernel = np.ones(({{k}}, {{k}}), np.uint8)\nresult = cv2.morphologyEx(img, cv2.MORPH_CLOSE, kernel)\ncv2.imwrite(\"cv_morph-close__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_morph-close__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-morph-close-s8",
+   "name": "morph-close_s8.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "形态学闭运算（大字报）",
+   "description": "膨胀再腐蚀，补小黑洞。输入场景：大字报。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"形态学闭运算（大字报）\nOpenCV 图像处理示例。膨胀再腐蚀，补小黑洞。\n合成输入图像自包含，运行后在当前目录生成 cv_morph-close__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.zeros((360, 480), dtype=np.uint8)\ncv2.putText(img, \"OPEN CV\", (40, 210), cv2.FONT_HERSHEY_SIMPLEX, 2.6, 220, 12)\ncv2.rectangle(img, (30, 30), (450, 330), 160, 5)\n\nkernel = np.ones(({{k}}, {{k}}), np.uint8)\nresult = cv2.morphologyEx(img, cv2.MORPH_CLOSE, kernel)\ncv2.imwrite(\"cv_morph-close__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_morph-close__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-gradient-s1",
+   "name": "gradient_s1.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "形态学梯度（几何场景）",
+   "description": "膨胀 − 腐蚀 = 边缘带。输入场景：几何场景。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"形态学梯度（几何场景）\nOpenCV 图像处理示例。膨胀 − 腐蚀 = 边缘带。\n合成输入图像自包含，运行后在当前目录生成 cv_gradient__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.zeros((360, 480), dtype=np.uint8)\ncv2.rectangle(img, (60, 60), (200, 200), 200, -1)\ncv2.circle(img, (340, 140), 80, 140, -1)\ncv2.line(img, (40, 300), (440, 320), 220, 6)\n\nkernel = np.ones(({{k}}, {{k}}), np.uint8)\nresult = cv2.morphologyEx(img, cv2.MORPH_GRADIENT, kernel)\ncv2.imwrite(\"cv_gradient__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_gradient__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-gradient-s2",
+   "name": "gradient_s2.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "形态学梯度（渐变场景）",
+   "description": "膨胀 − 腐蚀 = 边缘带。输入场景：渐变场景。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"形态学梯度（渐变场景）\nOpenCV 图像处理示例。膨胀 − 腐蚀 = 边缘带。\n合成输入图像自包含，运行后在当前目录生成 cv_gradient__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.tile(np.linspace(30, 220, 480, dtype=np.uint8), (360, 1))\ncv2.putText(img, \"CV\", (150, 240), cv2.FONT_HERSHEY_SIMPLEX, 4, 255, 12)\n\nkernel = np.ones(({{k}}, {{k}}), np.uint8)\nresult = cv2.morphologyEx(img, cv2.MORPH_GRADIENT, kernel)\ncv2.imwrite(\"cv_gradient__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_gradient__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-gradient-s3",
+   "name": "gradient_s3.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "形态学梯度（噪声场景）",
+   "description": "膨胀 − 腐蚀 = 边缘带。输入场景：噪声场景。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"形态学梯度（噪声场景）\nOpenCV 图像处理示例。膨胀 − 腐蚀 = 边缘带。\n合成输入图像自包含，运行后在当前目录生成 cv_gradient__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nrng = np.random.default_rng(13)\nimg = rng.integers(60, 200, (360, 480), dtype=np.uint8)\ncv2.circle(img, (240, 180), 110, 255, -1)\n\nkernel = np.ones(({{k}}, {{k}}), np.uint8)\nresult = cv2.morphologyEx(img, cv2.MORPH_GRADIENT, kernel)\ncv2.imwrite(\"cv_gradient__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_gradient__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-gradient-s4",
+   "name": "gradient_s4.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "形态学梯度（棋盘场景）",
+   "description": "膨胀 − 腐蚀 = 边缘带。输入场景：棋盘场景。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"形态学梯度（棋盘场景）\nOpenCV 图像处理示例。膨胀 − 腐蚀 = 边缘带。\n合成输入图像自包含，运行后在当前目录生成 cv_gradient__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.kron(np.indices((9, 12)).sum(0) % 2, np.uint8(255))[:360, :480].astype(np.uint8) * 0\nimg[::40, :] = 120; img[:, ::40] = 120\ncv2.rectangle(img, (100, 100), (380, 260), 255, -1)\n\nkernel = np.ones(({{k}}, {{k}}), np.uint8)\nresult = cv2.morphologyEx(img, cv2.MORPH_GRADIENT, kernel)\ncv2.imwrite(\"cv_gradient__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_gradient__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-gradient-s5",
+   "name": "gradient_s5.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "形态学梯度（混合场景）",
+   "description": "膨胀 − 腐蚀 = 边缘带。输入场景：混合场景。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"形态学梯度（混合场景）\nOpenCV 图像处理示例。膨胀 − 腐蚀 = 边缘带。\n合成输入图像自包含，运行后在当前目录生成 cv_gradient__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nrng = np.random.default_rng(15)\nimg = rng.integers(40, 120, (360, 480), dtype=np.uint8)\ncv2.ellipse(img, (240, 180), (180, 90), 25, 0, 360, 230, -1)\ncv2.rectangle(img, (60, 60), (160, 160), 255, 4)\n\nkernel = np.ones(({{k}}, {{k}}), np.uint8)\nresult = cv2.morphologyEx(img, cv2.MORPH_GRADIENT, kernel)\ncv2.imwrite(\"cv_gradient__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_gradient__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-gradient-s6",
+   "name": "gradient_s6.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "形态学梯度（点阵圆环）",
+   "description": "膨胀 − 腐蚀 = 边缘带。输入场景：点阵圆环。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"形态学梯度（点阵圆环）\nOpenCV 图像处理示例。膨胀 − 腐蚀 = 边缘带。\n合成输入图像自包含，运行后在当前目录生成 cv_gradient__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.zeros((360, 480), dtype=np.uint8)\nfor r in range(40, 200, 24):\n    cv2.circle(img, (240, 180), r, 200, 3)\nfor a in range(0, 360, 15):\n    cv2.circle(img, (int(240 + 120 * np.cos(np.radians(a))), int(180 + 120 * np.sin(np.radians(a)))), 5, 255, -1)\n\nkernel = np.ones(({{k}}, {{k}}), np.uint8)\nresult = cv2.morphologyEx(img, cv2.MORPH_GRADIENT, kernel)\ncv2.imwrite(\"cv_gradient__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_gradient__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-gradient-s7",
+   "name": "gradient_s7.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "形态学梯度（竖条纹）",
+   "description": "膨胀 − 腐蚀 = 边缘带。输入场景：竖条纹。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"形态学梯度（竖条纹）\nOpenCV 图像处理示例。膨胀 − 腐蚀 = 边缘带。\n合成输入图像自包含，运行后在当前目录生成 cv_gradient__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.zeros((360, 480), dtype=np.uint8)\nfor x in range(0, 480, 24):\n    cv2.rectangle(img, (x, 0), (x + 10, 360), 220, -1)\ncv2.circle(img, (240, 180), 70, 90, -1)\n\nkernel = np.ones(({{k}}, {{k}}), np.uint8)\nresult = cv2.morphologyEx(img, cv2.MORPH_GRADIENT, kernel)\ncv2.imwrite(\"cv_gradient__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_gradient__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-gradient-s8",
+   "name": "gradient_s8.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "形态学梯度（大字报）",
+   "description": "膨胀 − 腐蚀 = 边缘带。输入场景：大字报。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"形态学梯度（大字报）\nOpenCV 图像处理示例。膨胀 − 腐蚀 = 边缘带。\n合成输入图像自包含，运行后在当前目录生成 cv_gradient__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.zeros((360, 480), dtype=np.uint8)\ncv2.putText(img, \"OPEN CV\", (40, 210), cv2.FONT_HERSHEY_SIMPLEX, 2.6, 220, 12)\ncv2.rectangle(img, (30, 30), (450, 330), 160, 5)\n\nkernel = np.ones(({{k}}, {{k}}), np.uint8)\nresult = cv2.morphologyEx(img, cv2.MORPH_GRADIENT, kernel)\ncv2.imwrite(\"cv_gradient__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_gradient__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-sobel-s1",
+   "name": "sobel_s1.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "Sobel 梯度（几何场景）",
+   "description": "x/y 方向梯度合成幅值。输入场景：几何场景。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"Sobel 梯度（几何场景）\nOpenCV 图像处理示例。x/y 方向梯度合成幅值。\n合成输入图像自包含，运行后在当前目录生成 cv_sobel__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.zeros((360, 480), dtype=np.uint8)\ncv2.rectangle(img, (60, 60), (200, 200), 200, -1)\ncv2.circle(img, (340, 140), 80, 140, -1)\ncv2.line(img, (40, 300), (440, 320), 220, 6)\n\ngx = cv2.Sobel(img, cv2.CV_64F, 1, 0, ksize=3)\ngy = cv2.Sobel(img, cv2.CV_64F, 0, 1, ksize=3)\nresult = np.clip(np.hypot(gx, gy), 0, 255).astype(np.uint8)\ncv2.imwrite(\"cv_sobel__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_sobel__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-sobel-s2",
+   "name": "sobel_s2.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "Sobel 梯度（渐变场景）",
+   "description": "x/y 方向梯度合成幅值。输入场景：渐变场景。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"Sobel 梯度（渐变场景）\nOpenCV 图像处理示例。x/y 方向梯度合成幅值。\n合成输入图像自包含，运行后在当前目录生成 cv_sobel__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.tile(np.linspace(30, 220, 480, dtype=np.uint8), (360, 1))\ncv2.putText(img, \"CV\", (150, 240), cv2.FONT_HERSHEY_SIMPLEX, 4, 255, 12)\n\ngx = cv2.Sobel(img, cv2.CV_64F, 1, 0, ksize=3)\ngy = cv2.Sobel(img, cv2.CV_64F, 0, 1, ksize=3)\nresult = np.clip(np.hypot(gx, gy), 0, 255).astype(np.uint8)\ncv2.imwrite(\"cv_sobel__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_sobel__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-sobel-s3",
+   "name": "sobel_s3.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "Sobel 梯度（噪声场景）",
+   "description": "x/y 方向梯度合成幅值。输入场景：噪声场景。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"Sobel 梯度（噪声场景）\nOpenCV 图像处理示例。x/y 方向梯度合成幅值。\n合成输入图像自包含，运行后在当前目录生成 cv_sobel__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nrng = np.random.default_rng(13)\nimg = rng.integers(60, 200, (360, 480), dtype=np.uint8)\ncv2.circle(img, (240, 180), 110, 255, -1)\n\ngx = cv2.Sobel(img, cv2.CV_64F, 1, 0, ksize=3)\ngy = cv2.Sobel(img, cv2.CV_64F, 0, 1, ksize=3)\nresult = np.clip(np.hypot(gx, gy), 0, 255).astype(np.uint8)\ncv2.imwrite(\"cv_sobel__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_sobel__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-sobel-s4",
+   "name": "sobel_s4.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "Sobel 梯度（棋盘场景）",
+   "description": "x/y 方向梯度合成幅值。输入场景：棋盘场景。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"Sobel 梯度（棋盘场景）\nOpenCV 图像处理示例。x/y 方向梯度合成幅值。\n合成输入图像自包含，运行后在当前目录生成 cv_sobel__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.kron(np.indices((9, 12)).sum(0) % 2, np.uint8(255))[:360, :480].astype(np.uint8) * 0\nimg[::40, :] = 120; img[:, ::40] = 120\ncv2.rectangle(img, (100, 100), (380, 260), 255, -1)\n\ngx = cv2.Sobel(img, cv2.CV_64F, 1, 0, ksize=3)\ngy = cv2.Sobel(img, cv2.CV_64F, 0, 1, ksize=3)\nresult = np.clip(np.hypot(gx, gy), 0, 255).astype(np.uint8)\ncv2.imwrite(\"cv_sobel__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_sobel__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-sobel-s5",
+   "name": "sobel_s5.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "Sobel 梯度（混合场景）",
+   "description": "x/y 方向梯度合成幅值。输入场景：混合场景。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"Sobel 梯度（混合场景）\nOpenCV 图像处理示例。x/y 方向梯度合成幅值。\n合成输入图像自包含，运行后在当前目录生成 cv_sobel__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nrng = np.random.default_rng(15)\nimg = rng.integers(40, 120, (360, 480), dtype=np.uint8)\ncv2.ellipse(img, (240, 180), (180, 90), 25, 0, 360, 230, -1)\ncv2.rectangle(img, (60, 60), (160, 160), 255, 4)\n\ngx = cv2.Sobel(img, cv2.CV_64F, 1, 0, ksize=3)\ngy = cv2.Sobel(img, cv2.CV_64F, 0, 1, ksize=3)\nresult = np.clip(np.hypot(gx, gy), 0, 255).astype(np.uint8)\ncv2.imwrite(\"cv_sobel__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_sobel__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-sobel-s6",
+   "name": "sobel_s6.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "Sobel 梯度（点阵圆环）",
+   "description": "x/y 方向梯度合成幅值。输入场景：点阵圆环。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"Sobel 梯度（点阵圆环）\nOpenCV 图像处理示例。x/y 方向梯度合成幅值。\n合成输入图像自包含，运行后在当前目录生成 cv_sobel__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.zeros((360, 480), dtype=np.uint8)\nfor r in range(40, 200, 24):\n    cv2.circle(img, (240, 180), r, 200, 3)\nfor a in range(0, 360, 15):\n    cv2.circle(img, (int(240 + 120 * np.cos(np.radians(a))), int(180 + 120 * np.sin(np.radians(a)))), 5, 255, -1)\n\ngx = cv2.Sobel(img, cv2.CV_64F, 1, 0, ksize=3)\ngy = cv2.Sobel(img, cv2.CV_64F, 0, 1, ksize=3)\nresult = np.clip(np.hypot(gx, gy), 0, 255).astype(np.uint8)\ncv2.imwrite(\"cv_sobel__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_sobel__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-sobel-s7",
+   "name": "sobel_s7.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "Sobel 梯度（竖条纹）",
+   "description": "x/y 方向梯度合成幅值。输入场景：竖条纹。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"Sobel 梯度（竖条纹）\nOpenCV 图像处理示例。x/y 方向梯度合成幅值。\n合成输入图像自包含，运行后在当前目录生成 cv_sobel__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.zeros((360, 480), dtype=np.uint8)\nfor x in range(0, 480, 24):\n    cv2.rectangle(img, (x, 0), (x + 10, 360), 220, -1)\ncv2.circle(img, (240, 180), 70, 90, -1)\n\ngx = cv2.Sobel(img, cv2.CV_64F, 1, 0, ksize=3)\ngy = cv2.Sobel(img, cv2.CV_64F, 0, 1, ksize=3)\nresult = np.clip(np.hypot(gx, gy), 0, 255).astype(np.uint8)\ncv2.imwrite(\"cv_sobel__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_sobel__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-sobel-s8",
+   "name": "sobel_s8.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "Sobel 梯度（大字报）",
+   "description": "x/y 方向梯度合成幅值。输入场景：大字报。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"Sobel 梯度（大字报）\nOpenCV 图像处理示例。x/y 方向梯度合成幅值。\n合成输入图像自包含，运行后在当前目录生成 cv_sobel__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.zeros((360, 480), dtype=np.uint8)\ncv2.putText(img, \"OPEN CV\", (40, 210), cv2.FONT_HERSHEY_SIMPLEX, 2.6, 220, 12)\ncv2.rectangle(img, (30, 30), (450, 330), 160, 5)\n\ngx = cv2.Sobel(img, cv2.CV_64F, 1, 0, ksize=3)\ngy = cv2.Sobel(img, cv2.CV_64F, 0, 1, ksize=3)\nresult = np.clip(np.hypot(gx, gy), 0, 255).astype(np.uint8)\ncv2.imwrite(\"cv_sobel__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_sobel__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-laplacian-s1",
+   "name": "laplacian_s1.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "Laplacian 锐边（几何场景）",
+   "description": "二阶导数边缘响应。输入场景：几何场景。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"Laplacian 锐边（几何场景）\nOpenCV 图像处理示例。二阶导数边缘响应。\n合成输入图像自包含，运行后在当前目录生成 cv_laplacian__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.zeros((360, 480), dtype=np.uint8)\ncv2.rectangle(img, (60, 60), (200, 200), 200, -1)\ncv2.circle(img, (340, 140), 80, 140, -1)\ncv2.line(img, (40, 300), (440, 320), 220, 6)\n\nblur = cv2.GaussianBlur(img, (3, 3), 0)\nresult = np.clip(np.abs(cv2.Laplacian(blur, cv2.CV_64F)), 0, 255).astype(np.uint8)\ncv2.imwrite(\"cv_laplacian__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_laplacian__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-laplacian-s2",
+   "name": "laplacian_s2.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "Laplacian 锐边（渐变场景）",
+   "description": "二阶导数边缘响应。输入场景：渐变场景。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"Laplacian 锐边（渐变场景）\nOpenCV 图像处理示例。二阶导数边缘响应。\n合成输入图像自包含，运行后在当前目录生成 cv_laplacian__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.tile(np.linspace(30, 220, 480, dtype=np.uint8), (360, 1))\ncv2.putText(img, \"CV\", (150, 240), cv2.FONT_HERSHEY_SIMPLEX, 4, 255, 12)\n\nblur = cv2.GaussianBlur(img, (3, 3), 0)\nresult = np.clip(np.abs(cv2.Laplacian(blur, cv2.CV_64F)), 0, 255).astype(np.uint8)\ncv2.imwrite(\"cv_laplacian__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_laplacian__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-laplacian-s3",
+   "name": "laplacian_s3.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "Laplacian 锐边（噪声场景）",
+   "description": "二阶导数边缘响应。输入场景：噪声场景。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"Laplacian 锐边（噪声场景）\nOpenCV 图像处理示例。二阶导数边缘响应。\n合成输入图像自包含，运行后在当前目录生成 cv_laplacian__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nrng = np.random.default_rng(13)\nimg = rng.integers(60, 200, (360, 480), dtype=np.uint8)\ncv2.circle(img, (240, 180), 110, 255, -1)\n\nblur = cv2.GaussianBlur(img, (3, 3), 0)\nresult = np.clip(np.abs(cv2.Laplacian(blur, cv2.CV_64F)), 0, 255).astype(np.uint8)\ncv2.imwrite(\"cv_laplacian__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_laplacian__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-laplacian-s4",
+   "name": "laplacian_s4.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "Laplacian 锐边（棋盘场景）",
+   "description": "二阶导数边缘响应。输入场景：棋盘场景。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"Laplacian 锐边（棋盘场景）\nOpenCV 图像处理示例。二阶导数边缘响应。\n合成输入图像自包含，运行后在当前目录生成 cv_laplacian__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.kron(np.indices((9, 12)).sum(0) % 2, np.uint8(255))[:360, :480].astype(np.uint8) * 0\nimg[::40, :] = 120; img[:, ::40] = 120\ncv2.rectangle(img, (100, 100), (380, 260), 255, -1)\n\nblur = cv2.GaussianBlur(img, (3, 3), 0)\nresult = np.clip(np.abs(cv2.Laplacian(blur, cv2.CV_64F)), 0, 255).astype(np.uint8)\ncv2.imwrite(\"cv_laplacian__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_laplacian__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-laplacian-s5",
+   "name": "laplacian_s5.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "Laplacian 锐边（混合场景）",
+   "description": "二阶导数边缘响应。输入场景：混合场景。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"Laplacian 锐边（混合场景）\nOpenCV 图像处理示例。二阶导数边缘响应。\n合成输入图像自包含，运行后在当前目录生成 cv_laplacian__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nrng = np.random.default_rng(15)\nimg = rng.integers(40, 120, (360, 480), dtype=np.uint8)\ncv2.ellipse(img, (240, 180), (180, 90), 25, 0, 360, 230, -1)\ncv2.rectangle(img, (60, 60), (160, 160), 255, 4)\n\nblur = cv2.GaussianBlur(img, (3, 3), 0)\nresult = np.clip(np.abs(cv2.Laplacian(blur, cv2.CV_64F)), 0, 255).astype(np.uint8)\ncv2.imwrite(\"cv_laplacian__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_laplacian__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-laplacian-s6",
+   "name": "laplacian_s6.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "Laplacian 锐边（点阵圆环）",
+   "description": "二阶导数边缘响应。输入场景：点阵圆环。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"Laplacian 锐边（点阵圆环）\nOpenCV 图像处理示例。二阶导数边缘响应。\n合成输入图像自包含，运行后在当前目录生成 cv_laplacian__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.zeros((360, 480), dtype=np.uint8)\nfor r in range(40, 200, 24):\n    cv2.circle(img, (240, 180), r, 200, 3)\nfor a in range(0, 360, 15):\n    cv2.circle(img, (int(240 + 120 * np.cos(np.radians(a))), int(180 + 120 * np.sin(np.radians(a)))), 5, 255, -1)\n\nblur = cv2.GaussianBlur(img, (3, 3), 0)\nresult = np.clip(np.abs(cv2.Laplacian(blur, cv2.CV_64F)), 0, 255).astype(np.uint8)\ncv2.imwrite(\"cv_laplacian__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_laplacian__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-laplacian-s7",
+   "name": "laplacian_s7.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "Laplacian 锐边（竖条纹）",
+   "description": "二阶导数边缘响应。输入场景：竖条纹。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"Laplacian 锐边（竖条纹）\nOpenCV 图像处理示例。二阶导数边缘响应。\n合成输入图像自包含，运行后在当前目录生成 cv_laplacian__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.zeros((360, 480), dtype=np.uint8)\nfor x in range(0, 480, 24):\n    cv2.rectangle(img, (x, 0), (x + 10, 360), 220, -1)\ncv2.circle(img, (240, 180), 70, 90, -1)\n\nblur = cv2.GaussianBlur(img, (3, 3), 0)\nresult = np.clip(np.abs(cv2.Laplacian(blur, cv2.CV_64F)), 0, 255).astype(np.uint8)\ncv2.imwrite(\"cv_laplacian__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_laplacian__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-laplacian-s8",
+   "name": "laplacian_s8.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "Laplacian 锐边（大字报）",
+   "description": "二阶导数边缘响应。输入场景：大字报。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"Laplacian 锐边（大字报）\nOpenCV 图像处理示例。二阶导数边缘响应。\n合成输入图像自包含，运行后在当前目录生成 cv_laplacian__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.zeros((360, 480), dtype=np.uint8)\ncv2.putText(img, \"OPEN CV\", (40, 210), cv2.FONT_HERSHEY_SIMPLEX, 2.6, 220, 12)\ncv2.rectangle(img, (30, 30), (450, 330), 160, 5)\n\nblur = cv2.GaussianBlur(img, (3, 3), 0)\nresult = np.clip(np.abs(cv2.Laplacian(blur, cv2.CV_64F)), 0, 255).astype(np.uint8)\ncv2.imwrite(\"cv_laplacian__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_laplacian__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-blur-stack-s1",
+   "name": "blur-stack_s1.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "模糊对比（几何场景）",
+   "description": "均值/高斯/中值三种模糊并排。输入场景：几何场景。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"模糊对比（几何场景）\nOpenCV 图像处理示例。均值/高斯/中值三种模糊并排。\n合成输入图像自包含，运行后在当前目录生成 cv_blur-stack__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.zeros((360, 480), dtype=np.uint8)\ncv2.rectangle(img, (60, 60), (200, 200), 200, -1)\ncv2.circle(img, (340, 140), 80, 140, -1)\ncv2.line(img, (40, 300), (440, 320), 220, 6)\n\na = cv2.blur(img, ({{k}}, {{k}}))\nb = cv2.GaussianBlur(img, ({{k}}, {{k}}), 0)\nc = cv2.medianBlur(img, {{k}})\nresult = np.hstack([a, b, c])\ncv2.imwrite(\"cv_blur-stack__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_blur-stack__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-blur-stack-s2",
+   "name": "blur-stack_s2.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "模糊对比（渐变场景）",
+   "description": "均值/高斯/中值三种模糊并排。输入场景：渐变场景。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"模糊对比（渐变场景）\nOpenCV 图像处理示例。均值/高斯/中值三种模糊并排。\n合成输入图像自包含，运行后在当前目录生成 cv_blur-stack__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.tile(np.linspace(30, 220, 480, dtype=np.uint8), (360, 1))\ncv2.putText(img, \"CV\", (150, 240), cv2.FONT_HERSHEY_SIMPLEX, 4, 255, 12)\n\na = cv2.blur(img, ({{k}}, {{k}}))\nb = cv2.GaussianBlur(img, ({{k}}, {{k}}), 0)\nc = cv2.medianBlur(img, {{k}})\nresult = np.hstack([a, b, c])\ncv2.imwrite(\"cv_blur-stack__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_blur-stack__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-blur-stack-s3",
+   "name": "blur-stack_s3.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "模糊对比（噪声场景）",
+   "description": "均值/高斯/中值三种模糊并排。输入场景：噪声场景。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"模糊对比（噪声场景）\nOpenCV 图像处理示例。均值/高斯/中值三种模糊并排。\n合成输入图像自包含，运行后在当前目录生成 cv_blur-stack__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nrng = np.random.default_rng(13)\nimg = rng.integers(60, 200, (360, 480), dtype=np.uint8)\ncv2.circle(img, (240, 180), 110, 255, -1)\n\na = cv2.blur(img, ({{k}}, {{k}}))\nb = cv2.GaussianBlur(img, ({{k}}, {{k}}), 0)\nc = cv2.medianBlur(img, {{k}})\nresult = np.hstack([a, b, c])\ncv2.imwrite(\"cv_blur-stack__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_blur-stack__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-blur-stack-s4",
+   "name": "blur-stack_s4.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "模糊对比（棋盘场景）",
+   "description": "均值/高斯/中值三种模糊并排。输入场景：棋盘场景。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"模糊对比（棋盘场景）\nOpenCV 图像处理示例。均值/高斯/中值三种模糊并排。\n合成输入图像自包含，运行后在当前目录生成 cv_blur-stack__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.kron(np.indices((9, 12)).sum(0) % 2, np.uint8(255))[:360, :480].astype(np.uint8) * 0\nimg[::40, :] = 120; img[:, ::40] = 120\ncv2.rectangle(img, (100, 100), (380, 260), 255, -1)\n\na = cv2.blur(img, ({{k}}, {{k}}))\nb = cv2.GaussianBlur(img, ({{k}}, {{k}}), 0)\nc = cv2.medianBlur(img, {{k}})\nresult = np.hstack([a, b, c])\ncv2.imwrite(\"cv_blur-stack__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_blur-stack__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-blur-stack-s5",
+   "name": "blur-stack_s5.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "模糊对比（混合场景）",
+   "description": "均值/高斯/中值三种模糊并排。输入场景：混合场景。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"模糊对比（混合场景）\nOpenCV 图像处理示例。均值/高斯/中值三种模糊并排。\n合成输入图像自包含，运行后在当前目录生成 cv_blur-stack__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nrng = np.random.default_rng(15)\nimg = rng.integers(40, 120, (360, 480), dtype=np.uint8)\ncv2.ellipse(img, (240, 180), (180, 90), 25, 0, 360, 230, -1)\ncv2.rectangle(img, (60, 60), (160, 160), 255, 4)\n\na = cv2.blur(img, ({{k}}, {{k}}))\nb = cv2.GaussianBlur(img, ({{k}}, {{k}}), 0)\nc = cv2.medianBlur(img, {{k}})\nresult = np.hstack([a, b, c])\ncv2.imwrite(\"cv_blur-stack__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_blur-stack__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-blur-stack-s6",
+   "name": "blur-stack_s6.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "模糊对比（点阵圆环）",
+   "description": "均值/高斯/中值三种模糊并排。输入场景：点阵圆环。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"模糊对比（点阵圆环）\nOpenCV 图像处理示例。均值/高斯/中值三种模糊并排。\n合成输入图像自包含，运行后在当前目录生成 cv_blur-stack__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.zeros((360, 480), dtype=np.uint8)\nfor r in range(40, 200, 24):\n    cv2.circle(img, (240, 180), r, 200, 3)\nfor a in range(0, 360, 15):\n    cv2.circle(img, (int(240 + 120 * np.cos(np.radians(a))), int(180 + 120 * np.sin(np.radians(a)))), 5, 255, -1)\n\na = cv2.blur(img, ({{k}}, {{k}}))\nb = cv2.GaussianBlur(img, ({{k}}, {{k}}), 0)\nc = cv2.medianBlur(img, {{k}})\nresult = np.hstack([a, b, c])\ncv2.imwrite(\"cv_blur-stack__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_blur-stack__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-blur-stack-s7",
+   "name": "blur-stack_s7.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "模糊对比（竖条纹）",
+   "description": "均值/高斯/中值三种模糊并排。输入场景：竖条纹。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"模糊对比（竖条纹）\nOpenCV 图像处理示例。均值/高斯/中值三种模糊并排。\n合成输入图像自包含，运行后在当前目录生成 cv_blur-stack__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.zeros((360, 480), dtype=np.uint8)\nfor x in range(0, 480, 24):\n    cv2.rectangle(img, (x, 0), (x + 10, 360), 220, -1)\ncv2.circle(img, (240, 180), 70, 90, -1)\n\na = cv2.blur(img, ({{k}}, {{k}}))\nb = cv2.GaussianBlur(img, ({{k}}, {{k}}), 0)\nc = cv2.medianBlur(img, {{k}})\nresult = np.hstack([a, b, c])\ncv2.imwrite(\"cv_blur-stack__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_blur-stack__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-blur-stack-s8",
+   "name": "blur-stack_s8.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "模糊对比（大字报）",
+   "description": "均值/高斯/中值三种模糊并排。输入场景：大字报。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"模糊对比（大字报）\nOpenCV 图像处理示例。均值/高斯/中值三种模糊并排。\n合成输入图像自包含，运行后在当前目录生成 cv_blur-stack__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.zeros((360, 480), dtype=np.uint8)\ncv2.putText(img, \"OPEN CV\", (40, 210), cv2.FONT_HERSHEY_SIMPLEX, 2.6, 220, 12)\ncv2.rectangle(img, (30, 30), (450, 330), 160, 5)\n\na = cv2.blur(img, ({{k}}, {{k}}))\nb = cv2.GaussianBlur(img, ({{k}}, {{k}}), 0)\nc = cv2.medianBlur(img, {{k}})\nresult = np.hstack([a, b, c])\ncv2.imwrite(\"cv_blur-stack__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_blur-stack__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-sharpen-s1",
+   "name": "sharpen_s1.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "锐化滤波（几何场景）",
+   "description": "拉普拉斯混合锐化。输入场景：几何场景。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"锐化滤波（几何场景）\nOpenCV 图像处理示例。拉普拉斯混合锐化。\n合成输入图像自包含，运行后在当前目录生成 cv_sharpen__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.zeros((360, 480), dtype=np.uint8)\ncv2.rectangle(img, (60, 60), (200, 200), 200, -1)\ncv2.circle(img, (340, 140), 80, 140, -1)\ncv2.line(img, (40, 300), (440, 320), 220, 6)\n\nblur = cv2.GaussianBlur(img, (0, 0), 3)\nresult = cv2.addWeighted(img, {{w1}}, blur, -{{w2}}, 0)\ncv2.imwrite(\"cv_sharpen__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_sharpen__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-sharpen-s2",
+   "name": "sharpen_s2.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "锐化滤波（渐变场景）",
+   "description": "拉普拉斯混合锐化。输入场景：渐变场景。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"锐化滤波（渐变场景）\nOpenCV 图像处理示例。拉普拉斯混合锐化。\n合成输入图像自包含，运行后在当前目录生成 cv_sharpen__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.tile(np.linspace(30, 220, 480, dtype=np.uint8), (360, 1))\ncv2.putText(img, \"CV\", (150, 240), cv2.FONT_HERSHEY_SIMPLEX, 4, 255, 12)\n\nblur = cv2.GaussianBlur(img, (0, 0), 3)\nresult = cv2.addWeighted(img, {{w1}}, blur, -{{w2}}, 0)\ncv2.imwrite(\"cv_sharpen__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_sharpen__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-sharpen-s3",
+   "name": "sharpen_s3.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "锐化滤波（噪声场景）",
+   "description": "拉普拉斯混合锐化。输入场景：噪声场景。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"锐化滤波（噪声场景）\nOpenCV 图像处理示例。拉普拉斯混合锐化。\n合成输入图像自包含，运行后在当前目录生成 cv_sharpen__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nrng = np.random.default_rng(13)\nimg = rng.integers(60, 200, (360, 480), dtype=np.uint8)\ncv2.circle(img, (240, 180), 110, 255, -1)\n\nblur = cv2.GaussianBlur(img, (0, 0), 3)\nresult = cv2.addWeighted(img, {{w1}}, blur, -{{w2}}, 0)\ncv2.imwrite(\"cv_sharpen__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_sharpen__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-sharpen-s4",
+   "name": "sharpen_s4.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "锐化滤波（棋盘场景）",
+   "description": "拉普拉斯混合锐化。输入场景：棋盘场景。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"锐化滤波（棋盘场景）\nOpenCV 图像处理示例。拉普拉斯混合锐化。\n合成输入图像自包含，运行后在当前目录生成 cv_sharpen__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.kron(np.indices((9, 12)).sum(0) % 2, np.uint8(255))[:360, :480].astype(np.uint8) * 0\nimg[::40, :] = 120; img[:, ::40] = 120\ncv2.rectangle(img, (100, 100), (380, 260), 255, -1)\n\nblur = cv2.GaussianBlur(img, (0, 0), 3)\nresult = cv2.addWeighted(img, {{w1}}, blur, -{{w2}}, 0)\ncv2.imwrite(\"cv_sharpen__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_sharpen__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-sharpen-s5",
+   "name": "sharpen_s5.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "锐化滤波（混合场景）",
+   "description": "拉普拉斯混合锐化。输入场景：混合场景。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"锐化滤波（混合场景）\nOpenCV 图像处理示例。拉普拉斯混合锐化。\n合成输入图像自包含，运行后在当前目录生成 cv_sharpen__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nrng = np.random.default_rng(15)\nimg = rng.integers(40, 120, (360, 480), dtype=np.uint8)\ncv2.ellipse(img, (240, 180), (180, 90), 25, 0, 360, 230, -1)\ncv2.rectangle(img, (60, 60), (160, 160), 255, 4)\n\nblur = cv2.GaussianBlur(img, (0, 0), 3)\nresult = cv2.addWeighted(img, {{w1}}, blur, -{{w2}}, 0)\ncv2.imwrite(\"cv_sharpen__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_sharpen__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-sharpen-s6",
+   "name": "sharpen_s6.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "锐化滤波（点阵圆环）",
+   "description": "拉普拉斯混合锐化。输入场景：点阵圆环。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"锐化滤波（点阵圆环）\nOpenCV 图像处理示例。拉普拉斯混合锐化。\n合成输入图像自包含，运行后在当前目录生成 cv_sharpen__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.zeros((360, 480), dtype=np.uint8)\nfor r in range(40, 200, 24):\n    cv2.circle(img, (240, 180), r, 200, 3)\nfor a in range(0, 360, 15):\n    cv2.circle(img, (int(240 + 120 * np.cos(np.radians(a))), int(180 + 120 * np.sin(np.radians(a)))), 5, 255, -1)\n\nblur = cv2.GaussianBlur(img, (0, 0), 3)\nresult = cv2.addWeighted(img, {{w1}}, blur, -{{w2}}, 0)\ncv2.imwrite(\"cv_sharpen__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_sharpen__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-sharpen-s7",
+   "name": "sharpen_s7.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "锐化滤波（竖条纹）",
+   "description": "拉普拉斯混合锐化。输入场景：竖条纹。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"锐化滤波（竖条纹）\nOpenCV 图像处理示例。拉普拉斯混合锐化。\n合成输入图像自包含，运行后在当前目录生成 cv_sharpen__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.zeros((360, 480), dtype=np.uint8)\nfor x in range(0, 480, 24):\n    cv2.rectangle(img, (x, 0), (x + 10, 360), 220, -1)\ncv2.circle(img, (240, 180), 70, 90, -1)\n\nblur = cv2.GaussianBlur(img, (0, 0), 3)\nresult = cv2.addWeighted(img, {{w1}}, blur, -{{w2}}, 0)\ncv2.imwrite(\"cv_sharpen__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_sharpen__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-sharpen-s8",
+   "name": "sharpen_s8.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "锐化滤波（大字报）",
+   "description": "拉普拉斯混合锐化。输入场景：大字报。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"锐化滤波（大字报）\nOpenCV 图像处理示例。拉普拉斯混合锐化。\n合成输入图像自包含，运行后在当前目录生成 cv_sharpen__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.zeros((360, 480), dtype=np.uint8)\ncv2.putText(img, \"OPEN CV\", (40, 210), cv2.FONT_HERSHEY_SIMPLEX, 2.6, 220, 12)\ncv2.rectangle(img, (30, 30), (450, 330), 160, 5)\n\nblur = cv2.GaussianBlur(img, (0, 0), 3)\nresult = cv2.addWeighted(img, {{w1}}, blur, -{{w2}}, 0)\ncv2.imwrite(\"cv_sharpen__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_sharpen__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-equalize-s1",
+   "name": "equalize_s1.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "直方图均衡（几何场景）",
+   "description": "对比度均衡（CLAHE 局部版）。输入场景：几何场景。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"直方图均衡（几何场景）\nOpenCV 图像处理示例。对比度均衡（CLAHE 局部版）。\n合成输入图像自包含，运行后在当前目录生成 cv_equalize__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.zeros((360, 480), dtype=np.uint8)\ncv2.rectangle(img, (60, 60), (200, 200), 200, -1)\ncv2.circle(img, (340, 140), 80, 140, -1)\ncv2.line(img, (40, 300), (440, 320), 220, 6)\n\nclahe = cv2.createCLAHE(clipLimit={{clip}}, tileGridSize=(8, 8))\nresult = clahe.apply(img)\ncv2.imwrite(\"cv_equalize__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_equalize__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-equalize-s2",
+   "name": "equalize_s2.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "直方图均衡（渐变场景）",
+   "description": "对比度均衡（CLAHE 局部版）。输入场景：渐变场景。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"直方图均衡（渐变场景）\nOpenCV 图像处理示例。对比度均衡（CLAHE 局部版）。\n合成输入图像自包含，运行后在当前目录生成 cv_equalize__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.tile(np.linspace(30, 220, 480, dtype=np.uint8), (360, 1))\ncv2.putText(img, \"CV\", (150, 240), cv2.FONT_HERSHEY_SIMPLEX, 4, 255, 12)\n\nclahe = cv2.createCLAHE(clipLimit={{clip}}, tileGridSize=(8, 8))\nresult = clahe.apply(img)\ncv2.imwrite(\"cv_equalize__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_equalize__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-equalize-s3",
+   "name": "equalize_s3.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "直方图均衡（噪声场景）",
+   "description": "对比度均衡（CLAHE 局部版）。输入场景：噪声场景。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"直方图均衡（噪声场景）\nOpenCV 图像处理示例。对比度均衡（CLAHE 局部版）。\n合成输入图像自包含，运行后在当前目录生成 cv_equalize__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nrng = np.random.default_rng(13)\nimg = rng.integers(60, 200, (360, 480), dtype=np.uint8)\ncv2.circle(img, (240, 180), 110, 255, -1)\n\nclahe = cv2.createCLAHE(clipLimit={{clip}}, tileGridSize=(8, 8))\nresult = clahe.apply(img)\ncv2.imwrite(\"cv_equalize__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_equalize__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-equalize-s4",
+   "name": "equalize_s4.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "直方图均衡（棋盘场景）",
+   "description": "对比度均衡（CLAHE 局部版）。输入场景：棋盘场景。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"直方图均衡（棋盘场景）\nOpenCV 图像处理示例。对比度均衡（CLAHE 局部版）。\n合成输入图像自包含，运行后在当前目录生成 cv_equalize__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.kron(np.indices((9, 12)).sum(0) % 2, np.uint8(255))[:360, :480].astype(np.uint8) * 0\nimg[::40, :] = 120; img[:, ::40] = 120\ncv2.rectangle(img, (100, 100), (380, 260), 255, -1)\n\nclahe = cv2.createCLAHE(clipLimit={{clip}}, tileGridSize=(8, 8))\nresult = clahe.apply(img)\ncv2.imwrite(\"cv_equalize__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_equalize__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-equalize-s5",
+   "name": "equalize_s5.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "直方图均衡（混合场景）",
+   "description": "对比度均衡（CLAHE 局部版）。输入场景：混合场景。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"直方图均衡（混合场景）\nOpenCV 图像处理示例。对比度均衡（CLAHE 局部版）。\n合成输入图像自包含，运行后在当前目录生成 cv_equalize__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nrng = np.random.default_rng(15)\nimg = rng.integers(40, 120, (360, 480), dtype=np.uint8)\ncv2.ellipse(img, (240, 180), (180, 90), 25, 0, 360, 230, -1)\ncv2.rectangle(img, (60, 60), (160, 160), 255, 4)\n\nclahe = cv2.createCLAHE(clipLimit={{clip}}, tileGridSize=(8, 8))\nresult = clahe.apply(img)\ncv2.imwrite(\"cv_equalize__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_equalize__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-equalize-s6",
+   "name": "equalize_s6.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "直方图均衡（点阵圆环）",
+   "description": "对比度均衡（CLAHE 局部版）。输入场景：点阵圆环。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"直方图均衡（点阵圆环）\nOpenCV 图像处理示例。对比度均衡（CLAHE 局部版）。\n合成输入图像自包含，运行后在当前目录生成 cv_equalize__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.zeros((360, 480), dtype=np.uint8)\nfor r in range(40, 200, 24):\n    cv2.circle(img, (240, 180), r, 200, 3)\nfor a in range(0, 360, 15):\n    cv2.circle(img, (int(240 + 120 * np.cos(np.radians(a))), int(180 + 120 * np.sin(np.radians(a)))), 5, 255, -1)\n\nclahe = cv2.createCLAHE(clipLimit={{clip}}, tileGridSize=(8, 8))\nresult = clahe.apply(img)\ncv2.imwrite(\"cv_equalize__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_equalize__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-equalize-s7",
+   "name": "equalize_s7.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "直方图均衡（竖条纹）",
+   "description": "对比度均衡（CLAHE 局部版）。输入场景：竖条纹。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"直方图均衡（竖条纹）\nOpenCV 图像处理示例。对比度均衡（CLAHE 局部版）。\n合成输入图像自包含，运行后在当前目录生成 cv_equalize__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.zeros((360, 480), dtype=np.uint8)\nfor x in range(0, 480, 24):\n    cv2.rectangle(img, (x, 0), (x + 10, 360), 220, -1)\ncv2.circle(img, (240, 180), 70, 90, -1)\n\nclahe = cv2.createCLAHE(clipLimit={{clip}}, tileGridSize=(8, 8))\nresult = clahe.apply(img)\ncv2.imwrite(\"cv_equalize__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_equalize__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-equalize-s8",
+   "name": "equalize_s8.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "直方图均衡（大字报）",
+   "description": "对比度均衡（CLAHE 局部版）。输入场景：大字报。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"直方图均衡（大字报）\nOpenCV 图像处理示例。对比度均衡（CLAHE 局部版）。\n合成输入图像自包含，运行后在当前目录生成 cv_equalize__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.zeros((360, 480), dtype=np.uint8)\ncv2.putText(img, \"OPEN CV\", (40, 210), cv2.FONT_HERSHEY_SIMPLEX, 2.6, 220, 12)\ncv2.rectangle(img, (30, 30), (450, 330), 160, 5)\n\nclahe = cv2.createCLAHE(clipLimit={{clip}}, tileGridSize=(8, 8))\nresult = clahe.apply(img)\ncv2.imwrite(\"cv_equalize__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_equalize__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-gamma-s1",
+   "name": "gamma_s1.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "Gamma 校正（几何场景）",
+   "description": "查找表法伽马亮度校正。输入场景：几何场景。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"Gamma 校正（几何场景）\nOpenCV 图像处理示例。查找表法伽马亮度校正。\n合成输入图像自包含，运行后在当前目录生成 cv_gamma__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.zeros((360, 480), dtype=np.uint8)\ncv2.rectangle(img, (60, 60), (200, 200), 200, -1)\ncv2.circle(img, (340, 140), 80, 140, -1)\ncv2.line(img, (40, 300), (440, 320), 220, 6)\n\ntable = np.array([(i / 255.0) ** {{gamma}} * 255 for i in range(256)]).astype(np.uint8)\nresult = cv2.LUT(img, table)\ncv2.imwrite(\"cv_gamma__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_gamma__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-gamma-s2",
+   "name": "gamma_s2.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "Gamma 校正（渐变场景）",
+   "description": "查找表法伽马亮度校正。输入场景：渐变场景。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"Gamma 校正（渐变场景）\nOpenCV 图像处理示例。查找表法伽马亮度校正。\n合成输入图像自包含，运行后在当前目录生成 cv_gamma__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.tile(np.linspace(30, 220, 480, dtype=np.uint8), (360, 1))\ncv2.putText(img, \"CV\", (150, 240), cv2.FONT_HERSHEY_SIMPLEX, 4, 255, 12)\n\ntable = np.array([(i / 255.0) ** {{gamma}} * 255 for i in range(256)]).astype(np.uint8)\nresult = cv2.LUT(img, table)\ncv2.imwrite(\"cv_gamma__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_gamma__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-gamma-s3",
+   "name": "gamma_s3.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "Gamma 校正（噪声场景）",
+   "description": "查找表法伽马亮度校正。输入场景：噪声场景。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"Gamma 校正（噪声场景）\nOpenCV 图像处理示例。查找表法伽马亮度校正。\n合成输入图像自包含，运行后在当前目录生成 cv_gamma__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nrng = np.random.default_rng(13)\nimg = rng.integers(60, 200, (360, 480), dtype=np.uint8)\ncv2.circle(img, (240, 180), 110, 255, -1)\n\ntable = np.array([(i / 255.0) ** {{gamma}} * 255 for i in range(256)]).astype(np.uint8)\nresult = cv2.LUT(img, table)\ncv2.imwrite(\"cv_gamma__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_gamma__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-gamma-s4",
+   "name": "gamma_s4.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "Gamma 校正（棋盘场景）",
+   "description": "查找表法伽马亮度校正。输入场景：棋盘场景。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"Gamma 校正（棋盘场景）\nOpenCV 图像处理示例。查找表法伽马亮度校正。\n合成输入图像自包含，运行后在当前目录生成 cv_gamma__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.kron(np.indices((9, 12)).sum(0) % 2, np.uint8(255))[:360, :480].astype(np.uint8) * 0\nimg[::40, :] = 120; img[:, ::40] = 120\ncv2.rectangle(img, (100, 100), (380, 260), 255, -1)\n\ntable = np.array([(i / 255.0) ** {{gamma}} * 255 for i in range(256)]).astype(np.uint8)\nresult = cv2.LUT(img, table)\ncv2.imwrite(\"cv_gamma__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_gamma__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-gamma-s5",
+   "name": "gamma_s5.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "Gamma 校正（混合场景）",
+   "description": "查找表法伽马亮度校正。输入场景：混合场景。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"Gamma 校正（混合场景）\nOpenCV 图像处理示例。查找表法伽马亮度校正。\n合成输入图像自包含，运行后在当前目录生成 cv_gamma__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nrng = np.random.default_rng(15)\nimg = rng.integers(40, 120, (360, 480), dtype=np.uint8)\ncv2.ellipse(img, (240, 180), (180, 90), 25, 0, 360, 230, -1)\ncv2.rectangle(img, (60, 60), (160, 160), 255, 4)\n\ntable = np.array([(i / 255.0) ** {{gamma}} * 255 for i in range(256)]).astype(np.uint8)\nresult = cv2.LUT(img, table)\ncv2.imwrite(\"cv_gamma__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_gamma__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-gamma-s6",
+   "name": "gamma_s6.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "Gamma 校正（点阵圆环）",
+   "description": "查找表法伽马亮度校正。输入场景：点阵圆环。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"Gamma 校正（点阵圆环）\nOpenCV 图像处理示例。查找表法伽马亮度校正。\n合成输入图像自包含，运行后在当前目录生成 cv_gamma__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.zeros((360, 480), dtype=np.uint8)\nfor r in range(40, 200, 24):\n    cv2.circle(img, (240, 180), r, 200, 3)\nfor a in range(0, 360, 15):\n    cv2.circle(img, (int(240 + 120 * np.cos(np.radians(a))), int(180 + 120 * np.sin(np.radians(a)))), 5, 255, -1)\n\ntable = np.array([(i / 255.0) ** {{gamma}} * 255 for i in range(256)]).astype(np.uint8)\nresult = cv2.LUT(img, table)\ncv2.imwrite(\"cv_gamma__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_gamma__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-gamma-s7",
+   "name": "gamma_s7.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "Gamma 校正（竖条纹）",
+   "description": "查找表法伽马亮度校正。输入场景：竖条纹。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"Gamma 校正（竖条纹）\nOpenCV 图像处理示例。查找表法伽马亮度校正。\n合成输入图像自包含，运行后在当前目录生成 cv_gamma__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.zeros((360, 480), dtype=np.uint8)\nfor x in range(0, 480, 24):\n    cv2.rectangle(img, (x, 0), (x + 10, 360), 220, -1)\ncv2.circle(img, (240, 180), 70, 90, -1)\n\ntable = np.array([(i / 255.0) ** {{gamma}} * 255 for i in range(256)]).astype(np.uint8)\nresult = cv2.LUT(img, table)\ncv2.imwrite(\"cv_gamma__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_gamma__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-gamma-s8",
+   "name": "gamma_s8.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "Gamma 校正（大字报）",
+   "description": "查找表法伽马亮度校正。输入场景：大字报。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"Gamma 校正（大字报）\nOpenCV 图像处理示例。查找表法伽马亮度校正。\n合成输入图像自包含，运行后在当前目录生成 cv_gamma__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.zeros((360, 480), dtype=np.uint8)\ncv2.putText(img, \"OPEN CV\", (40, 210), cv2.FONT_HERSHEY_SIMPLEX, 2.6, 220, 12)\ncv2.rectangle(img, (30, 30), (450, 330), 160, 5)\n\ntable = np.array([(i / 255.0) ** {{gamma}} * 255 for i in range(256)]).astype(np.uint8)\nresult = cv2.LUT(img, table)\ncv2.imwrite(\"cv_gamma__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_gamma__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-rotate-s1",
+   "name": "rotate_s1.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "仿射旋转（几何场景）",
+   "description": "以中心旋转并缩放。输入场景：几何场景。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"仿射旋转（几何场景）\nOpenCV 图像处理示例。以中心旋转并缩放。\n合成输入图像自包含，运行后在当前目录生成 cv_rotate__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.zeros((360, 480), dtype=np.uint8)\ncv2.rectangle(img, (60, 60), (200, 200), 200, -1)\ncv2.circle(img, (340, 140), 80, 140, -1)\ncv2.line(img, (40, 300), (440, 320), 220, 6)\n\nh, w = img.shape[:2]\nM = cv2.getRotationMatrix2D((w / 2, h / 2), {{angle}}, {{scale}})\nresult = cv2.warpAffine(img, M, (w, h))\ncv2.imwrite(\"cv_rotate__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_rotate__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-rotate-s2",
+   "name": "rotate_s2.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "仿射旋转（渐变场景）",
+   "description": "以中心旋转并缩放。输入场景：渐变场景。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"仿射旋转（渐变场景）\nOpenCV 图像处理示例。以中心旋转并缩放。\n合成输入图像自包含，运行后在当前目录生成 cv_rotate__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.tile(np.linspace(30, 220, 480, dtype=np.uint8), (360, 1))\ncv2.putText(img, \"CV\", (150, 240), cv2.FONT_HERSHEY_SIMPLEX, 4, 255, 12)\n\nh, w = img.shape[:2]\nM = cv2.getRotationMatrix2D((w / 2, h / 2), {{angle}}, {{scale}})\nresult = cv2.warpAffine(img, M, (w, h))\ncv2.imwrite(\"cv_rotate__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_rotate__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-rotate-s3",
+   "name": "rotate_s3.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "仿射旋转（噪声场景）",
+   "description": "以中心旋转并缩放。输入场景：噪声场景。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"仿射旋转（噪声场景）\nOpenCV 图像处理示例。以中心旋转并缩放。\n合成输入图像自包含，运行后在当前目录生成 cv_rotate__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nrng = np.random.default_rng(13)\nimg = rng.integers(60, 200, (360, 480), dtype=np.uint8)\ncv2.circle(img, (240, 180), 110, 255, -1)\n\nh, w = img.shape[:2]\nM = cv2.getRotationMatrix2D((w / 2, h / 2), {{angle}}, {{scale}})\nresult = cv2.warpAffine(img, M, (w, h))\ncv2.imwrite(\"cv_rotate__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_rotate__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-rotate-s4",
+   "name": "rotate_s4.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "仿射旋转（棋盘场景）",
+   "description": "以中心旋转并缩放。输入场景：棋盘场景。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"仿射旋转（棋盘场景）\nOpenCV 图像处理示例。以中心旋转并缩放。\n合成输入图像自包含，运行后在当前目录生成 cv_rotate__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.kron(np.indices((9, 12)).sum(0) % 2, np.uint8(255))[:360, :480].astype(np.uint8) * 0\nimg[::40, :] = 120; img[:, ::40] = 120\ncv2.rectangle(img, (100, 100), (380, 260), 255, -1)\n\nh, w = img.shape[:2]\nM = cv2.getRotationMatrix2D((w / 2, h / 2), {{angle}}, {{scale}})\nresult = cv2.warpAffine(img, M, (w, h))\ncv2.imwrite(\"cv_rotate__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_rotate__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-rotate-s5",
+   "name": "rotate_s5.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "仿射旋转（混合场景）",
+   "description": "以中心旋转并缩放。输入场景：混合场景。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"仿射旋转（混合场景）\nOpenCV 图像处理示例。以中心旋转并缩放。\n合成输入图像自包含，运行后在当前目录生成 cv_rotate__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nrng = np.random.default_rng(15)\nimg = rng.integers(40, 120, (360, 480), dtype=np.uint8)\ncv2.ellipse(img, (240, 180), (180, 90), 25, 0, 360, 230, -1)\ncv2.rectangle(img, (60, 60), (160, 160), 255, 4)\n\nh, w = img.shape[:2]\nM = cv2.getRotationMatrix2D((w / 2, h / 2), {{angle}}, {{scale}})\nresult = cv2.warpAffine(img, M, (w, h))\ncv2.imwrite(\"cv_rotate__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_rotate__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-rotate-s6",
+   "name": "rotate_s6.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "仿射旋转（点阵圆环）",
+   "description": "以中心旋转并缩放。输入场景：点阵圆环。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"仿射旋转（点阵圆环）\nOpenCV 图像处理示例。以中心旋转并缩放。\n合成输入图像自包含，运行后在当前目录生成 cv_rotate__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.zeros((360, 480), dtype=np.uint8)\nfor r in range(40, 200, 24):\n    cv2.circle(img, (240, 180), r, 200, 3)\nfor a in range(0, 360, 15):\n    cv2.circle(img, (int(240 + 120 * np.cos(np.radians(a))), int(180 + 120 * np.sin(np.radians(a)))), 5, 255, -1)\n\nh, w = img.shape[:2]\nM = cv2.getRotationMatrix2D((w / 2, h / 2), {{angle}}, {{scale}})\nresult = cv2.warpAffine(img, M, (w, h))\ncv2.imwrite(\"cv_rotate__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_rotate__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-rotate-s7",
+   "name": "rotate_s7.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "仿射旋转（竖条纹）",
+   "description": "以中心旋转并缩放。输入场景：竖条纹。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"仿射旋转（竖条纹）\nOpenCV 图像处理示例。以中心旋转并缩放。\n合成输入图像自包含，运行后在当前目录生成 cv_rotate__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.zeros((360, 480), dtype=np.uint8)\nfor x in range(0, 480, 24):\n    cv2.rectangle(img, (x, 0), (x + 10, 360), 220, -1)\ncv2.circle(img, (240, 180), 70, 90, -1)\n\nh, w = img.shape[:2]\nM = cv2.getRotationMatrix2D((w / 2, h / 2), {{angle}}, {{scale}})\nresult = cv2.warpAffine(img, M, (w, h))\ncv2.imwrite(\"cv_rotate__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_rotate__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-rotate-s8",
+   "name": "rotate_s8.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "仿射旋转（大字报）",
+   "description": "以中心旋转并缩放。输入场景：大字报。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"仿射旋转（大字报）\nOpenCV 图像处理示例。以中心旋转并缩放。\n合成输入图像自包含，运行后在当前目录生成 cv_rotate__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.zeros((360, 480), dtype=np.uint8)\ncv2.putText(img, \"OPEN CV\", (40, 210), cv2.FONT_HERSHEY_SIMPLEX, 2.6, 220, 12)\ncv2.rectangle(img, (30, 30), (450, 330), 160, 5)\n\nh, w = img.shape[:2]\nM = cv2.getRotationMatrix2D((w / 2, h / 2), {{angle}}, {{scale}})\nresult = cv2.warpAffine(img, M, (w, h))\ncv2.imwrite(\"cv_rotate__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_rotate__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-perspective-s1",
+   "name": "perspective_s1.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "透视变换（几何场景）",
+   "description": "四点透视矫正。输入场景：几何场景。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"透视变换（几何场景）\nOpenCV 图像处理示例。四点透视矫正。\n合成输入图像自包含，运行后在当前目录生成 cv_perspective__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.zeros((360, 480), dtype=np.uint8)\ncv2.rectangle(img, (60, 60), (200, 200), 200, -1)\ncv2.circle(img, (340, 140), 80, 140, -1)\ncv2.line(img, (40, 300), (440, 320), 220, 6)\n\nh, w = img.shape[:2]\nsrc = np.float32([[0, 0], [w - 1, 0], [0, h - 1], [w - 1, h - 1]])\ndst = np.float32([[{{d}}, {{d}}], [w - 1 - {{d}}, {{d}} ], [{{d}}, h - 1 - {{d}}], [w - 1 - {{d}}, h - 1 - {{d}}]])\nM = cv2.getPerspectiveTransform(src, dst)\nresult = cv2.warpPerspective(img, M, (w, h))\ncv2.imwrite(\"cv_perspective__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_perspective__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-perspective-s2",
+   "name": "perspective_s2.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "透视变换（渐变场景）",
+   "description": "四点透视矫正。输入场景：渐变场景。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"透视变换（渐变场景）\nOpenCV 图像处理示例。四点透视矫正。\n合成输入图像自包含，运行后在当前目录生成 cv_perspective__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.tile(np.linspace(30, 220, 480, dtype=np.uint8), (360, 1))\ncv2.putText(img, \"CV\", (150, 240), cv2.FONT_HERSHEY_SIMPLEX, 4, 255, 12)\n\nh, w = img.shape[:2]\nsrc = np.float32([[0, 0], [w - 1, 0], [0, h - 1], [w - 1, h - 1]])\ndst = np.float32([[{{d}}, {{d}}], [w - 1 - {{d}}, {{d}} ], [{{d}}, h - 1 - {{d}}], [w - 1 - {{d}}, h - 1 - {{d}}]])\nM = cv2.getPerspectiveTransform(src, dst)\nresult = cv2.warpPerspective(img, M, (w, h))\ncv2.imwrite(\"cv_perspective__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_perspective__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-perspective-s3",
+   "name": "perspective_s3.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "透视变换（噪声场景）",
+   "description": "四点透视矫正。输入场景：噪声场景。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"透视变换（噪声场景）\nOpenCV 图像处理示例。四点透视矫正。\n合成输入图像自包含，运行后在当前目录生成 cv_perspective__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nrng = np.random.default_rng(13)\nimg = rng.integers(60, 200, (360, 480), dtype=np.uint8)\ncv2.circle(img, (240, 180), 110, 255, -1)\n\nh, w = img.shape[:2]\nsrc = np.float32([[0, 0], [w - 1, 0], [0, h - 1], [w - 1, h - 1]])\ndst = np.float32([[{{d}}, {{d}}], [w - 1 - {{d}}, {{d}} ], [{{d}}, h - 1 - {{d}}], [w - 1 - {{d}}, h - 1 - {{d}}]])\nM = cv2.getPerspectiveTransform(src, dst)\nresult = cv2.warpPerspective(img, M, (w, h))\ncv2.imwrite(\"cv_perspective__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_perspective__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-perspective-s4",
+   "name": "perspective_s4.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "透视变换（棋盘场景）",
+   "description": "四点透视矫正。输入场景：棋盘场景。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"透视变换（棋盘场景）\nOpenCV 图像处理示例。四点透视矫正。\n合成输入图像自包含，运行后在当前目录生成 cv_perspective__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.kron(np.indices((9, 12)).sum(0) % 2, np.uint8(255))[:360, :480].astype(np.uint8) * 0\nimg[::40, :] = 120; img[:, ::40] = 120\ncv2.rectangle(img, (100, 100), (380, 260), 255, -1)\n\nh, w = img.shape[:2]\nsrc = np.float32([[0, 0], [w - 1, 0], [0, h - 1], [w - 1, h - 1]])\ndst = np.float32([[{{d}}, {{d}}], [w - 1 - {{d}}, {{d}} ], [{{d}}, h - 1 - {{d}}], [w - 1 - {{d}}, h - 1 - {{d}}]])\nM = cv2.getPerspectiveTransform(src, dst)\nresult = cv2.warpPerspective(img, M, (w, h))\ncv2.imwrite(\"cv_perspective__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_perspective__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-perspective-s5",
+   "name": "perspective_s5.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "透视变换（混合场景）",
+   "description": "四点透视矫正。输入场景：混合场景。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"透视变换（混合场景）\nOpenCV 图像处理示例。四点透视矫正。\n合成输入图像自包含，运行后在当前目录生成 cv_perspective__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nrng = np.random.default_rng(15)\nimg = rng.integers(40, 120, (360, 480), dtype=np.uint8)\ncv2.ellipse(img, (240, 180), (180, 90), 25, 0, 360, 230, -1)\ncv2.rectangle(img, (60, 60), (160, 160), 255, 4)\n\nh, w = img.shape[:2]\nsrc = np.float32([[0, 0], [w - 1, 0], [0, h - 1], [w - 1, h - 1]])\ndst = np.float32([[{{d}}, {{d}}], [w - 1 - {{d}}, {{d}} ], [{{d}}, h - 1 - {{d}}], [w - 1 - {{d}}, h - 1 - {{d}}]])\nM = cv2.getPerspectiveTransform(src, dst)\nresult = cv2.warpPerspective(img, M, (w, h))\ncv2.imwrite(\"cv_perspective__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_perspective__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-perspective-s6",
+   "name": "perspective_s6.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "透视变换（点阵圆环）",
+   "description": "四点透视矫正。输入场景：点阵圆环。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"透视变换（点阵圆环）\nOpenCV 图像处理示例。四点透视矫正。\n合成输入图像自包含，运行后在当前目录生成 cv_perspective__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.zeros((360, 480), dtype=np.uint8)\nfor r in range(40, 200, 24):\n    cv2.circle(img, (240, 180), r, 200, 3)\nfor a in range(0, 360, 15):\n    cv2.circle(img, (int(240 + 120 * np.cos(np.radians(a))), int(180 + 120 * np.sin(np.radians(a)))), 5, 255, -1)\n\nh, w = img.shape[:2]\nsrc = np.float32([[0, 0], [w - 1, 0], [0, h - 1], [w - 1, h - 1]])\ndst = np.float32([[{{d}}, {{d}}], [w - 1 - {{d}}, {{d}} ], [{{d}}, h - 1 - {{d}}], [w - 1 - {{d}}, h - 1 - {{d}}]])\nM = cv2.getPerspectiveTransform(src, dst)\nresult = cv2.warpPerspective(img, M, (w, h))\ncv2.imwrite(\"cv_perspective__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_perspective__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-perspective-s7",
+   "name": "perspective_s7.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "透视变换（竖条纹）",
+   "description": "四点透视矫正。输入场景：竖条纹。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"透视变换（竖条纹）\nOpenCV 图像处理示例。四点透视矫正。\n合成输入图像自包含，运行后在当前目录生成 cv_perspective__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.zeros((360, 480), dtype=np.uint8)\nfor x in range(0, 480, 24):\n    cv2.rectangle(img, (x, 0), (x + 10, 360), 220, -1)\ncv2.circle(img, (240, 180), 70, 90, -1)\n\nh, w = img.shape[:2]\nsrc = np.float32([[0, 0], [w - 1, 0], [0, h - 1], [w - 1, h - 1]])\ndst = np.float32([[{{d}}, {{d}}], [w - 1 - {{d}}, {{d}} ], [{{d}}, h - 1 - {{d}}], [w - 1 - {{d}}, h - 1 - {{d}}]])\nM = cv2.getPerspectiveTransform(src, dst)\nresult = cv2.warpPerspective(img, M, (w, h))\ncv2.imwrite(\"cv_perspective__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_perspective__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-perspective-s8",
+   "name": "perspective_s8.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "透视变换（大字报）",
+   "description": "四点透视矫正。输入场景：大字报。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"透视变换（大字报）\nOpenCV 图像处理示例。四点透视矫正。\n合成输入图像自包含，运行后在当前目录生成 cv_perspective__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.zeros((360, 480), dtype=np.uint8)\ncv2.putText(img, \"OPEN CV\", (40, 210), cv2.FONT_HERSHEY_SIMPLEX, 2.6, 220, 12)\ncv2.rectangle(img, (30, 30), (450, 330), 160, 5)\n\nh, w = img.shape[:2]\nsrc = np.float32([[0, 0], [w - 1, 0], [0, h - 1], [w - 1, h - 1]])\ndst = np.float32([[{{d}}, {{d}}], [w - 1 - {{d}}, {{d}} ], [{{d}}, h - 1 - {{d}}], [w - 1 - {{d}}, h - 1 - {{d}}]])\nM = cv2.getPerspectiveTransform(src, dst)\nresult = cv2.warpPerspective(img, M, (w, h))\ncv2.imwrite(\"cv_perspective__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_perspective__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-resize-pyramid-s1",
+   "name": "resize-pyramid_s1.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "缩放金字塔（几何场景）",
+   "description": "逐级缩小的高斯金字塔。输入场景：几何场景。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"缩放金字塔（几何场景）\nOpenCV 图像处理示例。逐级缩小的高斯金字塔。\n合成输入图像自包含，运行后在当前目录生成 cv_resize-pyramid__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.zeros((360, 480), dtype=np.uint8)\ncv2.rectangle(img, (60, 60), (200, 200), 200, -1)\ncv2.circle(img, (340, 140), 80, 140, -1)\ncv2.line(img, (40, 300), (440, 320), 220, 6)\n\nlevels = [img]\nfor _ in range(3):\n    levels.append(cv2.pyrDown(levels[-1]))\nresult = np.hstack([cv2.resize(l, (img.shape[1] // 4, img.shape[0] // 4)) for l in levels])\ncv2.imwrite(\"cv_resize-pyramid__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_resize-pyramid__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-resize-pyramid-s2",
+   "name": "resize-pyramid_s2.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "缩放金字塔（渐变场景）",
+   "description": "逐级缩小的高斯金字塔。输入场景：渐变场景。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"缩放金字塔（渐变场景）\nOpenCV 图像处理示例。逐级缩小的高斯金字塔。\n合成输入图像自包含，运行后在当前目录生成 cv_resize-pyramid__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.tile(np.linspace(30, 220, 480, dtype=np.uint8), (360, 1))\ncv2.putText(img, \"CV\", (150, 240), cv2.FONT_HERSHEY_SIMPLEX, 4, 255, 12)\n\nlevels = [img]\nfor _ in range(3):\n    levels.append(cv2.pyrDown(levels[-1]))\nresult = np.hstack([cv2.resize(l, (img.shape[1] // 4, img.shape[0] // 4)) for l in levels])\ncv2.imwrite(\"cv_resize-pyramid__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_resize-pyramid__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-resize-pyramid-s3",
+   "name": "resize-pyramid_s3.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "缩放金字塔（噪声场景）",
+   "description": "逐级缩小的高斯金字塔。输入场景：噪声场景。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"缩放金字塔（噪声场景）\nOpenCV 图像处理示例。逐级缩小的高斯金字塔。\n合成输入图像自包含，运行后在当前目录生成 cv_resize-pyramid__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nrng = np.random.default_rng(13)\nimg = rng.integers(60, 200, (360, 480), dtype=np.uint8)\ncv2.circle(img, (240, 180), 110, 255, -1)\n\nlevels = [img]\nfor _ in range(3):\n    levels.append(cv2.pyrDown(levels[-1]))\nresult = np.hstack([cv2.resize(l, (img.shape[1] // 4, img.shape[0] // 4)) for l in levels])\ncv2.imwrite(\"cv_resize-pyramid__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_resize-pyramid__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-resize-pyramid-s4",
+   "name": "resize-pyramid_s4.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "缩放金字塔（棋盘场景）",
+   "description": "逐级缩小的高斯金字塔。输入场景：棋盘场景。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"缩放金字塔（棋盘场景）\nOpenCV 图像处理示例。逐级缩小的高斯金字塔。\n合成输入图像自包含，运行后在当前目录生成 cv_resize-pyramid__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.kron(np.indices((9, 12)).sum(0) % 2, np.uint8(255))[:360, :480].astype(np.uint8) * 0\nimg[::40, :] = 120; img[:, ::40] = 120\ncv2.rectangle(img, (100, 100), (380, 260), 255, -1)\n\nlevels = [img]\nfor _ in range(3):\n    levels.append(cv2.pyrDown(levels[-1]))\nresult = np.hstack([cv2.resize(l, (img.shape[1] // 4, img.shape[0] // 4)) for l in levels])\ncv2.imwrite(\"cv_resize-pyramid__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_resize-pyramid__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-resize-pyramid-s5",
+   "name": "resize-pyramid_s5.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "缩放金字塔（混合场景）",
+   "description": "逐级缩小的高斯金字塔。输入场景：混合场景。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"缩放金字塔（混合场景）\nOpenCV 图像处理示例。逐级缩小的高斯金字塔。\n合成输入图像自包含，运行后在当前目录生成 cv_resize-pyramid__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nrng = np.random.default_rng(15)\nimg = rng.integers(40, 120, (360, 480), dtype=np.uint8)\ncv2.ellipse(img, (240, 180), (180, 90), 25, 0, 360, 230, -1)\ncv2.rectangle(img, (60, 60), (160, 160), 255, 4)\n\nlevels = [img]\nfor _ in range(3):\n    levels.append(cv2.pyrDown(levels[-1]))\nresult = np.hstack([cv2.resize(l, (img.shape[1] // 4, img.shape[0] // 4)) for l in levels])\ncv2.imwrite(\"cv_resize-pyramid__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_resize-pyramid__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-resize-pyramid-s6",
+   "name": "resize-pyramid_s6.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "缩放金字塔（点阵圆环）",
+   "description": "逐级缩小的高斯金字塔。输入场景：点阵圆环。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"缩放金字塔（点阵圆环）\nOpenCV 图像处理示例。逐级缩小的高斯金字塔。\n合成输入图像自包含，运行后在当前目录生成 cv_resize-pyramid__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.zeros((360, 480), dtype=np.uint8)\nfor r in range(40, 200, 24):\n    cv2.circle(img, (240, 180), r, 200, 3)\nfor a in range(0, 360, 15):\n    cv2.circle(img, (int(240 + 120 * np.cos(np.radians(a))), int(180 + 120 * np.sin(np.radians(a)))), 5, 255, -1)\n\nlevels = [img]\nfor _ in range(3):\n    levels.append(cv2.pyrDown(levels[-1]))\nresult = np.hstack([cv2.resize(l, (img.shape[1] // 4, img.shape[0] // 4)) for l in levels])\ncv2.imwrite(\"cv_resize-pyramid__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_resize-pyramid__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-resize-pyramid-s7",
+   "name": "resize-pyramid_s7.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "缩放金字塔（竖条纹）",
+   "description": "逐级缩小的高斯金字塔。输入场景：竖条纹。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"缩放金字塔（竖条纹）\nOpenCV 图像处理示例。逐级缩小的高斯金字塔。\n合成输入图像自包含，运行后在当前目录生成 cv_resize-pyramid__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.zeros((360, 480), dtype=np.uint8)\nfor x in range(0, 480, 24):\n    cv2.rectangle(img, (x, 0), (x + 10, 360), 220, -1)\ncv2.circle(img, (240, 180), 70, 90, -1)\n\nlevels = [img]\nfor _ in range(3):\n    levels.append(cv2.pyrDown(levels[-1]))\nresult = np.hstack([cv2.resize(l, (img.shape[1] // 4, img.shape[0] // 4)) for l in levels])\ncv2.imwrite(\"cv_resize-pyramid__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_resize-pyramid__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-resize-pyramid-s8",
+   "name": "resize-pyramid_s8.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "缩放金字塔（大字报）",
+   "description": "逐级缩小的高斯金字塔。输入场景：大字报。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"缩放金字塔（大字报）\nOpenCV 图像处理示例。逐级缩小的高斯金字塔。\n合成输入图像自包含，运行后在当前目录生成 cv_resize-pyramid__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.zeros((360, 480), dtype=np.uint8)\ncv2.putText(img, \"OPEN CV\", (40, 210), cv2.FONT_HERSHEY_SIMPLEX, 2.6, 220, 12)\ncv2.rectangle(img, (30, 30), (450, 330), 160, 5)\n\nlevels = [img]\nfor _ in range(3):\n    levels.append(cv2.pyrDown(levels[-1]))\nresult = np.hstack([cv2.resize(l, (img.shape[1] // 4, img.shape[0] // 4)) for l in levels])\ncv2.imwrite(\"cv_resize-pyramid__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_resize-pyramid__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-contours-area-s1",
+   "name": "contours-area_s1.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "轮廓筛选（几何场景）",
+   "description": "按面积过滤轮廓并标注质心。输入场景：几何场景。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"轮廓筛选（几何场景）\nOpenCV 图像处理示例。按面积过滤轮廓并标注质心。\n合成输入图像自包含，运行后在当前目录生成 cv_contours-area__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.zeros((360, 480), dtype=np.uint8)\ncv2.rectangle(img, (60, 60), (200, 200), 200, -1)\ncv2.circle(img, (340, 140), 80, 140, -1)\ncv2.line(img, (40, 300), (440, 320), 220, 6)\n\n_, th = cv2.threshold(img, 120, 255, cv2.THRESH_BINARY)\ncontours, _ = cv2.findContours(th, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)\nresult = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)\nfor c in contours:\n    area = cv2.contourArea(c)\n    if area < {{min_area}}:\n        continue\n    M = cv2.moments(c)\n    if M[\"m00\"]:\n        cv2.drawContours(result, [c], -1, (80, 220, 120), 2)\n        cv2.circle(result, (int(M[\"m10\"] / M[\"m00\"]), int(M[\"m01\"] / M[\"m00\"])), 3, (60, 90, 255), -1)\ncv2.imwrite(\"cv_contours-area__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_contours-area__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-contours-area-s2",
+   "name": "contours-area_s2.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "轮廓筛选（渐变场景）",
+   "description": "按面积过滤轮廓并标注质心。输入场景：渐变场景。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"轮廓筛选（渐变场景）\nOpenCV 图像处理示例。按面积过滤轮廓并标注质心。\n合成输入图像自包含，运行后在当前目录生成 cv_contours-area__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.tile(np.linspace(30, 220, 480, dtype=np.uint8), (360, 1))\ncv2.putText(img, \"CV\", (150, 240), cv2.FONT_HERSHEY_SIMPLEX, 4, 255, 12)\n\n_, th = cv2.threshold(img, 120, 255, cv2.THRESH_BINARY)\ncontours, _ = cv2.findContours(th, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)\nresult = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)\nfor c in contours:\n    area = cv2.contourArea(c)\n    if area < {{min_area}}:\n        continue\n    M = cv2.moments(c)\n    if M[\"m00\"]:\n        cv2.drawContours(result, [c], -1, (80, 220, 120), 2)\n        cv2.circle(result, (int(M[\"m10\"] / M[\"m00\"]), int(M[\"m01\"] / M[\"m00\"])), 3, (60, 90, 255), -1)\ncv2.imwrite(\"cv_contours-area__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_contours-area__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-contours-area-s3",
+   "name": "contours-area_s3.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "轮廓筛选（噪声场景）",
+   "description": "按面积过滤轮廓并标注质心。输入场景：噪声场景。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"轮廓筛选（噪声场景）\nOpenCV 图像处理示例。按面积过滤轮廓并标注质心。\n合成输入图像自包含，运行后在当前目录生成 cv_contours-area__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nrng = np.random.default_rng(13)\nimg = rng.integers(60, 200, (360, 480), dtype=np.uint8)\ncv2.circle(img, (240, 180), 110, 255, -1)\n\n_, th = cv2.threshold(img, 120, 255, cv2.THRESH_BINARY)\ncontours, _ = cv2.findContours(th, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)\nresult = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)\nfor c in contours:\n    area = cv2.contourArea(c)\n    if area < {{min_area}}:\n        continue\n    M = cv2.moments(c)\n    if M[\"m00\"]:\n        cv2.drawContours(result, [c], -1, (80, 220, 120), 2)\n        cv2.circle(result, (int(M[\"m10\"] / M[\"m00\"]), int(M[\"m01\"] / M[\"m00\"])), 3, (60, 90, 255), -1)\ncv2.imwrite(\"cv_contours-area__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_contours-area__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-contours-area-s4",
+   "name": "contours-area_s4.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "轮廓筛选（棋盘场景）",
+   "description": "按面积过滤轮廓并标注质心。输入场景：棋盘场景。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"轮廓筛选（棋盘场景）\nOpenCV 图像处理示例。按面积过滤轮廓并标注质心。\n合成输入图像自包含，运行后在当前目录生成 cv_contours-area__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.kron(np.indices((9, 12)).sum(0) % 2, np.uint8(255))[:360, :480].astype(np.uint8) * 0\nimg[::40, :] = 120; img[:, ::40] = 120\ncv2.rectangle(img, (100, 100), (380, 260), 255, -1)\n\n_, th = cv2.threshold(img, 120, 255, cv2.THRESH_BINARY)\ncontours, _ = cv2.findContours(th, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)\nresult = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)\nfor c in contours:\n    area = cv2.contourArea(c)\n    if area < {{min_area}}:\n        continue\n    M = cv2.moments(c)\n    if M[\"m00\"]:\n        cv2.drawContours(result, [c], -1, (80, 220, 120), 2)\n        cv2.circle(result, (int(M[\"m10\"] / M[\"m00\"]), int(M[\"m01\"] / M[\"m00\"])), 3, (60, 90, 255), -1)\ncv2.imwrite(\"cv_contours-area__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_contours-area__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-contours-area-s5",
+   "name": "contours-area_s5.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "轮廓筛选（混合场景）",
+   "description": "按面积过滤轮廓并标注质心。输入场景：混合场景。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"轮廓筛选（混合场景）\nOpenCV 图像处理示例。按面积过滤轮廓并标注质心。\n合成输入图像自包含，运行后在当前目录生成 cv_contours-area__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nrng = np.random.default_rng(15)\nimg = rng.integers(40, 120, (360, 480), dtype=np.uint8)\ncv2.ellipse(img, (240, 180), (180, 90), 25, 0, 360, 230, -1)\ncv2.rectangle(img, (60, 60), (160, 160), 255, 4)\n\n_, th = cv2.threshold(img, 120, 255, cv2.THRESH_BINARY)\ncontours, _ = cv2.findContours(th, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)\nresult = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)\nfor c in contours:\n    area = cv2.contourArea(c)\n    if area < {{min_area}}:\n        continue\n    M = cv2.moments(c)\n    if M[\"m00\"]:\n        cv2.drawContours(result, [c], -1, (80, 220, 120), 2)\n        cv2.circle(result, (int(M[\"m10\"] / M[\"m00\"]), int(M[\"m01\"] / M[\"m00\"])), 3, (60, 90, 255), -1)\ncv2.imwrite(\"cv_contours-area__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_contours-area__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-contours-area-s6",
+   "name": "contours-area_s6.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "轮廓筛选（点阵圆环）",
+   "description": "按面积过滤轮廓并标注质心。输入场景：点阵圆环。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"轮廓筛选（点阵圆环）\nOpenCV 图像处理示例。按面积过滤轮廓并标注质心。\n合成输入图像自包含，运行后在当前目录生成 cv_contours-area__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.zeros((360, 480), dtype=np.uint8)\nfor r in range(40, 200, 24):\n    cv2.circle(img, (240, 180), r, 200, 3)\nfor a in range(0, 360, 15):\n    cv2.circle(img, (int(240 + 120 * np.cos(np.radians(a))), int(180 + 120 * np.sin(np.radians(a)))), 5, 255, -1)\n\n_, th = cv2.threshold(img, 120, 255, cv2.THRESH_BINARY)\ncontours, _ = cv2.findContours(th, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)\nresult = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)\nfor c in contours:\n    area = cv2.contourArea(c)\n    if area < {{min_area}}:\n        continue\n    M = cv2.moments(c)\n    if M[\"m00\"]:\n        cv2.drawContours(result, [c], -1, (80, 220, 120), 2)\n        cv2.circle(result, (int(M[\"m10\"] / M[\"m00\"]), int(M[\"m01\"] / M[\"m00\"])), 3, (60, 90, 255), -1)\ncv2.imwrite(\"cv_contours-area__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_contours-area__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-contours-area-s7",
+   "name": "contours-area_s7.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "轮廓筛选（竖条纹）",
+   "description": "按面积过滤轮廓并标注质心。输入场景：竖条纹。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"轮廓筛选（竖条纹）\nOpenCV 图像处理示例。按面积过滤轮廓并标注质心。\n合成输入图像自包含，运行后在当前目录生成 cv_contours-area__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.zeros((360, 480), dtype=np.uint8)\nfor x in range(0, 480, 24):\n    cv2.rectangle(img, (x, 0), (x + 10, 360), 220, -1)\ncv2.circle(img, (240, 180), 70, 90, -1)\n\n_, th = cv2.threshold(img, 120, 255, cv2.THRESH_BINARY)\ncontours, _ = cv2.findContours(th, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)\nresult = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)\nfor c in contours:\n    area = cv2.contourArea(c)\n    if area < {{min_area}}:\n        continue\n    M = cv2.moments(c)\n    if M[\"m00\"]:\n        cv2.drawContours(result, [c], -1, (80, 220, 120), 2)\n        cv2.circle(result, (int(M[\"m10\"] / M[\"m00\"]), int(M[\"m01\"] / M[\"m00\"])), 3, (60, 90, 255), -1)\ncv2.imwrite(\"cv_contours-area__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_contours-area__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-contours-area-s8",
+   "name": "contours-area_s8.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "轮廓筛选（大字报）",
+   "description": "按面积过滤轮廓并标注质心。输入场景：大字报。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"轮廓筛选（大字报）\nOpenCV 图像处理示例。按面积过滤轮廓并标注质心。\n合成输入图像自包含，运行后在当前目录生成 cv_contours-area__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.zeros((360, 480), dtype=np.uint8)\ncv2.putText(img, \"OPEN CV\", (40, 210), cv2.FONT_HERSHEY_SIMPLEX, 2.6, 220, 12)\ncv2.rectangle(img, (30, 30), (450, 330), 160, 5)\n\n_, th = cv2.threshold(img, 120, 255, cv2.THRESH_BINARY)\ncontours, _ = cv2.findContours(th, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)\nresult = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)\nfor c in contours:\n    area = cv2.contourArea(c)\n    if area < {{min_area}}:\n        continue\n    M = cv2.moments(c)\n    if M[\"m00\"]:\n        cv2.drawContours(result, [c], -1, (80, 220, 120), 2)\n        cv2.circle(result, (int(M[\"m10\"] / M[\"m00\"]), int(M[\"m01\"] / M[\"m00\"])), 3, (60, 90, 255), -1)\ncv2.imwrite(\"cv_contours-area__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_contours-area__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-hough-lines-s1",
+   "name": "hough-lines_s1.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "霍夫直线（几何场景）",
+   "description": "概率霍夫变换检测线段。输入场景：几何场景。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"霍夫直线（几何场景）\nOpenCV 图像处理示例。概率霍夫变换检测线段。\n合成输入图像自包含，运行后在当前目录生成 cv_hough-lines__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.zeros((360, 480), dtype=np.uint8)\ncv2.rectangle(img, (60, 60), (200, 200), 200, -1)\ncv2.circle(img, (340, 140), 80, 140, -1)\ncv2.line(img, (40, 300), (440, 320), 220, 6)\n\nedges = cv2.Canny(img, 80, 160)\nlines = cv2.HoughLinesP(edges, 1, np.pi / 180, 60, minLineLength=30, maxLineGap=8)\nresult = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)\nif lines is not None:\n    for l in lines[:40]:\n        cv2.line(result, tuple(l[0][:2]), tuple(l[0][2:]), (90, 200, 255), 1)\ncv2.imwrite(\"cv_hough-lines__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_hough-lines__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-hough-lines-s2",
+   "name": "hough-lines_s2.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "霍夫直线（渐变场景）",
+   "description": "概率霍夫变换检测线段。输入场景：渐变场景。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"霍夫直线（渐变场景）\nOpenCV 图像处理示例。概率霍夫变换检测线段。\n合成输入图像自包含，运行后在当前目录生成 cv_hough-lines__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.tile(np.linspace(30, 220, 480, dtype=np.uint8), (360, 1))\ncv2.putText(img, \"CV\", (150, 240), cv2.FONT_HERSHEY_SIMPLEX, 4, 255, 12)\n\nedges = cv2.Canny(img, 80, 160)\nlines = cv2.HoughLinesP(edges, 1, np.pi / 180, 60, minLineLength=30, maxLineGap=8)\nresult = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)\nif lines is not None:\n    for l in lines[:40]:\n        cv2.line(result, tuple(l[0][:2]), tuple(l[0][2:]), (90, 200, 255), 1)\ncv2.imwrite(\"cv_hough-lines__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_hough-lines__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-hough-lines-s3",
+   "name": "hough-lines_s3.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "霍夫直线（噪声场景）",
+   "description": "概率霍夫变换检测线段。输入场景：噪声场景。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"霍夫直线（噪声场景）\nOpenCV 图像处理示例。概率霍夫变换检测线段。\n合成输入图像自包含，运行后在当前目录生成 cv_hough-lines__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nrng = np.random.default_rng(13)\nimg = rng.integers(60, 200, (360, 480), dtype=np.uint8)\ncv2.circle(img, (240, 180), 110, 255, -1)\n\nedges = cv2.Canny(img, 80, 160)\nlines = cv2.HoughLinesP(edges, 1, np.pi / 180, 60, minLineLength=30, maxLineGap=8)\nresult = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)\nif lines is not None:\n    for l in lines[:40]:\n        cv2.line(result, tuple(l[0][:2]), tuple(l[0][2:]), (90, 200, 255), 1)\ncv2.imwrite(\"cv_hough-lines__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_hough-lines__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-hough-lines-s4",
+   "name": "hough-lines_s4.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "霍夫直线（棋盘场景）",
+   "description": "概率霍夫变换检测线段。输入场景：棋盘场景。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"霍夫直线（棋盘场景）\nOpenCV 图像处理示例。概率霍夫变换检测线段。\n合成输入图像自包含，运行后在当前目录生成 cv_hough-lines__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.kron(np.indices((9, 12)).sum(0) % 2, np.uint8(255))[:360, :480].astype(np.uint8) * 0\nimg[::40, :] = 120; img[:, ::40] = 120\ncv2.rectangle(img, (100, 100), (380, 260), 255, -1)\n\nedges = cv2.Canny(img, 80, 160)\nlines = cv2.HoughLinesP(edges, 1, np.pi / 180, 60, minLineLength=30, maxLineGap=8)\nresult = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)\nif lines is not None:\n    for l in lines[:40]:\n        cv2.line(result, tuple(l[0][:2]), tuple(l[0][2:]), (90, 200, 255), 1)\ncv2.imwrite(\"cv_hough-lines__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_hough-lines__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-hough-lines-s5",
+   "name": "hough-lines_s5.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "霍夫直线（混合场景）",
+   "description": "概率霍夫变换检测线段。输入场景：混合场景。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"霍夫直线（混合场景）\nOpenCV 图像处理示例。概率霍夫变换检测线段。\n合成输入图像自包含，运行后在当前目录生成 cv_hough-lines__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nrng = np.random.default_rng(15)\nimg = rng.integers(40, 120, (360, 480), dtype=np.uint8)\ncv2.ellipse(img, (240, 180), (180, 90), 25, 0, 360, 230, -1)\ncv2.rectangle(img, (60, 60), (160, 160), 255, 4)\n\nedges = cv2.Canny(img, 80, 160)\nlines = cv2.HoughLinesP(edges, 1, np.pi / 180, 60, minLineLength=30, maxLineGap=8)\nresult = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)\nif lines is not None:\n    for l in lines[:40]:\n        cv2.line(result, tuple(l[0][:2]), tuple(l[0][2:]), (90, 200, 255), 1)\ncv2.imwrite(\"cv_hough-lines__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_hough-lines__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-hough-lines-s6",
+   "name": "hough-lines_s6.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "霍夫直线（点阵圆环）",
+   "description": "概率霍夫变换检测线段。输入场景：点阵圆环。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"霍夫直线（点阵圆环）\nOpenCV 图像处理示例。概率霍夫变换检测线段。\n合成输入图像自包含，运行后在当前目录生成 cv_hough-lines__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.zeros((360, 480), dtype=np.uint8)\nfor r in range(40, 200, 24):\n    cv2.circle(img, (240, 180), r, 200, 3)\nfor a in range(0, 360, 15):\n    cv2.circle(img, (int(240 + 120 * np.cos(np.radians(a))), int(180 + 120 * np.sin(np.radians(a)))), 5, 255, -1)\n\nedges = cv2.Canny(img, 80, 160)\nlines = cv2.HoughLinesP(edges, 1, np.pi / 180, 60, minLineLength=30, maxLineGap=8)\nresult = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)\nif lines is not None:\n    for l in lines[:40]:\n        cv2.line(result, tuple(l[0][:2]), tuple(l[0][2:]), (90, 200, 255), 1)\ncv2.imwrite(\"cv_hough-lines__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_hough-lines__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-hough-lines-s7",
+   "name": "hough-lines_s7.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "霍夫直线（竖条纹）",
+   "description": "概率霍夫变换检测线段。输入场景：竖条纹。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"霍夫直线（竖条纹）\nOpenCV 图像处理示例。概率霍夫变换检测线段。\n合成输入图像自包含，运行后在当前目录生成 cv_hough-lines__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.zeros((360, 480), dtype=np.uint8)\nfor x in range(0, 480, 24):\n    cv2.rectangle(img, (x, 0), (x + 10, 360), 220, -1)\ncv2.circle(img, (240, 180), 70, 90, -1)\n\nedges = cv2.Canny(img, 80, 160)\nlines = cv2.HoughLinesP(edges, 1, np.pi / 180, 60, minLineLength=30, maxLineGap=8)\nresult = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)\nif lines is not None:\n    for l in lines[:40]:\n        cv2.line(result, tuple(l[0][:2]), tuple(l[0][2:]), (90, 200, 255), 1)\ncv2.imwrite(\"cv_hough-lines__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_hough-lines__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-hough-lines-s8",
+   "name": "hough-lines_s8.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "霍夫直线（大字报）",
+   "description": "概率霍夫变换检测线段。输入场景：大字报。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"霍夫直线（大字报）\nOpenCV 图像处理示例。概率霍夫变换检测线段。\n合成输入图像自包含，运行后在当前目录生成 cv_hough-lines__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.zeros((360, 480), dtype=np.uint8)\ncv2.putText(img, \"OPEN CV\", (40, 210), cv2.FONT_HERSHEY_SIMPLEX, 2.6, 220, 12)\ncv2.rectangle(img, (30, 30), (450, 330), 160, 5)\n\nedges = cv2.Canny(img, 80, 160)\nlines = cv2.HoughLinesP(edges, 1, np.pi / 180, 60, minLineLength=30, maxLineGap=8)\nresult = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)\nif lines is not None:\n    for l in lines[:40]:\n        cv2.line(result, tuple(l[0][:2]), tuple(l[0][2:]), (90, 200, 255), 1)\ncv2.imwrite(\"cv_hough-lines__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_hough-lines__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-distance-transform-s1",
+   "name": "distance-transform_s1.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "距离变换（几何场景）",
+   "description": "前景像素到边界的距离场。输入场景：几何场景。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"距离变换（几何场景）\nOpenCV 图像处理示例。前景像素到边界的距离场。\n合成输入图像自包含，运行后在当前目录生成 cv_distance-transform__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.zeros((360, 480), dtype=np.uint8)\ncv2.rectangle(img, (60, 60), (200, 200), 200, -1)\ncv2.circle(img, (340, 140), 80, 140, -1)\ncv2.line(img, (40, 300), (440, 320), 220, 6)\n\n_, th = cv2.threshold(img, 120, 255, cv2.THRESH_BINARY)\nresult = cv2.normalize(cv2.distanceTransform(th, cv2.DIST_L2, 5), None, 0, 255, cv2.NORM_MINMAX).astype(np.uint8)\ncv2.imwrite(\"cv_distance-transform__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_distance-transform__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-distance-transform-s2",
+   "name": "distance-transform_s2.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "距离变换（渐变场景）",
+   "description": "前景像素到边界的距离场。输入场景：渐变场景。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"距离变换（渐变场景）\nOpenCV 图像处理示例。前景像素到边界的距离场。\n合成输入图像自包含，运行后在当前目录生成 cv_distance-transform__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.tile(np.linspace(30, 220, 480, dtype=np.uint8), (360, 1))\ncv2.putText(img, \"CV\", (150, 240), cv2.FONT_HERSHEY_SIMPLEX, 4, 255, 12)\n\n_, th = cv2.threshold(img, 120, 255, cv2.THRESH_BINARY)\nresult = cv2.normalize(cv2.distanceTransform(th, cv2.DIST_L2, 5), None, 0, 255, cv2.NORM_MINMAX).astype(np.uint8)\ncv2.imwrite(\"cv_distance-transform__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_distance-transform__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-distance-transform-s3",
+   "name": "distance-transform_s3.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "距离变换（噪声场景）",
+   "description": "前景像素到边界的距离场。输入场景：噪声场景。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"距离变换（噪声场景）\nOpenCV 图像处理示例。前景像素到边界的距离场。\n合成输入图像自包含，运行后在当前目录生成 cv_distance-transform__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nrng = np.random.default_rng(13)\nimg = rng.integers(60, 200, (360, 480), dtype=np.uint8)\ncv2.circle(img, (240, 180), 110, 255, -1)\n\n_, th = cv2.threshold(img, 120, 255, cv2.THRESH_BINARY)\nresult = cv2.normalize(cv2.distanceTransform(th, cv2.DIST_L2, 5), None, 0, 255, cv2.NORM_MINMAX).astype(np.uint8)\ncv2.imwrite(\"cv_distance-transform__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_distance-transform__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-distance-transform-s4",
+   "name": "distance-transform_s4.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "距离变换（棋盘场景）",
+   "description": "前景像素到边界的距离场。输入场景：棋盘场景。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"距离变换（棋盘场景）\nOpenCV 图像处理示例。前景像素到边界的距离场。\n合成输入图像自包含，运行后在当前目录生成 cv_distance-transform__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.kron(np.indices((9, 12)).sum(0) % 2, np.uint8(255))[:360, :480].astype(np.uint8) * 0\nimg[::40, :] = 120; img[:, ::40] = 120\ncv2.rectangle(img, (100, 100), (380, 260), 255, -1)\n\n_, th = cv2.threshold(img, 120, 255, cv2.THRESH_BINARY)\nresult = cv2.normalize(cv2.distanceTransform(th, cv2.DIST_L2, 5), None, 0, 255, cv2.NORM_MINMAX).astype(np.uint8)\ncv2.imwrite(\"cv_distance-transform__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_distance-transform__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-distance-transform-s5",
+   "name": "distance-transform_s5.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "距离变换（混合场景）",
+   "description": "前景像素到边界的距离场。输入场景：混合场景。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"距离变换（混合场景）\nOpenCV 图像处理示例。前景像素到边界的距离场。\n合成输入图像自包含，运行后在当前目录生成 cv_distance-transform__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nrng = np.random.default_rng(15)\nimg = rng.integers(40, 120, (360, 480), dtype=np.uint8)\ncv2.ellipse(img, (240, 180), (180, 90), 25, 0, 360, 230, -1)\ncv2.rectangle(img, (60, 60), (160, 160), 255, 4)\n\n_, th = cv2.threshold(img, 120, 255, cv2.THRESH_BINARY)\nresult = cv2.normalize(cv2.distanceTransform(th, cv2.DIST_L2, 5), None, 0, 255, cv2.NORM_MINMAX).astype(np.uint8)\ncv2.imwrite(\"cv_distance-transform__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_distance-transform__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-distance-transform-s6",
+   "name": "distance-transform_s6.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "距离变换（点阵圆环）",
+   "description": "前景像素到边界的距离场。输入场景：点阵圆环。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"距离变换（点阵圆环）\nOpenCV 图像处理示例。前景像素到边界的距离场。\n合成输入图像自包含，运行后在当前目录生成 cv_distance-transform__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.zeros((360, 480), dtype=np.uint8)\nfor r in range(40, 200, 24):\n    cv2.circle(img, (240, 180), r, 200, 3)\nfor a in range(0, 360, 15):\n    cv2.circle(img, (int(240 + 120 * np.cos(np.radians(a))), int(180 + 120 * np.sin(np.radians(a)))), 5, 255, -1)\n\n_, th = cv2.threshold(img, 120, 255, cv2.THRESH_BINARY)\nresult = cv2.normalize(cv2.distanceTransform(th, cv2.DIST_L2, 5), None, 0, 255, cv2.NORM_MINMAX).astype(np.uint8)\ncv2.imwrite(\"cv_distance-transform__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_distance-transform__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-distance-transform-s7",
+   "name": "distance-transform_s7.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "距离变换（竖条纹）",
+   "description": "前景像素到边界的距离场。输入场景：竖条纹。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"距离变换（竖条纹）\nOpenCV 图像处理示例。前景像素到边界的距离场。\n合成输入图像自包含，运行后在当前目录生成 cv_distance-transform__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.zeros((360, 480), dtype=np.uint8)\nfor x in range(0, 480, 24):\n    cv2.rectangle(img, (x, 0), (x + 10, 360), 220, -1)\ncv2.circle(img, (240, 180), 70, 90, -1)\n\n_, th = cv2.threshold(img, 120, 255, cv2.THRESH_BINARY)\nresult = cv2.normalize(cv2.distanceTransform(th, cv2.DIST_L2, 5), None, 0, 255, cv2.NORM_MINMAX).astype(np.uint8)\ncv2.imwrite(\"cv_distance-transform__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_distance-transform__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-distance-transform-s8",
+   "name": "distance-transform_s8.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "距离变换（大字报）",
+   "description": "前景像素到边界的距离场。输入场景：大字报。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"距离变换（大字报）\nOpenCV 图像处理示例。前景像素到边界的距离场。\n合成输入图像自包含，运行后在当前目录生成 cv_distance-transform__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.zeros((360, 480), dtype=np.uint8)\ncv2.putText(img, \"OPEN CV\", (40, 210), cv2.FONT_HERSHEY_SIMPLEX, 2.6, 220, 12)\ncv2.rectangle(img, (30, 30), (450, 330), 160, 5)\n\n_, th = cv2.threshold(img, 120, 255, cv2.THRESH_BINARY)\nresult = cv2.normalize(cv2.distanceTransform(th, cv2.DIST_L2, 5), None, 0, 255, cv2.NORM_MINMAX).astype(np.uint8)\ncv2.imwrite(\"cv_distance-transform__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_distance-transform__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-bitwise-mix-s1",
+   "name": "bitwise-mix_s1.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "位运算合成（几何场景）",
+   "description": "与/或/异或三通道合成。输入场景：几何场景。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"位运算合成（几何场景）\nOpenCV 图像处理示例。与/或/异或三通道合成。\n合成输入图像自包含，运行后在当前目录生成 cv_bitwise-mix__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.zeros((360, 480), dtype=np.uint8)\ncv2.rectangle(img, (60, 60), (200, 200), 200, -1)\ncv2.circle(img, (340, 140), 80, 140, -1)\ncv2.line(img, (40, 300), (440, 320), 220, 6)\n\nh, w = img.shape[:2]\nm1 = np.zeros_like(img); cv2.circle(m1, (w // 3, h // 2), 80, 255, -1)\nm2 = np.zeros_like(img); cv2.rectangle(m2, (w // 2, 40), (w - 20, h - 40), 255, -1)\nresult = np.hstack([cv2.bitwise_and(m1, m2), cv2.bitwise_or(m1, m2), cv2.bitwise_xor(m1, m2)])\ncv2.imwrite(\"cv_bitwise-mix__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_bitwise-mix__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-bitwise-mix-s2",
+   "name": "bitwise-mix_s2.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "位运算合成（渐变场景）",
+   "description": "与/或/异或三通道合成。输入场景：渐变场景。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"位运算合成（渐变场景）\nOpenCV 图像处理示例。与/或/异或三通道合成。\n合成输入图像自包含，运行后在当前目录生成 cv_bitwise-mix__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.tile(np.linspace(30, 220, 480, dtype=np.uint8), (360, 1))\ncv2.putText(img, \"CV\", (150, 240), cv2.FONT_HERSHEY_SIMPLEX, 4, 255, 12)\n\nh, w = img.shape[:2]\nm1 = np.zeros_like(img); cv2.circle(m1, (w // 3, h // 2), 80, 255, -1)\nm2 = np.zeros_like(img); cv2.rectangle(m2, (w // 2, 40), (w - 20, h - 40), 255, -1)\nresult = np.hstack([cv2.bitwise_and(m1, m2), cv2.bitwise_or(m1, m2), cv2.bitwise_xor(m1, m2)])\ncv2.imwrite(\"cv_bitwise-mix__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_bitwise-mix__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-bitwise-mix-s3",
+   "name": "bitwise-mix_s3.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "位运算合成（噪声场景）",
+   "description": "与/或/异或三通道合成。输入场景：噪声场景。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"位运算合成（噪声场景）\nOpenCV 图像处理示例。与/或/异或三通道合成。\n合成输入图像自包含，运行后在当前目录生成 cv_bitwise-mix__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nrng = np.random.default_rng(13)\nimg = rng.integers(60, 200, (360, 480), dtype=np.uint8)\ncv2.circle(img, (240, 180), 110, 255, -1)\n\nh, w = img.shape[:2]\nm1 = np.zeros_like(img); cv2.circle(m1, (w // 3, h // 2), 80, 255, -1)\nm2 = np.zeros_like(img); cv2.rectangle(m2, (w // 2, 40), (w - 20, h - 40), 255, -1)\nresult = np.hstack([cv2.bitwise_and(m1, m2), cv2.bitwise_or(m1, m2), cv2.bitwise_xor(m1, m2)])\ncv2.imwrite(\"cv_bitwise-mix__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_bitwise-mix__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-bitwise-mix-s4",
+   "name": "bitwise-mix_s4.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "位运算合成（棋盘场景）",
+   "description": "与/或/异或三通道合成。输入场景：棋盘场景。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"位运算合成（棋盘场景）\nOpenCV 图像处理示例。与/或/异或三通道合成。\n合成输入图像自包含，运行后在当前目录生成 cv_bitwise-mix__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.kron(np.indices((9, 12)).sum(0) % 2, np.uint8(255))[:360, :480].astype(np.uint8) * 0\nimg[::40, :] = 120; img[:, ::40] = 120\ncv2.rectangle(img, (100, 100), (380, 260), 255, -1)\n\nh, w = img.shape[:2]\nm1 = np.zeros_like(img); cv2.circle(m1, (w // 3, h // 2), 80, 255, -1)\nm2 = np.zeros_like(img); cv2.rectangle(m2, (w // 2, 40), (w - 20, h - 40), 255, -1)\nresult = np.hstack([cv2.bitwise_and(m1, m2), cv2.bitwise_or(m1, m2), cv2.bitwise_xor(m1, m2)])\ncv2.imwrite(\"cv_bitwise-mix__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_bitwise-mix__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-bitwise-mix-s5",
+   "name": "bitwise-mix_s5.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "位运算合成（混合场景）",
+   "description": "与/或/异或三通道合成。输入场景：混合场景。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"位运算合成（混合场景）\nOpenCV 图像处理示例。与/或/异或三通道合成。\n合成输入图像自包含，运行后在当前目录生成 cv_bitwise-mix__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nrng = np.random.default_rng(15)\nimg = rng.integers(40, 120, (360, 480), dtype=np.uint8)\ncv2.ellipse(img, (240, 180), (180, 90), 25, 0, 360, 230, -1)\ncv2.rectangle(img, (60, 60), (160, 160), 255, 4)\n\nh, w = img.shape[:2]\nm1 = np.zeros_like(img); cv2.circle(m1, (w // 3, h // 2), 80, 255, -1)\nm2 = np.zeros_like(img); cv2.rectangle(m2, (w // 2, 40), (w - 20, h - 40), 255, -1)\nresult = np.hstack([cv2.bitwise_and(m1, m2), cv2.bitwise_or(m1, m2), cv2.bitwise_xor(m1, m2)])\ncv2.imwrite(\"cv_bitwise-mix__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_bitwise-mix__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-bitwise-mix-s6",
+   "name": "bitwise-mix_s6.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "位运算合成（点阵圆环）",
+   "description": "与/或/异或三通道合成。输入场景：点阵圆环。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"位运算合成（点阵圆环）\nOpenCV 图像处理示例。与/或/异或三通道合成。\n合成输入图像自包含，运行后在当前目录生成 cv_bitwise-mix__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.zeros((360, 480), dtype=np.uint8)\nfor r in range(40, 200, 24):\n    cv2.circle(img, (240, 180), r, 200, 3)\nfor a in range(0, 360, 15):\n    cv2.circle(img, (int(240 + 120 * np.cos(np.radians(a))), int(180 + 120 * np.sin(np.radians(a)))), 5, 255, -1)\n\nh, w = img.shape[:2]\nm1 = np.zeros_like(img); cv2.circle(m1, (w // 3, h // 2), 80, 255, -1)\nm2 = np.zeros_like(img); cv2.rectangle(m2, (w // 2, 40), (w - 20, h - 40), 255, -1)\nresult = np.hstack([cv2.bitwise_and(m1, m2), cv2.bitwise_or(m1, m2), cv2.bitwise_xor(m1, m2)])\ncv2.imwrite(\"cv_bitwise-mix__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_bitwise-mix__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-bitwise-mix-s7",
+   "name": "bitwise-mix_s7.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "位运算合成（竖条纹）",
+   "description": "与/或/异或三通道合成。输入场景：竖条纹。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"位运算合成（竖条纹）\nOpenCV 图像处理示例。与/或/异或三通道合成。\n合成输入图像自包含，运行后在当前目录生成 cv_bitwise-mix__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.zeros((360, 480), dtype=np.uint8)\nfor x in range(0, 480, 24):\n    cv2.rectangle(img, (x, 0), (x + 10, 360), 220, -1)\ncv2.circle(img, (240, 180), 70, 90, -1)\n\nh, w = img.shape[:2]\nm1 = np.zeros_like(img); cv2.circle(m1, (w // 3, h // 2), 80, 255, -1)\nm2 = np.zeros_like(img); cv2.rectangle(m2, (w // 2, 40), (w - 20, h - 40), 255, -1)\nresult = np.hstack([cv2.bitwise_and(m1, m2), cv2.bitwise_or(m1, m2), cv2.bitwise_xor(m1, m2)])\ncv2.imwrite(\"cv_bitwise-mix__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_bitwise-mix__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-bitwise-mix-s8",
+   "name": "bitwise-mix_s8.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "位运算合成（大字报）",
+   "description": "与/或/异或三通道合成。输入场景：大字报。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"位运算合成（大字报）\nOpenCV 图像处理示例。与/或/异或三通道合成。\n合成输入图像自包含，运行后在当前目录生成 cv_bitwise-mix__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.zeros((360, 480), dtype=np.uint8)\ncv2.putText(img, \"OPEN CV\", (40, 210), cv2.FONT_HERSHEY_SIMPLEX, 2.6, 220, 12)\ncv2.rectangle(img, (30, 30), (450, 330), 160, 5)\n\nh, w = img.shape[:2]\nm1 = np.zeros_like(img); cv2.circle(m1, (w // 3, h // 2), 80, 255, -1)\nm2 = np.zeros_like(img); cv2.rectangle(m2, (w // 2, 40), (w - 20, h - 40), 255, -1)\nresult = np.hstack([cv2.bitwise_and(m1, m2), cv2.bitwise_or(m1, m2), cv2.bitwise_xor(m1, m2)])\ncv2.imwrite(\"cv_bitwise-mix__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_bitwise-mix__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-colormap-s1",
+   "name": "colormap_s1.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "伪彩色映射（几何场景）",
+   "description": "灰度图套用 COLORMAP_JET。输入场景：几何场景。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"伪彩色映射（几何场景）\nOpenCV 图像处理示例。灰度图套用 COLORMAP_JET。\n合成输入图像自包含，运行后在当前目录生成 cv_colormap__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.zeros((360, 480), dtype=np.uint8)\ncv2.rectangle(img, (60, 60), (200, 200), 200, -1)\ncv2.circle(img, (340, 140), 80, 140, -1)\ncv2.line(img, (40, 300), (440, 320), 220, 6)\n\nresult = cv2.applyColorMap(img, cv2.COLORMAP_JET)\ncv2.imwrite(\"cv_colormap__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_colormap__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-colormap-s2",
+   "name": "colormap_s2.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "伪彩色映射（渐变场景）",
+   "description": "灰度图套用 COLORMAP_JET。输入场景：渐变场景。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"伪彩色映射（渐变场景）\nOpenCV 图像处理示例。灰度图套用 COLORMAP_JET。\n合成输入图像自包含，运行后在当前目录生成 cv_colormap__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.tile(np.linspace(30, 220, 480, dtype=np.uint8), (360, 1))\ncv2.putText(img, \"CV\", (150, 240), cv2.FONT_HERSHEY_SIMPLEX, 4, 255, 12)\n\nresult = cv2.applyColorMap(img, cv2.COLORMAP_JET)\ncv2.imwrite(\"cv_colormap__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_colormap__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-colormap-s3",
+   "name": "colormap_s3.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "伪彩色映射（噪声场景）",
+   "description": "灰度图套用 COLORMAP_JET。输入场景：噪声场景。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"伪彩色映射（噪声场景）\nOpenCV 图像处理示例。灰度图套用 COLORMAP_JET。\n合成输入图像自包含，运行后在当前目录生成 cv_colormap__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nrng = np.random.default_rng(13)\nimg = rng.integers(60, 200, (360, 480), dtype=np.uint8)\ncv2.circle(img, (240, 180), 110, 255, -1)\n\nresult = cv2.applyColorMap(img, cv2.COLORMAP_JET)\ncv2.imwrite(\"cv_colormap__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_colormap__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-colormap-s4",
+   "name": "colormap_s4.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "伪彩色映射（棋盘场景）",
+   "description": "灰度图套用 COLORMAP_JET。输入场景：棋盘场景。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"伪彩色映射（棋盘场景）\nOpenCV 图像处理示例。灰度图套用 COLORMAP_JET。\n合成输入图像自包含，运行后在当前目录生成 cv_colormap__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.kron(np.indices((9, 12)).sum(0) % 2, np.uint8(255))[:360, :480].astype(np.uint8) * 0\nimg[::40, :] = 120; img[:, ::40] = 120\ncv2.rectangle(img, (100, 100), (380, 260), 255, -1)\n\nresult = cv2.applyColorMap(img, cv2.COLORMAP_JET)\ncv2.imwrite(\"cv_colormap__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_colormap__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-colormap-s5",
+   "name": "colormap_s5.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "伪彩色映射（混合场景）",
+   "description": "灰度图套用 COLORMAP_JET。输入场景：混合场景。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"伪彩色映射（混合场景）\nOpenCV 图像处理示例。灰度图套用 COLORMAP_JET。\n合成输入图像自包含，运行后在当前目录生成 cv_colormap__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nrng = np.random.default_rng(15)\nimg = rng.integers(40, 120, (360, 480), dtype=np.uint8)\ncv2.ellipse(img, (240, 180), (180, 90), 25, 0, 360, 230, -1)\ncv2.rectangle(img, (60, 60), (160, 160), 255, 4)\n\nresult = cv2.applyColorMap(img, cv2.COLORMAP_JET)\ncv2.imwrite(\"cv_colormap__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_colormap__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-colormap-s6",
+   "name": "colormap_s6.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "伪彩色映射（点阵圆环）",
+   "description": "灰度图套用 COLORMAP_JET。输入场景：点阵圆环。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"伪彩色映射（点阵圆环）\nOpenCV 图像处理示例。灰度图套用 COLORMAP_JET。\n合成输入图像自包含，运行后在当前目录生成 cv_colormap__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.zeros((360, 480), dtype=np.uint8)\nfor r in range(40, 200, 24):\n    cv2.circle(img, (240, 180), r, 200, 3)\nfor a in range(0, 360, 15):\n    cv2.circle(img, (int(240 + 120 * np.cos(np.radians(a))), int(180 + 120 * np.sin(np.radians(a)))), 5, 255, -1)\n\nresult = cv2.applyColorMap(img, cv2.COLORMAP_JET)\ncv2.imwrite(\"cv_colormap__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_colormap__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-colormap-s7",
+   "name": "colormap_s7.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "伪彩色映射（竖条纹）",
+   "description": "灰度图套用 COLORMAP_JET。输入场景：竖条纹。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"伪彩色映射（竖条纹）\nOpenCV 图像处理示例。灰度图套用 COLORMAP_JET。\n合成输入图像自包含，运行后在当前目录生成 cv_colormap__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.zeros((360, 480), dtype=np.uint8)\nfor x in range(0, 480, 24):\n    cv2.rectangle(img, (x, 0), (x + 10, 360), 220, -1)\ncv2.circle(img, (240, 180), 70, 90, -1)\n\nresult = cv2.applyColorMap(img, cv2.COLORMAP_JET)\ncv2.imwrite(\"cv_colormap__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_colormap__preview.png\")\n"
+  },
+  {
+   "id": "topics_opencv-colormap-s8",
+   "name": "colormap_s8.py",
+   "category": "topics",
+   "tags": [
+    "OpenCV"
+   ],
+   "title": "伪彩色映射（大字报）",
+   "description": "灰度图套用 COLORMAP_JET。输入场景：大字报。",
+   "requirements": [
+    "opencv-python",
+    "numpy"
+   ],
+   "code": "\"\"\"伪彩色映射（大字报）\nOpenCV 图像处理示例。灰度图套用 COLORMAP_JET。\n合成输入图像自包含，运行后在当前目录生成 cv_colormap__preview.png。\n\"\"\"\nimport cv2\nimport numpy as np\n\nimg = np.zeros((360, 480), dtype=np.uint8)\ncv2.putText(img, \"OPEN CV\", (40, 210), cv2.FONT_HERSHEY_SIMPLEX, 2.6, 220, 12)\ncv2.rectangle(img, (30, 30), (450, 330), 160, 5)\n\nresult = cv2.applyColorMap(img, cv2.COLORMAP_JET)\ncv2.imwrite(\"cv_colormap__preview.png\", result if \"result\" in dir() else img)\nprint(\"已生成 cv_colormap__preview.png\")\n"
+  }
+ ]
+}
