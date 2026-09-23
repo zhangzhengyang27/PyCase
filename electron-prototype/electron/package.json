@@ -1,7 +1,7 @@
 {
-  "name": "pycase",
+  "name": "python-example-manager-electron",
   "version": "0.10.0",
-  "description": "蟒匣 PyCase：Electron 壳 + Python sidecar（vite + TypeScript + tailwindcss）",
+  "description": "Electron 壳 + Python sidecar（vite + TypeScript + tailwindcss）",
   "main": "out/main/index.js",
   "scripts": {
     "dev": "electron-vite dev",
@@ -13,8 +13,8 @@
     "dist:dir": "electron-vite build && electron-builder --dir"
   },
   "build": {
-    "appId": "com.pycase.desktop",
-    "productName": "蟒匣",
+    "appId": "com.example.python-example-manager",
+    "productName": "Python示例管理器",
     "files": [
       "out/**/*"
     ],
