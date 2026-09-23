@@ -3,9 +3,9 @@ requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "python-example-repo-manager"
+name = "pycase"
 version = "0.4.0"
-description = "Python 示例仓库管理器：Electron 壳 + Python sidecar，浏览、编辑、隔离运行本地示例"
+description = "蟒匣 PyCase：Electron 壳 + Python sidecar，浏览、编辑、隔离运行本地 Python 示例与工具"
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }

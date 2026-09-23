@@ -26,8 +26,8 @@ def main() -> int:
     """应用主入口。"""
     configure_logging()
     app = QApplication(sys.argv)
-    app.setApplicationName("Python 示例仓库管理器")
-    app.setApplicationDisplayName("Python 示例仓库管理器")
+    app.setApplicationName("蟒匣 PyCase")
+    app.setApplicationDisplayName("蟒匣 PyCase")
 
     # 设置全局样式
     app.setStyle("Fusion")

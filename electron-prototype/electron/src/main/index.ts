@@ -291,7 +291,7 @@ function createWindow(): void {
     height: 800,
     minWidth: 900,
     minHeight: 600,
-    title: 'Python 示例管理器',
+    title: '蟒匣 · PyCase',
     // macOS：隐藏系统标题栏、红绿灯嵌入左侧导航栏头区（消灭双标题栏，设计规范 v1 S2）；
     // 位置与 App.vue 导航栏头区左侧 72px 品牌留白对齐；非 macOS 未实测打包，保持系统默认标题栏
     ...(process.platform === 'darwin' ? { titleBarStyle: 'hiddenInset' as const, trafficLightPosition: { x: 8, y: 12 } } : {}),
