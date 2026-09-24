@@ -16,6 +16,8 @@
     "src/renderer/src/**/*.d.ts",
     "src/renderer/*.ts",
     "src/renderer/*.d.ts",
-    "src/renderer/**/*.vue"
+    "src/renderer/**/*.vue",
+    "src/renderer/components/__tests__/**/*.ts",
+    "vitest.setup.ts"
   ]
 }

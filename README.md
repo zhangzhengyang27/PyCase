@@ -46,7 +46,20 @@ node tests/test_toolbox_groups.mjs
 
 # 渲染层状态编排（加载真实 store.ts，vue 走真实响应式，IPC 用桩）
 node tests/test_store.mjs
+
+# Vue 组件渲染层（Vitest + jsdom，真实 SFC 编译，需先在 electron-prototype/electron 下 npm ci）
+cd electron-prototype/electron && npm test
 ```
+
+前端测试分两层，各自有明确的适用面：
+
+| 层 | 运行器 | 位置 | 适用 |
+|---|---|---|---|
+| 纯逻辑模块 | `node --test`（`tests/renderer-loader.mjs` 转译 TS） | `tests/test_*.mjs` | filter-engine / utils / overview / store 等无 DOM、无 SFC 的模块，零 bundler、启动快 |
+| Vue 组件 | Vitest + jsdom | `electron-prototype/electron/src/renderer/components/__tests__/*.spec.ts` | 需要 SFC 编译与 DOM 的 `.vue` 组件；与 `electron.vite.config.ts` 共用 `@vitejs/plugin-vue`，编译链与真实构建一致 |
+
+组件的 jsdom 环境缺口（`PointerEvent` / `IntersectionObserver` / `Blob.arrayBuffer` / `matchMedia`）
+与跨用例清理统一由 `electron-prototype/electron/vitest.setup.ts` 兜底，单个 spec 不必重复补桩。
 
 提交前钩子见 `.pre-commit-config.yaml`（ruff + 文档引用防漂移 `scripts/check_doc_refs.py`）。
 

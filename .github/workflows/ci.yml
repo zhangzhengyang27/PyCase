@@ -37,7 +37,7 @@ jobs:
         run: pytest tests/ -q --tb=short
 
   frontend:
-    name: 类型检查与前端纯函数测试
+    name: 类型检查与前端测试
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -72,6 +72,11 @@ jobs:
 
       - name: 渲染层 store 状态编排测试（真实 Vue 响应式 + IPC 桩）
         run: node tests/test_store.mjs
+
+      # Vue 组件渲染层：Vitest + jsdom，与 electron.vite.config.ts 共用 @vitejs/plugin-vue
+      - name: Vue 组件渲染层测试
+        working-directory: electron-prototype/electron
+        run: npm test
 
   # ---------------------------------------------------------------------------
   # Electron 冒烟自测：仅在已验证的 macOS 上运行（SMOKE_TEST 自校验后退出）
