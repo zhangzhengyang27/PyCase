@@ -34,6 +34,9 @@ electron-prototype/electron/sidecar-dist/
 node_modules/
 out/
 
+# electron-vite 转译配置时落盘的临时文件（每次 build 都会生成）
+electron-prototype/electron/electron.vite.config.*.mjs
+
 # 应用运行时产物（userData 镜像）
 user_examples/
 
