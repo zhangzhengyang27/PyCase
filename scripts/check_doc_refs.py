@@ -16,7 +16,6 @@ ROADMAP 能力矩阵引用 renderer/app.js 等三个已删目录）。本脚本�
 from __future__ import annotations
 
 import re
-import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent

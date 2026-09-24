@@ -945,18 +945,12 @@ def main():
 
 
 
-"""第二批真实项目示例：追加到 crawler_examples.json / office_examples.json（合并模式）。"""
-import hashlib
-import json
-from pathlib import Path
+# 第二批真实项目示例：追加到 crawler_examples.json / office_examples.json（合并模式）。
+# 本文件由三批生成器顺序拼接而成，顶部已导入 hashlib / json / Path 并定义 slug，
+# 后续批次直接复用，不再重复声明（否则 E402 / F811）。
 
 ROOT = Path(__file__).resolve().parent.parent
 OUT_DIR = ROOT / "json_examples"
-
-
-def slug(text: str) -> str:
-    import re
-    return re.sub(r"[^0-9A-Za-z_.-]+", "-", text).strip("-").lower()
 
 
 def build_crawler2():
@@ -1485,10 +1479,7 @@ for k in sorted(stock):
 
 
 
-"""第三批真实项目示例：爬虫进阶 + 办公进阶（合并到既有集合文件）。"""
-import hashlib
-import json
-from pathlib import Path
+# 第三批真实项目示例：爬虫进阶 + 办公进阶（合并到既有集合文件）。
 
 ROOT = Path(__file__).resolve().parent.parent
 OUT_DIR = ROOT / "json_examples"

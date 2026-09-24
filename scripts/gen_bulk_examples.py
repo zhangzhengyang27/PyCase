@@ -9,7 +9,6 @@
 """
 import hashlib
 import json
-import os
 import re
 from pathlib import Path
 
@@ -81,7 +80,6 @@ class Collection:
 # Turtle 绘图：24 种图案 × 10 变体
 # ===========================================================================
 def build_turtle():
-    import turtle as _  # noqa: 确认依赖存在（生成期不做运行断言）
     coll = Collection("bulk_turtle.json", "Turtle 图集",
                       "参数化生成的 Turtle 绘图示例：每种图案 10 个变体（色板/步长/角度/迭代不同，源码各自独立）。")
     head = '"""{title}\nTurtle 绘图示例。{desc}\n运行后弹出画布，绘制完成自动退出事件循环。\n"""\nimport turtle\n\n'
@@ -102,7 +100,9 @@ def build_turtle():
                      f"{desc}变体「{pname}」：{pv.get('note', '不同参数组合的独立绘制代码')}。",
                      list(tags) + ["参数化"], [], head.format(title=title, desc=desc) + code)
 
-    pal = lambda i: PALETTES[PALETTE_NAMES[i % len(PALETTE_NAMES)]]
+    def pal(i):
+        return PALETTES[PALETTE_NAMES[i % len(PALETTE_NAMES)]]
+
     def V(base, count=15):
         return [(f"{PALETTE_NAMES[j % len(PALETTE_NAMES)]}·v{j + 1}",
                  dict(colors=pal(j), **base(j))) for j in range(count)]
@@ -780,7 +780,8 @@ import pygame
                      f"{desc}本变体：{pv.get('vname', '')}（速度 {pv.get('speed', '-')}，窗口 {pv.get('W', '-')}×{pv.get('H', '-')}）。",
                      list(tags), ["pygame"], full)
 
-    snake_body = lambda p: '''CELL, COLS, ROWS = {{cell}}, {{W}} // {{cell}}, {{H}} // {{cell}}
+    def snake_body(p):
+        return '''CELL, COLS, ROWS = {{cell}}, {{W}} // {{cell}}, {{H}} // {{cell}}
 pygame.init()
 screen = pygame.display.set_mode((COLS * CELL, ROWS * CELL))
 pygame.display.set_caption("贪吃蛇")
@@ -826,7 +827,8 @@ while True:
          [dict(vname=v, W=576 + v * 48, H=432 + v * 24, cell=24 - v % 3 * 2, speed=7 + v * 2,
                cr=60 + v * 22, cg=200 - v * 12, cb=100 + v * 14) for v in range(5)], snake_body)
 
-    catch_body = lambda p: '''W, H = {{W}}, {{H}}
+    def catch_body(p):
+        return '''W, H = {{W}}, {{H}}
 pygame.init()
 screen = pygame.display.set_mode((W, H))
 pygame.display.set_caption("接水果")
@@ -872,7 +874,8 @@ while True:
                lives=3 + v % 2, colors=", ".join(f'"{c}"' for c in PALETTES[list(PALETTES)[v]][v % 4:v % 4 + 3]))
           for v in range(4)], catch_body)
 
-    pong_body = lambda p: '''W, H = {{W}}, {{H}}
+    def pong_body(p):
+        return '''W, H = {{W}}, {{H}}
 pygame.init()
 screen = pygame.display.set_mode((W, H))
 pygame.display.set_caption("Pong")
@@ -1390,7 +1393,7 @@ def collatz_len(n):
 print("起点 {{start}} 步数:", collatz_len({{start}}))
 best = max(range(1, {{limit}}), key=lambda n: (collatz_len(n), -n))
 print(f"1~{{limit}} 中链最长: {{best}} ({{collatz_len(best)}} 步)")''',
-        variants=[dict(vname=f"L{l}", start=s, limit=l) for s, l in
+        variants=[dict(vname=f"L{lim}", start=s, limit=lim) for s, lim in
                   [(27, 1000), (97, 2000), (871, 5000), (6171, 10000)]])
 
     add("algo-gcd-lcm", "GCD/LCM", "辗转相除与最小公倍数。",

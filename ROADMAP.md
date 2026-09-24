@@ -19,16 +19,26 @@
       脚手架、旧原型页 `renderer/index.html`、误复制的 21M `node_modules`；
       同步收窄 `electron.vite.config.ts` 的 MPA 入口、`tsconfig.web.json` 改为覆盖 Vue 组件
 - [x] 统一版本号：pyproject 与 sidecar 自报版本对齐到 `0.10.0`（与 Electron 一致）
-- [ ] 校正过期基线文档（`docs/audit-examples.md` 仍写 1187 条）
+- [x] 校正过期基线文档：`docs/audit-examples.md` 重跑审计改写为当前数据
+      （1496 个示例 / 5 条问题记录，其中 4 条依赖缺失是本地模块误报），
+      旧的 1187 条时点记录压缩为「历史快照」存档段
 
 ### P1 — 质量缺口
 
-- [ ] Vue 层 `store.ts`（1086 行）与 22 个组件零测试
-- [ ] `scripts/` 下 23 处历史 lint 债（F401 / F811 / E402 / E731 / E741 / F841），
-      多为一次性生成脚本；CI 门禁暂只覆盖 `app tests`
-- [ ] `requirements.txt` 含无效包名 `ternary-new`（PyPI 不存在，由迁移脚本的
-      `IMPORT_TO_PKG` 猜测产生），会让 `pip install -r requirements.txt` 整体失败；
-      需在 `scripts/gen_shared_requirements.py` 加拒绝名单后重新生成
+- [x] 补上 Vue 层 `store.ts` 的测试：新增 `tests/test_store.mjs`（80 项断言），
+      经 renderer-loader 加载真实 store.ts —— `vue` 从 node_modules 真实加载（真响应式），
+      仅以替身替换 `./toast` 与 `./src/sidecar-client` 两个副作用依赖；覆盖画廊/工具箱
+      互补池、排序、收藏、筛选重置、芯片反向应用、下钻范围互斥、loadAll 成功/失败/
+      脏偏好拒绝、搜索防抖、facet 计数口径、运行超时持久化、高危确认门。
+      顺带修掉加载器的缓存命中 bug（返回 module 外壳而非 module.exports）
+- [ ] 22 个 Vue 组件仍无渲染层测试（需要 @vue/test-utils 级别的组件测试基建）
+- [x] `requirements.txt` 含无效包名 `ternary-new`（`ternary_new` 是科研绘图示例内嵌的
+      本地模块，被迁移脚本误猜成 PyPI 包，会让整份 requirements 安装失败）：
+      已加入 `gen_shared_requirements.py` 的 `EXCLUDED_PKGS` 并重新生成，
+      46 个包 `uv pip install --dry-run` 全部可解析
+- [x] 清完 `scripts/` 的 23 处 lint 债（F401 / F811 / E402 / E731 / E741 / F841），
+      CI 门禁恢复为 `ruff check app scripts tests`；重跑 gen_bulk / gen_real_projects
+      生成的 JSON 与提交版逐字节一致，确认属纯重构
 - [ ] 示例运行回归：补全 CI 中的 Electron 冒烟 job（仅 macOS 验证过）
 
 ## 2. Done（已交付，按 tag 与提交对账）

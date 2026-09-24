@@ -45,7 +45,6 @@ scipy
 seaborn
 selenium
 sqlalchemy
-ternary-new
 tornado
 vega
 wordcloud

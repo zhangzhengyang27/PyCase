@@ -46,7 +46,7 @@ npm start
 
 ## 已验证的主链路
 
-1. **列出示例** — `list_examples` 调用 ExampleStore.load()，返回全部 1251 个示例
+1. **列出示例** — `list_examples` 调用 ExampleStore.load()，返回全部 1496 个示例（2026-09-24 复核）
 2. **搜索/筛选** — 前端按名称、标签、代码内容搜索；按 topics/tools/projects 分类筛选
 3. **代码预览** — 选中示例后显示完整代码
 4. **运行示例** — `run_example` 用 asyncio 子进程执行，stdout 逐行通过 JSON-RPC notification 推送
@@ -65,7 +65,7 @@ npm start
 
 **响应：**
 ```json
-{"jsonrpc":"2.0","id":1,"result":{"total":1251,"examples":[...]}}
+{"jsonrpc":"2.0","id":1,"result":{"total":1496,"examples":[...]}}
 ```
 
 **通知（无 id，服务端主动推送）：**

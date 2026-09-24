@@ -22,7 +22,7 @@ import importlib.util
 import json
 import sys
 import warnings
-from collections import Counter, defaultdict
+from collections import defaultdict
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -162,7 +162,6 @@ def main() -> int:
     print(f"审计范围：{len(items)} 个示例（{len(list(JSON_DIR.glob('*.json')))} 个集合文件）\n")
     order = ["结构缺失", "id 重复", "语法错误", "空壳代码", "完全重复", "依赖缺失", "安全高危", "dir 失效"]
     total_bad = 0
-    flagged: set[str] = set()
     for key in order:
         rows = report.get(key, [])
         total_bad += len(rows)

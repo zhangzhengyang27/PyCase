@@ -17,11 +17,9 @@
 用法：python scripts/gen_shared_requirements.py
 """
 
-import ast
 import json
 import re
 import sys
-import warnings
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -66,7 +64,20 @@ SCAN_SKIP_DIRS = {
 # - pyqt5：GUI 框架，本应用无显示环境（GUI 示例本就无法交互运行），且该 Python 无 wheel
 # - autotest：Python 2 时代的同名气包，源码构建必败
 # - c01 / c1104 / corner-widget / tencentyoutuyun：原仓库源码中的无效导入名，PyPI 不存在
-EXCLUDED_PKGS = {"pycrypto", "typed-ast", "pyqt5", "autotest", "c01", "c1104", "corner-widget", "tencentyoutuyun"}
+# - ternary-new：由 `import ternary_new` 猜出的包名。ternary_new 是科研绘图示例
+#   内嵌的本地模块（gen_sciviz_examples.py 的 MODULE_ASSETS 会随示例一起拷贝），
+#   不是 PyPI 包；该名字会让整份 requirements.txt 安装失败。
+EXCLUDED_PKGS = {
+    "pycrypto",
+    "typed-ast",
+    "pyqt5",
+    "autotest",
+    "c01",
+    "c1104",
+    "corner-widget",
+    "tencentyoutuyun",
+    "ternary-new",
+}
 
 
 def normalize(name: str) -> str:

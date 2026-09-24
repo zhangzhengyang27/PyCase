@@ -26,10 +26,9 @@ jobs:
           pip install -r requirements-dev.txt
           pip install ruff==0.6.9
 
-      # 与 .pre-commit-config.yaml 的 ruff 版本保持一致；scripts/ 下的一次性生成脚本
-      # 仍有历史 lint 债，暂不纳入门禁（见 ROADMAP 节 1 P1）
+      # 与 .pre-commit-config.yaml 的 ruff 版本保持一致
       - name: ruff 检查
-        run: ruff check app tests
+        run: ruff check app scripts tests
 
       - name: 文档引用防漂移
         run: python3 scripts/check_doc_refs.py
@@ -70,6 +69,9 @@ jobs:
 
       - name: 工具箱分组纯函数测试（TS 转译加载）
         run: node tests/test_toolbox_groups.mjs
+
+      - name: 渲染层 store 状态编排测试（真实 Vue 响应式 + IPC 桩）
+        run: node tests/test_store.mjs
 
   # ---------------------------------------------------------------------------
   # Electron 冒烟自测：仅在已验证的 macOS 上运行（SMOKE_TEST 自校验后退出）

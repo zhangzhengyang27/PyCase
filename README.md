@@ -37,12 +37,15 @@ npm run dev          # = electron-vite dev；sidecar 由主进程自动 spawn，
 # Python 侧（共享 venv，需 pytest）
 .venv/bin/python -m pytest tests/ -q
 
-# 前端纯函数（node --test，经 tests/renderer-loader.mjs 加载真实 TS 源码）
+# 前端纯函数（经 tests/renderer-loader.mjs 加载真实 TS 源码）
 node tests/test_filter_engine.mjs
 node tests/test_renderer_utils.mjs
 node tests/test_overview.mjs
 node tests/test_filter_chips.mjs
 node tests/test_toolbox_groups.mjs
+
+# 渲染层状态编排（加载真实 store.ts，vue 走真实响应式，IPC 用桩）
+node tests/test_store.mjs
 ```
 
 提交前钩子见 `.pre-commit-config.yaml`（ruff + 文档引用防漂移 `scripts/check_doc_refs.py`）。
