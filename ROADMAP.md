@@ -47,7 +47,33 @@
 - [x] 清完 `scripts/` 的 23 处 lint 债（F401 / F811 / E402 / E731 / E741 / F841），
       CI 门禁恢复为 `ruff check app scripts tests`；重跑 gen_bulk / gen_real_projects
       生成的 JSON 与提交版逐字节一致，确认属纯重构
-- [ ] 示例运行回归：补全 CI 中的 Electron 冒烟 job（仅 macOS 验证过）
+- [x] 示例运行回归：修好 CI 中的 Electron 冒烟 job（原 45s 超时导致**必然失败**）
+      **① 冒烟链路已本地跑通（首次）**：`[smoke] 全部通过` / `EXIT=0`，7 个探针全绿
+      （sidecar ready → ping → list_examples 1496 个/14 集合 → history → favorites →
+      facets → gallery → ai → 用户集合导入/删除）。
+      本地复现需要两个环境绕行（**与代码无关，是运行环境限制**）：
+      - `ELECTRON_RUN_AS_NODE` 必须清掉。该变量被设置时 Electron 以纯 Node 运行，
+        `require('electron')` 返回二进制路径字符串 → `electron.app` 为 undefined →
+        主进程首行 `electron.app.isPackaged` 直接抛错。
+      - 嵌套沙箱内 Chromium 起不来（`Failed to initialize sandbox` + GPU/network
+        service 崩溃 → 渲染进程 `crashed`），需 `--no-sandbox --disable-gpu` 才跑得动。
+        正常 CI runner 无此问题。
+      **② 45s 超时是硬缺陷（已修）**：实测（1496 个示例）首次 `list_examples` ≈17s、
+      `import_examples` ≈13s、每次 `delete_example` ≈13s —— 仅「导入/删除」三步就 40s+，
+      再叠加渲染层加载与末尾 8s 观察窗，**在原样跑通之前必然超时**。
+      已把超时改为默认 180s 并支持 `SMOKE_TIMEOUT_MS` 覆盖；同时给超时信息加上
+      「卡在哪一步」（原来只报一句「45s 内未完成」，无从定位）。
+      **③ 超时会留下残留（已修一半）**：`import_examples` 建的 `user_examples/smoke_import.json`
+      与物化缓存 `.json_examples_cache/smoke_*` 会留在开发机上，而 `user_examples/`
+      在 `.gitignore:41` 里 → **CI 与 `git status` 都看不见，会持续累积**。
+      已加 `finally` 兜底删除本步导入的示例（删空后集合文件自动移除）。
+      ⚠️ 仍未覆盖「deadline 硬超时」路径：`app.exit(1)` 直接退出，async 流程的 `finally`
+      不会执行——彻底解决需把 deadline 改成可中断信号，属后续改进。
+      **④ CI 无 `.venv` 也能跑**：`electron-smoke` job 不建 `.venv`，
+      `resolveSidecarCommand` 回退 `python3`；索引链路（`_ensure_store`）纯标准库，
+      不依赖 opencv/pygame 等重包，故 `list_examples` 可用。
+      **未验证项**：`macos-latest` runner 上的实际表现（本地沙箱只能跑到「渲染层崩溃」，
+      本机是靠 `--no-sandbox` 绕行才完整跑通的）
 
 ### P2 — 组件测试期间发现的问题（4 项均已核读源码 / 实测确认，且已全部修复）
 

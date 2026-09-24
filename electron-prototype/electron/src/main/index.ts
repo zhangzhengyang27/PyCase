@@ -594,10 +594,17 @@ ipcMain.handle('file:saveText', async (event, { content, defaultName, filters }:
 // ---------------------------------------------------------------------------
 function runSmokeTest(): void {
   const failures: string[] = []
+  // 冒烟总超时：默认 180s，可用 SMOKE_TIMEOUT_MS 覆盖。
+  // 链路耗时随示例量增长，本机实测（1496 个示例）：首次 list_examples ≈17s、
+  // import ≈13s、每次 delete ≈13s——仅「导入/删除」三步就要 40s+，加上
+  // 渲染层加载与末尾 8s 观察窗，原先的 45s 在原样跑通之前就会超时。
+  const timeoutMs = Number(process.env.SMOKE_TIMEOUT_MS) || 180000
+  // 记录当前阶段：超时时能直接看出卡在哪一步，而不是只报一句「未完成」
+  let step = 'sidecar 启动'
   const deadline = setTimeout(() => {
-    console.error('[smoke] 45s 内未完成，判定失败')
+    console.error(`[smoke] ${Math.round(timeoutMs / 1000)}s 内未完成（卡在：${step}），判定失败`)
     app.exit(1)
-  }, 45000)
+  }, timeoutMs)
 
   mainWindow?.webContents.on('console-message', (_event, level, message) => {
     if (level === 3) failures.push(`renderer console error: ${message}`)
@@ -621,19 +628,23 @@ function runSmokeTest(): void {
 
   void (async () => {
     try {
+      step = 'sidecar ready'
       await waitFor(() => sidecarReady, 'sidecar ready')
       const ping = await callSidecar('ping') as { status?: string }
       if (!ping || ping.status !== 'ok') throw new Error('ping 返回异常')
+      step = 'list_examples'
       const list = await callSidecar('list_examples') as { total?: number; tree?: { children?: unknown[] } }
       if (!list || !list.total || list.total < 100) throw new Error(`示例数量异常: ${list && list.total}`)
       if (!list.tree || !list.tree.children || list.tree.children.length === 0) throw new Error('目录树为空')
       console.log(`[smoke] sidecar 正常，示例 ${list.total} 个，集合 ${list.tree.children.length} 个`)
       // 等渲染进程（Vue）完成 loadExamples
+      step = 'Vue 应用加载示例'
       await waitFor(async () => {
         const n = await mainWindow!.webContents.executeJavaScript('window.__app ? window.__app.examples().length : 0') as number
         return n > 100
       }, 'Vue 应用加载示例')
       // 渲染层链路探针：经 window.__app 驱动 Vue 应用（store 状态 + 持久化 + 筛选）
+      step = '渲染层链路探针'
       const probe = await mainWindow!.webContents.executeJavaScript(`(async () => {
         const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
         const app = window.__app;
@@ -705,7 +716,9 @@ function runSmokeTest(): void {
         console.log(`[smoke] ${key} 链路正常`)
       }
       // 5) 用户集合导入/删除链路：tmp 目录 → import → 数量与标记 → delete → 复原
+      step = '用户集合导入/删除'
       const tmpImportDir = fs.mkdtempSync(path.join(os.tmpdir(), 'smoke-import-'))
+      const importedIds = ['smoke_a.py', 'smoke_b.py']
       try {
         fs.writeFileSync(path.join(tmpImportDir, 'smoke_a.py'), 'print("a")\n', 'utf-8')
         fs.writeFileSync(path.join(tmpImportDir, 'smoke_b.py'), 'print("b")\n', 'utf-8')
@@ -736,9 +749,20 @@ function runSmokeTest(): void {
         }
         console.log('[smoke] 导入/删除链路正常')
       } finally {
+        // 中途失败时也要复原：删掉本步导入的示例（集合被删空后文件会自动移除，
+        // 否则 user_examples/smoke_import.json 会留在开发机上，且被 .gitignore 掩盖）。
+        // 注：deadline 触发的硬超时走 app.exit，不会执行到这里。
+        for (const id of importedIds) {
+          try {
+            await callSidecar('delete_example', { id })
+          } catch {
+            // 该示例可能已被本步正常删除，忽略
+          }
+        }
         fs.rmSync(tmpImportDir, { recursive: true, force: true })
       }
       // 留 8s 让渲染进程完成 Monaco 初始化与列表渲染，捕获潜在 console error
+      step = '渲染层错误观察窗'
       await new Promise((r) => setTimeout(r, 8000))
       if (failures.length) {
         console.error('[smoke] 渲染进程报错:\n' + failures.join('\n'))
