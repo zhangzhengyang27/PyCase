@@ -3,13 +3,14 @@
 // 收集与回填语义从旧 args-form.ts 的 collectArgsFromForm / applyArgsToForm 移植：
 // - 收集：布尔开关按 checked 推 flag；其余非空值按位置/选项展开
 // - 回填：-开头 token 匹配 spec.flags（布尔开关勾选，其余取下一个 token），非 - 按位置顺序
-import { nextTick, reactive, ref, watch } from 'vue'
+import { nextTick, onBeforeUnmount, reactive, ref, watch } from 'vue'
 import {
   argsLoading,
   currentArgs,
   pendingBackfillTokens,
   registerArgsCollector,
   registerArgsSetter,
+  registerArgsValidator,
   requiredArgsMissing,
   type ArgSpec
 } from '../store'
@@ -32,7 +33,9 @@ const showErrors = ref(false)
 function isMissing(spec: ArgSpec, idx: number): boolean {
   return (
     !!spec.required &&
-    spec.default === undefined &&
+    // sidecar 对「没有默认值」的参数返回 null（不是 undefined），两者都要判，
+    // 否则必填高亮永远不会亮（与 store.requiredArgsMissing 同一口径）
+    (spec.default === undefined || spec.default === null) &&
     !isBool(spec) &&
     !String(values.list[idx] ?? '').trim()
   )
@@ -137,6 +140,11 @@ registerArgsCollector(collectArgs)
 registerArgsSetter((idx, v) => {
   values.list[idx] = v
 })
+// 表单值存在本组件的局部 values.list 里，store 侧读不到，因此把「按当前值判断是否仍缺
+// 必填项」反向注册给它。校验器读了 values.list，store 的 requiredArgsMissing 便随输入自动重算
+// ——这样提示文案/红框会在用户填完后消失，而不是一旦出现就永久挂着。
+registerArgsValidator(() => currentArgs.value.some((spec, idx) => isMissing(spec, idx)))
+onBeforeUnmount(() => registerArgsValidator(null))
 </script>
 
 <template>

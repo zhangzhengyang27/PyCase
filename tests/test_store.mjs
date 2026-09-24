@@ -17,6 +17,8 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const calls = [];
 let fixtures = [];
 let storeData = {};
+// parseArgs 的返回：按需注入参数规格（必填门禁用例要它）
+let argFixtures = [];
 
 const api = {
   storeGet: async (key) => (Object.prototype.hasOwnProperty.call(storeData, key) ? storeData[key] : null),
@@ -31,7 +33,7 @@ const api = {
     calls.push(["runExample", params]);
     return { run_id: "run-1" };
   },
-  parseArgs: async () => ({ args: [] }),
+  parseArgs: async () => ({ args: argFixtures }),
   listAssets: async () => ({ assets: [] })
 };
 
@@ -58,6 +60,7 @@ async function resetState() {
   fixtures = mkExamples();
   storeData = {};
   calls.length = 0;
+  argFixtures = [];
   S.examples.value = [];
   S.loadError.value = "";
   S.searchQuery.value = "";
@@ -82,6 +85,10 @@ async function resetState() {
   S.pendingHighRiskRun.value = null;
   S.selectedId.value = null;
   S.isDirty.value = false;
+  // 必填门禁：参数规格与「表单反向注册的校验器」都是模块级单例，必须归零，
+  // 否则上一个用例注册的校验器会替下一个用例作答（典型跨用例串味）
+  S.currentArgs.value = [];
+  S.registerArgsValidator(null);
   // 两个搜索框都有 120ms 防抖，等它们落定，避免跨用例串味
   await sleep(140);
 }
@@ -357,6 +364,76 @@ await boot();
 fixtures = null;
 await S.loadAll();
 check("重载失败清空旧示例（不展示过期数据）", S.examples.value.length === 0);
+
+console.log("必填参数门禁（requiredArgsMissing / runFromDetail）");
+await boot();
+// 必填门禁只看参数规格（spec），不看表单里已填的值——表单值由 ArgsForm 反向注册的
+// 校验器提供。这里先测「无校验器」的纯 spec 回退口径。
+const runCountReq = () => calls.filter((c) => c[0] === "runExample").length;
+const specOf = (over) => ({ name: "--token", flags: ["--token"], dest: "token", type: "str", required: true, ...over });
+// 每次「应该起跑」的尝试前复位运行态：beginRun 会同步把 isRunning 置真，
+// 而 runFromDetail 开头就挡 isRunning —— 不复位的话第二次调用永远不会起跑（假红）
+const settleReq = () => {
+  S.isRunning.value = false;
+  S.currentRunId.value = null;
+  calls.length = 0;
+};
+
+// ① 必填 + 无默认值 → 缺失
+S.currentArgs.value = [specOf({})];
+check("必填无默认值 → requiredArgsMissing", S.requiredArgsMissing.value === true);
+settleReq();
+S.selectedId.value = "t1";
+S.runFromDetail();
+check("必填无默认值 → runFromDetail 不起跑", runCountReq() === 0);
+
+// ② 必填 + sidecar 返回 default: null（真实数据形状）→ 仍是缺失
+//    回归护栏：曾只判 === undefined，导致整条门禁是死代码
+S.currentArgs.value = [specOf({ default: null })];
+check("必填 default:null（真实形状）→ 仍视为缺失", S.requiredArgsMissing.value === true);
+
+// ③ 必填 + 有默认值 → 不算缺失（用户裁定：必填可以有默认值）
+S.currentArgs.value = [specOf({ default: "fallback" })];
+check("必填有默认值 → 不算缺失", S.requiredArgsMissing.value === false);
+settleReq();
+S.runFromDetail();
+check("必填有默认值 → runFromDetail 正常起跑", runCountReq() === 1);
+
+// ④ 布尔开关：store_true / store_false 永远有值，不进门禁
+S.currentArgs.value = [specOf({ type: "bool", action: "store_true" }), specOf({ type: "bool", action: "store_false" })];
+check("布尔必填项不进门禁", S.requiredArgsMissing.value === false);
+
+// ⑤ 非必填参数不受影响
+S.currentArgs.value = [specOf({ required: false })];
+check("非必填参数不进门禁", S.requiredArgsMissing.value === false);
+
+// ⑥ 表单反向注册的校验器优先于 spec 回退：用户已填值时不再拦
+S.currentArgs.value = [specOf({})];
+S.registerArgsValidator(() => false);
+check("校验器说「已填」→ 门禁放行（spec 仍看着缺失）", S.requiredArgsMissing.value === false);
+settleReq();
+S.runFromDetail();
+check("放行后 runFromDetail 起跑", runCountReq() === 1);
+S.registerArgsValidator(null);
+check("校验器注销 → 回退到 spec 判定", S.requiredArgsMissing.value === true);
+
+// ⑦ 卡片入口同样受门禁约束（runFromCard → openDetail 拿到必填参数后拦住）
+settleReq();
+S.selectedId.value = null;
+S.currentArgs.value = [];
+argFixtures = [specOf({})];
+await S.runFromCard("t1");
+await sleep(0);
+check("runFromCard：必填缺失不自动起跑", runCountReq() === 0);
+check("runFromCard：仍停在详情页引导填参", S.selectedId.value === "t1");
+
+settleReq();
+S.selectedId.value = null;
+S.currentArgs.value = [];
+argFixtures = [specOf({ default: "fallback" })];
+await S.runFromCard("t1");
+await sleep(0);
+check("runFromCard：有默认值则自动起跑", runCountReq() === 1);
 
 // ===========================================================================
 if (failed) {

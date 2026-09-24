@@ -664,25 +664,55 @@ describe('ArgsForm', () => {
     expect(testApi.collectArgs()).toEqual(['--verbose', '--no-cache', '--quiet'])
   })
 
-  it('必填参数：标签带 *、底部提示常驻，收集后高亮缺失字段', async () => {
+  it('必填参数：标签带 *、缺失时提示常驻；补填后红框与提示一并消失', async () => {
     currentArgs.value = [{ name: '--token', flags: ['--token'], dest: 'token', type: 'str', required: true }]
     const w = mount(ArgsForm)
 
     expect(w.get('label').text()).toContain('*')
+    // 未填：底部提示常驻（挂载即出现），但字段尚未标红——标红只发生在点过「运行」之后
     expect(w.findAll('span').some((s) => s.text().includes('存在必填参数'))).toBe(true)
     expect(w.get('input').attributes('aria-invalid')).toBeUndefined()
 
+    // 触发一次收集 = 点「运行」被门禁拦下的那条路径：标红并聚焦首个缺失字段
     testApi.collectArgs()
     await nextTick()
     expect(w.get('input').attributes('aria-invalid')).toBe('true')
     expect(w.get('input').classes()).toContain('border-danger')
 
+    // 补填后红框消失，底部提示也随之消失：校验器读的是「当前值」，不再是
+    // 「一旦出现就永久挂着」——后者正是修复前的缺陷（门禁只看 spec，不看已填值）
     await w.get('input').setValue('abc')
     expect(w.get('input').attributes('aria-invalid')).toBeUndefined()
-    // 注意：底部提示由 requiredArgsMissing 驱动，而它只看 spec（required && default 未定义），
-    // 不看已填值——所以补填后提示仍在。这是组件的现状行为（疑似缺陷，已单独上报）。
-    expect(w.findAll('span').some((s) => s.text().includes('存在必填参数'))).toBe(true)
+    expect(w.findAll('span').some((s) => s.text().includes('存在必填参数'))).toBe(false)
     expect(testApi.collectArgs()).toEqual(['--token', 'abc'])
+  })
+
+  it('必填但有默认值：不算缺失——不提示、不标红，直接可收集', async () => {
+    // 语义裁定：必填 ≠ 必须由用户输入，有默认值即视为已满足
+    currentArgs.value = [
+      { name: '--token', flags: ['--token'], dest: 'token', type: 'str', required: true, default: 'fallback' }
+    ]
+    const w = mount(ArgsForm)
+    // 星标照常显示（它标记 required，不标记「当前缺失」）
+    expect(w.get('label').text()).toContain('*')
+    expect(w.text()).not.toContain('存在必填参数')
+    testApi.collectArgs()
+    await nextTick()
+    expect(w.get('input').attributes('aria-invalid')).toBeUndefined()
+    expect(testApi.collectArgs()).toEqual(['--token', 'fallback'])
+  })
+
+  it('sidecar 对无默认值的必填项返回 default: null —— 必须按缺失处理（真实数据形状）', async () => {
+    // 回归护栏：曾只判 `default === undefined`，而 sidecar 序列化的是 null，
+    // 导致整条必填门禁（提示 / 红框 / runFromCard 拦截）全是死代码
+    currentArgs.value = [
+      { name: '--token', flags: ['--token'], dest: 'token', type: 'str', required: true, default: null }
+    ]
+    const w = mount(ArgsForm)
+    expect(w.text()).toContain('存在必填参数')
+    testApi.collectArgs()
+    await nextTick()
+    expect(w.get('input').attributes('aria-invalid')).toBe('true')
   })
 
   it('无必填参数时不出现底部提示', () => {

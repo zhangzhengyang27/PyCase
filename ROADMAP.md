@@ -25,15 +25,15 @@
 
 ### P1 — 质量缺口
 
-- [x] 补上 Vue 层 `store.ts` 的测试：新增 `tests/test_store.mjs`（80 项断言），
+- [x] 补上 Vue 层 `store.ts` 的测试：新增 `tests/test_store.mjs`（**93 项断言**），
       经 renderer-loader 加载真实 store.ts —— `vue` 从 node_modules 真实加载（真响应式），
       仅以替身替换 `./toast` 与 `./src/sidecar-client` 两个副作用依赖；覆盖画廊/工具箱
       互补池、排序、收藏、筛选重置、芯片反向应用、下钻范围互斥、loadAll 成功/失败/
-      脏偏好拒绝、搜索防抖、facet 计数口径、运行超时持久化、高危确认门。
+      脏偏好拒绝、搜索防抖、facet 计数口径、运行超时持久化、高危确认门、必填门禁。
       顺带修掉加载器的缓存命中 bug（返回 module 外壳而非 module.exports）
 - [x] 27 个 Vue 组件补齐渲染层测试：新增 Vitest + jsdom 组件测试基建
       （`electron-prototype/electron/vitest.config.ts`、`vitest.setup.ts`、`npm test`），
-      5 个 spec 覆盖全部组件共 **234 项断言**（base 8 个 / cards 7 个 / browse 3 个 /
+      5 个 spec 覆盖全部组件共 **236 项断言**（base 8 个 / cards 7 个 / browse 3 个 /
       detail 4 个 / panels 5 个）。与 `tests/*.mjs` 分层：纯逻辑模块走 `node --test`
       （零 bundler），需要 SFC 编译与 DOM 的组件走 Vitest；Vitest 与 `electron.vite.config.ts`
       共用 `@vitejs/plugin-vue`，编译链与真实构建一致。jsdom 的四处缺口
@@ -49,7 +49,7 @@
       生成的 JSON 与提交版逐字节一致，确认属纯重构
 - [ ] 示例运行回归：补全 CI 中的 Electron 冒烟 job（仅 macOS 验证过）
 
-### P2 — 组件测试期间发现的问题（均已核读源码 / 实测确认）
+### P2 — 组件测试期间发现的问题（4 项均已核读源码 / 实测确认，且已全部修复）
 
 - [x] **`CommandPalette` 键盘双触发（已修）**：`onMounted` 用捕获阶段在 window 注册
       `onKeydown`，搜索框上又挂了 `@keydown="onKeydown"`；面板打开即聚焦搜索框，于是
@@ -69,18 +69,27 @@
       `runStatusLabel` 对 `runnable` 返回「可运行」、对 `risky` 返回「高危」——详情页因此多出
       一个卡片刻意不显示的「可运行」徽章，`risk_high` 示例还会出现两个「高危」。
       已改为与卡片同源的 `statusBadge` computed，并补用例覆盖两个分支
-- [ ] `store.requiredArgsMissing`（`store.ts:455`）只按参数 spec 判定，不随用户填入值重算
-      ——表单值存在 `ArgsForm` 的局部 `values.list` 里，store 侧读不到。连带影响：
-      ① `ArgsForm.vue:183` 的「存在必填参数，请填写后再运行」一旦出现就不再消失（用户填完仍在），
-      而字段红色高亮会随填写消失（`ArgsForm.isMissing` 有查值），同一件事两处口径不一致；
-      ② `ArgsForm.vue:110` 注释称「store 侧同步拦截运行」，但 `runFromDetail`（`store.ts:585`）
-      与 `startRun`（`store.ts:620`）都没有该门禁，`collectArgs` 也不提前返回——必填项为空时
-      在详情页点「运行」仍会起跑，与注释和文案承诺都不符；
-      ③ `runFromCard`（`store.ts:595`）据此不自动运行，属注释写明的预期行为，不算缺陷。
-      ⚠️ **不能只在 `runFromDetail` 补一道门禁**：该 computed 读不到表单值，用户填完必填项后
-      它仍为 `true`，补门禁会让这类示例变成**永久无法运行**（比现状更糟）。
-      正解是把表单值提升到 store，或让门禁改读 ArgsForm 的实时校验结果——属结构改动，
-      **需先定交互语义**：必填项为空时，详情页的「运行」到底该拦还是该放行？
+- [x] **`store.requiredArgsMissing` 必填门禁是死代码（已修）** —— 这条比原先记的更严重，
+      根因有两层，实测确认：
+      **① `null` / `undefined` 口径错（致命）**：sidecar 的 `parse_args` 对「没有默认值」的
+      参数序列化为 `"default": null`（不是省略字段、也不是 `undefined`），而门禁判的是
+      `a.default === undefined` —— 对真实数据**永远为假**。也就是说整条必填门禁
+      （`ArgsForm` 的提示文案与字段红框、`runFromCard` 的拦截）从未生效过，全是死代码。
+      实测：`printf '{"jsonrpc":"2.0","id":1,"method":"parse_args",...}' | .venv/bin/python
+      electron-prototype/sidecar/server.py` → `"default": null`。
+      **② 门禁读不到表单值**：表单值在 `ArgsForm` 局部的 `values.list` 里，store 侧不可见，
+      故门禁无法随用户填入而重算——修好①之后若不解决②，会让必填示例**永久无法运行**。
+      **交互语义（用户裁定）**：必填项**可以有默认值**——`required` 只表示「必须有一个值」，
+      不表示「必须由用户输入」；有 `default` 即视为已满足。
+      **修法**：`store.ts` 新增 `isRequiredArgUnset()`（同时判 `undefined` 与 `null`，
+      并排除 `store_true` / `store_false` 布尔开关）；新增 `registerArgsValidator()`，
+      由 `ArgsForm` 反向注册一个读 `values.list` 的校验器（`shallowRef` 持有，
+      组件卸载时注销），`requiredArgsMissing` 优先用它、未注册时回退纯 spec 判定；
+      `runFromDetail` 补上门禁。`ArgsForm.isMissing` 同步修掉 `null` 口径。
+      **回归护栏**：组件层 +2 条（`default: null` 按缺失处理；必填有默认值不拦不标红），
+      store 层 +13 条（无默认值/`null`/有默认值/布尔/非必填/校验器优先与注销/
+      `runFromCard` 两个分支）。**变异测试 4/4 全部被捕获**：① 去掉 store 的 `null` 判定
+      ② 去掉 `ArgsForm` 的 `null` 判定 ③ 去掉反向注册的校验器 ④ 去掉 `runFromDetail` 门禁
 
 ## 2. Done（已交付，按 tag 与提交对账）
 

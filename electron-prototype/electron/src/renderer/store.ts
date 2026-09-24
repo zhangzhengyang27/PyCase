@@ -4,7 +4,7 @@
 // 状态变化自动重算，从架构上消灭旧版"手动 applyAllFilters 同步视图"的整类 bug。
 // 纯过滤逻辑仍全部来自 filter-engine.ts（与旧窗口共用同一实现与测试）。
 
-import { computed, reactive, ref, watch } from 'vue'
+import { computed, reactive, ref, shallowRef, watch } from 'vue'
 import { pushToast } from './toast'
 import * as FilterEngine from './src/filter-engine'
 import { splitArgs } from './src/utils'
@@ -452,10 +452,33 @@ export const selectedExample = computed(() => examples.value.find((e) => e.id ==
 export const detailHistory = computed(() =>
   selectedId.value ? runHistory.value.filter((h) => h.id === selectedId.value).slice(0, 20) : []
 )
+/**
+ * 参数是否「既没有默认值、也没有用户填的值」。
+ *
+ * 注意 sidecar 对**没有**默认值的参数返回 `"default": null`（不是省略、也不是 undefined），
+ * 所以这里必须同时判 null 与 undefined —— 只判 `=== undefined` 会让整个必填门禁永远为假
+ * （曾经如此：提示文案、字段红框、runFromCard 的拦截全是死代码）。
+ */
+function isRequiredArgUnset(a: ArgSpec): boolean {
+  const noDefault = a.default === undefined || a.default === null
+  return !!a.required && noDefault && a.action !== 'store_true' && a.action !== 'store_false'
+}
+
+// 表单值（用户已填的内容）存在 ArgsForm 组件局部的 reactive 里，store 侧读不到，
+// 因此由表单反向注册一个「按当前值判断是否仍缺必填项」的校验器。
+// 未注册时（例如详情页未挂载表单）回退到纯 spec 判定。
+const _argsValidator = shallowRef<(() => boolean) | null>(null)
+
+export function registerArgsValidator(fn: (() => boolean) | null): void {
+  _argsValidator.value = fn
+}
+
+/**
+ * 是否存在「必填但没有值」的参数。
+ * 「有默认值」即视为已满足——必填不等于「必须由用户输入」（见 isRequiredArgUnset）。
+ */
 export const requiredArgsMissing = computed(() =>
-  currentArgs.value.some(
-    (a) => a.required && a.default === undefined && !(a.action === 'store_true' || a.action === 'store_false')
-  )
+  _argsValidator.value ? _argsValidator.value() : currentArgs.value.some(isRequiredArgUnset)
 )
 
 function appendOutput(text: string, cls: OutputLine['cls'] = 'base', surface: OutputSurface = 'detail'): void {
@@ -585,6 +608,9 @@ export async function saveExample(): Promise<void> {
 export function runFromDetail(): void {
   if (isRunning.value || !selectedId.value) return
   const args = _argsCollector ? _argsCollector() : []
+  // 必填项确实没有值（既无 default、用户也没填）时不起跑：collectArgs 已在上面置错
+  // 并聚焦首个缺失字段，这里只负责拦住这次运行。有默认值的必填项不会被拦。
+  if (requiredArgsMissing.value) return
   void startRun(selectedId.value, args, 'detail')
 }
 
