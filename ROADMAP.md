@@ -33,7 +33,7 @@
       顺带修掉加载器的缓存命中 bug（返回 module 外壳而非 module.exports）
 - [x] 27 个 Vue 组件补齐渲染层测试：新增 Vitest + jsdom 组件测试基建
       （`electron-prototype/electron/vitest.config.ts`、`vitest.setup.ts`、`npm test`），
-      5 个 spec 覆盖全部组件共 **227 项断言**（base 8 个 / cards 7 个 / browse 3 个 /
+      5 个 spec 覆盖全部组件共 **234 项断言**（base 8 个 / cards 7 个 / browse 3 个 /
       detail 4 个 / panels 5 个）。与 `tests/*.mjs` 分层：纯逻辑模块走 `node --test`
       （零 bundler），需要 SFC 编译与 DOM 的组件走 Vitest；Vitest 与 `electron.vite.config.ts`
       共用 `@vitejs/plugin-vue`，编译链与真实构建一致。jsdom 的四处缺口
@@ -58,24 +58,29 @@
       两次 `runFromCard`。已删掉搜索框上的冗余监听（window 捕获监听本就覆盖全文档），
       并补两条按**真实派发目标（input）**断言的回归用例——此前的用例把事件派发到
       window，恰好绕过了 input 那一环，所以一直没暴露
-- [ ] `ToolboxView` 空态死路：页头（搜索框 + 收藏筛选 + 排序）整块位于 `v-else` 分支内，
-      当 `toolboxItems` 为空时被 `AppEmpty` 整体替换。用户在工具池打开「只看收藏」且尚无
-      收藏时，会落进「没有匹配的工具 / 调整搜索词试试」空态，而关闭该开关的唯一入口已随
-      页头消失（文案还把原因归咎于搜索词）。`GalleryView` 不受影响——它的收藏开关在侧栏
+- [x] **`ToolboxView` 空态死路（已修）**：页头（搜索框 + 收藏筛选 + 排序）整块位于 `v-else`
+      分支内，工具池为空时被 `AppEmpty` 整体替换。用户在工具池打开「只看收藏」且尚无收藏时
+      会落进空态，而关闭该开关的唯一入口已随页头消失——被永久困住。已把空态挪进滚动层内部，
+      页头始终保留；并把空态文案改为按成因归因（有搜索词→提示改搜索词；`favOnly` 且无收藏
+      →提示点星标恢复），不再一律怪搜索词。补 4 条用例，含「点星标即恢复列表」的端到端验证
+- [x] **`DetailPage` 状态徽章口径不一致（已修）**：卡片用 `statusBadge` 显式排除
+      `runnable` / `risky`，`utils.ts:66-68` 注释亦写明「runnable 无需徽章、risky 由高危徽章
+      承担」；但 `DetailPage` 直接以 `v-if="runStatusLabel(ex.run_status)"` 判定，而
+      `runStatusLabel` 对 `runnable` 返回「可运行」、对 `risky` 返回「高危」——详情页因此多出
+      一个卡片刻意不显示的「可运行」徽章，`risk_high` 示例还会出现两个「高危」。
+      已改为与卡片同源的 `statusBadge` computed，并补用例覆盖两个分支
 - [ ] `store.requiredArgsMissing`（`store.ts:455`）只按参数 spec 判定，不随用户填入值重算
-      ——表单值存在 `ArgsForm` 的局部 `values.list` 里，store 侧读不到。三个连带影响：
+      ——表单值存在 `ArgsForm` 的局部 `values.list` 里，store 侧读不到。连带影响：
       ① `ArgsForm.vue:183` 的「存在必填参数，请填写后再运行」一旦出现就不再消失（用户填完仍在），
       而字段红色高亮会随填写消失（`ArgsForm.isMissing` 有查值），同一件事两处口径不一致；
       ② `ArgsForm.vue:110` 注释称「store 侧同步拦截运行」，但 `runFromDetail`（`store.ts:585`）
       与 `startRun`（`store.ts:620`）都没有该门禁，`collectArgs` 也不提前返回——必填项为空时
       在详情页点「运行」仍会起跑，与注释和文案承诺都不符；
-      ③ `runFromCard`（`store.ts:595`）据此不自动运行，属注释写明的预期行为，不算缺陷
-- [ ] `DetailPage` 状态徽章与卡片口径不一致：卡片（`ExampleCard`/`ExampleListItem`）用
-      `statusBadge` 显式排除 `runnable` / `risky`，`utils.ts:66-68` 的注释也写明
-      「runnable 无需徽章、risky 由高危徽章承担」；但 `DetailPage.vue:136` 直接以
-      `v-if="runStatusLabel(ex.run_status)"` 判定，而 `runStatusLabel` 对 `runnable`
-      返回「可运行」、对 `risky` 返回「高危」——于是详情页多出一个卡片刻意不显示的
-      「可运行」徽章，`risk_high` 示例还会出现两个「高危」徽章
+      ③ `runFromCard`（`store.ts:595`）据此不自动运行，属注释写明的预期行为，不算缺陷。
+      ⚠️ **不能只在 `runFromDetail` 补一道门禁**：该 computed 读不到表单值，用户填完必填项后
+      它仍为 `true`，补门禁会让这类示例变成**永久无法运行**（比现状更糟）。
+      正解是把表单值提升到 store，或让门禁改读 ArgsForm 的实时校验结果——属结构改动，
+      **需先定交互语义**：必填项为空时，详情页的「运行」到底该拦还是该放行？
 
 ## 2. Done（已交付，按 tag 与提交对账）
 

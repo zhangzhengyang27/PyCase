@@ -70,6 +70,15 @@ const title = computed(() => {
 })
 const meta = computed(() => CATEGORY_META[ex.value?.category || ''] || CATEGORY_META.topics)
 const metaIcon = computed(() => meta.value?.icon ?? categoryIcon(ex.value?.category || ''))
+// 可运行性徽章：与卡片（ExampleCard / ExampleListItem）保持同一口径——
+// runnable 是正向状态不占视觉，risky 由高危徽章承担展示（见 utils.ts 中
+// RUN_STATUS_LABELS 上方的注释）。若直接拿 runStatusLabel() 判定，详情页会多出一个
+// 卡片刻意不显示的「可运行」徽章，risk_high 示例还会出现两个「高危」。
+const statusBadge = computed(() =>
+  ex.value?.run_status && ex.value.run_status !== 'runnable' && ex.value.run_status !== 'risky'
+    ? ex.value.run_status
+    : ''
+)
 // 样张对齐：详情页图标徽章与卡片/分区同源（emoji+分区色相），未命中回退分类；
 // 追踪 ex.code：保存后 invalidateExampleVisual 清备忘，此处随之重算，徽章即时刷新
 const visual = computed(() => {
@@ -133,11 +142,11 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
             <ShieldAlert :size="10" /> 高危
           </span>
           <span
-            v-if="runStatusLabel(ex.run_status)"
+            v-if="statusBadge"
             class="inline-flex items-center px-1.5 py-px rounded-badge text-badge font-[590] shrink-0"
-            :class="runStatusBadgeCls(ex.run_status)"
-            :title="runStatusHint(ex.run_status)"
-            >{{ runStatusLabel(ex.run_status) }}</span
+            :class="runStatusBadgeCls(statusBadge)"
+            :title="runStatusHint(statusBadge)"
+            >{{ runStatusLabel(statusBadge) }}</span
           >
         </div>
         <div class="flex items-center gap-1.5 min-w-0">

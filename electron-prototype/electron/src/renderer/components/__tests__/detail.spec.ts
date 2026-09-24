@@ -249,6 +249,19 @@ describe('DetailPage', () => {
     expect(unknown.text()).not.toContain('缺依赖')
   })
 
+  it('可运行性徽章与卡片同口径：runnable 不渲染，risky 交给高危徽章', () => {
+    // runnable 是正向状态，卡片刻意不展示（见 utils.ts 中 RUN_STATUS_LABELS 上方注释），
+    // 详情页同样不该多出一个卡片刻意不显示的「可运行」徽章
+    const runnable = mountDetail({ run_status: 'runnable' })
+    expect(runnable.find('[title*="静态检查通过"]').exists()).toBe(false)
+    expect(runnable.text()).not.toContain('可运行')
+
+    // risky：run_status 徽章整段省略，只保留 risk_high 的高危徽章，避免两个「高危」并存
+    const risky = mountDetail({ run_status: 'risky', risk_high: true })
+    expect(risky.find('[title*="子进程隔离不是安全沙箱"]').exists()).toBe(false)
+    expect(risky.findAll('[title="含高危操作（系统命令/文件删除等），运行前请先审阅代码"]')).toHaveLength(1)
+  })
+
   it('risk_high 时渲染高危徽章，普通示例不渲染', () => {
     expect(mountDetail({ risk_high: true }).text()).toContain('高危')
     expect(mountDetail({ risk_high: false }).text()).not.toContain('高危')

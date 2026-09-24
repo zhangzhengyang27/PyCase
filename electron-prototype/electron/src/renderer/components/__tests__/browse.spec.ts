@@ -4,6 +4,7 @@
 // 断言优先落在渲染文本 / 类名与交互后的 store 状态上，不穿透子组件内部实现。
 import { describe, expect, it, afterEach, beforeEach, vi } from 'vitest'
 import { mount, type VueWrapper } from '@vue/test-utils'
+import { nextTick } from 'vue'
 
 import GalleryView from '../GalleryView.vue'
 import ToolboxView from '../ToolboxView.vue'
@@ -287,6 +288,59 @@ describe('ToolboxView', () => {
     examples.value = [makeExample({ id: 't', category: 'topics' })]
     const w = mount(ToolboxView)
     expect(w.text()).toContain('没有匹配的工具')
+  })
+
+  it('工具池为空时页头仍然可见——它是退出筛选的唯一入口', () => {
+    examples.value = [makeExample({ id: 't', category: 'topics' })]
+    const w = mount(ToolboxView)
+
+    expect(w.text()).toContain('没有匹配的工具')
+    // 回归：空态曾整块替换页头，用户因此无法清空搜索词或关掉「只看收藏」，被永久困住
+    expect(w.find('input[placeholder="搜索工具…"]').exists()).toBe(true)
+    expect(w.find('select').exists()).toBe(true)
+    expect(w.findAll('button').some((b) => b.attributes('aria-label') === '只看收藏')).toBe(true)
+  })
+
+  it('空态归因于收藏筛选，而不是一律怪搜索词', () => {
+    examples.value = toolFixtures()
+    favorites.value = new Set()
+    favOnly.value = true
+    const w = mount(ToolboxView)
+
+    expect(w.text()).toContain('没有匹配的工具')
+    expect(w.text()).toContain('当前只显示已收藏的工具')
+    expect(w.text()).not.toContain('调整搜索词试试')
+  })
+
+  it('搜索无匹配时空态归因于搜索词', async () => {
+    examples.value = toolFixtures()
+    // 搜索是防抖的：toolSearchQuery 输入后 120ms 才写入 appliedToolSearch（toolboxItems 用的是后者）
+    vi.useFakeTimers()
+    toolSearchQuery.value = 'zzz-不存在'
+    await nextTick()
+    vi.advanceTimersByTime(120)
+    await nextTick()
+    vi.useRealTimers()
+
+    const w = mount(ToolboxView)
+    expect(w.findAll('section.mb-9')).toHaveLength(0)
+    expect(w.text()).toContain('没有匹配的工具')
+    expect(w.text()).toContain('调整搜索词试试')
+  })
+
+  it('空态下点星标即可退出「只看收藏」，列表随即恢复', async () => {
+    examples.value = toolFixtures()
+    favorites.value = new Set()
+    favOnly.value = true
+    const w = mount(ToolboxView)
+    expect(w.findAll('section.mb-9')).toHaveLength(0)
+
+    // 开关处于激活态时，按钮的 aria-label 会翻转为「显示全部工具」
+    const toggle = w.findAll('button').find((b) => b.attributes('aria-label') === '显示全部工具')!
+    await toggle.trigger('click')
+
+    expect(favOnly.value).toBe(false)
+    expect(w.findAll('section.mb-9').length).toBeGreaterThan(0)
   })
 
   it('页头统计工具数 / 项目数 / 可静态运行百分比', () => {

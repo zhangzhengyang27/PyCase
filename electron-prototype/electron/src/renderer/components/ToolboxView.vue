@@ -106,6 +106,14 @@ function onRun(id: string): void {
 function toggleFavOnly(): void {
   favOnly.value = !favOnly.value
 }
+
+// 空态归因：空态下页头仍然可见，所以文案必须指明是哪个开关造成的，
+// 否则「只看收藏」导致的空列表会被误导性地归咎于搜索词。
+const emptyHint = computed(() => {
+  if (toolSearchQuery.value.trim()) return '调整搜索词试试'
+  if (favOnly.value) return '当前只显示已收藏的工具，点右上角星标可恢复'
+  return '工具库中暂无示例'
+})
 </script>
 
 <template>
@@ -120,11 +128,10 @@ function toggleFavOnly(): void {
       <AlertBanner :title="`加载失败: ${loadError}`" class="w-[420px]" />
       <BaseButton variant="primary" @click="emit('reload')">重试</BaseButton>
     </div>
-    <div v-else-if="toolboxItems.length === 0" class="flex-1 flex items-center justify-center">
-      <AppEmpty :icon="SearchX" title="没有匹配的工具" description="调整搜索词试试" />
-    </div>
 
-    <!-- 落地页：页头固定（app-drag 在滚动容器内不生效）+ 项目分区滚动 -->
+    <!-- 落地页：页头固定（app-drag 在滚动容器内不生效）+ 项目分区滚动。
+         注意：工具池为空（搜索无匹配 / 只看收藏且无收藏）时，**页头必须留着**——
+         它是关闭「只看收藏」、清空搜索词的唯一入口，随空态一起消失会把用户困死。 -->
     <div v-else class="flex-1 min-h-0 flex flex-col">
       <div class="app-drag select-none px-8 pt-7 pb-3">
         <div class="max-w-[1200px] mx-auto flex items-end justify-between gap-4">
@@ -154,9 +161,12 @@ function toggleFavOnly(): void {
         </div>
       </div>
 
-      <!-- 项目分区（滚动层）：区头 + 卡片网格 -->
+      <!-- 项目分区（滚动层）：区头 + 卡片网格；工具池为空时同一滚动层内给空态 -->
       <div class="flex-1 min-h-0 overflow-y-auto">
-        <div class="max-w-[1200px] mx-auto px-8 pb-12">
+        <div v-if="toolboxItems.length === 0" class="flex items-center justify-center pt-20">
+          <AppEmpty :icon="SearchX" title="没有匹配的工具" :description="emptyHint" />
+        </div>
+        <div v-else class="max-w-[1200px] mx-auto px-8 pb-12">
           <section v-for="g in groups" :key="g.key" class="mb-9">
             <div class="flex items-center gap-2.5 mb-3">
               <div class="hue-chip w-7 h-7 rounded-control flex items-center justify-center shrink-0" :style="groupHue(g.key)">
