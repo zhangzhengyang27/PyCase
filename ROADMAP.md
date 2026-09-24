@@ -49,17 +49,33 @@
       生成的 JSON 与提交版逐字节一致，确认属纯重构
 - [ ] 示例运行回归：补全 CI 中的 Electron 冒烟 job（仅 macOS 验证过）
 
-### P2 — 组件测试期间发现、尚未处理的疑点（均已核读源码确认）
+### P2 — 组件测试期间发现的问题（均已核读源码 / 实测确认）
 
+- [x] **`CommandPalette` 键盘双触发（已修）**：`onMounted` 用捕获阶段在 window 注册
+      `onKeydown`，搜索框上又挂了 `@keydown="onKeydown"`；面板打开即聚焦搜索框，于是
+      同一个按键被处理两次（捕获一次 + 目标一次）。实测：在聚焦的搜索框上按一次 ↓，
+      高亮从 0 跳到 **2**（正常应为 1）；Enter / Esc 各 emit 两次 `close`，⌘+Enter 会发起
+      两次 `runFromCard`。已删掉搜索框上的冗余监听（window 捕获监听本就覆盖全文档），
+      并补两条按**真实派发目标（input）**断言的回归用例——此前的用例把事件派发到
+      window，恰好绕过了 input 那一环，所以一直没暴露
 - [ ] `ToolboxView` 空态死路：页头（搜索框 + 收藏筛选 + 排序）整块位于 `v-else` 分支内，
       当 `toolboxItems` 为空时被 `AppEmpty` 整体替换。用户在工具池打开「只看收藏」且尚无
       收藏时，会落进「没有匹配的工具 / 调整搜索词试试」空态，而关闭该开关的唯一入口已随
       页头消失（文案还把原因归咎于搜索词）。`GalleryView` 不受影响——它的收藏开关在侧栏
 - [ ] `store.requiredArgsMissing`（`store.ts:455`）只按参数 spec 判定，不随用户填入值重算
-      ——表单值存在 `ArgsForm` 的局部 `values.list` 里，store 侧读不到。影响：
-      `ArgsForm.vue:183` 的「存在必填参数，请填写后再运行」一旦出现就不再消失（用户填完仍在），
-      而字段红色高亮会随填写消失（`ArgsForm.isMissing` 有查值），同一件事两处口径不一致。
-      注：`runFromCard`（`store.ts:595`）据此不自动运行，属注释写明的预期行为，不算缺陷
+      ——表单值存在 `ArgsForm` 的局部 `values.list` 里，store 侧读不到。三个连带影响：
+      ① `ArgsForm.vue:183` 的「存在必填参数，请填写后再运行」一旦出现就不再消失（用户填完仍在），
+      而字段红色高亮会随填写消失（`ArgsForm.isMissing` 有查值），同一件事两处口径不一致；
+      ② `ArgsForm.vue:110` 注释称「store 侧同步拦截运行」，但 `runFromDetail`（`store.ts:585`）
+      与 `startRun`（`store.ts:620`）都没有该门禁，`collectArgs` 也不提前返回——必填项为空时
+      在详情页点「运行」仍会起跑，与注释和文案承诺都不符；
+      ③ `runFromCard`（`store.ts:595`）据此不自动运行，属注释写明的预期行为，不算缺陷
+- [ ] `DetailPage` 状态徽章与卡片口径不一致：卡片（`ExampleCard`/`ExampleListItem`）用
+      `statusBadge` 显式排除 `runnable` / `risky`，`utils.ts:66-68` 的注释也写明
+      「runnable 无需徽章、risky 由高危徽章承担」；但 `DetailPage.vue:136` 直接以
+      `v-if="runStatusLabel(ex.run_status)"` 判定，而 `runStatusLabel` 对 `runnable`
+      返回「可运行」、对 `risky` 返回「高危」——于是详情页多出一个卡片刻意不显示的
+      「可运行」徽章，`risk_high` 示例还会出现两个「高危」徽章
 
 ## 2. Done（已交付，按 tag 与提交对账）
 

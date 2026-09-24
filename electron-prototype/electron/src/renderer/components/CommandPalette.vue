@@ -95,6 +95,9 @@ function onKeydown(e: KeyboardEvent): void {
 }
 
 onMounted(() => {
+  // 键盘只在这里统一接管：window 捕获阶段能收到面板内任意位置（含搜索框）的按键。
+  // 搜索框上**不要**再挂 @keydown —— 那会让同一个按键被处理两次（捕获一次 + 目标一次），
+  // ↑↓ 一次跨两行、Enter 触发两次打开。
   window.addEventListener('keydown', onKeydown, true)
   inputEl.value?.focus()
 })
@@ -115,7 +118,6 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown, true))
             aria-label="全局搜索示例"
             spellcheck="false"
             class="flex-1 bg-transparent border-0 outline-none text-body text-ink placeholder:text-ink-faint"
-            @keydown="onKeydown"
           />
           <kbd class="px-1 py-px text-badge font-mono bg-card border border-line-subtle rounded-badge text-ink-faint shrink-0">Esc</kbd>
         </div>

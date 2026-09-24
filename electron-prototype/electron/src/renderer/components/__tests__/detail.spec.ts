@@ -621,6 +621,20 @@ describe('CommandPalette', () => {
     return document.body.querySelectorAll<HTMLElement>('button[data-active]')
   }
 
+  /**
+   * 真实浏览器路径：面板打开后搜索框已聚焦，按键事件的 target 是 input。
+   * 必须按这个路径派发——直接派发到 window 会绕过「input 上的监听器」这一环，
+   * 从而掩盖「同一个按键被处理两次」的缺陷（曾据此漏掉 ↑↓ 一次跨两行）。
+   */
+  function pressKey(key: string): void {
+    const input = document.body.querySelector<HTMLInputElement>('input[aria-label="全局搜索示例"]')!
+    input.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true }))
+  }
+
+  function activeIndexOf(): number {
+    return Array.from(matchItems()).findIndex((e) => e.getAttribute('data-active') === 'true')
+  }
+
   it('挂载后渲染到 body 并聚焦搜索框', () => {
     mountPalette()
     const input = document.body.querySelector('input[aria-label="全局搜索示例"]')
@@ -691,17 +705,41 @@ describe('CommandPalette', () => {
 
     window.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown' }))
     await nextTick()
-    expect(matchItems()[1].getAttribute('data-active')).toBe('true')
+    expect(activeIndexOf()).toBe(1)
 
     // 从 0 再往上回绕到最后一条
     window.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp' }))
     window.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp' }))
     await nextTick()
-    expect(matchItems()[2].getAttribute('data-active')).toBe('true')
+    expect(activeIndexOf()).toBe(2)
 
     window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }))
     await nextTick()
     expect(selectedId.value).toBe('c')
+    expect(w.emitted('close')).toHaveLength(1)
+  })
+
+  it('搜索框聚焦时，单次 ↑↓ 只移动一行（回归：曾因双重监听一次跨两行）', async () => {
+    examples.value = ['a', 'b', 'c'].map((n) => makeExample({ id: n, name: `${n}.py`, title: undefined }))
+    mountPalette()
+    setQuery('py')
+    await nextTick()
+    expect(activeIndexOf()).toBe(0)
+
+    pressKey('ArrowDown')
+    await nextTick()
+    expect(activeIndexOf()).toBe(1)
+  })
+
+  it('搜索框聚焦时，单次 Enter 只打开一次并只 emit 一次 close（回归：曾触发两次）', async () => {
+    examples.value = [makeExample({ id: 't1', name: 'alpha.py', title: undefined })]
+    const w = mountPalette()
+    setQuery('alpha')
+    await nextTick()
+
+    pressKey('Enter')
+    await nextTick()
+    expect(selectedId.value).toBe('t1')
     expect(w.emitted('close')).toHaveLength(1)
   })
 
