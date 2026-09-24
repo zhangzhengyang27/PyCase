@@ -1,3 +1,36 @@
+# ROADMAP
+
+> 版本节奏见 README 功能列表；本节 1 记录当前待办，节 2 记录已交付内容（按 tag 与提交对账）。
+
+## 1. Now / Next（当前待办）
+
+基线：HEAD `2668eb5`，示例总量 **1496**（topics 1286 / tools 163 / projects 47）。
+
+### P0 — 工程健康度（2026-09-24 架构勘察提出）
+
+- [x] 删除死入口与构建残留：根目录 PyQt6 旧入口 main.py（其依赖的 app/ui 全历史从未存在）、
+      electron 目录下 CJS 旧主进程 main.js、两份 egg-info、venv 里两份失效 editable
+      安装、5 个空产物目录
+- [x] 修复被截断的 `.github/workflows/ci.yml`（原文件缺 `name/on/jobs`，CI 从未生效）
+- [x] 安装 pytest，让 `tests/*.py` 真正可执行
+- [x] 补装 `requirements.txt` 中声明但缺失的 `selenium` / `playwright` / `ffmpeg`
+- [x] 清理死渲染层：`src/` 中 14 个旧 TS 模块（ai/app/args-form/assets/detail/facets/
+      favorites/gallery/history/main/monaco-editor/output/runner/state）与 `src/renderer/vue/`
+      脚手架、旧原型页 `renderer/index.html`、误复制的 21M `node_modules`；
+      同步收窄 `electron.vite.config.ts` 的 MPA 入口、`tsconfig.web.json` 改为覆盖 Vue 组件
+- [x] 统一版本号：pyproject 与 sidecar 自报版本对齐到 `0.10.0`（与 Electron 一致）
+- [ ] 校正过期基线文档（`docs/audit-examples.md` 仍写 1187 条）
+
+### P1 — 质量缺口
+
+- [ ] Vue 层 `store.ts`（1086 行）与 22 个组件零测试
+- [ ] `scripts/` 下 23 处历史 lint 债（F401 / F811 / E402 / E731 / E741 / F841），
+      多为一次性生成脚本；CI 门禁暂只覆盖 `app tests`
+- [ ] `requirements.txt` 含无效包名 `ternary-new`（PyPI 不存在，由迁移脚本的
+      `IMPORT_TO_PKG` 猜测产生），会让 `pip install -r requirements.txt` 整体失败；
+      需在 `scripts/gen_shared_requirements.py` 加拒绝名单后重新生成
+- [ ] 示例运行回归：补全 CI 中的 Electron 冒烟 job（仅 macOS 验证过）
+
 ## 2. Done（已交付，按 tag 与提交对账）
 
 ### v0.10.0（画廊/工具箱信息架构重设计，tag v0.10.0）

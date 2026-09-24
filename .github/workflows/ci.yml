@@ -1,3 +1,59 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# 说明：示例运行依赖仓库根 .venv（按 requirements.txt 装齐，含 opencv/pygame 等重包），
+# CI 不重建该环境——Python job 只跑不依赖第三方库的单元测试与核心逻辑。
+
+jobs:
+  python:
+    name: Python 单元测试
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: 安装开发依赖
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+          pip install ruff==0.6.9
+
+      # 与 .pre-commit-config.yaml 的 ruff 版本保持一致；scripts/ 下的一次性生成脚本
+      # 仍有历史 lint 债，暂不纳入门禁（见 ROADMAP 节 1 P1）
+      - name: ruff 检查
+        run: ruff check app tests
+
+      - name: 文档引用防漂移
+        run: python3 scripts/check_doc_refs.py
+
+      - name: pytest
+        run: pytest tests/ -q --tb=short
+
+  frontend:
+    name: 类型检查与前端纯函数测试
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      # tests/renderer-loader.mjs 用工程自带的 typescript 转译 TS 源码，必须先装依赖
+      - name: 安装前端依赖
+        working-directory: electron-prototype/electron
+        run: npm ci
+
+      - name: 类型检查
+        working-directory: electron-prototype/electron
         run: npm run typecheck
 
       - name: 多维筛选引擎纯函数测试
@@ -21,3 +77,24 @@
   # ---------------------------------------------------------------------------
   electron-smoke:
     name: Electron smoke (macos)
+    runs-on: macos-latest
+    needs: frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: 安装前端依赖
+        working-directory: electron-prototype/electron
+        run: npm ci
+
+      # 无显示器的 runner 上用 xvfb 起 Electron（Linux 需要；macOS 保留以复用同一脚本）
+      - name: 冒烟自测
+        working-directory: electron-prototype/electron
+        run: npm run smoke

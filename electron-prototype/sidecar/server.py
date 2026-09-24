@@ -34,7 +34,8 @@ import ai_service
 _STDOUT_LOCK = threading.Lock()
 
 # ---------------------------------------------------------------------------
-# 路径设置：与 main.py 保持一致，确保能 import app 包且示例内部导入正常
+# 路径设置：把 APP_DIR / REPO_ROOT 插到 sys.path 最前，确保能 import app 包
+# 且示例内部导入（兄弟模块、祖先包）能解析。app 是命名空间包，无需 editable 安装。
 # ---------------------------------------------------------------------------
 if getattr(sys, "frozen", False):
     # PyInstaller 打包模式：__file__ 指向临时解压目录，
@@ -1195,7 +1196,7 @@ def main() -> None:
     # INFO 级日志走 stderr（不污染 JSON-RPC stdout），否则 venv 创建等关键过程不可见
     configure_logging(level=logging.INFO)
     # 启动时发一条 ready 通知，让 Electron 知道 sidecar 已就绪
-    _notify("sidecar_ready", {"version": "0.9.0", "app_dir": str(APP_DIR)})
+    _notify("sidecar_ready", {"version": "0.10.0", "app_dir": str(APP_DIR)})
     # 后台预热共享 venv（线程内阻塞安装依赖，不阻碍 JSON-RPC 事件循环）
     threading.Thread(target=_warmup_venv, name="venv-warmup", daemon=True).start()
     try:

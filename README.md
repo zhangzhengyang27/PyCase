@@ -1,3 +1,68 @@
+# Python 示例仓库管理器
+
+一个 **Electron 壳 + Python sidecar** 的桌面应用：内置 **1496 条 Python 示例**，可浏览、筛选、
+编辑，并在共享虚拟环境里隔离运行，实时查看输出与生成的图片。
+
+两条贯穿全局的设计：
+
+- 示例以 `json_examples/*.json` 为**唯一真相源**（14 个集合、1496 条），运行时物化到
+  `.json_examples_cache/` 后执行，编辑保存原子回写 JSON。
+- 全项目共用仓库根一份 `.venv`，依赖按项目级 `requirements.txt` 一次装齐，示例本身不单独建环境。
+
+## 技术栈
+
+| 层 | 位置 | 技术 |
+|---|---|---|
+| 桌面壳 | `electron-prototype/electron/src/main/index.ts` | Electron 33 + electron-vite |
+| 渲染层 | `electron-prototype/electron/src/renderer/` | Vue 3 + Element Plus + Tailwind 4 + Monaco |
+| 后端 | `electron-prototype/sidecar/server.py` | 纯标准库 + asyncio，stdio JSON-RPC 2.0（15 个方法） |
+| 核心逻辑 | `app/` | Python 命名空间包，9 个模块（数据源 / 物化 / 安全 / 评分 / 环境） |
+| 示例运行环境 | 仓库根 `.venv` | Python 3.13，依赖见 `requirements.txt` |
+
+## 快速开始
+
+```bash
+cd electron-prototype/electron
+npm install
+npm run dev          # = electron-vite dev；sidecar 由主进程自动 spawn，无需手动起
+```
+
+首次启动会在后台创建并预热 `.venv`（数分钟，按 `requirements.txt` 装依赖）。
+其他常用命令（均在 `electron-prototype/electron` 下）：`npm run typecheck`、`npm run smoke`、
+`npm run dist`（electron-builder 打包）。
+
+## 测试
+
+```bash
+# Python 侧（共享 venv，需 pytest）
+.venv/bin/python -m pytest tests/ -q
+
+# 前端纯函数（node --test，经 tests/renderer-loader.mjs 加载真实 TS 源码）
+node tests/test_filter_engine.mjs
+node tests/test_renderer_utils.mjs
+node tests/test_overview.mjs
+node tests/test_filter_chips.mjs
+node tests/test_toolbox_groups.mjs
+```
+
+提交前钩子见 `.pre-commit-config.yaml`（ruff + 文档引用防漂移 `scripts/check_doc_refs.py`）。
+
+## 项目结构
+
+| 路径 | 职责 |
+|---|---|
+| `app/` | Python 核心包：数据源与物化、安全扫描、质量评分、venv 管理 |
+| `electron-prototype/electron/` | Electron 主进程 + preload + Vue 渲染层 |
+| `electron-prototype/sidecar/` | Python 后端，JSON-RPC 接口与示例运行器 |
+| `json_examples/` | 示例唯一真相源，1496 条 |
+| `topics/ tools/ projects/` | 迁移前的原始源码；其中 101 条示例带 `dir` 字段，物化时需整目录拷贝，**不可删** |
+| `examples_assets/` | 示例运行所需的数据素材 |
+| `scripts/` | 示例生成 / 迁移 / 审计脚本 |
+| `tests/` | pytest（Python 侧）+ node --test（前端纯函数） |
+| `docs/` | 设计与基线文档，其中 `docs/json-examples.md` 讲透了 JSON 真相源机制 |
+
+## 功能
+
 - 📥 **导入自己的示例**：侧栏一键把任意本地目录的 .py 文件导入为「我的示例集合」（三步向导：选目录 → 预览 → 导入，自动猜依赖、id 防冲突），存于本机应用数据随应用存续，与内置库并存展示、详情页可删除
 - ✨ **示例画廊**：两级浏览——落地即主题分区总览（头区统计 + 五大主题横向卡片带 + 「还有 N 个」下钻），点进任意分区进入筛选浏览态（侧栏 + 结果条 + 网格/清单双密度，触底无限加载）；筛选支持 主题 / 收藏 / 运行状态 / 可运行性 / 标签 / 质量分阈值 与全文搜索任意组合，当前生效筛选以可移除芯片汇总在结果条；工具类示例只待在工具箱，画廊各层不重复展示
 - 🩺 **可运行性体检**：每条示例静态判定五态（可运行 / 缺依赖 / 空壳 / 语法损坏 / 高危），卡片直接标注「缺依赖」「空壳」等负面状态，不再用点击探雷；缺依赖判定基于共享运行环境的真实模块索引
@@ -17,7 +82,5 @@
 
 ## 界面预览
 
-![主界面预览](docs/screenshots/electron-main.png)
-
-> v0.7 界面重制（「Linear 式精密工作台」）：hiddenInset 单标题栏 + Linear 式左侧导航栏、左侧可折叠筛选栏、
-> 卡片常显操作钮与主题特征图标、Lucide 图标体系、Cmd+K 全局搜索、深浅双主题。
+v0.7 界面重制（「Linear 式精密工作台」）：hiddenInset 单标题栏 + Linear 式左侧导航栏、左侧可折叠筛选栏、
+卡片常显操作钮与主题特征图标、Lucide 图标体系、Cmd+K 全局搜索、深浅双主题。

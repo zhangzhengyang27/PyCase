@@ -32,10 +32,8 @@ export default defineConfig({
     build: {
       outDir: 'out/renderer',
       rollupOptions: {
-        // MPA：旧渲染层（迁移期保留）与 Vue 渲染层并行构建
         input: {
-          index: resolve(__dirname, 'src/renderer/index.html'),
-          vue: resolve(__dirname, 'src/renderer/vue/index.html')
+          index: resolve(__dirname, 'src/renderer/index.html')
         }
       }
     }
