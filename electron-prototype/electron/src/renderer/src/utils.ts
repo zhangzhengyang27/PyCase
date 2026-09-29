@@ -53,13 +53,11 @@ export function splitArgs(line: string): string[] {
 }
 
 // ---------------------------------------------------------------------------
-// 质量分徽章配色（0-100，六维质量评分总分）——状态令牌见 theme.css
+// 质量分文字配色（0-100，六维质量评分总分）
+// v2：分数不再用底色徽章，按档取文字色——低分才是信号，及格以上保持中性
 // ---------------------------------------------------------------------------
-export function qualityBadgeCls(score: number | undefined): string {
-  const s = score ?? 0
-  if (s >= 80) return 'bg-ok-bg text-ok'
-  if (s >= 60) return 'bg-warn-bg text-warn'
-  return 'bg-hover text-ink-mute'
+export function qualityTextCls(score: number | undefined): string {
+  return (score ?? 0) < 60 ? 'text-warn' : 'text-ink-mute'
 }
 
 // ---------------------------------------------------------------------------
@@ -78,18 +76,21 @@ export function runStatusLabel(status: string | undefined): string {
   return (status && RUN_STATUS_LABELS[status]) || ''
 }
 
-export function runStatusBadgeCls(status: string | undefined): string {
-  switch (status) {
-    case 'missing_deps':
-      return 'bg-warn-bg text-warn'
-    case 'empty':
-    case 'broken':
-      return 'bg-hover text-ink-mute'
-    case 'risky':
-      return 'bg-danger-bg text-danger'
-    default:
-      return ''
-  }
+/** 状态圆点配色（v2 状态语言 = 彩色圆点 + 中性文字；仅高危保留红字） */
+const RUN_STATUS_DOT: Record<string, string> = {
+  runnable: 'bg-ok',
+  missing_deps: 'bg-warn',
+  empty: 'bg-ink-faint',
+  broken: 'bg-ink-faint',
+  risky: 'bg-danger'
+}
+
+export function runStatusDotCls(status: string | undefined): string {
+  return (status && RUN_STATUS_DOT[status]) || 'bg-ink-faint'
+}
+
+export function runStatusTextCls(status: string | undefined): string {
+  return status === 'risky' ? 'text-danger' : 'text-ink-mute'
 }
 
 /** 卡片/详情页状态徽章的悬浮提示文案 */
@@ -138,38 +139,6 @@ export const OUTPUT_LINE_CLS = {
   error: 'whitespace-pre-wrap break-all text-danger',
   success: 'whitespace-pre-wrap break-all text-ok'
 } as const
-
-// 主题视图运行状态徽章（代替状态点）
-const THEME_STATUS_BASE = 'inline-block px-2 py-px rounded-full text-[11px] leading-[1.6] font-[510] bg-[rgba(127,127,127,0.12)]'
-export const THEME_STATUS_CLS = {
-  idle: `${THEME_STATUS_BASE} text-ink-mute`,
-  running: 'inline-block px-2 py-px rounded-full text-[11px] leading-[1.6] font-[510] bg-[rgba(64,128,255,0.14)] text-[#4080ff]',
-  success: 'inline-block px-2 py-px rounded-full text-[11px] leading-[1.6] font-[510] bg-[rgba(52,199,89,0.14)] text-ok',
-  error: 'inline-block px-2 py-px rounded-full text-[11px] leading-[1.6] font-[510] bg-[rgba(255,59,48,0.14)] text-danger'
-} as const
-
-// 工具卡片图标：按脚本文件名关键词映射（emoji 体系，v0.10 卡片内联 HTML 使用）
-const TOOL_ICON_RULES: Array<[RegExp, string]> = [
-  [/bili|video|movie|douyin|tiktok/i, "📺"],
-  [/crawl|spider|scrape|comment|weibo|weather|news/i, "🕸️"],
-  [/download|fetch/i, "⬇️"],
-  [/image|pic|photo|compress|watermark|crop/i, "🖼️"],
-  [/pdf|word|office|excel|docx/i, "📄"],
-  [/mail|email/i, "📧"],
-  [/music|audio|mp3/i, "🎵"],
-  [/translate|nlp|text/i, "🌐"],
-  [/rename|file|dir/i, "📁"],
-  [/password|token|secret|encrypt/i, "🔐"],
-  [/timer|todo|schedule/i, "⏱️"],
-  [/chart|plot|viz|data/i, "📊"],
-]
-
-export function getToolIcon(name: string): string {
-  for (const [re, icon] of TOOL_ICON_RULES) {
-    if (re.test(name)) return icon
-  }
-  return "🛠️"
-}
 
 // ---------------------------------------------------------------------------
 // HTML 转义：防止 XSS，所有用户/示例数据插入 DOM 前必须经过此函数。

@@ -30,9 +30,6 @@ const title = computed(() => {
   return '全部示例'
 })
 
-const SEG_BTN =
-  'w-7 h-6 flex items-center justify-center cursor-pointer transition-colors duration-150 text-ink-mute hover:text-ink'
-
 // 同 FilterSidebar 约定：模板不直接赋值导入的 ref，全部经函数变更
 function backToOverview(): void {
   galleryMode.value = 'overview'
@@ -47,30 +44,30 @@ function setMode(v: 'grid' | 'list'): void {
 <template>
   <div class="app-drag select-none shrink-0 bg-panel border-b border-line-subtle">
     <!-- 行 1：面包屑结果条（specs §4.2） -->
-    <div class="flex items-center gap-1.5 px-4 h-[26px] border-b border-line-subtle/60 text-caption">
+    <div class="flex items-center gap-1.5 px-4 h-[var(--statusbar-h)] border-b border-line-hairline text-caption">
       <button
-        class="app-no-drag flex items-center gap-1 h-5 px-1.5 rounded-control border-0 bg-transparent text-caption text-ink-mute hover:text-ink hover:bg-hover cursor-pointer shrink-0 transition-colors duration-150"
+        class="app-no-drag flex items-center gap-1 h-5 px-1.5 rounded-control border-0 bg-transparent text-caption text-ink-mute hover:text-ink hover:bg-hover cursor-pointer shrink-0 transition-colors dur-fast"
         title="返回总览"
         @click="backToOverview()"
       >
         <ArrowLeft :size="12" /> 示例库
       </button>
       <span class="text-ink-faint" aria-hidden="true">/</span>
-      <span class="app-no-drag font-[590] text-ink-dim truncate" :title="title">{{ title }}</span>
-      <span class="ml-auto text-ink-faint font-mono shrink-0" aria-live="polite">{{ filtered.length }} 个结果</span>
+      <span class="app-no-drag font-medium text-ink-dim truncate" :title="title">{{ title }}</span>
+      <span class="ml-auto text-ink-mute font-mono shrink-0" aria-live="polite">{{ filtered.length }} 个结果</span>
     </div>
 
     <!-- 行 2：筛选芯片 + 排序 + 密度 -->
-    <div class="flex items-center gap-2 px-4 h-10">
+    <div class="flex items-center gap-2 px-4 h-[var(--toolbar-h)]">
       <div v-if="galleryChips.length" class="app-no-drag flex-1 min-w-0 flex items-center gap-1.5 overflow-x-auto [scrollbar-width:none]">
         <span
           v-for="chip in galleryChips"
           :key="chip.key + ':' + chip.value"
-          class="inline-flex items-center gap-1 h-6 pl-2 pr-1 rounded-badge bg-accent/10 text-accent-strong text-caption shrink-0 whitespace-nowrap"
+          class="inline-flex items-center gap-1 h-6 pl-2 pr-1 rounded-control bg-accent/12 text-accent-text text-caption shrink-0 whitespace-nowrap"
         >
           {{ chip.label }}
           <button
-            class="w-4 h-4 flex items-center justify-center rounded-full border-0 bg-transparent cursor-pointer text-accent-strong/70 hover:text-ink hover:bg-accent/20 transition-colors duration-150"
+            class="w-4 h-4 flex items-center justify-center rounded-control border-0 bg-transparent cursor-pointer text-accent-text hover:text-ink hover:bg-accent/20 transition-colors dur-fast"
             :title="`移除筛选：${chip.label}`"
             :aria-label="`移除筛选：${chip.label}`"
             @click="removeChip(chip)"
@@ -93,24 +90,22 @@ function setMode(v: 'grid' | 'list'): void {
         <option value="last_run">最近运行</option>
       </BaseSelect>
 
-      <div class="app-no-drag flex items-center rounded-control border border-line-subtle overflow-hidden shrink-0 bg-page" role="group" aria-label="浏览密度">
+      <div class="app-no-drag seg shrink-0" role="group" aria-label="浏览密度">
         <button
-          :class="[SEG_BTN, viewMode === 'grid' ? 'bg-accent/15 text-ink' : '']"
           title="网格视图"
           aria-label="网格视图"
           :aria-pressed="viewMode === 'grid'"
           @click="setMode('grid')"
         >
-          <LayoutGrid :size="13" />
+          <LayoutGrid :size="13" :stroke-width="1.5" /> 网格
         </button>
         <button
-          :class="[SEG_BTN, viewMode === 'list' ? 'bg-accent/15 text-ink' : '']"
           title="列表视图"
           aria-label="列表视图"
           :aria-pressed="viewMode === 'list'"
           @click="setMode('list')"
         >
-          <List :size="13" />
+          <List :size="13" :stroke-width="1.5" /> 列表
         </button>
       </div>
     </div>

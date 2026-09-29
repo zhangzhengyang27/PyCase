@@ -138,6 +138,96 @@
     color: var(--status-green);
   }
 
+  /* 语义图标 chip：28×28 中性底 + 细线（卡片/详情/分区头共用；win 用卡片底色） */
+  .chip-ic {
+    width: 28px;
+    height: 28px;
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--line-hairline);
+    border-radius: var(--r-control);
+    background: var(--bg-inset);
+    color: var(--text-secondary);
+  }
+  html[data-platform='win'] .chip-ic {
+    background: var(--bg-card);
+  }
+
+  /* 选中卡片：强调色描边 + 1px 内圈（不留硬编码色） */
+  .card-sel {
+    border-color: var(--accent);
+    box-shadow:
+      var(--shadow-card),
+      0 0 0 1px var(--accent);
+  }
+
+  /* 分段控件：mac = 抬起段（bg-pressed + 主文字）；win = 强调文字 + 底部 2px 强调下划线 */
+  .seg {
+    display: inline-flex;
+    align-items: center;
+    height: var(--ctrl-md);
+    border: 1px solid var(--line-hairline);
+    border-radius: var(--r-control);
+    overflow: hidden;
+  }
+  .seg > button {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    height: 100%;
+    padding: 0 9px;
+    border: 0;
+    background: transparent;
+    color: var(--text-secondary);
+    font-family: var(--font-ui);
+    font-size: var(--fs-caption);
+    cursor: pointer;
+    transition: background-color var(--dur-fast) var(--ease-std);
+  }
+  .seg > button:hover {
+    color: var(--text-primary);
+  }
+  html[data-platform='mac'] .seg > button[aria-pressed='true'] {
+    background: var(--bg-pressed);
+    color: var(--text-primary);
+  }
+  html[data-platform='win'] .seg {
+    border-color: transparent;
+  }
+  html[data-platform='win'] .seg > button {
+    padding: 0 12px;
+    font-size: var(--fs-body);
+  }
+  html[data-platform='win'] .seg > button[aria-pressed='true'] {
+    color: var(--accent-text);
+  }
+  html[data-platform='win'] .seg > button[aria-pressed='true']::after {
+    content: '';
+    position: absolute;
+    left: 8px;
+    right: 8px;
+    bottom: 3px;
+    height: 2px;
+    border-radius: 1px;
+    background: var(--accent);
+  }
+  .seg > button:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-shadow);
+  }
+
+  /* 状态行：彩色圆点 + 中性文字（v2 状态语言） */
+  .stat-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 9999px;
+    flex: none;
+    display: inline-block;
+  }
+
   /* 主按钮（BaseButton variant=primary）：v2 = 强调色平面填充，无渐变无外发光 */
   .btn-primary-deep {
     background: var(--accent);

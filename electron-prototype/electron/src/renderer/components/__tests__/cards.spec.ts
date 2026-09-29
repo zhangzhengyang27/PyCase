@@ -133,12 +133,12 @@ describe('ExampleCard', () => {
     expect(mount(ExampleCard, { props: { ex: makeExample({ description: '有描述' }) } }).text()).toContain('有描述')
   })
 
-  it('selected 才加边框高亮类', () => {
+  it('selected 才加选中描边类', () => {
     expect(
       mount(ExampleCard, { props: { ex: makeExample(), selected: true } }).get('[role="button"]').classes()
-    ).toContain('border-accent')
+    ).toContain('card-sel')
     expect(mount(ExampleCard, { props: { ex: makeExample() } }).get('[role="button"]').classes()).not.toContain(
-      'border-accent'
+      'card-sel'
     )
   })
 
@@ -188,21 +188,21 @@ describe('ExampleCard', () => {
     const off = mount(ExampleCard, { props: { ex: makeExample({ name: 'demo.py' }) } })
     const offBtn = off.get('button[title="收藏"]')
     expect(offBtn.attributes('aria-label')).toBe('收藏 demo')
-    expect(offBtn.classes()).toContain('text-ink-faint/70')
+    expect(offBtn.classes()).toContain('text-ink-faint')
     expect(offBtn.find('svg').classes()).not.toContain('fill-current')
   })
 
-  it('质量分徽章：缺失按 0 显示，并按 80/60 两档切换配色', () => {
+  it('质量分：缺失按 0 显示，60 分以下才切警示色（v2 无底色徽章）', () => {
     const badge = (score?: number) =>
       mount(ExampleCard, { props: { ex: makeExample({ quality_score: score }) } }).get(
         '[title="六维质量评分（0-100）"]'
       )
 
     expect(badge(85).text()).toBe('85')
-    expect(badge(85).classes()).toContain('bg-ok-bg')
-    expect(badge(60).classes()).toContain('bg-warn-bg')
-    expect(badge(59).classes()).toContain('bg-hover')
-    // undefined 不渲染空白徽章，而是回退 0
+    expect(badge(85).classes()).toContain('text-ink-mute')
+    expect(badge(60).classes()).toContain('text-ink-mute')
+    expect(badge(59).classes()).toContain('text-warn')
+    // undefined 不渲染空白，而是回退 0
     expect(badge(undefined).text()).toBe('0')
   })
 
@@ -219,17 +219,20 @@ describe('ExampleCard', () => {
     const risky = mount(ExampleCard, { props: { ex: makeExample({ risk_high: true }) } })
     const badge = risky.get('[title^="含高危操作"]')
     expect(badge.text()).toContain('高危')
-    expect(badge.classes()).toContain('bg-danger-bg')
+    // v2：状态 = 圆点 + 文字，高危用红字，底色徽章退役
+    expect(badge.classes()).toContain('text-danger')
+    expect(badge.find('.stat-dot').classes()).toContain('bg-danger')
 
     expect(
       mount(ExampleCard, { props: { ex: makeExample() } }).find('[title^="含高危操作"]').exists()
     ).toBe(false)
   })
 
-  it('可运行性徽章只显示负面状态：缺依赖出徽章，runnable/risky 让位给正向与高危展示', () => {
+  it('可运行性状态只显示负面：缺依赖出圆点 + 中性文字，runnable/risky 让位给正向与高危展示', () => {
     const w = mount(ExampleCard, { props: { ex: makeExample({ run_status: 'missing_deps' }) } })
     const badge = w.findAll('span').find((s) => s.text() === '缺依赖')!
-    expect(badge.classes()).toContain('bg-warn-bg')
+    expect(badge.classes()).toContain('text-ink-mute')
+    expect(badge.find('.stat-dot').classes()).toContain('bg-warn')
     expect(badge.attributes('title')).toBe(runStatusHint('missing_deps'))
 
     // runnable 是正向状态、risky 由高危徽章承担：两者都不该再出一个徽章
@@ -239,21 +242,16 @@ describe('ExampleCard', () => {
     expect(mount(ExampleCard, { props: { ex: makeExample({ run_status: 'risky' }) } }).text()).not.toContain('高危')
   })
 
-  it('图标徽章：命中分区用 emoji + 分区色相，未命中回退分类图标与分类色相', () => {
+  it('图标 chip：命中分区与未命中都出 Lucide 图标（v2 无 emoji、无色相）', () => {
     const themed = mount(ExampleCard, {
       props: { ex: makeExample({ name: 'basic-demo', tags: ['python-basics'] }) }
     })
-    const themedChip = themed.get('.hue-chip')
-    expect(themedChip.attributes('style')).toContain('--hue: #64748b')
-    expect(themedChip.get('span').text()).toBe('🧱')
-    expect(themedChip.find('svg').exists()).toBe(false)
+    const themedChip = themed.get('.chip-ic')
+    expect(themedChip.find('svg').exists()).toBe(true)
+    expect(themedChip.text()).toBe('')
 
     const fallback = mount(ExampleCard, { props: { ex: makeExample({ category: 'unknown', tags: [] }) } })
-    const fallbackChip = fallback.get('.hue-chip')
-    // 未知分类回退 topics 色相，图标回退 FileCode2（svg）
-    expect(fallbackChip.attributes('style')).toContain('--hue: #5e6ad2')
-    expect(fallbackChip.find('svg').exists()).toBe(true)
-    expect(fallbackChip.find('span').exists()).toBe(false)
+    expect(fallback.get('.chip-ic').find('svg').exists()).toBe(true)
   })
 })
 
@@ -271,10 +269,10 @@ describe('ExampleListItem', () => {
     ).toContain('有描述')
   })
 
-  it('质量徽章只在低分（<80）出现，undefined 按 0 处理', () => {
+  it('质量分只在低分（<80）出现，undefined 按 0 处理', () => {
     const low = mount(ExampleListItem, { props: { ex: makeExample({ quality_score: 59 }) } })
     expect(low.get('[title="六维质量评分（0-100）"]').text()).toBe('59')
-    expect(low.get('[title="六维质量评分（0-100）"]').classes()).toContain('bg-hover')
+    expect(low.get('[title="六维质量评分（0-100）"]').classes()).toContain('text-warn')
 
     // 80 分是边界：不打扰扫读，不渲染徽章
     expect(
@@ -359,13 +357,13 @@ describe('ExampleListItem', () => {
 // BrowseToolbar
 // ---------------------------------------------------------------------------
 describe('BrowseToolbar', () => {
-  // 范围标题 span 是唯一「有 title 属性且带 font-[590] 的 span」，
+  // 范围标题 span 是唯一「有 title 属性且带 font-medium 的 span」，
   // 用类名数组精确匹配（不写 CSS 转义）比按结构取 nth-child 稳。
   function scopeTitle(): string {
     const w = mount(BrowseToolbar)
     const el = w
       .findAll('span')
-      .find((s) => s.classes().includes('font-[590]') && s.attributes('title') !== undefined)!
+      .find((s) => s.classes().includes('font-medium') && s.attributes('title') !== undefined)!
     return el.text()
   }
 
@@ -441,14 +439,15 @@ describe('BrowseToolbar', () => {
 
   it('密度切换写入 viewMode、持久化 viewPrefs，并用 aria-pressed 反映当前态', async () => {
     const w = mount(BrowseToolbar)
+    // v2：分段控件走平台语义（.seg + aria-pressed），选中态由 CSS 按 data-platform 决定
+    expect(w.find('.seg').exists()).toBe(true)
     expect(w.get('button[aria-label="网格视图"]').attributes('aria-pressed')).toBe('true')
     expect(w.get('button[aria-label="列表视图"]').attributes('aria-pressed')).toBe('false')
-    expect(w.get('button[aria-label="网格视图"]').classes()).toContain('bg-accent/15')
 
     await w.get('button[aria-label="列表视图"]').trigger('click')
     expect(viewMode.value).toBe('list')
     expect(w.get('button[aria-label="列表视图"]').attributes('aria-pressed')).toBe('true')
-    expect(w.get('button[aria-label="网格视图"]').classes()).not.toContain('bg-accent/15')
+    expect(w.get('button[aria-label="网格视图"]').attributes('aria-pressed')).toBe('false')
     expect(vi.mocked(window.sidecar.store.set)).toHaveBeenCalledWith(
       'viewPrefs',
       expect.objectContaining({ viewMode: 'list' })

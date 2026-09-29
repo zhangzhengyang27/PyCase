@@ -6,10 +6,11 @@
 // Cmd+S 保存 / Cmd+Enter 运行 / Cmd+. 停止。
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { ArrowLeft, Play, Save, ShieldAlert, Sparkles, Square, Star, Trash2 } from 'lucide-vue-next'
-import { qualityBadgeCls, runStatusBadgeCls, runStatusHint, runStatusLabel } from '../src/utils'
+import { qualityTextCls, runStatusDotCls, runStatusHint, runStatusLabel, runStatusTextCls } from '../src/utils'
 import { categoryIcon } from '../src/icons'
 import { CATEGORY_META } from '../src/category-meta'
-import { exampleVisual } from '../src/overview'
+import { sectionIcon } from '../src/section-icons'
+import { sectionKeyOf } from '../src/overview'
 import {
   assets,
   closeDetail,
@@ -79,11 +80,12 @@ const statusBadge = computed(() =>
     ? ex.value.run_status
     : ''
 )
-// 样张对齐：详情页图标徽章与卡片/分区同源（emoji+分区色相），未命中回退分类；
-// 追踪 ex.code：保存后 invalidateExampleVisual 清备忘，此处随之重算，徽章即时刷新
-const visual = computed(() => {
+// 详情页图标与卡片/分区头同源（分区语义图标），未命中回退分类图标；
+// 追踪 ex.code：保存后 invalidateExampleVisual 清备忘，此处随之重算，图标即时刷新
+const headIcon = computed(() => {
   void ex.value?.code
-  return ex.value ? exampleVisual(ex.value) : undefined
+  if (!ex.value) return metaIcon.value
+  return sectionIcon(sectionKeyOf(ex.value)) ?? metaIcon.value
 })
 // 路径副标题（specs §4.3）：分类 / 示例 id（无 id 回退文件名）
 const pathLabel = computed(() => [ex.value?.category, ex.value?.id || ex.value?.name].filter(Boolean).join(' / '))
@@ -118,20 +120,17 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
         <ArrowLeft :size="15" />
       </BaseButton>
 
-      <!-- 图标与色相取分区视觉（exampleVisual）；未命中分区回退分类 metaIcon/色相。
-           --hue 为 undefined→'' 时 Chromium 视为移除声明，.hue-chip 的 var() 回退生效 -->
-      <div class="hue-chip w-7 h-7 rounded-control flex items-center justify-center shrink-0" :style="{ '--hue': visual?.hue || meta?.hue }">
-        <span v-if="visual" class="text-[13px] leading-none" aria-hidden="true">{{ visual.emoji }}</span>
-        <component :is="metaIcon" v-else :size="15" />
-      </div>
+      <!-- 图标取分区语义图标（与卡片/分区头同源），未命中回退分类图标 -->
+      <span class="chip-ic">
+        <component :is="headIcon" :size="15" :stroke-width="1.5" />
+      </span>
 
       <div class="min-w-0 flex-1 flex flex-col justify-center gap-0.5">
         <div class="flex items-center gap-2 min-w-0">
-          <span class="text-title font-[590] text-ink truncate tracking-[-0.005em]" :title="title">{{ title }}</span>
+          <span class="text-title font-semibold text-ink truncate tracking-[-0.005em]" :title="title">{{ title }}</span>
           <span
             v-if="meta"
-            class="hue-chip inline-flex items-center px-1.5 py-px rounded-badge text-badge font-[590] uppercase tracking-[0.03em] shrink-0"
-            :style="{ '--hue': visual?.hue || meta?.hue }"
+            class="inline-flex items-center px-1.5 py-px rounded-control border border-line-subtle text-caption uppercase tracking-[0.03em] text-ink-mute shrink-0"
             >{{ ex.category }}</span
           >
           <span
@@ -143,11 +142,12 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
           </span>
           <span
             v-if="statusBadge"
-            class="inline-flex items-center px-1.5 py-px rounded-badge text-badge font-[590] shrink-0"
-            :class="runStatusBadgeCls(statusBadge)"
+            class="inline-flex items-center gap-1 shrink-0 text-caption"
+            :class="runStatusTextCls(statusBadge)"
             :title="runStatusHint(statusBadge)"
-            >{{ runStatusLabel(statusBadge) }}</span
           >
+            <span class="stat-dot" :class="runStatusDotCls(statusBadge)"></span>{{ runStatusLabel(statusBadge) }}
+          </span>
         </div>
         <div class="flex items-center gap-1.5 min-w-0">
           <span class="text-badge font-mono text-ink-faint truncate lowercase tracking-[0.02em]" :title="pathLabel">{{ pathLabel }}</span>
@@ -164,10 +164,10 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
       </div>
 
       <span
-        class="app-no-drag inline-flex items-center gap-1 px-2 h-6 rounded-full text-caption font-[510] font-mono shrink-0"
-        :class="qualityBadgeCls(ex.quality_score)"
+        class="app-no-drag inline-flex items-center gap-1 shrink-0 text-caption font-mono"
+        :class="qualityTextCls(ex.quality_score)"
         title="六维质量评分（0-100）"
-        ><Star :size="10" /> {{ ex.quality_score ?? 0 }}</span
+        ><Star :size="11" :stroke-width="1.5" /> {{ ex.quality_score ?? 0 }}</span
       >
 
       <div class="app-no-drag flex items-center gap-1.5 shrink-0">

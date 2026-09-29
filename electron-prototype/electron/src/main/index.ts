@@ -813,6 +813,116 @@ function runSmokeTest(): void {
         if (problems.length) throw new Error('壳走查失败: ' + problems.join('; '))
         console.log(`[smoke] 壳走查通过：${s.platform}/${s.theme}/${s.accent} 侧栏 ${s.sidebarW} 行高 ${s.rowH} 标题栏 ${s.headH} 状态栏 ${s.statusH} 选中底 ${s.selBg}`)
       }
+      // 画廊/工具箱走查（A3）：在真实窗口里走一遍页面语言——图标来源、字重、状态圆点、分段控件
+      step = '画廊页面走查'
+      const page = await mainWindow!.webContents.executeJavaScript(`(async () => {
+        const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+        const root = document.documentElement;
+        const isWin = root.getAttribute('data-platform') === 'win';
+        const out = {};
+        const emojiRe = /[\\u{1F300}-\\u{1FAFF}\\u{2600}-\\u{27BF}]/u;
+        // 1) 总览态：分区 + 卡片语言
+        out.sections = document.querySelectorAll('main section').length;
+        const cards = Array.from(document.querySelectorAll('[role="button"][aria-label$="（详情）"]'));
+        out.cards = cards.length;
+        if (!cards.length) return { fatal: '画廊总览没有卡片' };
+        const card = cards[0];
+        const chip = card.querySelector('.chip-ic');
+        out.cardChip = !!chip;
+        out.cardChipSvg = !!(chip && chip.querySelector('svg'));
+        out.cardChipText = chip ? (chip.textContent || '').trim() : 'MISSING';
+        // 只查 UI chrome：chip 容器与标题——示例描述/标签属数据，可能自带 emoji，不算 UI 语言
+        const chromeText = (el) => Array.from(el.querySelectorAll('.chip-ic, .hue-chip, .font-semibold, .stat-dot, button')).map((n) => n.textContent || '').join('');
+        out.cardEmoji = emojiRe.test(chromeText(card));
+        out.cardsEmoji = cards.slice(0, 30).some((c) => emojiRe.test(chromeText(c)));
+        // 字重：卡片标题必须是 600（v2 只允许 400/500/600）
+        const titleEl = card.querySelector('.font-semibold');
+        out.cardTitleWeight = titleEl ? getComputedStyle(titleEl).fontWeight : 'MISSING';
+        // 全页抽样：卡片内出现的字号/字重白名单（抓非标字重回归）
+        const weights = new Set();
+        for (const el of cards.slice(0, 12)) {
+          for (const n of el.querySelectorAll('*')) weights.add(getComputedStyle(n).fontWeight);
+        }
+        out.cardWeights = Array.from(weights).sort();
+        // 分区头：语义图标 + 无 emoji
+        const secHead = document.querySelector('main section .chip-ic');
+        out.sectionChipSvg = !!(secHead && secHead.querySelector('svg'));
+        const secs = Array.from(document.querySelectorAll('main section'));
+        out.sectionEmoji = secs.some((sec) => {
+          const head = sec.firstElementChild;
+          return head ? emojiRe.test(chromeText(head)) : false;
+        });
+        // 2) 进浏览态：点「浏览全部」（真实用户路径）
+        const browseAll = Array.from(document.querySelectorAll('button')).find((b) => (b.textContent || '').includes('浏览全部'));
+        if (!browseAll) return { fatal: '总览页找不到「浏览全部」按钮' };
+        browseAll.click();
+        await sleep(700);
+        // 3) 分段控件：平台语义（mac = 抬起段底 + 主文字；win = 强调文字 + 下划线）
+        const seg = document.querySelector('.seg');
+        out.seg = !!seg;
+        if (seg) {
+          const btns = Array.from(seg.querySelectorAll('button'));
+          out.segCount = btns.length;
+          const active = btns.find((b) => b.getAttribute('aria-pressed') === 'true');
+          out.segActive = !!active;
+          if (active) {
+            const probe = document.createElement('div');
+            probe.style.cssText = 'position:absolute;visibility:hidden;background:var(--bg-pressed);color:var(--text-primary)';
+            document.body.appendChild(probe);
+            const csProbe = getComputedStyle(probe);
+            out.expectPressedBg = csProbe.backgroundColor;
+            out.expectPrimary = csProbe.color;
+            probe.remove();
+            const cs2 = getComputedStyle(active);
+            out.segActiveBg = cs2.backgroundColor;
+            out.segActiveColor = cs2.color;
+            const probe2 = document.createElement('div');
+            probe2.style.cssText = 'position:absolute;visibility:hidden;color:var(--accent-text)';
+            document.body.appendChild(probe2);
+            out.expectAccentText = getComputedStyle(probe2).color;
+            probe2.remove();
+          }
+        }
+        // 4) 浏览态工具条高度 = --toolbar-h（平台几何）
+        const toolbarRow = seg ? seg.parentElement : null;
+        out.chipRowH = toolbarRow ? Math.round(toolbarRow.getBoundingClientRect().height) : null;
+        out.expectToolbarH = parseFloat(getComputedStyle(root).getPropertyValue('--toolbar-h'));
+        // 保持在浏览态：主进程随后截图取证；复位交给后续 store 探针的 resetViewFilters
+        return out;
+      })()`) as Record<string, unknown>
+      {
+        const p = page as Record<string, unknown>
+        if (p.fatal) throw new Error(`页面走查: ${p.fatal}`)
+        const problems: string[] = []
+        if ((p.cards as number) < 1) problems.push('画廊无卡片')
+        if (p.cardChip !== true || p.cardChipSvg !== true) problems.push('卡片缺语义图标 chip')
+        if (p.cardChipText !== '') problems.push(`图标 chip 内含文本（emoji 残留？）: ${p.cardChipText}`)
+        if (p.cardEmoji || p.cardsEmoji || p.sectionEmoji) problems.push('页面仍有 emoji 文本')
+        if (p.cardTitleWeight !== '600') problems.push(`卡片标题字重 ${p.cardTitleWeight} != 600`)
+        const allowed = ['400', '500', '600']
+        const badWeights = (p.cardWeights as string[]).filter((w) => !allowed.includes(w))
+        if (badWeights.length) problems.push(`卡片内非标字重: ${badWeights.join(',')}`)
+        if (!p.sectionChipSvg) problems.push('分区头缺语义图标')
+        if (p.seg !== true) problems.push('浏览态缺分段控件')
+        if (p.segCount !== 2) problems.push(`分段控件按钮数 ${p.segCount}`)
+        if (p.segActive !== true) problems.push('分段控件无选中段')
+        if (p.chipRowH === null || Math.abs((p.chipRowH as number) - (p.expectToolbarH as number)) > 1) {
+          problems.push(`工具条高 ${p.chipRowH} != --toolbar-h ${p.expectToolbarH}`)
+        }
+        if (problems.length) throw new Error('画廊页面走查失败: ' + problems.join('; '))
+        // 走查取证：SMOKE_SHOTS=<dir> 时截浏览态（不带系统窗口装饰，纯页面布局）
+        if (process.env.SMOKE_SHOTS) {
+          try {
+            await new Promise((r) => setTimeout(r, 400))
+            const shot = await mainWindow!.webContents.capturePage()
+            fs.writeFileSync(path.join(process.env.SMOKE_SHOTS, 'gallery-browse.png'), shot.toPNG())
+          } catch (e) {
+            console.error('[smoke] 截图失败:', (e as Error).message)
+          }
+        }
+        const mode = p.segActiveBg === p.expectPressedBg ? '抬起段(mac)' : p.segActiveColor === p.expectAccentText ? '强调下划线(win)' : '未知'
+        console.log(`[smoke] 画廊走查通过：分区 ${p.sections} 卡片 ${p.cards} 图标 chip ✓ 字重 ${(p.cardWeights as string[]).join('/')} 分段 ${mode}`)
+      }
       // 渲染层链路探针：经 window.__app 驱动 Vue 应用（store 状态 + 持久化 + 筛选）
       step = '渲染层链路探针'
       const probe = await mainWindow!.webContents.executeJavaScript(`(async () => {

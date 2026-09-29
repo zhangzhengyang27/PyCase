@@ -220,29 +220,32 @@ describe('DetailPage', () => {
     expect(noId.find('span[title="tools / x.py"]').exists()).toBe(true)
   })
 
-  it('质量分徽章按分数分档，缺省显示 0', () => {
+  it('质量分按档取文字色，缺省显示 0', () => {
     const high = mountDetail({ quality_score: 90 })
     const highBadge = high.get('[title="六维质量评分（0-100）"]')
     expect(highBadge.text()).toContain('90')
-    expect(highBadge.classes()).toContain('bg-ok-bg')
+    expect(highBadge.classes()).toContain('text-ink-mute')
 
     const mid = mountDetail({ quality_score: 60 })
-    expect(mid.get('[title="六维质量评分（0-100）"]').classes()).toContain('bg-warn-bg')
+    expect(mid.get('[title="六维质量评分（0-100）"]').classes()).toContain('text-ink-mute')
 
     const none = mountDetail({ quality_score: undefined })
     const noneBadge = none.get('[title="六维质量评分（0-100）"]')
     expect(noneBadge.text()).toContain('0')
-    expect(noneBadge.classes()).toContain('bg-hover')
+    expect(noneBadge.classes()).toContain('text-warn')
   })
 
   it('运行状态徽章只对已知状态渲染，未知状态整段省略', () => {
     const broken = mountDetail({ run_status: 'broken' })
     expect(broken.text()).toContain('语法损坏')
-    expect(broken.get('[title="代码存在语法错误，无法运行"]').classes()).toContain('bg-hover')
+    const brokenEl = broken.get('[title="代码存在语法错误，无法运行"]')
+    expect(brokenEl.classes()).toContain('text-ink-mute')
+    expect(brokenEl.find('.stat-dot').classes()).toContain('bg-ink-faint')
 
     const missing = mountDetail({ run_status: 'missing_deps' })
     expect(missing.text()).toContain('缺依赖')
-    expect(missing.get('[title="依赖的第三方库在共享运行环境中缺失，运行会因 ImportError 失败"]').classes()).toContain('bg-warn-bg')
+    const missingEl = missing.get('[title="依赖的第三方库在共享运行环境中缺失，运行会因 ImportError 失败"]')
+    expect(missingEl.find('.stat-dot').classes()).toContain('bg-warn')
 
     const unknown = mountDetail({ run_status: undefined })
     expect(unknown.text()).not.toContain('语法损坏')
@@ -277,15 +280,14 @@ describe('DetailPage', () => {
     expect(many.text()).toContain('+2')
   })
 
-  it('图标徽章取分区视觉（emoji+色相），未命中分区时回退分类图标', () => {
-    // tags=['基础'] 命中「语言基础」分区 → emoji 徽章
+  it('头部图标 chip 出 Lucide 图标（v2 无 emoji/色相）', () => {
     const hit = mountDetail({ tags: ['基础'] })
-    expect(hit.findAll('.hue-chip')[0].text()).toContain('🧱')
+    const chipHit = hit.findAll('.chip-ic')[0]
+    expect(chipHit.find('svg').exists()).toBe(true)
+    expect(chipHit.text()).toBe('')
 
-    // 纯 print 脚本不命中任何主题/标签分区 → 回退 lucide 图标（无文本）
     const miss = mountDetail({ tags: [] })
-    expect(miss.findAll('.hue-chip')[0].text()).toBe('')
-    expect(miss.findAll('.hue-chip')[0].find('svg').exists()).toBe(true)
+    expect(miss.findAll('.chip-ic')[0].find('svg').exists()).toBe(true)
   })
 
   it('收藏按钮文案随 store 状态切换，点击后写入/移出收藏集合', async () => {

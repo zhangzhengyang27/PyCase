@@ -7,22 +7,21 @@ import type { ExampleItem } from './types'
 export interface ToolboxGroup {
   key: string
   label: string
-  icon: string
   items: ExampleItem[]
 }
 
 // 内置工具项目的展示元数据（与 json_examples 内置库对应；未收录项目回退原 key 展示）
-const PROJECT_META: Record<string, { label: string; icon: string }> = {
-  'db-table-dictionary-generator': { label: '数据库数据字典生成器', icon: '🗄️' },
-  'excel-row-to-in-clause': { label: 'Excel 行转 IN 语句', icon: '📊' },
-  'python-black-magic': { label: 'Python 黑魔法', icon: '🎩' },
-  'remote-sftp-downloader': { label: 'SFTP 远程下载', icon: '📡' },
-  'tkinter-work-countdown': { label: '上班倒计时（Tkinter）', icon: '⏳' },
-  'utility-crawlers': { label: '实用爬虫合集', icon: '🕸️' },
-  'wechat-official-account': { label: '微信公众号工具', icon: '💬' }
+const PROJECT_META: Record<string, { label: string }> = {
+  'db-table-dictionary-generator': { label: '数据库数据字典生成器' },
+  'excel-row-to-in-clause': { label: 'Excel 行转 IN 语句' },
+  'python-black-magic': { label: 'Python 黑魔法' },
+  'remote-sftp-downloader': { label: 'SFTP 远程下载' },
+  'tkinter-work-countdown': { label: '上班倒计时（Tkinter）' },
+  'utility-crawlers': { label: '实用爬虫合集' },
+  'wechat-official-account': { label: '微信公众号工具' }
 }
 
-const UNGROUPED_META = { key: 'standalone', label: '独立工具', icon: '🔧' } as const
+const UNGROUPED_META = { key: 'standalone', label: '独立工具' } as const
 
 export function projectKeyOf(sourceDir: string | undefined): string | null {
   if (!sourceDir) return null
@@ -46,7 +45,6 @@ export function buildToolboxGroups<T extends ExampleItem>(tools: readonly T[]): 
   const groups: ToolboxGroup[] = Array.from(buckets.entries()).map(([key, items]) => ({
     key,
     label: PROJECT_META[key]?.label || key,
-    icon: PROJECT_META[key]?.icon || '🔧',
     items
   }))
   // 组顺序稳定：内置项目按 PROJECT_META 声明序，未知项目按 key 字典序，独立工具垫底

@@ -4,7 +4,8 @@
 // 分区成员来自 assignSections（互斥分配 + 质量降序预览），计数与成员同口径。
 import { computed } from 'vue'
 import { ArrowRight } from 'lucide-vue-next'
-import { assignSections, SECTION_HUES, type OverviewSection } from '../src/overview'
+import { assignSections, type OverviewSection } from '../src/overview'
+import { sectionIcon } from '../src/section-icons'
 import { THEMES } from '../src/themes'
 import { favorites, facetCounts, galleryExamples, isFavorite, openDetail, openGalleryBrowse, runFromCard, toggleFavorite } from '../store'
 import ExampleCard from './ExampleCard.vue'
@@ -21,11 +22,6 @@ const runnablePct = computed(() => {
 
 function moreCount(sec: OverviewSection): number {
   return sec.items.length - PREVIEW_COUNT
-}
-
-/** 区头色相：others 等无色相分区返回 undefined，模板回退中性 chip */
-function secHue(key: string): Record<string, string> | undefined {
-  return SECTION_HUES[key] ? { '--hue': SECTION_HUES[key] } : undefined
 }
 
 /** 分区下钻：按 kind 预置对应范围（主题 / 分区标签组 / 项目类目 / 全部） */
@@ -47,7 +43,7 @@ function onRun(id: string): void {
     <div class="app-drag select-none px-8 pt-7 pb-3">
       <div class="max-w-[1200px] mx-auto flex items-end justify-between gap-4">
         <div>
-          <h1 class="text-page font-[650] text-ink m-0 tracking-[-0.02em]">示例库</h1>
+          <h1 class="text-page font-semibold text-ink m-0 tracking-[-0.02em]">示例库</h1>
           <div class="flex items-center gap-1.5 mt-2.5 app-no-drag">
             <span class="stat-chip"><b class="font-mono">{{ galleryExamples.length }}</b> 个示例</span>
             <span class="stat-chip"><b class="font-mono">{{ THEMES.length }}</b> 大主题</span>
@@ -67,17 +63,13 @@ function onRun(id: string): void {
       <div class="max-w-[1200px] mx-auto px-8 pb-12">
         <section v-for="sec in sections" :key="sec.key" class="mb-9">
           <div class="flex items-center gap-2 mb-3">
-            <span
-              class="hue-chip w-[18px] h-[18px] rounded-control flex items-center justify-center text-[11px] leading-none shrink-0"
-              :class="secHue(sec.key) ? '' : 'bg-card border-line-subtle text-ink-faint'"
-              :style="secHue(sec.key)"
-              aria-hidden="true"
-              >{{ sec.icon }}</span
-            >
-            <h2 class="text-title font-[650] text-ink m-0">{{ sec.label }}</h2>
-            <span class="text-caption text-ink-faint">{{ sec.items.length }} 个</span>
+            <span class="chip-ic !w-[22px] !h-[22px]" aria-hidden="true">
+              <component :is="sectionIcon(sec.key)" :size="13" :stroke-width="1.5" />
+            </span>
+            <h2 class="text-title font-semibold text-ink m-0">{{ sec.label }}</h2>
+            <span class="text-caption text-ink-mute">{{ sec.items.length }} 个</span>
             <button
-              class="ml-auto flex items-center gap-1 border-0 bg-transparent text-control text-ink-mute hover:text-accent cursor-pointer transition-colors duration-150"
+              class="ml-auto flex items-center gap-1 border-0 bg-transparent text-control text-ink-mute hover:text-accent cursor-pointer transition-colors dur-fast"
               @click="browseSection(sec)"
             >
               查看全部 <ArrowRight :size="13" />
@@ -96,7 +88,7 @@ function onRun(id: string): void {
             </div>
             <button
               v-if="sec.items.length > PREVIEW_COUNT"
-              class="w-[300px] shrink-0 self-stretch min-h-[110px] rounded-panel border border-dashed border-line-strong bg-transparent flex items-center justify-center gap-1 text-control text-ink-mute hover:text-ink hover:border-accent/60 cursor-pointer transition-colors duration-150"
+              class="w-[300px] shrink-0 self-stretch min-h-[110px] rounded-panel border border-dashed border-line-strong bg-transparent flex items-center justify-center gap-1 text-control text-ink-mute hover:text-ink hover:border-accent/60 cursor-pointer transition-colors dur-fast"
               :title="`浏览${sec.label}全部示例`"
               @click="browseSection(sec)"
             >

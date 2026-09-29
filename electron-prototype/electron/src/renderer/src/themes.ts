@@ -7,7 +7,6 @@ import type { ExampleItem } from './types'
 export interface ThemeConfig {
   key: string
   label: string
-  icon: string
   placeholder: string
   filter: (e: ExampleItem) => boolean
 }
@@ -16,7 +15,6 @@ export const THEMES: ThemeConfig[] = [
   {
     key: 'turtle',
     label: 'Turtle 绘图',
-    icon: '🐢',
     placeholder: '搜索 Turtle 示例…',
     filter: (e) => {
       const name = (e.name || '').toLowerCase()
@@ -29,7 +27,6 @@ export const THEMES: ThemeConfig[] = [
   {
     key: 'games',
     label: 'Pygame 游戏',
-    icon: '🕹️',
     placeholder: '搜索 Pygame 游戏示例…',
     filter: (e) => {
       if (e.name === '__init__.py' || e.category === 'projects') return false
@@ -39,7 +36,6 @@ export const THEMES: ThemeConfig[] = [
   {
     key: 'opencv',
     label: 'OpenCV 视觉',
-    icon: '🖼️',
     placeholder: '搜索 OpenCV 示例…',
     filter: (e) => {
       if (e.name === '__init__.py' || e.category === 'projects') return false
@@ -49,7 +45,6 @@ export const THEMES: ThemeConfig[] = [
   {
     key: 'images',
     label: 'PIL 图像处理',
-    icon: '🖌️',
     placeholder: '搜索 PIL 图像示例…',
     filter: (e) => {
       if (e.name === '__init__.py' || e.category === 'projects') return false
@@ -59,7 +54,6 @@ export const THEMES: ThemeConfig[] = [
   {
     key: 'viz',
     label: '数据可视化',
-    icon: '📈',
     placeholder: '搜索可视化示例…',
     filter: (e) => {
       if (e.name === '__init__.py' || e.category === 'projects') return false

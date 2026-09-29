@@ -101,13 +101,14 @@ const QUALITY_FACETS = [
 ]
 
 const ROW_CLS =
-  'flex items-center gap-2 w-full h-7 px-2 rounded-control border-0 bg-transparent text-control text-left cursor-pointer transition-colors duration-[120ms] text-ink-dim hover:bg-hover hover:text-ink'
+  'flex items-center gap-2 w-full h-[var(--row-h)] px-2 rounded-control border-0 bg-transparent text-control text-left cursor-pointer transition-colors dur-fast text-ink-dim hover:bg-hover hover:text-ink'
+// 选中行 = 强调色淡底（筛选是选中态，强调色允许出现在这里）
 const ROW_ACTIVE_CLS = 'bg-accent/15 text-ink'
 // 组头按钮：chevron + 组名 + 激活数徽标（折叠后激活状态仍可见）
 const GROUP_CLS =
-  'flex items-center gap-1 w-full h-7 px-2 mb-0.5 border-0 bg-transparent text-caption font-[650] text-ink-faint tracking-[0.04em] hover:text-ink-dim cursor-pointer transition-colors duration-[120ms]'
+  'flex items-center gap-1 w-full h-[var(--row-h)] px-2 mb-0.5 border-0 bg-transparent text-caption font-medium text-ink-mute tracking-[0.04em] hover:text-ink-dim cursor-pointer transition-colors dur-fast'
 const GROUP_BADGE_CLS =
-  'min-w-[16px] h-[16px] px-1 flex items-center justify-center rounded-full bg-accent text-white text-badge font-mono'
+  'min-w-[16px] h-[16px] px-1 flex items-center justify-center rounded-control bg-accent text-on-accent text-badge font-mono'
 const ICON_BTN =
   'w-7 h-7 flex items-center justify-center rounded-control border-0 bg-transparent text-ink-mute hover:text-ink hover:bg-hover cursor-pointer shrink-0'
 
@@ -181,7 +182,7 @@ const activeFilterCount = computed(
       >
         <component :is="collapsed ? PanelLeftOpen : PanelLeftClose" :size="15" />
       </button>
-      <span v-if="!collapsed" class="ml-1.5 text-caption font-[650] text-ink-faint tracking-[0.08em]">筛选</span>
+      <span v-if="!collapsed" class="ml-1.5 text-caption font-medium text-ink-mute tracking-[0.08em]">筛选</span>
     </div>
 
     <template v-if="!collapsed">
@@ -197,9 +198,9 @@ const activeFilterCount = computed(
       <div class="flex-1 overflow-y-auto px-2 py-2.5 space-y-4">
         <!-- 收藏 -->
         <button :class="[ROW_CLS, favOnly ? ROW_ACTIVE_CLS : '']" title="只看收藏" :aria-pressed="favOnly" @click="toggleFavOnly()">
-          <Star :size="13" :class="favOnly ? 'text-warn fill-current' : 'text-ink-faint'" />
+          <Star :size="13" :class="favOnly ? 'text-warn fill-current' : 'text-ink-mute'" />
           <span>收藏</span>
-          <span v-if="favorites.size" class="ml-auto text-caption text-ink-faint font-mono">{{ favorites.size }}</span>
+          <span v-if="favorites.size" class="ml-auto text-caption text-ink-mute font-mono">{{ favorites.size }}</span>
         </button>
 
         <!-- 运行状态 -->
@@ -241,7 +242,7 @@ const activeFilterCount = computed(
               <span>{{ r.label }}</span>
               <span
                 v-if="'key' in r && r.key !== 'all' && facetCounts.runnableCounts.get(r.key)"
-                class="ml-auto text-caption text-ink-faint font-mono"
+                class="ml-auto text-caption text-ink-mute font-mono"
                 >{{ facetCounts.runnableCounts.get(r.key) }}</span
               >
             </button>
@@ -272,9 +273,9 @@ const activeFilterCount = computed(
                 :title="t.placeholder"
                 @click="setTheme(t.key)"
               >
-                <component :is="THEME_ICONS[t.key]" :size="13" class="shrink-0 text-ink-faint" />
+                <component :is="THEME_ICONS[t.key]" :size="13" class="shrink-0 text-ink-mute" />
                 <span class="truncate">{{ t.label }}</span>
-                <span class="ml-auto text-caption text-ink-faint font-mono">{{ facetCounts.themeCounts.get(t.key) || 0 }}</span>
+                <span class="ml-auto text-caption text-ink-mute font-mono">{{ facetCounts.themeCounts.get(t.key) || 0 }}</span>
               </button>
             </div>
           </div>
@@ -293,7 +294,7 @@ const activeFilterCount = computed(
                 @click="setQuality(qf.min)"
               >
                 <span>{{ qf.label }}</span>
-                <span v-if="qf.min > 0" class="ml-auto text-caption text-ink-faint font-mono">{{
+                <span v-if="qf.min > 0" class="ml-auto text-caption text-ink-mute font-mono">{{
                   facetCounts.qualityCounts.get(qf.min) || 0
                 }}</span>
               </button>
@@ -318,7 +319,7 @@ const activeFilterCount = computed(
               @click="toggleTag(f.tag)"
             >
               <span class="truncate font-mono lowercase">{{ f.tag }}</span>
-              <span class="ml-auto text-caption text-ink-faint font-mono">{{ f.count }}</span>
+              <span class="ml-auto text-caption text-ink-mute font-mono">{{ f.count }}</span>
             </button>
             <button
               v-if="hiddenTagCount > 0 || showAllTags"
@@ -344,7 +345,7 @@ const activeFilterCount = computed(
     <div v-else class="flex-1 flex flex-col items-center pt-3">
       <span
         v-if="activeFilterCount"
-        class="min-w-[18px] h-[18px] px-1 flex items-center justify-center rounded-full bg-accent text-white text-badge font-mono"
+        class="min-w-[18px] h-[18px] px-1 flex items-center justify-center rounded-control bg-accent text-on-accent text-badge font-mono"
         >{{ activeFilterCount }}</span
       >
     </div>

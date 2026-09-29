@@ -297,10 +297,17 @@ Lucide 单一来源（stroke 1.5，round cap/join），尺寸三档 14 / 16 / 20
 - **#8 动效时长 → 三档 token**（`--dur-fast/base/panel`，新增 `dur-fast`/`dur-base`/`dur-panel` 工具类）；`--duration-*` 零引用问题随旧 token 删除消失。
 - **#9 硬编码 macOS 壳**：平台信息经 preload 写入 `html[data-platform]`，`pl-[72px]` 由 `--titlebar-lead` 承担，主进程按平台分支窗口装饰。
 
+**A3 落地进度**（画廊 / 工具箱批）：
+
+已退役：
+- **#2 emoji 与色相徽章 → 画廊侧归零**。删掉 `themes.ts` / `overview.ts` / `toolbox-groups.ts` / `category-meta.ts` 里的 emoji 字段与 `SECTION_HUES`，图标收敛到新文件 `R/src/section-icons.ts`（分区 key → Lucide 单一映射）；v0.10 遗留的 `getToolIcon`（emoji 体系）与 `THEME_STATUS_CLS`（硬编码色）作为无调用方死代码一并删除。渲染层 emoji 仅剩 2 处、均在注释里（`R/components/ExampleCard.vue:3`、`R/src/types.ts:25`）。
+- **#3 字重（画廊/工具箱/筛选栏）**：`font-[510/590/650]` 在该批组件内清零，卡片标题 600、行/组头 500、正文 400；全仓非标字重由 48 处降到 26 处（余者属 A4/A5 组件）。
+- **#6 组件层字面量（该批）**：卡片/列表/工具条/筛选栏/总览的颜色字面量与 `bg-accent/15`、`rounded-full`、`text-white`（强调底文字改 `text-on-accent`）全部改为 token 表达式。
+- 新增可复用表面类：`.chip-ic`（语义图标 chip）、`.card-sel`、`.stat-dot`（状态圆点）、`.seg`（分段控件，mac 抬起段 / win 强调下划线）。
+
 未退役（各有归属批次）：
-- #2 页面内 emoji 分区图标与色相徽章（`.hue-chip` 已中性化，emoji 与用法待 A3/A4）。
-- #3 非标字重（实测仍有 48 处 `font-[510/590/650]` 等）——随 A3/A4 组件重写逐个替换。
-- #6 的约 68 处组件层颜色字面量（A3/A4 重写，B3 校验归零）。
+- #3 余下 26 处非标字重（CommandPalette / DetailPage / OutputPanel / HistoryPanel / AIExplainPanel 等，A4/A5 重写时清除）。
+- #6 的组件层字面量残量（同批 A4/A5，B3 校验归零）。
 - #10 原生 confirm 三处（A5 自绘对话框批）。
 
 ### 7.2 Token 映射（v1 → v2）
