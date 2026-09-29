@@ -2,9 +2,11 @@
 
 import { contextBridge, ipcRenderer, type IpcRendererEvent } from 'electron'
 
-// 主题恢复（首帧前）：渲染层 main.ts 要等模块加载完才执行，light 用户会闪暗色。
-// DOM 在 preload 阶段已可用，此处提前设 data-theme；失败则回落到 index.html 的 dark 兜底。
-// 偏好值为 dark/light/system 三态，system 按 prefers-color-scheme 现场解析。
+// 三层绑定恢复（首帧前）：渲染层 main.ts 要等模块加载完才执行，light 用户会闪暗色、
+// Windows 用户会先看到 macOS 几何。DOM 在 preload 阶段已可用，此处提前设
+// data-theme / data-platform / data-accent；失败则回落到 index.html 的兜底。
+// 主题偏好是 dark/light/system 三态，system 按 prefers-color-scheme 现场解析；
+// 强调色默认 system（跟随平台系统强调色），品牌靛为可选项。
 // 本文件在无 DOM lib 的 node tsconfig 下编译，globalThis 经结构类型访问。
 try {
   const savedTheme = localStorage.getItem('app-theme') || 'dark'
@@ -17,9 +19,14 @@ try {
       : savedTheme
   const root = (globalThis as unknown as { document?: { documentElement: { setAttribute(key: string, value: string): void } } })
     .document?.documentElement
-  if (resolved && root) root.setAttribute('data-theme', resolved)
+  if (root) {
+    if (resolved) root.setAttribute('data-theme', resolved)
+    // 平台层：darwin → mac，其余（含 Windows）→ win。Linux 暂不在交付面（D7）。
+    root.setAttribute('data-platform', process.platform === 'darwin' ? 'mac' : 'win')
+    root.setAttribute('data-accent', localStorage.getItem('app-accent') === 'brand' ? 'brand' : 'system')
+  }
 } catch {
-  // localStorage 不可用时保持默认主题
+  // localStorage 不可用时保持默认主题与平台
 }
 
 // 类型定义：渲染层通过 window.sidecar.* 调用
@@ -49,6 +56,15 @@ export interface SidecarAPI {
   store: {
     get: (name: string) => Promise<unknown>
     set: (name: string, value: unknown) => Promise<unknown>
+  }
+
+  // 窗口控制（Windows frameless 自绘标题栏三键；macOS 侧按钮不展示但仍可用）
+  win: {
+    minimize: () => Promise<unknown>
+    toggleMaximize: () => Promise<unknown>
+    close: () => Promise<unknown>
+    isMaximized: () => Promise<unknown>
+    onMaximizedChange: (callback: (data: unknown) => void) => Unsubscribe
   }
 
   // AI 代码解释（DeepSeek）：key 只在主进程侧注入，前端不接触明文
@@ -106,6 +122,15 @@ const sidecarAPI: SidecarAPI = {
   store: {
     get: (name: string) => ipcRenderer.invoke('store:get', name),
     set: (name: string, value: unknown) => ipcRenderer.invoke('store:set', name, value)
+  },
+
+  // 窗口控制
+  win: {
+    minimize: () => ipcRenderer.invoke('window:minimize'),
+    toggleMaximize: () => ipcRenderer.invoke('window:toggleMaximize'),
+    close: () => ipcRenderer.invoke('window:close'),
+    isMaximized: () => ipcRenderer.invoke('window:isMaximized'),
+    onMaximizedChange: (callback: (data: unknown) => void) => subscribe('window:maximized', callback)
   },
 
   // AI 代码解释（DeepSeek）：key 只在主进程侧注入，前端不接触明文

@@ -1,5 +1,6 @@
 // monaco.ts：Monaco 初始化（从旧 monaco-editor.ts 移植，Vue 化）
 // ESM + worker 模式（与 CSP 兼容，不走 CDN）；主题色读 CSS 变量，随 data-theme 切换。
+// 代码区跟随主题（A1 §3.2）：底色 --bg-console，语法色 --code-*，与页稿/终端同一套。
 import * as monaco from 'monaco-editor/editor/editor.api'
 import 'monaco-editor/languages/definitions/python/register'
 import editorWorker from 'monaco-editor/editor/editor.worker?worker'
@@ -23,101 +24,59 @@ const rgba = (name: string, alpha: number) => {
 
 // 主题定义每次 apply 都重新注册：CSS 变量在 define 时取值快照，
 // 若只 define 一次，从 light 切到 dark 时 dark 定义仍带着 light 期变量值
-function defineThemes(): void {
-  // Linear inspired dark theme for Monaco — all colors read from CSS variables
-  monaco.editor.defineTheme('linear-dark', {
-    base: 'vs-dark',
-    inherit: true,
-    rules: [
-      { token: 'comment', foreground: hex('--text-quaternary'), fontStyle: 'italic' },
-      { token: 'keyword', foreground: hex('--accent-violet') },
-      { token: 'string', foreground: hex('--status-green') },
-      { token: 'number', foreground: hex('--status-amber') },
-      { token: 'type', foreground: hex('--text-tertiary') },
-      { token: 'function', foreground: hex('--text-secondary') },
-      { token: 'variable', foreground: hex('--text-primary') },
-      { token: 'operator', foreground: hex('--text-tertiary') },
-      { token: 'delimiter', foreground: hex('--text-tertiary') },
-      { token: 'regexp', foreground: hex('--status-amber') },
-      { token: 'constant', foreground: hex('--accent-violet') },
-      { token: 'attribute.name', foreground: hex('--accent-violet') },
-      { token: 'attribute.value', foreground: hex('--status-green') }
-    ],
-    colors: {
-      'editor.background': cssVar('--bg-marketing'),
-      'editor.foreground': cssVar('--text-secondary'),
-      'editor.lineHighlightBackground': cssVar('--bg-level3'),
-      'editorLineNumber.foreground': cssVar('--border-tertiary'),
-      'editorLineNumber.activeForeground': cssVar('--text-tertiary'),
-      'editor.selectionBackground': rgba('--brand-indigo', 0.25),
-      'editor.inactiveSelectionBackground': rgba('--brand-indigo', 0.12),
-      'editorIndentGuide.background': cssVar('--line-tint'),
-      'editorIndentGuide.activeBackground': cssVar('--border-primary'),
-      'editorWidget.background': cssVar('--bg-panel'),
-      'editorWidget.border': rgba('--text-primary', 0.08),
-      'editorSuggestWidget.background': cssVar('--bg-panel'),
-      'editorSuggestWidget.border': rgba('--text-primary', 0.08),
-      'editorSuggestWidget.selectedBackground': rgba('--brand-indigo', 0.15),
-      'editorCursor.foreground': cssVar('--accent-violet'),
-      'editor.findMatchBackground': rgba('--brand-indigo', 0.3),
-      'editor.findMatchHighlightBackground': rgba('--brand-indigo', 0.15),
-      'scrollbarSlider.background': rgba('--text-primary', 0.1),
-      'scrollbarSlider.hoverBackground': rgba('--text-primary', 0.18),
-      'scrollbarSlider.activeBackground': rgba('--text-primary', 0.25),
-      'editorGutter.background': cssVar('--bg-marketing'),
-      'editorOverviewRuler.border': rgba('--text-primary', 0.05)
-    }
-  })
+// 两套主题共用一份规则/取色表：底色、语法色、控件色全部来自 v2 令牌，
+// 深浅差异由令牌的值承担，不再各写一份字面量
+const RULES = [
+  { token: 'comment', foreground: hex('--code-cmt'), fontStyle: 'italic' },
+  { token: 'keyword', foreground: hex('--code-kw') },
+  { token: 'string', foreground: hex('--code-str') },
+  { token: 'number', foreground: hex('--code-num') },
+  { token: 'type', foreground: hex('--code-kw') },
+  { token: 'function', foreground: hex('--code-fn') },
+  { token: 'variable', foreground: hex('--text-console') },
+  { token: 'operator', foreground: hex('--text-console') },
+  { token: 'delimiter', foreground: hex('--text-console') },
+  { token: 'regexp', foreground: hex('--code-str') },
+  { token: 'constant', foreground: hex('--code-num') },
+  { token: 'attribute.name', foreground: hex('--code-kw') },
+  { token: 'attribute.value', foreground: hex('--code-str') }
+]
 
-  // Linear inspired light theme for Monaco — 同一套 CSS 变量（defineThemes 每次切换重取值）
-  monaco.editor.defineTheme('linear-light', {
-    base: 'vs',
-    inherit: true,
-    rules: [
-      { token: 'comment', foreground: hex('--text-quaternary'), fontStyle: 'italic' },
-      { token: 'keyword', foreground: hex('--accent-violet') },
-      { token: 'string', foreground: hex('--status-green') },
-      { token: 'number', foreground: hex('--status-amber') },
-      { token: 'type', foreground: hex('--text-tertiary') },
-      { token: 'function', foreground: hex('--text-secondary') },
-      { token: 'variable', foreground: hex('--text-primary') },
-      { token: 'operator', foreground: hex('--text-tertiary') },
-      { token: 'delimiter', foreground: hex('--text-tertiary') },
-      { token: 'regexp', foreground: hex('--status-amber') },
-      { token: 'constant', foreground: hex('--accent-violet') },
-      { token: 'attribute.name', foreground: hex('--accent-violet') },
-      { token: 'attribute.value', foreground: hex('--status-green') }
-    ],
-    colors: {
-      'editor.background': cssVar('--bg-marketing'),
-      'editor.foreground': cssVar('--text-secondary'),
-      'editor.lineHighlightBackground': cssVar('--bg-level3'),
-      'editorLineNumber.foreground': cssVar('--border-secondary'),
-      'editorLineNumber.activeForeground': cssVar('--text-tertiary'),
-      'editor.selectionBackground': rgba('--brand-indigo', 0.25),
-      'editor.inactiveSelectionBackground': rgba('--brand-indigo', 0.12),
-      'editorIndentGuide.background': cssVar('--line-tint'),
-      'editorIndentGuide.activeBackground': cssVar('--border-primary'),
-      'editorWidget.background': cssVar('--bg-panel'),
-      'editorWidget.border': rgba('--text-primary', 0.08),
-      'editorSuggestWidget.background': cssVar('--bg-panel'),
-      'editorSuggestWidget.border': rgba('--text-primary', 0.08),
-      'editorSuggestWidget.selectedBackground': rgba('--brand-indigo', 0.15),
-      'editorCursor.foreground': cssVar('--accent-violet'),
-      'editor.findMatchBackground': rgba('--brand-indigo', 0.3),
-      'editor.findMatchHighlightBackground': rgba('--brand-indigo', 0.15),
-      'scrollbarSlider.background': rgba('--text-primary', 0.1),
-      'scrollbarSlider.hoverBackground': rgba('--text-primary', 0.18),
-      'scrollbarSlider.activeBackground': rgba('--text-primary', 0.25),
-      'editorGutter.background': cssVar('--bg-marketing'),
-      'editorOverviewRuler.border': rgba('--text-primary', 0.05)
-    }
-  })
+function editorColors(): Record<string, string> {
+  return {
+    'editor.background': cssVar('--bg-console'),
+    'editor.foreground': cssVar('--text-console'),
+    'editor.lineHighlightBackground': cssVar('--bg-hover'),
+    'editorLineNumber.foreground': cssVar('--text-gutter'),
+    'editorLineNumber.activeForeground': cssVar('--text-console'),
+    'editor.selectionBackground': rgba('--accent', 0.25),
+    'editor.inactiveSelectionBackground': rgba('--accent', 0.12),
+    'editorIndentGuide.background': cssVar('--line-hairline'),
+    'editorIndentGuide.activeBackground': cssVar('--line-strong'),
+    'editorWidget.background': cssVar('--bg-card'),
+    'editorWidget.border': cssVar('--line-hairline'),
+    'editorSuggestWidget.background': cssVar('--bg-card'),
+    'editorSuggestWidget.border': cssVar('--line-hairline'),
+    'editorSuggestWidget.selectedBackground': rgba('--accent', 0.15),
+    'editorCursor.foreground': cssVar('--accent'),
+    'editor.findMatchBackground': rgba('--accent', 0.3),
+    'editor.findMatchHighlightBackground': rgba('--accent', 0.15),
+    'scrollbarSlider.background': rgba('--text-console', 0.1),
+    'scrollbarSlider.hoverBackground': rgba('--text-console', 0.18),
+    'scrollbarSlider.activeBackground': rgba('--text-console', 0.25),
+    'editorGutter.background': cssVar('--bg-console'),
+    'editorOverviewRuler.border': cssVar('--line-hairline')
+  }
+}
+
+function defineThemes(): void {
+  monaco.editor.defineTheme('pycase-dark', { base: 'vs-dark', inherit: true, rules: RULES, colors: editorColors() })
+  monaco.editor.defineTheme('pycase-light', { base: 'vs', inherit: true, rules: RULES, colors: editorColors() })
 }
 
 export function currentMonacoTheme(): string {
   const t = document.documentElement.getAttribute('data-theme') || 'dark'
-  return t === 'dark' ? 'linear-dark' : 'linear-light'
+  return t === 'dark' ? 'pycase-dark' : 'pycase-light'
 }
 
 export function applyMonacoTheme(): void {

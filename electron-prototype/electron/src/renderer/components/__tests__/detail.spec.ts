@@ -67,7 +67,7 @@ const h = vi.hoisted(() => {
 vi.mock('../../monaco', () => ({
   monaco: { editor: { create: h.create } },
   applyMonacoTheme: vi.fn(),
-  currentMonacoTheme: () => 'linear-dark'
+  currentMonacoTheme: () => 'pycase-dark'
 }))
 
 // restoreMocks 会重置 mock 实现，故每个用例开头重新装一遍桩行为（比依赖默认实现稳）。
@@ -839,7 +839,7 @@ describe('MonacoEditor', () => {
     const opts = h.create.mock.calls[0][1]
     expect(opts.value).toBe('print(1)\n')
     expect(opts.language).toBe('python')
-    expect(opts.theme).toBe('linear-dark')
+    expect(opts.theme).toBe('pycase-dark')
     expect(opts.readOnly).toBe(false)
 
     // 注册生效的证明：saveExample 经注册的 getValue 取到编辑器当前内容

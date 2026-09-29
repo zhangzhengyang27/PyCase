@@ -107,7 +107,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown, true))
 <template>
   <Teleport to="body">
     <div class="fixed inset-0 z-[1200] flex items-start justify-center pt-[14vh] bg-black/50 px-6" @click.self="emit('close')">
-      <div class="w-[560px] max-w-full bg-panel border border-line-subtle edge-highlight-top rounded-panel shadow-elev-3 overflow-hidden animate-modal-in">
+      <div class="w-[560px] max-w-full bg-panel border border-line-subtle rounded-panel shadow-elev-3 overflow-hidden animate-modal-in">
         <div class="flex items-center gap-2.5 px-3.5 h-11 border-b border-line-subtle">
           <Search :size="15" class="text-ink-faint shrink-0" />
           <input

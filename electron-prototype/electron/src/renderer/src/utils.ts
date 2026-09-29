@@ -110,7 +110,7 @@ export function runStatusHint(status: string | undefined): string {
   }
 }
 
-// 按钮（与原 style.css 末段 .btn 生效样式对齐：带 subtle 边框、5px/12px 内边距）
+// 按钮基类（带 subtle 边框、5px/12px 内边距）
 const BTN_BASE_CLS =
   "inline-flex items-center gap-1 px-3 py-[5px] border border-line-subtle rounded-md bg-transparent text-[12px] font-[510] font-sans cursor-pointer whitespace-nowrap tracking-[-0.005em] leading-[1.4] transition-all duration-[120ms] active:scale-[0.97] disabled:opacity-[0.35] disabled:cursor-not-allowed";
 export const BTN_GHOST_CLS = `${BTN_BASE_CLS} text-ink-dim hover:bg-hover hover:text-ink`;

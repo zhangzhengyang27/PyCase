@@ -34,7 +34,7 @@
 | token | macOS | Windows |
 |---|---|---|
 | --font-ui | -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", sans-serif | "Segoe UI Variable Text", "Segoe UI", "Microsoft YaHei UI", sans-serif |
-| --font-mono | ui-monospace, "SF Mono", Menlo | "Cascadia Mono", Consolas |
+| --font-code | ui-monospace, "SF Mono", Menlo | "Cascadia Mono", Consolas |
 | --fs-caption / body / title / page | 11 / 13 / 15 / 17 px | 12 / 14 / 20 / 28 px |
 | --ctrl-sm / md / lg | 20 / 24 / 28 px | 24 / 32 / 40 px |
 | --row-h（列表行） | 28 px | 40 px |
@@ -50,6 +50,8 @@
 | --nav-indicator | none（选中 = 强调填充） | block（选中 = 中性填充 + 3×16px 强调条） |
 
 密度的平台差异（mac 紧凑 / win 宽松）是**原生惯例**而非随意缩放：macOS 侧栏行高 28、控件 20–28；Windows 列表行高 40、控件 24–40。
+
+实现注记（A2）：等宽栈在实现层命名为 `--font-code`——Tailwind 的 `--font-mono` 是 `@theme` 命名空间变量，同名会构成自引用而取值失效。根字号固定 16px（rem 基准），正文 13px 只给 `body`：此前 `html, body { font-size: var(--fs-body) }` 把根字号也压到 13px，**全部 rem 计工具类尺寸缩到 81%**（h-8 实测 26px 而非 32px），A2 已修正并纳入走查（`body` 13 / `html` 16 由探针断言）。
 
 ### 3.2 主题层（4 组合）
 
@@ -284,6 +286,23 @@ Lucide 单一来源（stroke 1.5，round cap/join），尺寸三档 14 / 16 / 20
 | 9 | 硬编码 macOS 壳假设 | R/App.vue:160（pl-[72px] 红绿灯留白写死）、M/index.ts:297（仅 darwin 设 hiddenInset）、主进程未向渲染层暴露 platform（B10） | html[data-platform] 驱动全部平台差异；主进程平台信息进 preload |
 | 10 | 原生 confirm 打断 | R/store.ts:520,554,1044（B6） | 全部走自绘对话框（板 4 规格） |
 
+**A2 落地进度**（本批只退役与「壳 + token 层」直接相关的项）：
+
+已退役：
+- **#1 渐变与极光装饰 → 全清**。`R/main.css` 的 `.surface-card`/`.surface-raised`/`.btn-primary-deep` 改为平面填充；`.aurora-hero`、`.edge-highlight-top` 类与三处用法删除；全渲染层 `linear-gradient`/`radial-gradient`/`--card-grad-*` 计数 = 0（`grep -rn "linear-gradient\|radial-gradient\|card-grad" R/` 无输出）。
+- **#4 状态 14% 色底 → 中性 chip**。`--status-*-bg` 删除，`bg-ok-bg`/`bg-danger-bg`/`bg-warn-bg` 三个工具类别名改指 `--chip-bg`（中性）；类名保留到 A3/A4 重写各页面时一并改掉。
+- **#5 幽灵样式文件 → 已删**。`R/src/style.css`（163 行、无 import）`git rm` 删除，并清掉 `R/src/utils.ts:113` 指向它的注释；`R/tailwind.config.js` 属 B3 的单源清理范围，本批未动。
+- **#6 的 light 覆写块 → 非 token 层已归零**。`R/main.css` 的 9 处 `[data-theme='light']` 全部删除；全仓非 token 层 light 覆写计数 = 0。
+- **#7 字体栈双写 → 单源**：平台层 `--font-ui` / `--font-code`，`@theme` 只做映射。
+- **#8 动效时长 → 三档 token**（`--dur-fast/base/panel`，新增 `dur-fast`/`dur-base`/`dur-panel` 工具类）；`--duration-*` 零引用问题随旧 token 删除消失。
+- **#9 硬编码 macOS 壳**：平台信息经 preload 写入 `html[data-platform]`，`pl-[72px]` 由 `--titlebar-lead` 承担，主进程按平台分支窗口装饰。
+
+未退役（各有归属批次）：
+- #2 页面内 emoji 分区图标与色相徽章（`.hue-chip` 已中性化，emoji 与用法待 A3/A4）。
+- #3 非标字重（实测仍有 48 处 `font-[510/590/650]` 等）——随 A3/A4 组件重写逐个替换。
+- #6 的约 68 处组件层颜色字面量（A3/A4 重写，B3 校验归零）。
+- #10 原生 confirm 三处（A5 自绘对话框批）。
+
 ### 7.2 Token 映射（v1 → v2）
 
 | v1 | v2 | 说明 |
@@ -325,8 +344,9 @@ Lucide 单一来源（stroke 1.5，round cap/join），尺寸三档 14 / 16 / 20
 2. **密度 = 跟随平台**：mac 行高 28 / 控件 20–28，win 行高 40 / 控件 24–40，不做统一缩放。
 3. **终端与代码区 = 跟随主题**（推翻页稿初版「恒暗」）：浅色下浅底深字，语法高亮分深浅两套（见 §3.2）。落地要点见 §3.2 的级联顺序告警。
 
-**遗留（不阻塞 A1，转入实现期）**
+**遗留（截至 A2 收尾）**
 
-- 对比度脚本接入 CI 的时机 = token 落进产品 CSS 的 B3 阶段（脚本届时改指产品 token 源）。
-- 材质面在真实桌面背景下的可读性只能实机走查（A2 首屏落地后）。
-- 语法色浅色变体（#0550AE 家族）在 5.38–7.85 区间通过 AA，但未在真实 Python 代码长文上走查可读性；A2 详情页落地时目视复核。
+- token 已落产品源（`R/src/theme.css`，A2），`scripts/check_contrast.py` 同步改指该文件（142 项 0 失败）。**脚本进 ci.yml 的步骤仍留待 B3**（当前靠本地/评审时手动跑）。
+- 材质面可读性：mac 已实机走查（vibrancy 生效，侧栏随桌面透出，深浅两主题截图各一）；win 侧待 §8 真机渠道。
+- 语法色浅色变体（#0550AE 家族）在 5.38–7.85 区间通过 AA，但未在真实 Python 长文上复核——详情页代码区仍是 v1 结构，A4 重设计该页时目视复核。
+- win 窗口材质（Mica / `backgroundMaterial`）本批未启用：win 走不透明窗口底，避免在无法本机验证的环境里押注降级路径；真机验收渠道确定后开启并走查。

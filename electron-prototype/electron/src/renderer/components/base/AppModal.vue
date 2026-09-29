@@ -104,7 +104,7 @@ onBeforeUnmount(() => {
         aria-modal="true"
         :aria-label="title"
         tabindex="-1"
-        class="bg-panel border border-line-subtle edge-highlight-top rounded-panel shadow-elev-3 max-w-[92vw] max-h-[86vh] flex flex-col animate-modal-in outline-none"
+        class="bg-panel border border-line-subtle rounded-panel shadow-elev-3 max-w-[92vw] max-h-[86vh] flex flex-col animate-modal-in outline-none"
         :style="{ width: width, transform: `translate(${dx}px, ${dy}px)` }"
       >
         <div

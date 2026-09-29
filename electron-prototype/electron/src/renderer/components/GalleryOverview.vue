@@ -44,7 +44,7 @@ function onRun(id: string): void {
   <!-- 页头固定、独立于滚动层：app-drag 在滚动容器内不生效（Electron 限制），
        顺带让标题常驻——分区滚动时页头不消失 -->
   <div class="flex-1 min-h-0 flex flex-col">
-    <div class="app-drag select-none px-8 pt-7 pb-3 aurora-hero">
+    <div class="app-drag select-none px-8 pt-7 pb-3">
       <div class="max-w-[1200px] mx-auto flex items-end justify-between gap-4">
         <div>
           <h1 class="text-page font-[650] text-ink m-0 tracking-[-0.02em]">示例库</h1>

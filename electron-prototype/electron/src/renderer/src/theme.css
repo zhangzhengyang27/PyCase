@@ -1,15 +1,18 @@
 /* ============================================================
-   共享 Tailwind 4 主题层（旧渲染层与 Vue 渲染层共用）
+   PyCase 令牌层 v2（A1 视觉基线落地）
    ------------------------------------------------------------
-   Tailwind 3 → 4 迁移说明：
-   - v4 采用 CSS-first 配置，原 tailwind.config.js 的 theme 映射
-     全部搬进 @theme 块（工具类 bg-panel / text-ink-dim / shadow-elev-1
-     / font-sans / animate-pulse 由此生成）；
-   - 颜色/阴影引用 :root 设计令牌（CSS 变量），
-     data-theme dark/light 切换对工具类同样生效；
-   - preflight 保持关闭（应用自带精简 reset，避免与既有样式冲突），
-     显式只引入 theme + utilities 两层；
-   - 源扫描显式声明（@source），覆盖旧 TS 模板与 Vue SFC。
+   三层绑定：
+     平台层 html[data-platform]  字体 / 几何 / 动效 / 窗口装饰 / 选中语义
+     主题层 html[data-theme]     表面 / 文字 / 线 / 阴影 / 状态
+     强调色层 html[data-accent]  填充 / hover / pressed / 文字 / 光晕
+   级联顺序（后块覆盖前块，未重定义的沿用；scripts/check_contrast.py
+   按同一顺序解析本文件）：
+     html(平台默认 mac + mac 深色)
+       → html[data-theme="light"]（mac 浅色）
+       → html[data-platform="win"]（win 平台 + win 深色）
+       → html[data-platform="win"][data-theme="light"]（win 浅色）
+       → html[data-accent="brand"]（强调色指针切换）
+   规格与实测对比度见 docs/redesign-visual-baseline.md §3/§4。
    ============================================================ */
 
 @layer theme, base, components, utilities;
@@ -19,216 +22,409 @@
 @source "../index.html";
 @source "./";
 
-/* ============================================================
-   设计令牌（CSS 变量，dark/light 双主题）
-   ------------------------------------------------------------
-   S0 回归修复：本块在 f4fa0fb（Vue 3 迁移）中随旧 style.css 一起
-   丢失，@theme 的 var() 引用全部悬空导致主题层失效；此处按
-   f4fa0fb^:src/renderer/src/style.css 原样恢复表面/文字/品牌/
-   状态/边框/阴影六组值，并按设计规范 v1（方向 A）补充
-   字号阶梯 / 控件高度 / 圆角 / 动效 / 状态底色 五组度量令牌。
-   ============================================================ */
-:root {
-  /* 原生控件（select 弹层/滚动条/file input）跟随主题 */
+/* ---------- 平台层（默认 macOS）+ 主题层（macOS 深色） ---------- */
+html {
+  /* 平台：字体 */
+  --font-ui: -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", "Hiragino Sans GB", sans-serif;
+  /* 等宽栈命名为 code 而非 mono：@theme 的 --font-mono 是 Tailwind 命名空间变量，
+     同名会构成自引用（--font-mono: var(--font-mono)）而失效 */
+  --font-code: ui-monospace, "SF Mono", Menlo, monospace;
+  /* 平台：字阶与密度 */
+  --fs-caption: 11px;
+  --fs-body: 13px;
+  --fs-title: 15px;
+  --fs-page: 17px;
+  --ctrl-sm: 20px;
+  --ctrl-md: 24px;
+  --ctrl-lg: 28px;
+  --row-h: 28px;
+  --r-control: 6px;
+  --r-card: 10px;
+  --r-overlay: 12px;
+  --sidebar-w: 224px;
+  --titlebar-h: 44px;
+  --toolbar-h: 44px;
+  --statusbar-h: 22px;
+  --pane-head-h: 44px;
+  --titlebar-lead: 72px;
+  --titlebar-trail: 0px;
+  /* 平台：动效 */
+  --dur-fast: 100ms;
+  --dur-base: 160ms;
+  --dur-panel: 220ms;
+  --ease-std: cubic-bezier(0.25, 0.1, 0.25, 1);
+  --ease-emph: cubic-bezier(0.32, 0.72, 0, 1);
+
   color-scheme: dark;
 
-  /* 1. 背景表面 */
-  --bg-marketing: #0a0b0d;
-  --bg-panel: #0e0f12;
-  --bg-level3: #15171c;
-  --bg-secondary: #28282c;
-  --bg-hover: rgba(255, 255, 255, 0.05);
-  --bg-inset: #08090a;
+  /* 主题：macOS 深色 */
+  --bg-window: #1e1e1e;
+  --bg-chrome: #2a2a2a;
+  --bg-card: #2c2c2e;
+  --bg-card-hover: #323236;
+  --bg-sidebar: rgba(44, 44, 46, 0.6);
+  --bg-sidebar-fallback: #2b2b2d;
+  --bg-console: #1a1a1a;
+  --bg-inset: rgba(0, 0, 0, 0.22);
+  --bg-hover: rgba(255, 255, 255, 0.06);
+  --bg-pressed: rgba(255, 255, 255, 0.1);
+  --bg-subtle: rgba(255, 255, 255, 0.1);
+  --text-primary: #f5f5f7;
+  --text-secondary: #b6b6bd;
+  --text-tertiary: #a0a0a6;
+  --text-quaternary: #71717a;
+  --text-console: #d6d6d6;
+  --text-gutter: #6e6e76;
+  --code-kw: #569cd6;
+  --code-str: #ce9178;
+  --code-num: #b5cea8;
+  --code-cmt: #6a9955;
+  --code-fn: #dcdcaa;
+  --line-hairline: rgba(255, 255, 255, 0.1);
+  --line-strong: rgba(255, 255, 255, 0.2);
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-overlay: 0 12px 40px rgba(0, 0, 0, 0.55);
+  --focus-inner: #0a0a0a;
+  --focus-outer: #ffffff;
 
-  /* 2. 文字（quaternary 为面板底上仍达 AA 4.5:1 的最浅灰，只许更实不许更虚） */
-  --text-primary: #f7f8f8;
-  --text-secondary: #d0d6e0;
-  --text-tertiary: #8a8f98;
-  --text-quaternary: #80858d;
+  /* 状态：macOS 深色 */
+  --status-green: #30d158;
+  --status-red: #ff6961;
+  --status-amber: #ffb340;
+  --status-info-bg: transparent;
 
-  /* 3. 品牌与强调（accent-strong 供彩色底/浅色小字使用，对 accent 12% 底 ≥4.5:1） */
-  --brand-indigo: #5e6ad2;
-  --accent-violet: #7170ff;
-  --accent-hover: #828fff;
-  --accent-strong: #8584ff;
-  --accent-ring: rgba(94, 106, 210, 0.4);
+  /* 中性 chip（v2 状态语言：圆点 + 中性文字；色底只在 win 弹窗 InfoBar） */
+  --chip-bg: rgba(255, 255, 255, 0.07);
+  --chip-bd: rgba(255, 255, 255, 0.1);
 
-  /* 4. 状态（red 取对红 14% 底 ≥4.5:1 的最亮值） */
-  --status-green: #27a644;
-  --status-red: #ea4d52;
-  --status-amber: #f5a524;
+  /* 强调色：macOS 深色 */
+  --accent-system: #0a84ff;
+  --on-accent-system: #ffffff;
+  --accent-system-hover: #2e96ff;
+  --accent-system-pressed: #0071e3;
+  --accent-system-text: #4da2ff;
+  --accent-system-halo: rgba(10, 132, 255, 0.35);
+  --accent-brand: #5e6ad2;
+  --on-accent-brand: #ffffff;
+  --accent-brand-hover: #6e79db;
+  --accent-brand-pressed: #4f5abf;
+  --accent-brand-text: #a0a4ff;
+  --accent-brand-halo: rgba(94, 106, 210, 0.4);
+  --accent: var(--accent-system);
+  --on-accent: var(--on-accent-system);
+  --accent-hover: var(--accent-system-hover);
+  --accent-pressed: var(--accent-system-pressed);
+  --accent-text: var(--accent-system-text);
+  --accent-halo: var(--accent-system-halo);
 
-  /* 5. 边框分隔线 */
-  --border-primary: #23252a;
-  --border-secondary: #34343a;
-  --border-tertiary: #3e3e44;
-  --line-tint: #141516;
-  --border-subtle: rgba(255, 255, 255, 0.05);
-  --border-standard: rgba(255, 255, 255, 0.08);
-
-  /* 6. 字体（系统栈：仓库不打包 webfont，栈里不放装不上的字体名） */
-  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
-    "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
-  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-
-  /* 7. 阴影层级 */
-  --elevation-1: 0 1px 2px rgba(0, 0, 0, 0.3);
-  --elevation-2: 0 2px 8px rgba(0, 0, 0, 0.4);
-  --elevation-3: 0 8px 24px rgba(0, 0, 0, 0.5);
-  --elevation-focus: 0 0 0 2px var(--accent-ring);
-  --elevation-inset: inset 0 1px 3px rgba(0, 0, 0, 0.4);
-
-  /* 8. 字号阶梯（设计规范 v1；badge 为徽章/kbd 的刻意微字号，无行高对避免改变继承行为） */
-  --text-caption-size: 11px;
-  --text-badge-size: 10px;
-  --text-control-size: 12px;
-  --text-body-size: 13px;
-  --text-title-size: 15px;
-  --text-page-size: 17px;
-
-  /* 9. 控件高度三档：sm 24 / md 28 / lg 32（对应 Tailwind h-6/h-7/h-8） */
-  --control-h-sm: 24px;
-  --control-h-md: 28px;
-  --control-h-lg: 32px;
-
-  /* 10. 圆角体系（药丸 full 仅限筛选芯片与收藏 pill） */
-  --radius-badge: 3px;
-  --radius-control: 5px;
-  --radius-panel: 8px;
-
-  /* 11. 动效 */
-  --duration-fast: 120ms;
-  --duration-panel: 180ms;
-  --ease-standard: cubic-bezier(0.25, 0.8, 0.35, 1);
-  --ease-panel: cubic-bezier(0.32, 0.72, 0, 1);
-
-  /* 12. 状态底色（收编散落的硬编码 rgba） */
-  --status-green-bg: rgba(39, 166, 68, 0.14);
-  --status-red-bg: rgba(229, 72, 77, 0.14);
-  --status-amber-bg: rgba(245, 165, 36, 0.14);
-
-  /* 13. 卡片「深邃层次」（.surface-card 消费；浅色主题在 [data-theme] 覆盖，边框换实色） */
-  --card-grad-top: #1c1e26;
-  --card-grad-bottom: #16181f;
-  --card-highlight: rgba(255, 255, 255, 0.11);
-  --card-highlight-hover: rgba(255, 255, 255, 0.18);
-  --border-card: var(--border-subtle);
-  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.25);
-  --shadow-card-hover: 0 6px 18px rgba(0, 0, 0, 0.4);
-
-  /* 14. 卡片圆角（卡片 9px，控件 5px 不变） */
-  --radius-card: 9px;
+  /* 平台：焦点环与侧栏选中语义（mac = 强调填充；win = 中性填充 + 指示条） */
+  --focus-shadow: 0 0 0 1px var(--accent), 0 0 0 4px var(--accent-halo);
+  --side-sel-bg: var(--accent);
+  --side-sel-fg: var(--on-accent);
+  --nav-indicator: none;
 }
 
-/* Light 主题：仅覆盖表面/文字/边框/阴影，品牌色与状态色双主题共用。
-   状态色整体加深一档：浅色底上原值（绿 3.2 / 红 3.4 / 琥珀 1.9）远低于 AA 4.5:1 */
-[data-theme="light"] {
+/* ---------- 主题层：macOS 浅色 ---------- */
+html[data-theme="light"] {
   color-scheme: light;
 
-  --bg-marketing: #f7f8f8;
-  --bg-panel: #ffffff;
-  --bg-level3: #f3f4f5;
-  --bg-secondary: #f3f4f5;
-  --bg-hover: rgba(0, 0, 0, 0.04);
-  --bg-inset: #f3f4f5;
+  --bg-window: #ffffff;
+  --bg-chrome: #f2f2f2;
+  --bg-card: #ffffff;
+  --bg-card-hover: #fafafc;
+  --bg-sidebar: rgba(246, 246, 248, 0.62);
+  --bg-sidebar-fallback: #f2f2f4;
+  --bg-console: #ffffff;
+  --bg-inset: rgba(0, 0, 0, 0.05);
+  --bg-hover: rgba(0, 0, 0, 0.05);
+  --bg-pressed: rgba(0, 0, 0, 0.09);
+  --bg-subtle: rgba(0, 0, 0, 0.08);
+  --text-primary: #1d1d1f;
+  --text-secondary: #58585e;
+  --text-tertiary: #696970;
+  --text-quaternary: #99999f;
+  --text-console: #1d1d1f;
+  --text-gutter: #8e8e94;
+  --code-kw: #0550ae;
+  --code-str: #a31515;
+  --code-num: #0b6a3f;
+  --code-cmt: #1f7a3a;
+  --code-fn: #795e26;
+  --line-hairline: rgba(0, 0, 0, 0.1);
+  --line-strong: rgba(0, 0, 0, 0.18);
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.1);
+  --shadow-overlay: 0 12px 40px rgba(0, 0, 0, 0.18);
+  --focus-inner: #0a0a0a;
+  --focus-outer: #ffffff;
 
-  --text-primary: #08090a;
-  --text-secondary: #28282c;
-  --text-tertiary: #62666d;
-  --text-quaternary: #68707a;
+  --status-green: #1f7835;
+  --status-red: #c80014;
+  --status-amber: #a94c00;
+  --status-info-bg: transparent;
 
-  --border-primary: #d0d6e0;
-  --border-secondary: #e6e6e6;
-  --border-tertiary: #e6e6e6;
-  --line-tint: #e6e6e6;
-  --border-subtle: rgba(0, 0, 0, 0.05);
-  --border-standard: rgba(0, 0, 0, 0.08);
+  --chip-bg: rgba(0, 0, 0, 0.05);
+  --chip-bd: rgba(0, 0, 0, 0.1);
 
-  --accent-strong: #4f51c0;
-  --status-green: #187a30;
-  --status-red: #c43238;
-  --status-amber: #b45309;
+  --accent-system: #007aff;
+  --on-accent-system: #ffffff;
+  --accent-system-hover: #0071e3;
+  --accent-system-pressed: #0063cc;
+  --accent-system-text: #0063cc;
+  --accent-system-halo: rgba(0, 122, 255, 0.3);
+  --accent-brand: #4f51c0;
+  --on-accent-brand: #ffffff;
+  --accent-brand-hover: #5a5ccb;
+  --accent-brand-pressed: #4345ad;
+  --accent-brand-text: #4143ae;
+  --accent-brand-halo: rgba(79, 81, 192, 0.3);
 
-  --elevation-1: 0 1px 2px rgba(0, 0, 0, 0.06);
-  --elevation-2: 0 2px 8px rgba(0, 0, 0, 0.08);
-  --elevation-3: 0 8px 24px rgba(0, 0, 0, 0.12);
-  --elevation-inset: inset 0 1px 3px rgba(0, 0, 0, 0.06);
-
-  --card-highlight: rgba(0, 0, 0, 0.06);
-  --card-highlight-hover: rgba(0, 0, 0, 0.1);
-  --border-card: #e7e8ea;
-  --shadow-card: 0 2px 8px rgba(24, 28, 34, 0.06);
-  --shadow-card-hover: 0 6px 18px rgba(24, 28, 34, 0.1);
+  --focus-shadow: 0 0 0 1px var(--accent), 0 0 0 4px var(--accent-halo);
 }
 
-@theme {
-  /* 表面（背景） */
-  --color-page: var(--bg-marketing); /* 窗口最底色 */
-  --color-panel: var(--bg-panel); /* 工具栏/侧栏/面板 */
-  --color-card: var(--bg-level3); /* 卡片、激活分段 */
-  --color-surface: var(--bg-secondary); /* hover 后的次级表面 */
-  --color-hover: var(--bg-hover); /* 半透明 hover 覆盖层 */
-  --color-inset: var(--bg-inset); /* 输出终端内嵌背景 */
+/* ---------- 平台层：Windows + 主题层：win 深色 ---------- */
+html[data-platform="win"] {
+  --font-ui: "Segoe UI Variable Text", "Segoe UI", "Microsoft YaHei UI", "Microsoft YaHei", sans-serif;
+  --font-code: "Cascadia Mono", Consolas, ui-monospace, monospace;
+  --fs-caption: 12px;
+  --fs-body: 14px;
+  --fs-title: 20px;
+  --fs-page: 28px;
+  --ctrl-sm: 24px;
+  --ctrl-md: 32px;
+  --ctrl-lg: 40px;
+  --row-h: 40px;
+  --r-control: 4px;
+  --r-card: 8px;
+  --r-overlay: 8px;
+  --sidebar-w: 240px;
+  --titlebar-h: 32px;
+  --toolbar-h: 48px;
+  --statusbar-h: 28px;
+  --pane-head-h: 48px;
+  --titlebar-lead: 12px;
+  --titlebar-trail: 138px;
+  --dur-fast: 150ms;
+  --dur-base: 200ms;
+  --dur-panel: 250ms;
+  --ease-std: cubic-bezier(0.8, 0, 0.2, 1);
+  --ease-emph: cubic-bezier(0.1, 0.9, 0.2, 1);
 
-  /* 前景（文字） */
+  color-scheme: dark;
+
+  --bg-window: #202020;
+  --bg-chrome: #202020;
+  --bg-card: rgba(255, 255, 255, 0.051);
+  --bg-card-hover: rgba(255, 255, 255, 0.07);
+  --bg-sidebar: #242424;
+  --bg-sidebar-fallback: #242424;
+  --bg-inset: rgba(255, 255, 255, 0.06);
+  --bg-hover: rgba(255, 255, 255, 0.06);
+  --bg-pressed: rgba(255, 255, 255, 0.03);
+  --bg-subtle: rgba(255, 255, 255, 0.09);
+  --text-primary: #ffffff;
+  --text-secondary: #c9c9c9;
+  --text-tertiary: #a2a2a2;
+  --text-quaternary: #7a7a7a;
+  --text-gutter: #6e6e76;
+  --line-hairline: rgba(255, 255, 255, 0.07);
+  --line-strong: rgba(255, 255, 255, 0.14);
+  --shadow-card: 0 2px 4px rgba(0, 0, 0, 0.28);
+  --shadow-overlay: 0 8px 16px rgba(0, 0, 0, 0.28);
+  --focus-inner: #0a0a0a;
+  --focus-outer: #ffffff;
+
+  --status-green: #6ccb5f;
+  --status-red: #ff99a4;
+  --status-amber: #fce100;
+  --status-info-bg: #433519;
+
+  --chip-bg: rgba(255, 255, 255, 0.06);
+  --chip-bd: rgba(255, 255, 255, 0.07);
+
+  --accent-system: #60cdff;
+  --on-accent-system: #0a0a0a;
+  --accent-system-hover: #7bd4ff;
+  --accent-system-pressed: #4bc3f5;
+  --accent-system-text: #6ccbff;
+  --accent-system-halo: rgba(96, 205, 255, 0.35);
+  --accent-brand: #8b8dff;
+  --on-accent-brand: #0a0a0a;
+  --accent-brand-hover: #9b9dff;
+  --accent-brand-pressed: #7a7cff;
+  --accent-brand-text: #a7a9ff;
+  --accent-brand-halo: rgba(139, 141, 255, 0.35);
+  --accent: var(--accent-system);
+  --on-accent: var(--on-accent-system);
+  --accent-hover: var(--accent-system-hover);
+  --accent-pressed: var(--accent-system-pressed);
+  --accent-text: var(--accent-system-text);
+  --accent-halo: var(--accent-system-halo);
+
+  --focus-shadow: 0 0 0 1px var(--focus-inner), 0 0 0 3px var(--focus-outer);
+  --side-sel-bg: var(--bg-subtle);
+  --side-sel-fg: var(--text-primary);
+  --nav-indicator: block;
+}
+
+/* ---------- 主题层：Windows 浅色 ---------- */
+html[data-platform="win"][data-theme="light"] {
+  color-scheme: light;
+
+  --bg-window: #f3f3f3;
+  --bg-chrome: #f3f3f3;
+  --bg-card: #ffffff;
+  --bg-card-hover: #fbfbfb;
+  --bg-sidebar: #eeeeee;
+  --bg-sidebar-fallback: #eeeeee;
+  --bg-console: #ffffff;
+  --bg-inset: rgba(0, 0, 0, 0.04);
+  --bg-hover: rgba(0, 0, 0, 0.037);
+  --bg-pressed: rgba(0, 0, 0, 0.024);
+  --bg-subtle: rgba(0, 0, 0, 0.06);
+  --text-primary: #1b1b1b;
+  --text-secondary: #575757;
+  --text-tertiary: #696969;
+  --text-quaternary: #939393;
+  --text-console: #1d1d1f;
+  --text-gutter: #8e8e94;
+  --code-kw: #0550ae;
+  --code-str: #a31515;
+  --code-num: #0b6a3f;
+  --code-cmt: #1f7a3a;
+  --code-fn: #795e26;
+  --line-hairline: rgba(0, 0, 0, 0.06);
+  --line-strong: rgba(0, 0, 0, 0.14);
+  --shadow-card: 0 2px 4px rgba(0, 0, 0, 0.12);
+  --shadow-overlay: 0 8px 16px rgba(0, 0, 0, 0.14);
+  --focus-inner: #ffffff;
+  --focus-outer: #0a0a0a;
+
+  --status-green: #0e700e;
+  --status-red: #b4281a;
+  --status-amber: #8d5400;
+  --status-info-bg: #fff4ce;
+
+  --chip-bg: rgba(0, 0, 0, 0.04);
+  --chip-bd: rgba(0, 0, 0, 0.06);
+
+  --accent-system: #005fb8;
+  --on-accent-system: #ffffff;
+  --accent-system-hover: #196fc0;
+  --accent-system-pressed: #0067c0;
+  --accent-system-text: #005fb8;
+  --accent-system-halo: rgba(0, 95, 184, 0.3);
+  --accent-brand: #4f51c0;
+  --on-accent-brand: #ffffff;
+  --accent-brand-hover: #5a5ccb;
+  --accent-brand-pressed: #4345ad;
+  --accent-brand-text: #4143ae;
+  --accent-brand-halo: rgba(79, 81, 192, 0.3);
+
+  --focus-shadow: 0 0 0 1px var(--focus-inner), 0 0 0 3px var(--focus-outer);
+}
+
+/* ---------- 强调色层：品牌靛（覆盖指针，家族值取自上面对应组合） ---------- */
+html[data-accent="brand"] {
+  --accent: var(--accent-brand);
+  --on-accent: var(--on-accent-brand);
+  --accent-hover: var(--accent-brand-hover);
+  --accent-pressed: var(--accent-brand-pressed);
+  --accent-text: var(--accent-brand-text);
+  --accent-halo: var(--accent-brand-halo);
+}
+
+/* ============================================================
+   Tailwind 工具类映射
+   ------------------------------------------------------------
+   工具类名保持组件层现有用法不变（bg-panel / text-ink-mute …），
+   底层值全部来自上面的 v2 令牌——组件层颜色字面量随各页重设计
+   批次（A3/A4）收敛，本层不引入新字面量。
+   ============================================================ */
+@theme {
+  /* 表面 */
+  --color-page: var(--bg-window);
+  --color-panel: var(--bg-chrome);
+  --color-card: var(--bg-card);
+  --color-surface: var(--bg-card-hover);
+  --color-hover: var(--bg-hover);
+  --color-pressed: var(--bg-pressed);
+  --color-subtle: var(--bg-subtle);
+  --color-inset: var(--bg-inset);
+  --color-sidebar: var(--bg-sidebar);
+  --color-sidebar-fallback: var(--bg-sidebar-fallback);
+  --color-console: var(--bg-console);
+  --color-chip: var(--chip-bg);
+  --color-chip-bd: var(--chip-bd);
+
+  /* 前景 */
   --color-ink: var(--text-primary);
   --color-ink-dim: var(--text-secondary);
   --color-ink-mute: var(--text-tertiary);
   --color-ink-faint: var(--text-quaternary);
 
-  /* 品牌与强调 */
-  --color-accent: var(--brand-indigo);
-  --color-accent-violet: var(--accent-violet);
+  /* 强调（accent-* 旧名保留为过渡别名，指向 v2 的 text 档） */
+  --color-accent: var(--accent);
+  --color-on-accent: var(--on-accent);
   --color-accent-hover: var(--accent-hover);
-  --color-accent-strong: var(--accent-strong);
-  --color-accent-ring: var(--accent-ring);
+  --color-accent-pressed: var(--accent-pressed);
+  --color-accent-text: var(--accent-text);
+  --color-accent-halo: var(--accent-halo);
+  --color-accent-violet: var(--accent-text);
+  --color-accent-strong: var(--accent-text);
 
-  /* 状态 */
+  /* 状态（*-bg 旧名映射到中性 chip 底：v2 状态语言 = 圆点 + 中性文字） */
   --color-ok: var(--status-green);
   --color-danger: var(--status-red);
   --color-warn: var(--status-amber);
-  --color-ok-bg: var(--status-green-bg);
-  --color-danger-bg: var(--status-red-bg);
-  --color-warn-bg: var(--status-amber-bg);
+  --color-ok-bg: var(--chip-bg);
+  --color-danger-bg: var(--chip-bg);
+  --color-warn-bg: var(--chip-bg);
+  --color-info-bg: var(--status-info-bg);
 
-  /* 边框分隔线 */
-  --color-line: var(--border-standard);
-  --color-line-subtle: var(--border-subtle);
-  --color-line-strong: var(--border-primary);
-  --color-line-mid: var(--border-secondary);
-  --color-line-deep: var(--border-tertiary);
-  --color-line-tint: var(--line-tint);
+  /* 线条（v1 五档收敛为 hairline / strong 两档） */
+  --color-line: var(--line-hairline);
+  --color-line-subtle: var(--line-hairline);
+  --color-line-strong: var(--line-strong);
+  --color-line-mid: var(--line-hairline);
+  --color-line-deep: var(--line-strong);
+  --color-line-tint: var(--line-hairline);
 
-  /* 阴影层级 */
-  --shadow-elev-1: var(--elevation-1);
-  --shadow-elev-2: var(--elevation-2);
-  --shadow-elev-3: var(--elevation-3);
-  --shadow-elev-focus: var(--elevation-focus);
-  --shadow-elev-inset: var(--elevation-inset);
+  /* 阴影 */
+  --shadow-elev-1: var(--shadow-card);
+  --shadow-elev-2: var(--shadow-card);
+  --shadow-elev-3: var(--shadow-overlay);
+  --shadow-elev-focus: var(--focus-shadow);
+  --shadow-elev-inset: inset 0 1px 3px rgba(0, 0, 0, 0.25);
 
-  /* 字体（与 :root 保持一致） */
-  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
-  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  /* 字体 */
+  --font-sans: var(--font-ui);
+  --font-mono: var(--font-code);
 
-  /* 字号阶梯（语义工具类：text-badge / caption / control / body / title / page） */
-  --text-badge: var(--text-badge-size);
-  --text-caption: var(--text-caption-size);
+  /* 字阶（badge 并入 caption） */
+  --text-badge: var(--fs-caption);
+  --text-caption: var(--fs-caption);
   --text-caption--line-height: 1.4;
-  --text-control: var(--text-control-size);
+  --text-control: var(--fs-body);
   --text-control--line-height: 1.4;
-  --text-body: var(--text-body-size);
+  --text-body: var(--fs-body);
   --text-body--line-height: 1.55;
-  --text-title: var(--text-title-size);
+  --text-title: var(--fs-title);
   --text-title--line-height: 1.35;
-  --text-page: var(--text-page-size);
+  --text-page: var(--fs-page);
   --text-page--line-height: 1.3;
 
-  /* 圆角体系（rounded-badge / rounded-control / rounded-panel） */
-  --radius-badge: 3px;
-  --radius-control: 5px;
-  --radius-panel: 8px;
+  /* 圆角（badge 并入 control，panel 并入 card） */
+  --radius-badge: var(--r-control);
+  --radius-control: var(--r-control);
+  --radius-panel: var(--r-card);
+  --radius-card: var(--r-card);
+  --radius-overlay: var(--r-overlay);
 
-  /* 覆盖内置 pulse：状态点呼吸（opacity 0.4 谷底） */
+  /* 过渡（Tailwind 无 duration 命名空间，用 @utility 暴露三档） */
+  --ease-standard: var(--ease-std);
+  --ease-panel: var(--ease-emph);
+
+  /* 状态点呼吸 */
   --animate-pulse: pulse 1.5s infinite;
   @keyframes pulse {
     0%,
@@ -241,7 +437,7 @@
   }
 
   /* 弹窗/命令面板入场 */
-  --animate-modal-in: modal-in var(--duration-panel) var(--ease-panel);
+  --animate-modal-in: modal-in var(--dur-panel) var(--ease-emph);
   @keyframes modal-in {
     from {
       opacity: 0;
@@ -264,11 +460,8 @@
     }
   }
 
-  /* 卡片圆角（rounded-card） */
-  --radius-card: 9px;
-
-  /* 卡片/列表行入场（stagger 由消费方内联 animation-delay 控制，backwards 保证延迟期不可见） */
-  --animate-card-in: card-in 240ms var(--ease-panel) backwards;
+  /* 卡片/列表行入场（stagger 由消费方内联 animation-delay 控制） */
+  --animate-card-in: card-in var(--dur-panel) var(--ease-emph) backwards;
   @keyframes card-in {
     from {
       opacity: 0;
@@ -280,8 +473,8 @@
     }
   }
 
-  /* 视图切换（v-show 分支从 display:none 恢复时自动重放） */
-  --animate-view-in: view-in 200ms var(--ease-panel);
+  /* 视图切换 */
+  --animate-view-in: view-in var(--dur-base) var(--ease-emph);
   @keyframes view-in {
     from {
       opacity: 0;
@@ -292,4 +485,15 @@
       transform: translateY(0);
     }
   }
+}
+
+/* 动效三档（hover/选中 用 fast，展开/切换 用 base，弹层 用 panel） */
+@utility dur-fast {
+  transition-duration: var(--dur-fast);
+}
+@utility dur-base {
+  transition-duration: var(--dur-base);
+}
+@utility dur-panel {
+  transition-duration: var(--dur-panel);
 }

@@ -3,15 +3,20 @@ import './main.css'
 import App from './App.vue'
 import { getTestApi } from './store'
 
-// 主题初始化：与旧渲染层共用 localStorage 'app-theme' 键（dark/light/system 三态），
-// 应用令牌走 data-theme。preload 已在首帧前解析并恢复主题，这里同步 theme-color meta。
+// 三层绑定初始化：与 preload 同一套口径（preload 已在首帧前设好，这里是幂等兜底 +
+// theme-color meta 同步）。平台由 preload 按 process.platform 写入，渲染层不猜平台。
 const savedTheme = localStorage.getItem('app-theme') || 'dark'
 const systemDark = window.matchMedia('(prefers-color-scheme: dark)')
 const resolvedTheme = savedTheme === 'system' ? (systemDark.matches ? 'dark' : 'light') : savedTheme
-document.documentElement.setAttribute('data-theme', resolvedTheme)
+const rootEl = document.documentElement
+rootEl.setAttribute('data-theme', resolvedTheme)
+if (!rootEl.hasAttribute('data-platform')) rootEl.setAttribute('data-platform', 'mac')
+if (!rootEl.hasAttribute('data-accent')) {
+  rootEl.setAttribute('data-accent', localStorage.getItem('app-accent') === 'brand' ? 'brand' : 'system')
+}
 document
   .querySelector('meta[name="theme-color"]')
-  ?.setAttribute('content', resolvedTheme === 'light' ? '#f7f8f8' : '#08090a')
+  ?.setAttribute('content', resolvedTheme === 'light' ? '#ffffff' : '#1e1e1e')
 
 createApp(App).mount('#app')
 

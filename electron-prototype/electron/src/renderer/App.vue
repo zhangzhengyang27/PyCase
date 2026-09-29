@@ -1,20 +1,25 @@
 <script setup lang="ts">
-// App：应用壳（设计规范 v1：hiddenInset + Linear 式左侧导航栏 + Cmd+K 命令面板）
-// 视图组件经 store 的 computed 派生数据驱动，无 applyAllFilters 式手动刷新。
-// macOS 下导航栏兼任窗口标题栏：头区左侧为红绿灯留白，空区 app-drag、按钮 app-no-drag。
+// App：应用壳（视觉基线 v2 / A1）
+// 三层绑定：html[data-platform]（平台几何与选中语义）× html[data-theme]（主题）
+// × html[data-accent]（强调色），均由 preload/main.ts 在首帧前写入，模板只消费。
+// 平台差异一律走 token 与 data-platform 选择器，模板内不再出现平台判断分支以外的硬编码。
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import {
+  Copy,
   FolderUp,
   LayoutGrid,
   LibraryBig,
+  Minus,
   Monitor,
   Moon,
   RefreshCw,
   Search,
   Settings,
+  Square,
   SquareTerminal,
   SunMedium,
   Wrench,
+  X,
   type LucideIcon
 } from 'lucide-vue-next'
 import { api } from './src/sidecar-client'
@@ -73,8 +78,25 @@ function applyTheme(pref: ThemePref): void {
   document.documentElement.setAttribute('data-theme', appliedTheme.value)
   document
     .querySelector('meta[name="theme-color"]')
-    ?.setAttribute('content', appliedTheme.value === 'light' ? '#f7f8f8' : '#08090a')
+    ?.setAttribute('content', appliedTheme.value === 'light' ? '#ffffff' : '#1e1e1e')
   applyMonacoTheme()
+}
+
+// 平台来自 preload（process.platform 写入的 data-platform），渲染层不猜平台：
+// 键盘提示、窗口控制区、平台专属文案都由它派生
+const platform = ref<'mac' | 'win'>(document.documentElement.getAttribute('data-platform') === 'win' ? 'win' : 'mac')
+const isMac = computed(() => platform.value === 'mac')
+const modKey = computed(() => (isMac.value ? '⌘' : 'Ctrl'))
+
+// Windows 自绘标题栏：最大化状态由主进程回推
+const maximized = ref(false)
+let offMaximized: (() => void) | null = null
+function windowAction(action: 'minimize' | 'toggleMaximize' | 'close'): void {
+  const w = window.sidecar?.win
+  if (!w) return
+  if (action === 'minimize') void w.minimize()
+  else if (action === 'toggleMaximize') void w.toggleMaximize().then((v) => (maximized.value = !!v))
+  else void w.close()
 }
 
 const THEME_META: Record<ThemePref, { label: string; icon: LucideIcon }> = {
@@ -112,6 +134,13 @@ const statusCount = computed(() => {
   return `${filtered.value.length} / ${galleryExamples.value.length} 个示例`
 })
 
+// 侧栏导航计数徽章：与状态栏同源（分母口径，表示该视图的总量）
+const navBadge = computed<Record<ViewKey, string>>(() => ({
+  gallery: galleryExamples.value.length.toLocaleString('zh-CN'),
+  toolbox: toolsTotal.value.toLocaleString('zh-CN'),
+  runner: ''
+}))
+
 // Cmd/Ctrl+K 全局命令面板
 function onGlobalKey(e: KeyboardEvent): void {
   if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
@@ -123,6 +152,12 @@ function onGlobalKey(e: KeyboardEvent): void {
 onMounted(async () => {
   window.addEventListener('keydown', onGlobalKey)
   systemDark.addEventListener('change', onSystemThemeChange)
+  // 自绘标题栏最大化状态：主进程事件 + 首帧对齐（win 专用按钮，mac 下按钮不渲染）
+  offMaximized = window.sidecar?.win?.onMaximizedChange((data) => {
+    const d = data as { maximized?: boolean }
+    maximized.value = !!d?.maximized
+  }) ?? null
+  void window.sidecar?.win?.isMaximized?.().then((v) => (maximized.value = !!v))
   // 运行输出/结束/图片通知订阅 + AI 流式事件订阅（全局一次）
   initRunEvents()
   initAIEvents()
@@ -148,94 +183,72 @@ onMounted(async () => {
 onBeforeUnmount(() => {
   window.removeEventListener('keydown', onGlobalKey)
   systemDark.removeEventListener('change', onSystemThemeChange)
+  offMaximized?.()
 })
 </script>
 
 <template>
-  <div class="h-screen flex bg-page text-ink">
-    <!-- 左侧导航栏（Linear 式宽侧栏）：macOS hiddenInset 下兼任标题栏，
-         红绿灯悬浮于头区左侧留白，头区与栏内空区 app-drag -->
-    <nav class="app-drag flex flex-col w-44 shrink-0 bg-panel border-r border-line-subtle select-none">
-      <!-- 头区：红绿灯（trafficLightPosition 8,12，右缘 ≈60px）右侧放品牌行 -->
-      <div class="flex items-center gap-2 h-10 pl-[72px] pr-2 shrink-0" title="Python 示例管理器">
-        <div class="w-[18px] h-[18px] rounded-[5px] bg-ok-bg text-ok border border-ok/25 flex items-center justify-center shrink-0">
-          <LibraryBig :size="11" />
-        </div>
-        <span class="text-body font-medium text-ink-dim truncate">示例管理器</span>
+  <div class="h-screen flex text-ink">
+    <!-- 侧栏（材质面）：macOS 下兼任标题栏——红绿灯由系统绘制在 --titlebar-lead 留白内，
+         win 下同样高度的头区只放应用名。空区 app-drag，交互件 app-no-drag。 -->
+    <nav class="app-drag sidebar flex flex-col shrink-0 select-none">
+      <div class="side-head titlebar-lead flex items-center gap-2 pr-3 shrink-0">
+        <span class="appname truncate">示例库</span>
       </div>
 
-      <!-- 搜索：内嵌输入槽质感 -->
-      <div class="flex flex-col gap-0.5 px-2 pt-1 shrink-0">
+      <!-- 搜索槽：打开命令面板（v2 不用内嵌真实输入框，避免与面板双入口） -->
+      <div class="px-2.5 pt-1 pb-2 shrink-0">
         <button
-          class="app-no-drag flex items-center gap-2 w-full h-8 px-2.5 rounded-control border border-line-subtle bg-inset cursor-pointer font-sans text-body font-normal text-ink-faint hover:text-ink-dim transition-colors duration-[120ms]"
-          title="全局搜索（⌘K）"
+          class="app-no-drag flex items-center gap-2 w-full h-[var(--ctrl-md)] px-2 rounded-control border border-line-subtle bg-inset cursor-pointer font-sans text-body text-ink-mute hover:text-ink-dim transition-colors dur-fast"
+          :title="`全局搜索（${modKey} K）`"
           @click="paletteOpen = true"
         >
-          <Search :size="16" :stroke-width="1.8" class="shrink-0" />
-          <span>搜索</span>
-          <kbd class="ml-auto px-1 py-px text-badge font-mono bg-card border border-line-subtle rounded-badge text-ink-faint">⌘&nbsp;K</kbd>
+          <Search :size="16" :stroke-width="1.5" class="shrink-0" />
+          <span class="truncate">搜索</span>
+          <kbd class="ml-auto shrink-0 px-1 py-px text-caption font-mono border border-line-subtle rounded-control text-ink-mute">
+            {{ modKey }} K
+          </kbd>
         </button>
       </div>
 
-      <div class="h-px bg-line mx-3 my-2 shrink-0" aria-hidden="true"></div>
-
-      <!-- 主视图导航：行式（图标 + 文字同行），标准字重（400/500，非标中间字重会触发苹方合成加粗发虚），
-           激活态 = 卡片底胶囊 + 左缘强调条 -->
-      <div class="flex flex-col gap-0.5 px-2 shrink-0">
-        <button
-          v-for="item in NAV_ITEMS"
-          :key="item.key"
-          class="app-no-drag relative flex items-center gap-2 w-full h-8 px-2.5 rounded-control cursor-pointer font-sans text-body transition-colors duration-[120ms]"
-          :class="activeView === item.key
-            ? 'surface-raised text-ink font-medium'
-            : 'border-0 bg-transparent text-ink-mute hover:text-ink hover:bg-hover font-normal'"
-          :aria-current="activeView === item.key ? 'page' : undefined"
-          @click="setView(item.key)"
-        >
-          <span
-            class="absolute -left-2 top-1/2 -translate-y-1/2 w-0.5 h-4 rounded-full bg-accent transition-[opacity,transform] duration-[180ms]"
-            :class="activeView === item.key ? 'opacity-100' : 'opacity-0 scale-y-50'"
-            aria-hidden="true"
-          ></span>
-          <component :is="item.icon" :size="16" :stroke-width="1.8" class="shrink-0" />
-          <span class="truncate">{{ item.label }}</span>
-        </button>
+      <!-- 主视图导航 -->
+      <div class="px-2.5 shrink-0">
+        <div class="px-2 pb-1 text-caption text-ink-mute">浏览</div>
+        <div class="flex flex-col gap-px">
+          <button
+            v-for="item in NAV_ITEMS"
+            :key="item.key"
+            class="navitem app-no-drag"
+            :class="{ sel: activeView === item.key }"
+            :aria-current="activeView === item.key ? 'page' : undefined"
+            @click="setView(item.key)"
+          >
+            <span class="accent-bar" aria-hidden="true"></span>
+            <component :is="item.icon" :size="16" :stroke-width="1.5" class="shrink-0" />
+            <span class="truncate">{{ item.label }}</span>
+            <span v-if="navBadge[item.key]" class="badge-n">{{ navBadge[item.key] }}</span>
+          </button>
+        </div>
       </div>
 
       <div class="flex-1 min-h-3" aria-hidden="true"></div>
 
-      <div class="h-px bg-line mx-3 mb-2 shrink-0" aria-hidden="true"></div>
-
       <!-- 全局工具 -->
-      <div class="flex flex-col gap-0.5 px-2 pb-2 shrink-0">
-        <button
-          class="app-no-drag flex items-center gap-2 w-full h-8 px-2.5 rounded-control border-0 bg-transparent cursor-pointer font-sans text-body font-normal text-ink-mute hover:text-ink hover:bg-hover transition-colors duration-[120ms]"
-          @click="openImportWizard()"
-        >
-          <FolderUp :size="16" :stroke-width="1.8" class="shrink-0" />
+      <div class="flex flex-col gap-px px-2.5 pb-2.5 shrink-0">
+        <button class="navitem app-no-drag" @click="openImportWizard()">
+          <FolderUp :size="16" :stroke-width="1.5" class="shrink-0" />
           <span class="truncate">导入示例目录</span>
         </button>
-        <button
-          class="app-no-drag flex items-center gap-2 w-full h-8 px-2.5 rounded-control border-0 bg-transparent cursor-pointer font-sans text-body font-normal text-ink-mute hover:text-ink hover:bg-hover transition-colors duration-[120ms]"
-          @click="openAISettings()"
-        >
-          <Settings :size="16" :stroke-width="1.8" class="shrink-0" />
+        <button class="navitem app-no-drag" @click="openAISettings()">
+          <Settings :size="16" :stroke-width="1.5" class="shrink-0" />
           <span class="truncate">设置</span>
         </button>
-        <button
-          class="app-no-drag flex items-center gap-2 w-full h-8 px-2.5 rounded-control border-0 bg-transparent cursor-pointer font-sans text-body font-normal text-ink-mute hover:text-ink hover:bg-hover transition-colors duration-[120ms]"
-          title="切换主题（深色 / 浅色 / 跟随系统）"
-          @click="toggleTheme"
-        >
-          <component :is="THEME_META[themePref].icon" :size="16" :stroke-width="1.8" class="shrink-0" />
+        <button class="navitem app-no-drag" :title="`当前：${THEME_META[themePref].label}`" @click="toggleTheme">
+          <component :is="THEME_META[themePref].icon" :size="16" :stroke-width="1.5" class="shrink-0" />
           <span class="truncate">{{ THEME_META[themePref].label }}</span>
         </button>
-        <button
-          class="app-no-drag flex items-center gap-2 w-full h-8 px-2.5 rounded-control border-0 bg-transparent cursor-pointer font-sans text-body font-normal text-ink-mute hover:text-ink hover:bg-hover transition-colors duration-[120ms] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-ink-mute"
-          :disabled="loading"
-          @click="loadAll()"
-        >
-          <RefreshCw :size="16" :stroke-width="1.8" class="shrink-0" :class="{ 'animate-spin': loading }" />
+        <button class="navitem app-no-drag" :disabled="loading" @click="loadAll()">
+          <RefreshCw :size="16" :stroke-width="1.5" class="shrink-0" :class="{ 'animate-spin': loading }" />
           <span class="truncate">重新加载示例</span>
         </button>
       </div>
@@ -243,18 +256,45 @@ onBeforeUnmount(() => {
 
     <!-- 视图主体（详情页打开时隐藏来源视图，与旧窗口行为一致） -->
     <div class="flex-1 min-w-0 min-h-0 flex flex-col">
-      <div class="flex-1 min-h-0 flex">
+      <!-- Windows 自绘标题栏：mac 下 display:none 交还系统红绿灯 -->
+      <div class="titlebar-win app-drag items-center shrink-0">
+        <span class="titlebar-lead flex items-center gap-2 text-caption text-ink-dim">
+          <span class="w-4 h-4 rounded-[4px] bg-accent text-on-accent inline-flex items-center justify-center shrink-0">
+            <LibraryBig :size="10" :stroke-width="2" />
+          </span>
+          PyCase
+        </span>
+        <span class="ml-auto flex">
+          <button class="caption-btn app-no-drag" title="最小化" aria-label="最小化" @click="windowAction('minimize')">
+            <Minus :size="14" :stroke-width="1.5" />
+          </button>
+          <button
+            class="caption-btn app-no-drag"
+            :title="maximized ? '向下还原' : '最大化'"
+            :aria-label="maximized ? '向下还原' : '最大化'"
+            @click="windowAction('toggleMaximize')"
+          >
+            <Copy v-if="maximized" :size="12" :stroke-width="1.5" />
+            <Square v-else :size="12" :stroke-width="1.5" />
+          </button>
+          <button class="caption-btn close app-no-drag" title="关闭" aria-label="关闭" @click="windowAction('close')">
+            <X :size="15" :stroke-width="1.5" />
+          </button>
+        </span>
+      </div>
+
+      <main class="flex-1 min-h-0 min-w-0 flex bg-page">
         <GalleryView v-show="!selectedId && activeView === 'gallery'" class="animate-view-in" @reload="loadAll()" />
         <ToolboxView v-show="!selectedId && activeView === 'toolbox'" class="animate-view-in" @reload="loadAll()" />
         <RunnerView v-show="!selectedId && activeView === 'runner'" class="animate-view-in" />
         <DetailPage v-if="selectedId" class="animate-view-in" />
-      </div>
+      </main>
 
       <!-- 底部状态栏（空区兼作拖拽面） -->
-      <footer class="app-drag flex items-center gap-3 h-7 px-3 bg-panel border-t border-line-subtle shrink-0 text-caption text-ink-mute select-none">
+      <footer class="statusbar app-drag flex items-center gap-3 px-3.5 shrink-0 select-none">
         <span class="app-no-drag flex items-center gap-1.5">
           <span class="inline-block w-1.5 h-1.5 rounded-full shrink-0" :class="statusDot"></span>
-          sidecar {{ sidecarReady === 'ready' ? '已连接' : sidecarReady === 'error' ? '已断开' : '连接中' }}
+          {{ sidecarReady === 'ready' ? '已连接' : sidecarReady === 'error' ? '已断开' : '连接中' }}
         </span>
         <span v-if="!selectedId" data-testid="status-count" class="app-no-drag">{{ statusCount }}</span>
         <span class="ml-auto app-no-drag" aria-live="polite">{{ runStatusText }}</span>

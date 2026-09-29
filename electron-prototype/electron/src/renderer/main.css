@@ -1,7 +1,7 @@
-/* Vue 渲染层样式入口：复用与旧渲染层同一份 Tailwind 4 令牌层 */
+/* Vue 渲染层样式入口：令牌层见 ./src/theme.css（v2 三层绑定） */
 @import "./src/theme.css";
 
-/* Vue 页面精简 reset（与旧渲染层 reset 对齐，置于 base 层让工具类可覆盖） */
+/* Vue 页面精简 reset（置于 base 层让工具类可覆盖） */
 @layer base {
   * {
     margin: 0;
@@ -9,8 +9,9 @@
     box-sizing: border-box;
   }
 
-  /* rem 基准修复：根字号曾为 13px，全部 rem 计工具类（间距/尺寸）整体缩水 19%；
-     恢复 16px 根基准让 h-10=40px、p-4=16px 等回到设计值，正文仍为 13px */
+  /* rem 基准 16px：全部 rem 计工具类（间距/尺寸）按此换算。
+     注意：正文 13px 只能给 body——若把 font-size 写进 html，会覆盖本行，
+     使 rem 基准变成正文尺寸，所有工具类尺寸缩到 81%（曾长期如此）。 */
   html {
     font-size: 16px;
   }
@@ -19,23 +20,27 @@
   body {
     height: 100%;
     overflow: hidden;
-    font-family: var(--font-sans);
-    font-size: var(--text-body-size);
+    font-family: var(--font-ui);
     font-weight: 400;
     color: var(--text-primary);
-    background: var(--bg-marketing);
+    /* 窗口底透明：侧栏材质（mac 毛玻璃 / win Mica）由主进程 vibrancy 提供，
+       不透明底改由主内容区承担（见 App.vue 主区 bg-page） */
+    background: transparent;
     -webkit-font-smoothing: antialiased;
     letter-spacing: -0.005em;
   }
 
-  /* 键盘可达性：仅键盘导航时显示焦点环（设计规范 v1） */
-  :focus-visible {
-    outline: none;
-    box-shadow: var(--elevation-focus);
+  body {
+    font-size: var(--fs-body);
   }
 
-  /* 前庭安全：系统请求减弱动态时，终止全部循环动画并把过渡压到近零
-     （状态点呼吸 / spinner / 不确定进度条 / 弹窗与 toast 过渡全部覆盖） */
+  /* 键盘可达性：仅键盘导航时显示焦点环（平台语义：mac 强调环 / win 双色矩形） */
+  :focus-visible {
+    outline: none;
+    box-shadow: var(--focus-shadow);
+  }
+
+  /* 前庭安全：系统请求减弱动态时，终止全部循环动画并把过渡压到近零 */
   @media (prefers-reduced-motion: reduce) {
     *,
     *::before,
@@ -56,12 +61,12 @@
     background: transparent;
   }
   ::-webkit-scrollbar-thumb {
-    background: var(--border-secondary);
+    background: var(--line-strong);
     border-radius: 4px;
   }
 }
 
-/* Electron 无边框窗口拖拽区（与旧渲染层 style.css 同名工具类保持一致） */
+/* Electron 拖拽区工具类 */
 .app-drag {
   -webkit-app-region: drag;
 }
@@ -69,136 +74,224 @@
   -webkit-app-region: no-drag;
 }
 
-/* ===== 深邃层次：公共表面类（specs §3；放 components 层让 utilities 可覆盖） ===== */
+/* 窗口四元：标题栏留白与窗口控制区（平台差异由令牌表达） */
+.titlebar-lead {
+  padding-left: var(--titlebar-lead);
+}
+
+/* ===== 公共表面类（components 层，utilities 可覆盖） ===== */
 @layer components {
-  /* 卡片：渐变表面 + 顶部受光高边 + hover 抬升。
-     边框/圆角/阴影由本类全权负责，消费方不要再叠加 border/rounded/shadow 静态工具类 */
+  /* 卡片：v2 = 表面 + 细线 + 阴影，无渐变、无 hover 抬升位移 */
   .surface-card {
-    background: linear-gradient(180deg, var(--card-grad-top), var(--card-grad-bottom));
-    border: 1px solid var(--border-card);
-    border-top-color: var(--card-highlight);
-    border-radius: var(--radius-card);
+    background: var(--bg-card);
+    border: 1px solid var(--line-hairline);
+    border-radius: var(--r-card);
     box-shadow: var(--shadow-card);
     transition:
-      box-shadow 160ms var(--ease-standard),
-      border-color 160ms var(--ease-standard),
-      transform 160ms var(--ease-standard);
+      background-color var(--dur-fast) var(--ease-std),
+      border-color var(--dur-fast) var(--ease-std);
   }
   .surface-card:hover {
-    transform: translateY(-1px);
-    border-top-color: var(--card-highlight-hover);
-    box-shadow: var(--shadow-card-hover);
+    background: var(--bg-card-hover);
+    border-color: var(--line-strong);
   }
-  [data-theme='light'] .surface-card {
-    background: #ffffff;
-  }
-  /* 焦点环恢复：.surface-card/.surface-raised 的静置阴影在 components 层
-     压过 base 层全局 :focus-visible 的 box-shadow，键盘焦点需在本层显式恢复；
-     选中态的工具类阴影（utilities 层）仍优先于本规则 */
+  /* 焦点环恢复：本层静置阴影会压过 base 层全局 :focus-visible，键盘焦点需在此显式恢复 */
   .surface-card:focus-visible,
   .surface-raised:focus-visible {
-    box-shadow: var(--elevation-focus);
+    box-shadow: var(--focus-shadow);
   }
 
-  /* 无 hover 抬升的凸起表面：导航激活胶囊 / 分段控件激活段 */
+  /* 抬起表面（分段控件激活段等；侧栏选中态改由 .navitem.sel 的侧栏语义负责） */
   .surface-raised {
-    background: linear-gradient(180deg, #1e2030, #181a24);
-    border: 1px solid rgba(133, 132, 255, 0.22);
-    border-top-color: rgba(255, 255, 255, 0.14);
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
-  }
-  [data-theme='light'] .surface-raised {
-    background: #f3f4f5;
-    border-color: #d0d6e0;
-    border-top-color: #d0d6e0;
-    box-shadow: 0 1px 2px rgba(24, 28, 34, 0.06);
+    background: var(--bg-pressed);
+    border: 1px solid transparent;
+    color: var(--text-primary);
   }
 
-  /* 色相徽章：--hue 由消费方内联注入（specs §3.2 分类/分区色相体系） */
+  /* 语义图标 chip：中性底 + 细线（v2 语言：图标不承载色相，色相徽章退役） */
   .hue-chip {
-    background: color-mix(in srgb, var(--hue, var(--accent-strong)) 14%, transparent);
-    border: 1px solid color-mix(in srgb, var(--hue, var(--accent-strong)) 35%, transparent);
-    color: color-mix(in srgb, var(--hue, var(--accent-strong)) 70%, white 30%);
-  }
-  [data-theme='light'] .hue-chip {
-    color: color-mix(in srgb, var(--hue, var(--accent-strong)) 55%, black 45%);
+    background: var(--chip-bg);
+    border: 1px solid var(--chip-bd);
+    color: var(--text-secondary);
   }
 
-  /* 总览统计 chips（specs §3.6） */
+  /* 统计 chip（总览） */
   .stat-chip {
     display: inline-flex;
     align-items: center;
     gap: 4px;
     padding: 2px 7px;
-    border-radius: var(--radius-control);
-    background: rgba(255, 255, 255, 0.045);
-    border: 1px solid rgba(255, 255, 255, 0.07);
-    font-size: var(--text-caption-size);
-    color: var(--text-quaternary);
+    border-radius: var(--r-control);
+    background: var(--chip-bg);
+    border: 1px solid var(--chip-bd);
+    font-size: var(--fs-caption);
+    color: var(--text-tertiary);
   }
   .stat-chip b {
-    font-weight: 590;
+    font-weight: 500;
     color: var(--text-secondary);
   }
-  [data-theme='light'] .stat-chip {
-    background: rgba(0, 0, 0, 0.035);
-    border-color: rgba(0, 0, 0, 0.08);
-  }
-  /* ok 变体（叠加在 .stat-chip 上使用） */
   .stat-chip-ok {
-    background: color-mix(in srgb, var(--status-green) 10%, transparent);
-    border-color: color-mix(in srgb, var(--status-green) 25%, transparent);
     color: var(--status-green);
   }
   .stat-chip-ok b {
     color: var(--status-green);
   }
-  [data-theme='light'] .stat-chip-ok {
-    background: color-mix(in srgb, var(--status-green) 10%, transparent);
-    border-color: color-mix(in srgb, var(--status-green) 25%, transparent);
-  }
 
-  /* 主按钮「深邃层次」变体（BaseButton variant=primary 消费） */
+  /* 主按钮（BaseButton variant=primary）：v2 = 强调色平面填充，无渐变无外发光 */
   .btn-primary-deep {
-    background: linear-gradient(180deg, #6a79e0, #5662c8);
-    border: 1px solid rgba(255, 255, 255, 0.16);
-    border-top-color: rgba(255, 255, 255, 0.3);
-    color: #fff;
-    box-shadow: 0 2px 8px rgba(94, 106, 210, 0.35);
+    background: var(--accent);
+    border: 1px solid transparent;
+    color: var(--on-accent);
   }
   .btn-primary-deep:hover {
-    background: linear-gradient(180deg, #7484e8, #5e6ad2);
-    box-shadow: 0 2px 10px rgba(94, 106, 210, 0.45);
+    background: var(--accent-hover);
   }
-  [data-theme='light'] .btn-primary-deep {
-    background: #4f51c0;
-    border-color: #4f51c0;
-    border-top-color: #5a5cd0;
-    box-shadow: 0 2px 6px rgba(79, 81, 192, 0.25);
+  .btn-primary-deep:active {
+    background: var(--accent-pressed);
   }
-  [data-theme='light'] .btn-primary-deep:hover {
-    background: #4547b3;
-    box-shadow: 0 2px 8px rgba(79, 81, 192, 0.32);
-  }
-
-  /* 画廊总览 hero 极光（浅色降为 6%/3%） */
-  .aurora-hero {
-    background:
-      radial-gradient(600px 130px at 18% 0%, rgba(94, 106, 210, 0.13), transparent 65%),
-      radial-gradient(500px 120px at 85% -20%, rgba(133, 132, 255, 0.07), transparent 60%);
-  }
-  [data-theme='light'] .aurora-hero {
-    background:
-      radial-gradient(600px 130px at 18% 0%, rgba(94, 106, 210, 0.06), transparent 65%),
-      radial-gradient(500px 120px at 85% -20%, rgba(94, 106, 210, 0.03), transparent 60%);
+  .btn-primary-deep:disabled {
+    background: var(--accent);
+    opacity: 0.4;
   }
 }
 
-/* 顶边高光：必须置于层级之外——面板同时携带 utilities 层的 border-line-subtle，
-   其 border-color 简写展开会覆盖 border-top-color；无层级样式可胜过全部 @layer（同 .app-drag 惯例） */
-.edge-highlight-top {
-  border-top-color: rgba(255, 255, 255, 0.14);
-}
-[data-theme='light'] .edge-highlight-top {
-  border-top-color: rgba(0, 0, 0, 0.06);
+/* ===== 壳（侧栏 / 标题栏 / 状态栏）：平台差异只在本层用 data-platform 选择器表达 ===== */
+@layer components {
+  /* 侧栏：mac 半透明叠系统毛玻璃（vibrancy），win 实色 */
+  .sidebar {
+    width: var(--sidebar-w);
+    background: var(--bg-sidebar-fallback);
+    border-right: 1px solid var(--line-hairline);
+  }
+  html[data-platform='mac'] .sidebar {
+    background: var(--bg-sidebar);
+  }
+  html[data-platform='win'] .sidebar {
+    border-right-color: transparent;
+  }
+
+  .side-head {
+    height: var(--titlebar-h);
+  }
+  .appname {
+    font-size: var(--fs-body);
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+
+  /* 导航行：mac 选中 = 强调填充；win 选中 = 中性填充 + 3×16 强调条 + 600 */
+  .navitem {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    height: var(--row-h);
+    padding: 0 8px;
+    border: 0;
+    border-radius: var(--r-control);
+    background: transparent;
+    color: var(--text-secondary);
+    font-family: var(--font-ui);
+    font-size: var(--fs-body);
+    font-weight: 400;
+    text-align: left;
+    cursor: pointer;
+    transition:
+      background-color var(--dur-fast) var(--ease-std),
+      color var(--dur-fast) var(--ease-std);
+  }
+  .navitem:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+  }
+  .navitem.sel {
+    background: var(--side-sel-bg);
+    color: var(--side-sel-fg);
+  }
+  html[data-platform='win'] .navitem.sel {
+    font-weight: 600;
+  }
+  .navitem:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-shadow);
+  }
+  .navitem:disabled {
+    color: var(--text-quaternary);
+    cursor: default;
+  }
+  .navitem:disabled:hover {
+    background: transparent;
+    color: var(--text-quaternary);
+  }
+  /* 侧栏为材质面：其上的信息性文字一律 ≥ tertiary（quaternary 仅装饰/禁用） */
+  .navitem .badge-n {
+    margin-left: auto;
+    font-family: var(--font-code);
+    font-size: var(--fs-caption);
+    color: var(--text-tertiary);
+  }
+  .navitem.sel .badge-n {
+    color: inherit;
+    opacity: 0.8;
+  }
+  .navitem .accent-bar {
+    display: none;
+    position: absolute;
+    left: -8px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 3px;
+    height: 16px;
+    border-radius: 2px;
+    background: var(--accent);
+  }
+  /* 选中指示条只在 win 出现（--nav-indicator 表达平台差异） */
+  .navitem.sel .accent-bar {
+    display: var(--nav-indicator);
+  }
+
+  /* 状态栏：mac 融于窗口底（仅细线），win 用窗口色 */
+  .statusbar {
+    height: var(--statusbar-h);
+    border-top: 1px solid var(--line-hairline);
+    color: var(--text-tertiary);
+    font-size: var(--fs-caption);
+  }
+  html[data-platform='win'] .statusbar {
+    color: var(--text-secondary);
+    background: var(--bg-chrome);
+  }
+
+  /* Windows 自绘标题栏（含右上三键 46×32；关闭键 hover 系统红） */
+  .titlebar-win {
+    display: none;
+    height: var(--titlebar-h);
+  }
+  html[data-platform='win'] .titlebar-win {
+    display: flex;
+  }
+  .caption-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 46px;
+    height: var(--titlebar-h);
+    border: 0;
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: default;
+  }
+  .caption-btn:hover {
+    background: var(--bg-hover);
+  }
+  .caption-btn.close:hover {
+    background: #c42b1c;
+    color: #ffffff;
+  }
+  .caption-btn:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-shadow);
+  }
 }

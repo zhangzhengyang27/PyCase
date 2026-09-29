@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
-"""A1 视觉基线对比度门禁：从代表页稿 token 源重算 WCAG 2.1 比率。
+"""A1 视觉基线对比度门禁：从产品 token 源重算 WCAG 2.1 比率。
 
-单一真值 = docs/a1-visual-baseline.html 的 CSS 变量块。
+单一真值 = electron-prototype/electron/src/renderer/src/theme.css 的令牌块
+（A2 起 token 已落产品；页稿 docs/a1-visual-baseline.html 冻结为评审存档）。
 token 值一改，本脚本与基线文档 §4 的矩阵必须同步——避免"文档数字漂亮、
 实现悄悄漂移"，也避免手抄矩阵出错。
 
@@ -22,18 +23,18 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-MOCKUP = ROOT / "docs" / "a1-visual-baseline.html"
+TOKENS = ROOT / "electron-prototype" / "electron" / "src" / "renderer" / "src" / "theme.css"
 
 COMBOS = [
-    ("macOS 深色", ["/* macOS 深色 */"]),
-    ("macOS 浅色", ["/* macOS 深色 */", 'html[data-theme="light"] {']),
-    ("Windows 深色", ["/* macOS 深色 */", "/* Windows 深色"]),
+    ("macOS 深色", ["html {"]),
+    ("macOS 浅色", ["html {", 'html[data-theme="light"] {']),
+    ("Windows 深色", ["html {", 'html[data-platform="win"] {']),
     (
         "Windows 浅色",
         [
-            "/* macOS 深色 */",
+            "html {",
             'html[data-theme="light"] {',
-            "/* Windows 深色",
+            'html[data-platform="win"] {',
             'html[data-platform="win"][data-theme="light"] {',
         ],
     ),
@@ -192,9 +193,9 @@ def checks(t: dict[str, str]) -> list[tuple[str, str, str, float, float, str]]:
 
 
 def main() -> int:
-    text = MOCKUP.read_text(encoding="utf-8")
+    text = TOKENS.read_text(encoding="utf-8")
     failures = 0
-    print(f"[contrast] 源: {MOCKUP.relative_to(ROOT)}")
+    print(f"[contrast] 源: {TOKENS.relative_to(ROOT)}")
     for label, marker in COMBOS:
         tokens = parse_combo(text, marker)
         rows = checks(tokens)

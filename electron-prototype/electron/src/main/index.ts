@@ -286,15 +286,26 @@ function callSidecar(method: string, params: Record<string, unknown> = {}): Prom
 // 窗口
 // ---------------------------------------------------------------------------
 function createWindow(): void {
+  const isMac = process.platform === 'darwin'
   mainWindow = new BrowserWindow({
     width: 1280,
     height: 800,
     minWidth: 900,
     minHeight: 600,
     title: 'Python 示例管理器',
-    // macOS：隐藏系统标题栏、红绿灯嵌入左侧导航栏头区（消灭双标题栏，设计规范 v1 S2）；
-    // 位置与 App.vue 导航栏头区左侧 72px 品牌留白对齐；非 macOS 未实测打包，保持系统默认标题栏
-    ...(process.platform === 'darwin' ? { titleBarStyle: 'hiddenInset' as const, trafficLightPosition: { x: 8, y: 12 } } : {}),
+    // 平台层窗口装饰（A1 §3.1）：
+    // - macOS：隐藏系统标题栏，红绿灯嵌入侧栏头区（lead 72px 留白 = 12px 起点 + 三灯 52px + 8px 间隙），
+    //   窗口材质走 vibrancy 'sidebar'（侧栏 --bg-sidebar 半透明叠系统毛玻璃）；
+    // - Windows：frameless 自绘标题栏（32px + 右上 46×32 三键），窗口底不透明
+    ...(isMac
+      ? {
+          titleBarStyle: 'hiddenInset' as const,
+          trafficLightPosition: { x: 12, y: 16 },
+          vibrancy: 'sidebar' as const,
+          visualEffectState: 'active' as const,
+          backgroundColor: '#00000000'
+        }
+      : { frame: false }),
     webPreferences: {
       preload: path.join(__dirname, '../preload/index.js'),
       contextIsolation: true,
@@ -312,6 +323,13 @@ function createWindow(): void {
   })
   mainWindow.webContents.setWindowOpenHandler(() => ({ action: 'deny' }))
 
+  // 最大化状态回推渲染层：自绘标题栏的最大化/还原按钮图标据此切换
+  const pushMaximized = (): void => broadcast('window:maximized', { maximized: mainWindow?.isMaximized() ?? false })
+  mainWindow.on('maximize', pushMaximized)
+  mainWindow.on('unmaximize', pushMaximized)
+  mainWindow.on('enter-full-screen', pushMaximized)
+  mainWindow.on('leave-full-screen', pushMaximized)
+
   // 开发模式加载 vite dev server，打包模式加载构建产物
   // 冒烟/E2E 模式给入口加 ?smoke=1：渲染层据此注入 window.__app 测试钩子
   const testMode = !!(process.env.SMOKE_TEST || process.env.E2E_TEST)
@@ -321,12 +339,35 @@ function createWindow(): void {
     mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'), testMode ? { query: { smoke: '1' } } : undefined)
   }
 
-  // 仅开发模式自动打开 DevTools（打包给用户的正式版不应弹出）
-  if (!IS_PACKAGED && !process.env.SMOKE_TEST) {
+  // 仅开发模式自动打开 DevTools（打包给用户的正式版不应弹出）；
+  // NO_DEVTOOLS=1 供走查/截图用：同一份未打包代码，但不弹面板窗口
+  if (!IS_PACKAGED && !process.env.SMOKE_TEST && !process.env.NO_DEVTOOLS) {
     mainWindow.webContents.openDevTools({ mode: 'detach' })
   }
 }
 
+
+// ---------------------------------------------------------------------------
+// IPC 处理：窗口控制（Windows frameless 自绘标题栏三键；macOS 走系统红绿灯）
+// ---------------------------------------------------------------------------
+function senderWindow(event: { sender: Electron.WebContents }): BrowserWindow | null {
+  return BrowserWindow.fromWebContents(event.sender)
+}
+
+ipcMain.handle('window:minimize', (event) => {
+  senderWindow(event)?.minimize()
+})
+ipcMain.handle('window:toggleMaximize', (event) => {
+  const win = senderWindow(event)
+  if (!win) return false
+  if (win.isMaximized()) win.unmaximize()
+  else win.maximize()
+  return win.isMaximized()
+})
+ipcMain.handle('window:close', (event) => {
+  senderWindow(event)?.close()
+})
+ipcMain.handle('window:isMaximized', (event) => senderWindow(event)?.isMaximized() ?? false)
 
 // ---------------------------------------------------------------------------
 // IPC 处理：渲染进程 -> sidecar
@@ -643,6 +684,135 @@ function runSmokeTest(): void {
         const n = await mainWindow!.webContents.executeJavaScript('window.__app ? window.__app.examples().length : 0') as number
         return n > 100
       }, 'Vue 应用加载示例')
+      // 壳与导航走查（A2）：在真实窗口里量三层绑定与平台几何，而不是看截图
+      step = '壳与导航走查'
+      const shell = await mainWindow!.webContents.executeJavaScript(`(async () => {
+        const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+        const out = {};
+        const root = document.documentElement;
+        const cs = getComputedStyle(root);
+        const px = (v) => parseFloat(v);
+        const isWin = root.getAttribute('data-platform') === 'win';
+        // 1) 三层绑定属性：平台由 preload 按 process.platform 写入，强调色默认 system
+        out.platform = root.getAttribute('data-platform');
+        out.accent = root.getAttribute('data-accent');
+        out.theme = root.getAttribute('data-theme');
+        // 2) 平台几何：侧栏宽 / 行高 / 标题栏高 / 状态栏高 必须等于平台层令牌
+        const nav = document.querySelector('nav.sidebar');
+        const head = document.querySelector('nav.sidebar .side-head');
+        const row = document.querySelector('nav.sidebar .navitem');
+        const status = document.querySelector('footer.statusbar');
+        if (!nav || !head || !row || !status) return { fatal: '壳结构缺失（nav.sidebar/.side-head/.navitem/footer.statusbar）' };
+        out.sidebarW = Math.round(nav.getBoundingClientRect().width);
+        out.rowH = Math.round(row.getBoundingClientRect().height);
+        out.headH = Math.round(head.getBoundingClientRect().height);
+        out.statusH = Math.round(status.getBoundingClientRect().height);
+        out.expect = {
+          sidebarW: px(cs.getPropertyValue('--sidebar-w')),
+          rowH: px(cs.getPropertyValue('--row-h')),
+          titlebarH: px(cs.getPropertyValue('--titlebar-h')),
+          statusH: px(cs.getPropertyValue('--statusbar-h'))
+        };
+        // 3) 侧栏头区留白 = 平台标题栏前导（mac 72 给红绿灯 / win 12）
+        out.headPadLeft = Math.round(px(getComputedStyle(head).paddingLeft));
+        out.expectLead = px(cs.getPropertyValue('--titlebar-lead'));
+        // 4) 选中语义：mac = 强调填充 + on-accent 文字；win = 中性填充 + 强调条
+        const sel = document.querySelector('nav.sidebar .navitem.sel');
+        if (!sel) return { fatal: '无选中导航项（.navitem.sel）' };
+        const selCs = getComputedStyle(sel);
+        out.selBg = selCs.backgroundColor;
+        out.selColor = selCs.color;
+        out.selWeight = selCs.fontWeight;
+        out.accentBarDisplay = getComputedStyle(sel.querySelector('.accent-bar')).display;
+        out.navIndicator = cs.getPropertyValue('--nav-indicator').trim();
+        // 5) 侧栏材质：macOS 半透明（叠系统毛玻璃）vs win 实色
+        out.sidebarBg = getComputedStyle(nav).backgroundColor;
+        // 6) Windows 自绘标题栏：mac 隐藏、win 显示且三键 46×32
+        const tb = document.querySelector('.titlebar-win');
+        out.titlebarDisplay = tb ? getComputedStyle(tb).display : 'MISSING';
+        if (isWin && tb) {
+          const btns = Array.from(tb.querySelectorAll('.caption-btn'));
+          out.caption = btns.map((b) => Math.round(b.getBoundingClientRect().width) + 'x' + Math.round(b.getBoundingClientRect().height));
+          out.captionCount = btns.length;
+        }
+        // 7) 焦点环：键盘焦点样式取自平台令牌（不硬编码）
+        out.focusShadow = cs.getPropertyValue('--focus-shadow').trim();
+        // 7b) 字号基准：根 16px（rem 计工具类的换算基准），正文 = --fs-body。
+        //     两者若相等，说明正文尺寸写进了 html，全部 rem 尺寸会缩水到 13/16
+        out.rootFs = px(getComputedStyle(root).fontSize);
+        out.bodyFs = px(getComputedStyle(document.body).fontSize);
+        out.fsBody = px(cs.getPropertyValue('--fs-body'));
+        // 8) 窗口控制：直接 IPC 往返（只测可逆的最大化/还原，不碰最小化与关闭）
+        try {
+          const before = await window.sidecar.win.isMaximized();
+          const toMax = await window.sidecar.win.toggleMaximize();
+          await sleep(400);
+          const afterEvents = await window.sidecar.win.isMaximized();
+          await window.sidecar.win.toggleMaximize();
+          await sleep(400);
+          const restored = await window.sidecar.win.isMaximized();
+          out.winCtl = { before, toMax, afterEvents, restored };
+        } catch (e) {
+          out.winCtl = { error: String(e) };
+        }
+        // 9) 标题栏按钮的"点击 → IPC"整条链路（按钮在 mac 下 display:none，但仍在 DOM 中，
+        //    可点：证明接线与直接调 IPC 不是两回事）
+        try {
+          const btns = document.querySelectorAll('.titlebar-win .caption-btn');
+          out.captionClickable = btns.length;
+          if (btns.length === 3) {
+            btns[1].click(); // 最大化/还原
+            await sleep(500);
+            const afterClick = await window.sidecar.win.isMaximized();
+            btns[1].click();
+            await sleep(500);
+            out.maximizedByClick = afterClick;
+            out.restoredByClick = await window.sidecar.win.isMaximized();
+          }
+        } catch (e) {
+          out.captionCtl = { error: String(e) };
+        }
+        return out;
+      })()`) as Record<string, unknown>
+      {
+        const s = shell as Record<string, unknown>
+        if (s.fatal) throw new Error(`壳走查: ${s.fatal}`)
+        const exp = s.expect as Record<string, number>
+        const near = (a: unknown, b: number, tol = 1): boolean => Math.abs((a as number) - b) <= tol
+        const problems: string[] = []
+        if (s.platform !== 'mac' && s.platform !== 'win') problems.push(`data-platform=${s.platform}`)
+        if (s.accent !== 'system' && s.accent !== 'brand') problems.push(`data-accent=${s.accent}`)
+        if (!near(s.sidebarW, exp.sidebarW)) problems.push(`侧栏宽 ${s.sidebarW} != ${exp.sidebarW}`)
+        if (!near(s.rowH, exp.rowH)) problems.push(`行高 ${s.rowH} != ${exp.rowH}`)
+        if (!near(s.headH, exp.titlebarH)) problems.push(`头区高 ${s.headH} != ${exp.titlebarH}`)
+        if (!near(s.statusH, exp.statusH)) problems.push(`状态栏高 ${s.statusH} != ${exp.statusH}`)
+        if (!near(s.headPadLeft, s.expectLead as number)) problems.push(`头区留白 ${s.headPadLeft} != ${s.expectLead}`)
+        // 选中语义按平台分流：断言"与令牌一致"，而不是断言某个平台的固定色值
+        if (s.platform === 'win') {
+          if (s.accentBarDisplay === 'none') problems.push('win 选中项缺强调条')
+          if (s.navIndicator !== 'block') problems.push(`win --nav-indicator=${s.navIndicator}`)
+          if (s.titlebarDisplay === 'none') problems.push('win 自绘标题栏未显示')
+          if (s.captionCount !== 3) problems.push(`win 窗口三键数=${s.captionCount}`)
+        } else {
+          if (s.accentBarDisplay !== 'none') problems.push('mac 选中项出现强调条')
+          if (s.navIndicator !== 'none') problems.push(`mac --nav-indicator=${s.navIndicator}`)
+          if (s.titlebarDisplay !== 'none') problems.push('mac 自绘标题栏未隐藏')
+        }
+        const wc = s.winCtl as Record<string, unknown>
+        if (wc.error) problems.push(`窗口控制 IPC: ${wc.error}`)
+        else if (wc.toMax !== true || wc.afterEvents !== true || wc.restored !== false) {
+          problems.push(`窗口控制往返异常: ${JSON.stringify(wc)}`)
+        }
+        if (!String(s.focusShadow).trim()) problems.push('焦点环令牌为空')
+        if (s.rootFs !== 16) problems.push(`根字号 ${s.rootFs}px（rem 基准应为 16px）`)
+        if (s.bodyFs !== s.fsBody) problems.push(`正文字号 ${s.bodyFs} != --fs-body ${s.fsBody}`)
+        if (s.captionClickable !== 3) problems.push(`标题栏按钮缺失（${s.captionClickable} 个）`)
+        else if (s.maximizedByClick !== true || s.restoredByClick !== false) {
+          problems.push(`按钮点击链路异常: ${JSON.stringify({ m: s.maximizedByClick, r: s.restoredByClick })}`)
+        }
+        if (problems.length) throw new Error('壳走查失败: ' + problems.join('; '))
+        console.log(`[smoke] 壳走查通过：${s.platform}/${s.theme}/${s.accent} 侧栏 ${s.sidebarW} 行高 ${s.rowH} 标题栏 ${s.headH} 状态栏 ${s.statusH} 选中底 ${s.selBg}`)
+      }
       // 渲染层链路探针：经 window.__app 驱动 Vue 应用（store 状态 + 持久化 + 筛选）
       step = '渲染层链路探针'
       const probe = await mainWindow!.webContents.executeJavaScript(`(async () => {
