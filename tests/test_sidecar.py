@@ -21,6 +21,33 @@ sys.path.insert(0, str(ROOT))
 import server  # noqa: E402
 
 
+def _make_v2_store(tmp_path: Path, examples: list[dict], collection: str = "demo"):
+    """v2 夹具：把 code 落成真实文件并写 file 字段（契约 §2.2），返回 (store, index)。
+
+    ``_ensure_store()`` 会加载真实库（1496 条，慢），资源/风险用例必须注入假 store，
+    且工作区根落在 tmp_path 下，任何落盘都不碰真实数据。
+    注：无 code 且无 file 的条目没有内容来源，load 期应被跳过——保留在夹具里断言该行为。
+    """
+    coll = tmp_path / "json_examples"
+    coll.mkdir(exist_ok=True)
+    src_dir = coll / collection
+    src_dir.mkdir(exist_ok=True)
+    entries: list[dict] = []
+    for ex in examples:
+        spec = dict(ex)
+        code = spec.pop("code", None)
+        if code is not None:
+            (src_dir / spec["name"]).write_text(code, encoding="utf-8")
+            spec["file"] = f"{collection}/{spec['name']}"
+        entries.append(spec)
+    (coll / f"{collection}.json").write_text(
+        json.dumps({"schema_version": 2, "name": collection, "examples": entries}), encoding="utf-8"
+    )
+    store = server.ContractStore.for_base_dir(base_dir=tmp_path)
+    store.load()
+    return store, store.index
+
+
 # ---------------------------------------------------------------------------
 # argparse 静态解析测试
 # ---------------------------------------------------------------------------
@@ -361,53 +388,48 @@ class TestEnvStatus:
 
 
 class TestCollectAssets:
-    """资源面板列出的是用户资源：受保护文件（脚本 / requirements.txt）不得混入——
-    它们删不掉，列出来只会给出"能删但删不掉"的死入口（A4 走查发现）。"""
+    """资源面板列出的是工作区里的**用户资产**：受保护文件（示例脚本 / requirements.txt）
+    与工作区账本 .manifest.json 不得混入——它们删不掉或属内部数据，列出来只会给出
+    "能删但删不掉"的死入口（A4 走查发现；契约 §4.2/§5）。"""
 
-    def _item(self, path: Path):
-        return server.ExampleItem(name=path.name, path=path, is_dir=False, category="topics")
+    def _item(self, tmp_path: Path):
+        store, index = _make_v2_store(tmp_path, [{"id": "demo1", "name": "demo.py", "code": "print('hi')\n"}])
+        return store, index["demo1"]
 
-    def test_protected_files_not_listed(self):
-        with tempfile.TemporaryDirectory() as tmpdir:
-            tmp = Path(tmpdir)
-            script = tmp / "demo.py"
-            script.write_text("print('hi')")
-            (tmp / "requirements.txt").write_text("requests\n")
-            (tmp / "data.csv").write_text("a,b\n")
-            assets = server._collect_assets(self._item(script))
-            names = [a["filename"] for a in assets]
-            assert names == ["data.csv"]
+    def test_protected_files_not_listed(self, tmp_path):
+        store, item = self._item(tmp_path)
+        with patch.object(server, "_store", store):
+            workspace = server._asset_dir(item)  # v2：资源目录 = 工作区（先经 ensure_workspace）
+            assert (workspace / "demo.py").is_file()  # 脚本基线随工作区到位
+            (workspace / "requirements.txt").write_text("requests\n", encoding="utf-8")
+            (workspace / "data.csv").write_text("a,b\n", encoding="utf-8")
+            assets = server._collect_assets(item)
+        names = [a["filename"] for a in assets]
+        assert names == ["data.csv"]
 
-    def test_image_flag_and_size(self):
-        with tempfile.TemporaryDirectory() as tmpdir:
-            tmp = Path(tmpdir)
-            script = tmp / "demo.py"
-            script.write_text("print('hi')")
-            (tmp / "shot.png").write_bytes(b"\x89PNG\r\n\x1a\n")
-            assets = server._collect_assets(self._item(script))
-            assert len(assets) == 1
-            assert assets[0]["is_image"] is True
-            assert assets[0]["size"] == 8
+    def test_image_flag_and_size(self, tmp_path):
+        store, item = self._item(tmp_path)
+        with patch.object(server, "_store", store):
+            workspace = server._asset_dir(item)
+            (workspace / "shot.png").write_bytes(b"\x89PNG\r\n\x1a\n")
+            assets = server._collect_assets(item)
+        assert len(assets) == 1
+        assert assets[0]["filename"] == "shot.png"
+        assert assets[0]["is_image"] is True
+        assert assets[0]["size"] == 8
 
 
 class TestUploadAssetGuard:
     def _make_item(self, tmp_path: Path):
-        """构造一个已物化的 json 示例及其索引项。"""
-        coll = tmp_path / "json_examples"
-        coll.mkdir()
-        (coll / "demo.json").write_text(
-            json.dumps({"name": "demo", "examples": [{"id": "demo1", "name": "demo1.py", "code": "print('x')"}]}),
-            encoding="utf-8",
-        )
+        """构造一个 v2 形态的 json 示例（真实文件 + file 字段）及其索引项。"""
+        store, index = _make_v2_store(tmp_path, [{"id": "demo1", "name": "demo1.py", "code": "print('x')"}])
+        item = index["demo1"]
         store_orig = server._store
         root_orig = server._root
         index_orig = dict(server._index)
-        server._store = None
-        server._root = None
+        server._store = store
+        server._root = store.root
         server._index.clear()
-        server._store = server.ExampleStore(base_dir=tmp_path)
-        server._root = server._store.load()
-        item = server._root.children[0].children[0]
         server._index[item.json_id] = item
         return item, store_orig, root_orig, index_orig
 
@@ -420,7 +442,7 @@ class TestUploadAssetGuard:
     def test_upload_cannot_overwrite_script(self, tmp_path):
         item, s0, r0, i0 = self._make_item(tmp_path)
         try:
-            script = item.path
+            script = item.path  # v2：item.path 就是真实文件
             original = script.read_text(encoding="utf-8")
             captured = []
             with patch.object(server, "_send", side_effect=lambda obj: captured.append(obj)):
@@ -437,6 +459,7 @@ class TestUploadAssetGuard:
             with patch.object(server, "_send", side_effect=lambda obj: captured.append(obj)):
                 server.method_upload_asset(1, {"id": item.json_id, "filename": "requirements.txt", "data": "aGk="})
             assert "error" in captured[0], "上传 requirements.txt 必须被拒绝（任意装包）"
+            assert not (server._asset_dir(item) / "requirements.txt").exists()
         finally:
             self._restore(s0, r0, i0)
 
@@ -447,7 +470,10 @@ class TestUploadAssetGuard:
             with patch.object(server, "_send", side_effect=lambda obj: captured.append(obj)):
                 server.method_upload_asset(1, {"id": item.json_id, "filename": "photo.png", "data": "aGk="})
             assert "result" in captured[0]
-            assert (item.path.parent / "photo.png").is_file()
+            # v2：资源落在运行工作区（契约 §4.1/§5），真实源码树不被污染
+            workspace = server._asset_dir(item)
+            assert (workspace / "photo.png").is_file()
+            assert not (item.path.parent / "photo.png").exists()
         finally:
             self._restore(s0, r0, i0)
 
@@ -460,6 +486,7 @@ class TestUploadAssetGuard:
                 server.method_delete_asset(1, {"id": item.json_id, "filename": "demo1.py"})
             assert "error" in captured[0], "删除示例脚本必须被拒绝"
             assert script.is_file()
+            assert (server._asset_dir(item) / "demo1.py").is_file()  # 工作区副本同样完好
         finally:
             self._restore(s0, r0, i0)
 
@@ -492,30 +519,19 @@ class TestStopRunRace:
         assert captured[0]["error"]["code"] == -32602
 
 class TestRiskHigh:
-    """ensure_risk_high：安全高危判定、缓存命中与保存后失效。"""
+    """ensure_risk_high：安全高危判定、缓存命中与保存后失效（v2：判定读真实文件）。"""
 
     def _make_store(self, tmp_path: Path):
-        coll = tmp_path / "json_examples"
-        coll.mkdir()
-        (coll / "demo.json").write_text(
-            json.dumps(
-                {
-                    "name": "demo",
-                    "examples": [
-                        {"id": "safe1", "name": "safe1.py", "code": "print('hello')"},
-                        {
-                            "id": "risky1",
-                            "name": "risky1.py",
-                            "code": "import os\nos.system('echo hi')",
-                        },
-                        {"id": "empty1", "name": "__init__.py"},
-                    ],
-                }
-            ),
-            encoding="utf-8",
+        store, _index = _make_v2_store(
+            tmp_path,
+            [
+                {"id": "safe1", "name": "safe1.py", "code": "print('hello')"},
+                {"id": "risky1", "name": "risky1.py", "code": "import os\nos.system('echo hi')"},
+                # 无 file 也无内联 code：没有内容来源，load 期即被跳过
+                {"id": "empty1", "name": "__init__.py"},
+            ],
         )
-        store = server.ExampleStore(base_dir=tmp_path)
-        root = store.load()
+        root = store.root
         items: dict = {}
 
         def walk(node):
@@ -534,7 +550,7 @@ class TestRiskHigh:
         store, items, root = self._make_store(tmp_path)
         assert store.ensure_risk_high(items["safe1.py"]) is False
         assert store.ensure_risk_high(items["risky1.py"]) is True
-        # 无 code 的条目在 load 阶段即被跳过，不会进入示例树
+        # 无内容来源的条目在 load 阶段即被跳过，不会进入示例树
         assert "__init__.py" not in items
         assert store.ensure_risk_high(root.children[0]) is False  # 目录节点恒安全
 
@@ -543,6 +559,8 @@ class TestRiskHigh:
         item = items["risky1.py"]
         assert store.ensure_risk_high(item) is True
         assert store.save_item(item, "print('now safe')") is True
+        # v2：保存写真实文件（真相源），工作区仍由 ensure_workspace 自愈
+        assert item.path.read_text(encoding="utf-8") == "print('now safe')"
         # 保存后高危缓存失效：删除 os.system 后不再判高危
         assert store.ensure_risk_high(item) is False
         # 质量分缓存同样失效，等待惰性重算

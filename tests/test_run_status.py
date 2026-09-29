@@ -1,7 +1,8 @@
-"""可运行性判定（app/run_status.py + ExampleStore 接入）的单元测试。
+"""可运行性判定（app/run_status.py + ContractStore 接入）的单元测试。
 
 覆盖：五态判定与优先级、模块索引集合运算、本地模块排除、
-ExampleStore 的 ensure_run_status / ensure_risk_findings 缓存与回写失效。
+ContractStore 的 ensure_run_status / ensure_risk_findings 缓存与保存失效
+（v2：源码与保存都走真实文件）。
 不执行任何示例代码。
 """
 
@@ -9,7 +10,7 @@ import json
 import sys
 from pathlib import Path
 
-from app.json_examples import ExampleStore
+from app.contract_store import ContractStore
 from app.run_status import (
     BROKEN,
     EMPTY,
@@ -113,18 +114,20 @@ def test_third_party_imports_excludes_local_modules(tmp_path):
     assert mods == set()
 
 
-# --------------------------------------------------------------------- ExampleStore 接入
+# --------------------------------------------------------------------- ContractStore 接入
 
 
-def make_store(tmp_path: Path, code: str) -> tuple[ExampleStore, object]:
-    """构造含单示例的临时 store（照 test_core.py 的回写测试模式）。"""
+def make_store(tmp_path: Path, code: str) -> tuple[ContractStore, object]:
+    """构造含单示例的临时 store（v2 形态：清单带 file + 真实文件）。"""
     coll = tmp_path / "json_examples"
     coll.mkdir()
-    spec = {"id": "demo", "name": "demo.py", "title": "Demo", "code": code}
+    (coll / "demo").mkdir()
+    (coll / "demo" / "demo.py").write_text(code, encoding="utf-8")
+    spec = {"id": "demo", "name": "demo.py", "title": "Demo", "file": "demo/demo.py"}
     (coll / "demo.json").write_text(
-        json.dumps({"name": "demo", "examples": [spec]}), encoding="utf-8"
+        json.dumps({"schema_version": 2, "name": "demo", "examples": [spec]}), encoding="utf-8"
     )
-    store = ExampleStore(base_dir=tmp_path)
+    store = ContractStore.for_base_dir(base_dir=tmp_path)
     store.load()
     item = store._root.children[0].children[0]
     return store, item
@@ -133,10 +136,10 @@ def make_store(tmp_path: Path, code: str) -> tuple[ExampleStore, object]:
 def test_store_run_status_cached_and_invalidated_by_save(tmp_path):
     store, item = make_store(tmp_path, GOOD_CODE)
     assert store.ensure_run_status(item) == RUNNABLE
-    # 缓存命中：篡改内存代码不重算也能读到旧值
-    item.code = '"""docstring only"""\n'
+    # 缓存命中：绕过 store 直接改真实文件（未失效）也能读到旧值，不重算
+    item.path.write_text('"""docstring only"""\n', encoding="utf-8")
     assert store.ensure_run_status(item) == RUNNABLE
-    # 回写后缓存失效，按新代码重算
+    # 保存后缓存失效，按新代码重算（真实文件是唯一真相源）
     assert store.save_item(item, '"""docstring only"""\n') is True
     assert store.ensure_run_status(item) == EMPTY
 

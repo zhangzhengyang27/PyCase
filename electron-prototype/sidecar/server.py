@@ -85,7 +85,7 @@ else:
     REAL_PYTHON = sys.executable
 
 from app import importer  # noqa: E402
-from app.json_examples import ExampleStore  # noqa: E402
+from app.contract_store import ContractStore  # noqa: E402
 from app.logger import configure_logging, get_logger  # noqa: E402
 from app.models import ExampleItem  # noqa: E402
 from app.venv_manager import VenvManager  # noqa: E402
@@ -93,7 +93,7 @@ from app.venv_manager import VenvManager  # noqa: E402
 # ---------------------------------------------------------------------------
 # 运行时状态
 # ---------------------------------------------------------------------------
-_store: ExampleStore | None = None
+_store: ContractStore | None = None
 _root: ExampleItem | None = None
 # example_id -> ExampleItem（扁平索引）
 _index: dict[str, ExampleItem] = {}
@@ -159,7 +159,7 @@ def _on_bg_task_done(task: asyncio.Task) -> None:
         get_logger(__name__).error("后台任务异常: %s", exc)
 
 
-def _ensure_store() -> ExampleStore:
+def _ensure_store() -> ContractStore:
     """懒加载 ExampleStore（首次调用时物化所有示例，可能较慢）。"""
     global _store, _root
     if _store is None:
@@ -173,11 +173,17 @@ def _ensure_store() -> ExampleStore:
     return _store
 
 
-def _build_store() -> ExampleStore:
-    """构造 ExampleStore：内置集合目录 + 用户集合目录（可写根下 user_examples/）。"""
-    return ExampleStore(
-        base_dir=APP_DIR,
-        cache_dir=DATA_DIR / ".json_examples_cache",
+def _build_store() -> ContractStore:
+    """构造契约 v2 存储：清单目录 + 集合树根 + 工作区根（可写根下）。
+
+    - 内置清单在 ``APP_DIR/json_examples``；用户集合在可写根的 ``user_examples/``；
+    - 集合树根 = REPO_ROOT（原位示例的 ``../topics`` 相对此根解析）；
+    - 工作区根 = ``DATA_DIR/.json_examples_cache``（打包版 APP_DIR 只读，故用 DATA_DIR）。
+    """
+    return ContractStore(
+        collection_dir=APP_DIR / "json_examples",
+        data_root=REPO_ROOT,
+        workspace_root=DATA_DIR / ".json_examples_cache",
         user_dir=_USER_DIR,
     )
 
@@ -220,7 +226,7 @@ def _rebuild_index(root: ExampleItem) -> None:
     _walk(root)
 
 
-def _item_to_dict(item: ExampleItem, include_code: bool = True) -> dict[str, Any]:
+def _item_to_dict(item: ExampleItem, include_code: bool = False) -> dict[str, Any]:
     """把 ExampleItem 序列化为可 JSON 化的字典。
 
     质量评分为惰性计算：加载时不做 AST 解析，首次序列化时才计算并缓存。
@@ -241,7 +247,7 @@ def _item_to_dict(item: ExampleItem, include_code: bool = True) -> dict[str, Any
         "run_status": run_status,
         "path": str(item.path),
         "source_dir": item.source_dir,
-        "run_pythonpath": item.run_pythonpath,
+        "run_pythonpath": _ensure_store().run_pythonpath(item),
         "description": item.description or "",
     }
     # 所属集合与来源标记（树节点与示例数组共用此序列化，两处一致）
@@ -252,7 +258,8 @@ def _item_to_dict(item: ExampleItem, include_code: bool = True) -> dict[str, Any
     if run_status == "risky" or result["risk_high"]:
         result["risk_findings"] = store.ensure_risk_findings(item)
     if include_code:
-        result["code"] = item.code or ""
+        # v2：源码按需从真实文件读（编辑器/AI/详情走这条），列表默认不带 code
+        result["code"] = store.get_code(item)
     return result
 
 
@@ -318,6 +325,20 @@ def method_list_examples(req_id: Any, params: dict[str, Any]) -> None:
     )
 
 
+def method_search_examples(req_id: Any, params: dict[str, Any]) -> None:
+    """服务端检索：元数据内存匹配 + code 按需读文件（契约 §5）。
+
+    返回 id 与命中原因，前端按 id 现有索引取卡片数据，避免把 code 全量下发。
+    """
+    store = _ensure_store()
+    query = str(params.get("query") or "")
+    try:
+        limit = int(params.get("limit") or 50)
+    except (TypeError, ValueError):
+        limit = 50
+    _result(req_id, {"query": query, "hits": store.search(query, limit=max(1, min(limit, 200)))})
+
+
 def method_get_example(req_id: Any, params: dict[str, Any]) -> None:
     _ensure_store()
     example_id = params.get("id")
@@ -325,7 +346,7 @@ def method_get_example(req_id: Any, params: dict[str, Any]) -> None:
     if item is None:
         _error(req_id, -32602, f"示例不存在: {example_id}")
         return
-    _result(req_id, _item_to_dict(item))
+    _result(req_id, _item_to_dict(item, include_code=True))
 
 
 async def method_run_example(req_id: Any, params: dict[str, Any]) -> None:
@@ -439,8 +460,14 @@ async def _run_subprocess(
     timeout: float,
 ) -> None:
     """启动子进程运行示例，逐行读取输出并推送。"""
-    file_path = item.path
-    working_dir = file_path.parent
+    # 契约 §4.1：运行前先确保工作区（唯一落盘入口），运行目录 = 工作区
+    workspace = await asyncio.to_thread(_ensure_store().ensure_workspace, item)
+    if workspace is None:
+        _notify("run_output", {"run_id": run_id, "text": "[错误] 无法准备工作区，运行已取消\n"})
+        _notify("run_finished", {"run_id": run_id, "exit_code": -1})
+        return
+    file_path = workspace / item.name
+    working_dir = workspace
     run_started = time.time()
 
     # 通过 VenvManager 获取项目共享 venv 的解释器（首次运行时自动创建并预装常用库，
@@ -491,7 +518,8 @@ async def _run_subprocess(
 
     # 构建环境变量：使用白名单过滤，避免把用户 shell 中的敏感环境变量
     # （API Key、令牌、密码等）传递给不可信示例
-    pythonpath_parts = list(item.run_pythonpath) + [str(REPO_ROOT)]
+    # 运行期 sys.path：工作区（含基线兄弟文件）+ 集合树根（解析 topics/tools 包导入）
+    pythonpath_parts = list(_ensure_store().run_pythonpath(item)) + [str(REPO_ROOT)]
     existing_pp = os.environ.get("PYTHONPATH", "")
     if existing_pp:
         pythonpath_parts.append(existing_pp)
@@ -773,14 +801,15 @@ def method_parse_args(req_id: Any, params: dict[str, Any]) -> None:
         if item is None:
             _error(req_id, -32602, f"示例不存在: {example_id}")
             return
-        code = item.code or ""
+        # v2：源码经 store 按需读（v1 兼容期读内联 code，迁移后读真实文件）
+        code = _ensure_store().get_code(item)
 
     specs = _parse_argparse_from_code(code)
     _result(req_id, {"args": specs, "count": len(specs)})
 
 
 def method_save_example(req_id: Any, params: dict[str, Any]) -> None:
-    """把编辑后的代码写回 JSON 源文件和缓存文件。"""
+    """保存编辑：契约 v2 下写真实文件（清单只存元数据，不再回写内联 code）。"""
     example_id = params.get("id")
     new_code = params.get("code")
 
@@ -816,8 +845,14 @@ _IMAGE_EXTS_ASSET = {".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp"}
 
 
 def _asset_dir(item: ExampleItem) -> Path:
-    """示例的资源目录 = 示例脚本所在目录（sidecar 运行时的 cwd）。"""
-    return item.path.parent
+    """示例的资源目录 = 运行工作区（契约 §4.1：资源上传/列举先经唯一落盘入口）。
+
+    ensure_workspace 负责建目录与自愈重建；失败时仍返回工作区路径，
+    由调用方的写盘/遍历报错兜底（不静默）。
+    """
+    store = _ensure_store()
+    store.ensure_workspace(item)
+    return store.workspace_of(item)
 
 
 def _safe_asset_name(filename: str) -> str:
@@ -826,19 +861,21 @@ def _safe_asset_name(filename: str) -> str:
 
 
 # 资源写入/删除的保护名单：上传同名脚本会产生"编辑器显示 JSON 代码、
-# 实际执行上传内容"的所见非所跑；覆盖 requirements.txt 则可向共享 venv 任意装包
+# 实际执行上传内容"的所见非所跑；覆盖 requirements.txt 则可向共享 venv 任意装包；
+# 工作区账本 .manifest.json（契约 §4.2）被覆盖会丢失基线记录。
 def _is_protected_asset(item: ExampleItem, filename: str) -> bool:
     lowered = filename.lower()
-    if lowered.endswith(".py") or lowered == "requirements.txt":
+    if lowered.endswith(".py") or lowered in ("requirements.txt", ".manifest.json"):
         return True
     return filename == item.path.name
 
 
 def _collect_assets(item: ExampleItem) -> list[dict[str, Any]]:
-    """列出示例目录中的用户资源文件。
+    """列出工作区中的用户资源文件。
 
-    排除受保护文件（示例脚本、__init__.py、requirements.txt）：它们不可删除，
-    列进资源面板只会给出"能删但删不掉"的死入口。
+    排除受保护文件（示例脚本、__init__.py、requirements.txt、工作区账本
+    .manifest.json）：它们不可删除或属于内部数据，列进资源面板只会给出
+    "能删但删不掉"的死入口（A4 走查发现）。
     """
     d = _asset_dir(item)
     assets = []
@@ -1169,6 +1206,7 @@ METHODS = {
     "set_run_env": method_set_run_env,
     "list_examples": method_list_examples,
     "get_example": method_get_example,
+    "search_examples": method_search_examples,
     "parse_args": method_parse_args,
     "save_example": method_save_example,
     "run_example": method_run_example,  # async

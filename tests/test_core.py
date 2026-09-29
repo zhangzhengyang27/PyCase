@@ -11,7 +11,7 @@ import sys
 from pathlib import Path
 
 import pytest
-from app.json_examples import ExampleStore
+from app.contract_store import ContractStore
 from app.models import ExampleItem
 from app.quality import QualityScorer
 from app.security import SecurityChecker
@@ -23,7 +23,7 @@ APP_DIR = Path(__file__).resolve().parent.parent
 @pytest.fixture(scope="module")
 def items() -> dict[str, ExampleItem]:
     """加载全部示例并构建 json_id -> ExampleItem 扁平索引。"""
-    store = ExampleStore(base_dir=APP_DIR)
+    store = ContractStore.for_base_dir(base_dir=APP_DIR)
     root = store.load()
     flat: dict[str, ExampleItem] = {}
 
@@ -39,8 +39,8 @@ def items() -> dict[str, ExampleItem]:
 
 def test_repo_root_is_project_itself():
     """示例仓库迁入后，仓库根应识别为 desktop-app 自身而非上级目录。"""
-    store = ExampleStore(base_dir=APP_DIR)
-    assert store._source_root == APP_DIR
+    store = ContractStore.for_base_dir(base_dir=APP_DIR)
+    assert store.data_root == APP_DIR  # v2：集合树根（原名 _source_root）
 
 
 def test_load_examples(items):
@@ -48,21 +48,28 @@ def test_load_examples(items):
     assert len(items) > 1400
     some = next(iter(items.values()))
     assert some.category in {"topics", "tools", "projects", "json"}
-    assert some.path.is_file() and some.path.suffix == ".py"
+    # v1 兼容窗口内源码还是内联 code（尚未外移）；两种形态都必须能取到源码
+    assert some.path.suffix == ".py" and some.json_id
+    # 源码可得：v1 兼容期来自清单内联 code，迁移后来自真实文件（两种形态都要能取到）
+    store = ContractStore.for_base_dir(base_dir=APP_DIR)
+    store.load()
+    assert store.get_code(store.index[some.json_id]) != ""
 
 
 def test_materialize_keeps_sibling_files(items):
-    """迁移示例物化时应保留原始目录的兄弟数据文件。"""
+    """目录型示例的兄弟数据文件随工作区到位（v2：load 不落盘，按需 ensure_workspace）。"""
     ex = items.get("topics_algorithms_cycle-detection_code_example06.py")
     assert ex is not None
-    assert (ex.path.parent / "dictionary.txt").is_file()
+    store = ContractStore.for_base_dir(base_dir=APP_DIR)
+    store.load()
+    item = store.index["topics_algorithms_cycle-detection_code_example06.py"]
+    workspace = store.ensure_workspace(item)
+    assert workspace is not None
+    assert (workspace / "dictionary.txt").is_file()
 
 
-def test_save_item_writes_back_json_and_cache(tmp_path):
-    """回写同时落到 JSON 真相源与物化缓存。
-
-    测试在 tmp 沙箱内运行：json_examples/*.json 是唯一真相源，测试不得写入。
-    """
+def test_save_item_writes_back_real_file(tmp_path):
+    """v2 保存：只落真实文件（不再回写内联 code），清单不被改动。"""
     coll = tmp_path / "json_examples"
     coll.mkdir()
     json_file = coll / "demo.json"
@@ -78,13 +85,30 @@ def test_save_item_writes_back_json_and_cache(tmp_path):
         ),
         encoding="utf-8",
     )
-    store = ExampleStore(base_dir=tmp_path)
+    # 先把夹具迁移成 v2 形态（真实文件 + file 字段），再验证保存写真实文件
+    (coll / "demo").mkdir()
+    (coll / "demo" / "a.py").write_text("print('a')\n", encoding="utf-8")
+    (coll / "demo" / "b.py").write_text("print('b')\n", encoding="utf-8")
+    json_file.write_text(
+        json.dumps(
+            {
+                "schema_version": 2,
+                "name": "demo",
+                "examples": [
+                    {"id": "demo_a", "name": "a.py", "file": "demo/a.py"},
+                    {"id": "demo_b", "name": "b.py", "file": "demo/b.py"},
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    before = json_file.read_bytes()
+    store = ContractStore.for_base_dir(base_dir=tmp_path)
     item = _flat(store.load())["demo_a"]
 
     assert store.save_item(item, "print('a2')\n") is True
-    codes = {s["id"]: s["code"] for s in json.loads(json_file.read_text(encoding="utf-8"))["examples"]}
-    assert codes == {"demo_a": "print('a2')\n", "demo_b": "print('b')\n"}
-    assert item.path.read_text(encoding="utf-8") == "print('a2')\n"
+    assert (coll / "demo" / "a.py").read_text(encoding="utf-8") == "print('a2')\n"
+    assert json_file.read_bytes() == before  # 清单是元数据，不再随编辑变动
 
 
 def test_save_item_survives_midwrite_failure(tmp_path, monkeypatch):
@@ -99,7 +123,7 @@ def test_save_item_survives_midwrite_failure(tmp_path, monkeypatch):
     json_file = coll / "demo.json"
     json_file.write_text(json.dumps({"name": "demo", "examples": [spec]}), encoding="utf-8")
 
-    store = ExampleStore(base_dir=tmp_path)
+    store = ContractStore.for_base_dir(base_dir=tmp_path)
     root = store.load()
     item = root.children[0].children[0]
 
@@ -143,13 +167,16 @@ def test_materialize_rejects_path_traversal(tmp_path):
     evil_name = {"id": "evil_name", "name": "../outside.py", "code": "print('x')"}
     (coll / "evil.json").write_text(json.dumps({"name": "evil", "examples": [evil_dir, evil_name]}), encoding="utf-8")
     try:
-        store = ExampleStore(base_dir=tmp_path)
+        store = ContractStore.for_base_dir(base_dir=tmp_path)
         root = store.load()
-        # 两条越界示例都应被拒绝加载（collection 下没有合法示例）
-        assert root.children[0].children == []
-        # 缓存目录中没有出现越界内容
+        # v2：name 越界的条目在校验期被拒；dir 字段彻底退役（不再拷贝任何外部目录）
+        loaded = [c.json_id for c in (root.children[0].children if root.children else [])]
+        assert "evil_name" not in loaded
+        for item in store.index.values():
+            store.ensure_workspace(item)  # 即便对 dir 越界条目建工作区，也不得产生越界内容
         assert not (tmp_path / ".json_examples_cache" / "secret.txt").exists()
         assert not (tmp_path / "outside.py").exists()
+        assert (outside / "secret.txt").read_text(encoding="utf-8") == "sensitive"  # 外部目录原样未动
     finally:
         shutil.rmtree(outside, ignore_errors=True)
 
@@ -176,12 +203,14 @@ def test_materialize_allows_normal_relative_dir(tmp_path):
         ),
         encoding="utf-8",
     )
-    store = ExampleStore(base_dir=tmp_path)
+    store = ContractStore.for_base_dir(base_dir=tmp_path)
     root = store.load()
     children = root.children[0].children
     assert len(children) == 2
-    # 兄弟数据文件随目录物化
-    assert (children[0].path.parent / "data.txt").is_file()
+    # 兄弟数据文件随工作区到位（v2：load 不落盘）
+    workspace = store.ensure_workspace(children[0])
+    assert workspace is not None
+    assert (workspace / "data.txt").is_file()
 
 
 def test_security_checker_detects_risky_code(tmp_path):
@@ -373,13 +402,33 @@ def test_shared_venv_without_requirements_skips_pip(tmp_path, monkeypatch):
     assert calls == [("create",)]
 
 
-def test_merge_requirements_drops_invalid_names(tmp_path):
-    """乱码/非法包名（历史迁移数据）不应写入 requirements.txt 污染共享 venv。"""
-    store = ExampleStore(base_dir=APP_DIR)
-    cache_dir = tmp_path / "ex"
-    cache_dir.mkdir()
-    store._merge_requirements(cache_dir, ["\x00F\x00l\x00a\x00s\x00k\x00", "requests", "ok-pkg_2"])
-    lines = (cache_dir / "requirements.txt").read_text(encoding="utf-8").splitlines()
+def test_workspace_requirements_drops_invalid_names(tmp_path):
+    """乱码/非法包名（历史迁移数据）不应写进工作区 requirements.txt 污染共享 venv。"""
+    coll = tmp_path / "json_examples"
+    coll.mkdir()
+    (coll / "deps").mkdir()
+    (coll / "deps" / "x.py").write_text("print(1)\n", encoding="utf-8")
+    (coll / "deps.json").write_text(
+        json.dumps(
+            {
+                "schema_version": 2,
+                "name": "deps",
+                "examples": [
+                    {
+                        "id": "x",
+                        "name": "x.py",
+                        "file": "deps/x.py",
+                        "requirements": ["\x00F\x00l\x00a\x00s\x00k\x00", "requests", "ok-pkg_2"],
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    store = ContractStore.for_base_dir(base_dir=tmp_path)
+    store.load()
+    workspace = store.ensure_workspace(store.index["x"])
+    lines = (workspace / "requirements.txt").read_text(encoding="utf-8").splitlines()
     assert lines == ["requests", "ok-pkg_2"]
 
 
@@ -408,7 +457,7 @@ def _make_two_source_store(tmp_path):
         ),
         encoding="utf-8",
     )
-    return ExampleStore(base_dir=tmp_path, user_dir=user), user
+    return ContractStore.for_base_dir(base_dir=tmp_path, user_dir=user), user
 
 
 def _flat(root):
@@ -446,7 +495,7 @@ def test_source_dir_survives_load(tmp_path):
         ),
         encoding="utf-8",
     )
-    store = ExampleStore(base_dir=tmp_path, user_dir=tmp_path / "user_examples")
+    store = ContractStore.for_base_dir(base_dir=tmp_path, user_dir=tmp_path / "user_examples")
     flat = _flat(store.load())
     assert flat["t1"].source_dir == "tools/utility-crawlers"
     assert flat["t2"].source_dir is None
@@ -460,18 +509,19 @@ def test_user_collection_flag_distinguishes_source(tmp_path):
     assert store.is_user_collection(None) is False
 
 
-def test_delete_user_example_writes_back_and_cleans_cache(tmp_path):
+def test_delete_user_example_cleans_manifest_file_and_workspace(tmp_path):
+    """删除 = 清单条目 + 真实文件 + 工作区三处同步清理（契约 §5）。"""
     store, user = _make_two_source_store(tmp_path)
     flat = _flat(store.load())
     assert store.ensure_run_status(flat["u1"])  # 预热派生缓存
-    cache_dir = store.cache_dir / "u1"
-    assert cache_dir.is_dir()  # 单文件物化已发生
+    workspace = store.ensure_workspace(flat["u1"])
+    assert workspace is not None and workspace.is_dir()  # 工作区已建
 
     assert store.delete_user_example(flat["u1"]) is True
     data = json.loads((user / "mine.json").read_text(encoding="utf-8"))
     assert [s["id"] for s in data["examples"]] == ["u2"]
-    assert not cache_dir.exists()  # 物化缓存一并清理
-    assert str(store._run_status.get("u1", "")) == "" or "u1" not in store._run_status
+    assert not workspace.exists()  # 工作区一并清理
+    assert "u1" not in store._run_status and "u1" not in store.index
 
 
 def test_delete_refuses_builtin_and_missing(tmp_path):
