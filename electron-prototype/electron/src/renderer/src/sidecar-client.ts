@@ -28,7 +28,9 @@ import type {
   RunOutputEvent,
   SaveTextResult,
   SearchHit,
-  SidecarStatusEvent
+  SidecarStatusEvent,
+  StorageReport,
+  VersionInfo
 } from '../../../../shared/protocol'
 
 const bridge = window.sidecar
@@ -176,7 +178,14 @@ export const RPC_BINDINGS: Record<string, string> = {
   import_examples: 'importExamples',
   delete_example: 'deleteExample',
   explain_code: 'aiExplain',
-  stop_ai: 'aiStop'
+  stop_ai: 'aiStop',
+  storage_report: 'storageReport',
+  clean_workspace: 'cleanWorkspace',
+  reclaim_legacy_cache: 'reclaimLegacyCache',
+  list_versions: 'listVersions',
+  read_version: 'readVersion',
+  restore_version: 'restoreVersion',
+  install_example_deps: 'installExampleDeps'
 }
 
 /** 渲染层唯一的数据/命令入口（类型与 shared/protocol.ts 对齐）。 */
@@ -270,6 +279,25 @@ export const api = {
   // 应用信息与日志（帮助面板「环境信息」段、首启页「查看准备日志」）
   appInfo: (): Promise<AppInfo> => request('app:info', () => bridge.app.info()),
   openLog: (): Promise<OpenLogResult> => request('app:openLog', () => bridge.app.openLog()),
+
+  // A6：存储治理（设置中心「存储」分区）
+  storageReport: (): Promise<StorageReport> => request('storage_report', () => bridge.storageReport()),
+  cleanWorkspace: (mode: 'clean' | 'all'): Promise<{ removed: number; kept: number; freed_bytes: number }> =>
+    request('clean_workspace', () => bridge.cleanWorkspace(mode)),
+  reclaimLegacyCache: (): Promise<{ removed: number; freed_bytes: number }> =>
+    request('reclaim_legacy_cache', () => bridge.reclaimLegacyCache()),
+
+  // A6：编辑历史（可恢复编辑）
+  listVersions: (id: string): Promise<{ id: string; versions: VersionInfo[] }> =>
+    request('list_versions', () => bridge.listVersions(id)),
+  readVersion: (id: string, ts: string): Promise<{ id: string; ts: string; code: string }> =>
+    request('read_version', () => bridge.readVersion(id, ts)),
+  restoreVersion: (id: string, ts: string): Promise<{ id: string; restored: string }> =>
+    request('restore_version', () => bridge.restoreVersion(id, ts)),
+
+  // A6：缺依赖修复（失败恢复）
+  installExampleDeps: (id: string): Promise<{ installed: string[]; failed: string[]; packages: string[] }> =>
+    request('install_example_deps', () => bridge.installExampleDeps(id)),
 
   // 窗口控制（Windows 自绘标题栏三键；macOS 不展示但可用）
   win: {

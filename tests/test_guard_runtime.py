@@ -359,6 +359,18 @@ class _RpcEnv:
         self._patch.start()
         return self
 
+    def last_result(self) -> dict:
+        for obj in reversed(self.captured):
+            if "result" in obj:
+                return obj["result"]
+        raise AssertionError("未捕获任何 result")
+
+    def last_error(self) -> dict:
+        for obj in reversed(self.captured):
+            if "error" in obj:
+                return obj["error"]
+        raise AssertionError("未捕获任何 error")
+
     def __exit__(self, *exc) -> bool:
         self._patch.stop()
         store, root, idx, app_dir, data_dir, user_dir = self._orig
@@ -500,3 +512,103 @@ def test_g6_delete_last_example_removes_empty_collection_dir(tmp_path):
         server.method_import_examples(3, {"source_path": str(src), "name": "same"})
         assert (server._USER_DIR / "same.json").exists()
         server.method_delete_example(4, {"id": "one.py"})
+
+
+# ------------------------------------- A6：存储治理 / 编辑历史 / 缺依赖修复 RPC
+
+
+class _RecordingVenv(_StubVenv):
+    """记录安装请求的替身（不真装包）。"""
+
+    def __init__(self) -> None:
+        self.installed: list[list[str]] = []
+        self.python = sys.executable
+
+    def get_python_executable(self) -> Path:
+        return Path(self.python)
+
+    def install_packages(self, packages: list[str]) -> tuple[list[str], list[str]]:
+        self.installed.append(list(packages))
+        return list(packages), []
+
+
+def test_g6_storage_report_and_clean_rpcs(tmp_path):
+    """存储报告 / 两档清理 / 旧根回收 三个 RPC 真跑：报告结构正确、清理不误删 v2。"""
+    with _RpcEnv(tmp_path) as env:
+        src = tmp_path / "src"
+        src.mkdir()
+        (src / "keeper.py").write_text("print('k')\n", encoding="utf-8")
+        server.method_import_examples(1, {"source_path": str(src), "name": "mine"})
+        item = server._index["keeper.py"]
+        store = server._ensure_store()
+        ws = store.ensure_workspace(item)
+        assert ws is not None
+        (ws / "run-output.bin").write_bytes(b"o" * 128)
+
+        server.method_storage_report(2, {})
+        report = env.last_result()
+        assert report["workspace"]["bytes"] >= 128
+        keys = [e["key"] for e in report["workspace"]["entries"]]
+        assert ws.name in keys
+        assert report["workspace"]["asset_entries"] >= 1
+
+        # 旧根：缓存根下塞一个 v1 残留
+        legacy = store.cache_root / "stale-dir"
+        legacy.mkdir()
+        (legacy / "x.py").write_bytes(b"s" * 64)
+        server.method_reclaim_legacy_cache(3, {})
+        assert env.last_result()["removed"] == 1
+        assert not legacy.exists() and (store.workspace_root / "facts.json").parent.is_dir()
+
+        # clean 模式保留含资产的工作区；all 模式才删
+        server.method_clean_workspace(4, {"mode": "clean"})
+        assert env.last_result()["kept"] == 1 and ws.is_dir()
+        server.method_clean_workspace(5, {"mode": "all"})
+        assert env.last_result()["removed"] == 1 and not ws.exists()
+        server.method_clean_workspace(6, {"mode": "nuke"})
+        assert env.last_error()["code"] == -32602
+
+
+def test_g6_version_history_rpcs(tmp_path):
+    """保存 → 列版本 → 读内容 → 还原：走 RPC 层的真实链路（用户集合，v2）。"""
+    with _RpcEnv(tmp_path) as env:
+        src = tmp_path / "src"
+        src.mkdir()
+        (src / "v.py").write_text("print('v1')\n", encoding="utf-8")
+        server.method_import_examples(1, {"source_path": str(src), "name": "mine"})
+
+        server.method_save_example(2, {"id": "v.py", "code": "print('v2')\n"})
+        assert env.last_result()["status"] == "saved"
+        server.method_list_versions(3, {"id": "v.py"})
+        versions = env.last_result()["versions"]
+        assert len(versions) == 1
+        server.method_read_version(4, {"id": "v.py", "ts": versions[0]["ts"]})
+        assert env.last_result()["code"] == "print('v1')\n"
+
+        server.method_restore_version(5, {"id": "v.py", "ts": versions[0]["ts"]})
+        assert env.last_result()["restored"] == versions[0]["ts"]
+        assert server._index["v.py"].path.read_text(encoding="utf-8") == "print('v1')\n"
+        # 还原也应留痕（可再回退到 v2）
+        server.method_list_versions(6, {"id": "v.py"})
+        assert len(env.last_result()["versions"]) == 2
+
+
+def test_g6_install_example_deps_uses_derived_analysis(tmp_path):
+    """缺依赖修复：按「清单 requirements ∪ 派生 import 分析」装包，并刷新模块索引。"""
+    with _RpcEnv(tmp_path) as env:
+        monkeypatch_venv = _RecordingVenv()
+        with patch.object(server, "_get_venv_manager", lambda: monkeypatch_venv):
+            src = tmp_path / "src"
+            src.mkdir()
+            (src / "need.py").write_text("import requests\nprint('hi')\n", encoding="utf-8")
+            server.method_import_examples(1, {"source_path": str(src), "name": "mine"})
+
+            asyncio.run(server.method_install_example_deps(2, {"id": "need.py"}))
+
+        result = env.last_result()
+        assert result["installed"] == result["packages"]
+        assert "requests" in result["packages"], f"派生 import 未转成包名: {result['packages']}"
+        assert monkeypatch_venv.installed == [result["packages"]]
+
+        asyncio.run(server.method_install_example_deps(3, {"id": "does-not-exist"}))
+        assert env.last_error()["code"] == -32602

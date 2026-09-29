@@ -558,6 +558,19 @@ ipcMain.handle('file:downloadResultImage', async (event, { url, defaultName }: {
   }
 })
 
+// A6：存储治理 / 编辑历史 / 缺依赖修复（薄转发；校验与业务在 sidecar 侧）
+ipcMain.handle('sidecar:storageReport', () => callSidecar('storage_report'))
+ipcMain.handle('sidecar:cleanWorkspace', (_e, mode: string) => callSidecar('clean_workspace', { mode }))
+ipcMain.handle('sidecar:reclaimLegacyCache', () => callSidecar('reclaim_legacy_cache'))
+ipcMain.handle('sidecar:listVersions', (_e, id: string) => callSidecar('list_versions', { id }))
+ipcMain.handle('sidecar:readVersion', (_e, params: { id: string; ts: string }) =>
+  callSidecar('read_version', params)
+)
+ipcMain.handle('sidecar:restoreVersion', (_e, params: { id: string; ts: string }) =>
+  callSidecar('restore_version', params)
+)
+ipcMain.handle('sidecar:installExampleDeps', (_e, id: string) => callSidecar('install_example_deps', { id }))
+
 ipcMain.handle('sidecar:restart', async () => {
   if (sidecarProcess) {
     sidecarManuallyStopped = true

@@ -19,7 +19,14 @@
     "import_examples",
     "delete_example",
     "explain_code",
-    "stop_ai"
+    "stop_ai",
+    "storage_report",
+    "clean_workspace",
+    "reclaim_legacy_cache",
+    "list_versions",
+    "read_version",
+    "restore_version",
+    "install_example_deps"
   ],
   "notifications": [
     "sidecar_ready",
@@ -31,13 +38,40 @@
     "ai_explain_done",
     "ai_explain_error"
   ],
-  "local_events": ["status"],
+  "local_events": [
+    "status"
+  ],
   "namespaces": {
-    "store": ["get", "set"],
-    "app": ["info", "openLog"],
-    "env": ["status", "setRunEnv", "onProgress"],
-    "win": ["minimize", "toggleMaximize", "close", "isMaximized", "onMaximizedChange"],
-    "ai": ["getSettings", "setSettings", "explain", "stop"],
-    "file": ["pickDirectory", "saveTextFile", "downloadResultImage"]
+    "store": [
+      "get",
+      "set"
+    ],
+    "app": [
+      "info",
+      "openLog"
+    ],
+    "env": [
+      "status",
+      "setRunEnv",
+      "onProgress"
+    ],
+    "win": [
+      "minimize",
+      "toggleMaximize",
+      "close",
+      "isMaximized",
+      "onMaximizedChange"
+    ],
+    "ai": [
+      "getSettings",
+      "setSettings",
+      "explain",
+      "stop"
+    ],
+    "file": [
+      "pickDirectory",
+      "saveTextFile",
+      "downloadResultImage"
+    ]
   }
 }

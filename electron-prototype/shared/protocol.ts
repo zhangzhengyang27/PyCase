@@ -25,7 +25,14 @@ export const RPC_METHODS = [
   'import_examples',
   'delete_example',
   'explain_code',
-  'stop_ai'
+  'stop_ai',
+  'storage_report',
+  'clean_workspace',
+  'reclaim_legacy_cache',
+  'list_versions',
+  'read_version',
+  'restore_version',
+  'install_example_deps'
 ] as const
 
 export type RpcMethod = (typeof RPC_METHODS)[number]
@@ -170,6 +177,26 @@ export interface EnvPhase {
   elapsed_ms: number
 }
 
+/** 历史版本条目（可恢复编辑）。 */
+export interface VersionInfo {
+  ts: string
+  bytes: number
+  sha256: string
+}
+
+/** 存储占用报告（工作区明细 + v1 旧根 + 编辑历史）。 */
+export interface StorageReport {
+  workspace: {
+    root: string
+    bytes: number
+    max_bytes: number
+    entries: { key: string; bytes: number; last_used: number; has_assets: boolean }[]
+    asset_entries: number
+  }
+  legacy: { root: string; bytes: number; entries: number }
+  history: { bytes: number }
+}
+
 export interface RunExampleParams {
   id: string
   args?: string[]
@@ -228,6 +255,19 @@ export interface RpcContract {
     result: { run_id: string; status?: 'error'; error?: string }
   }
   stop_ai: { params: { run_id: string }; result: { status: 'cancelled'; run_id: string } }
+  // A6：存储治理（设置中心「存储」分区）
+  storage_report: { params: void; result: StorageReport }
+  clean_workspace: { params: { mode: 'clean' | 'all' }; result: { removed: number; kept: number; freed_bytes: number } }
+  reclaim_legacy_cache: { params: void; result: { removed: number; freed_bytes: number } }
+  // A6：编辑历史（可恢复编辑）
+  list_versions: { params: { id: string }; result: { id: string; versions: VersionInfo[] } }
+  read_version: { params: { id: string; ts: string }; result: { id: string; ts: string; code: string } }
+  restore_version: { params: { id: string; ts: string }; result: { id: string; restored: string } }
+  // A6：缺依赖修复（失败恢复）
+  install_example_deps: {
+    params: { id: string }
+    result: { installed: string[]; failed: string[]; packages: string[] }
+  }
 }
 
 /** 编译期穷尽检查：RPC_METHODS 与 RpcContract 的键必须互相覆盖。 */

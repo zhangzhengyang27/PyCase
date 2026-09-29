@@ -145,3 +145,123 @@ def test_workspace_refresh_preserves_user_assets(tmp_path):
     store.ensure_workspace(item)
     assert (ws / "a.py").read_text(encoding="utf-8") == "print(2)\n"
     assert (ws / "output.bin").is_file(), "基线刷新删掉了运行产物"
+
+
+# ----------------------------------------------- 编辑历史（A6 可恢复编辑）
+
+
+def _edit_store(tmp_path: Path) -> ContractStore:
+    store = _store(tmp_path, [{"id": "a", "name": "a.py", "code": "print(1)\n"}])
+    store.history_root = tmp_path / "edit_history"
+    return store
+
+
+def test_edit_history_snapshot_and_restore(tmp_path):
+    """保存覆盖前留快照；可查看历史内容并一键还原（还原本身也可回退）。"""
+    store = _edit_store(tmp_path)
+    item = store.index["a"]
+    assert store.save_item(item, "print(2)\n") is True
+
+    versions = store.list_versions(item)
+    assert len(versions) == 1, "保存应留下旧内容快照"
+    old = store.read_version(item, versions[0]["ts"])
+    assert old == "print(1)\n"
+
+    # 还原：当前内容（print(2)）也留一份快照，可再回退
+    assert store.restore_version(item, versions[0]["ts"]) is True
+    assert item.path.read_text(encoding="utf-8") == "print(1)\n"
+    assert store.read_version(item, versions[0]["ts"]) == "print(1)\n"
+    assert len(store.list_versions(item)) == 2, "还原前应给当时内容留快照"
+
+
+def test_edit_history_keeps_recent_versions_only(tmp_path):
+    """历史保留最近 10 版，旧快照自动裁剪。"""
+    store = _edit_store(tmp_path)
+    item = store.index["a"]
+    for i in range(2, 14):  # 12 次保存 → 12 份快照
+        assert store.save_item(item, f"print({i})\n") is True
+        time.sleep(0.01)
+    versions = store.list_versions(item)
+    assert len(versions) == ContractStore.VERSION_KEEP
+    # 最新一份应是倒数第二次保存的内容
+    assert store.read_version(item, versions[0]["ts"]) == "print(12)\n"
+
+
+def test_read_version_rejects_path_traversal(tmp_path):
+    store = _edit_store(tmp_path)
+    item = store.index["a"]
+    store.save_item(item, "print(2)\n")
+    assert store.read_version(item, "../secrets") is None
+    assert store.read_version(item, "") is None
+
+
+# ----------------------------------------------- 存储治理（A6 缓存入口）
+
+
+def test_storage_report_lists_workspace_and_legacy(tmp_path):
+    store = _edit_store(tmp_path)
+    item = store.index["a"]
+    ws = store.ensure_workspace(item)
+    assert ws is not None
+    (ws / "output.bin").write_bytes(b"x" * 300)
+    # 造一个 v1 旧根残留（缓存根下非 v2 的目录）
+    legacy = store.cache_root / "old_example-1234abcd"
+    legacy.mkdir(parents=True)
+    (legacy / "a.py").write_bytes(b"y" * 500)
+
+    report = store.storage_report()
+    assert report["workspace"]["bytes"] >= 300
+    assert report["workspace"]["max_bytes"] > 0
+    assert [e["key"] for e in report["workspace"]["entries"]] == [ws.name]
+    assert report["workspace"]["entries"][0]["has_assets"] is True
+    assert report["workspace"]["asset_entries"] == 1
+    assert report["legacy"]["entries"] == 1
+    assert report["legacy"]["bytes"] >= 500
+
+
+def test_clean_workspace_two_modes(tmp_path):
+    """clean 保留含用户资产的条目；all 全清（用户显式选择）。"""
+    store = _edit_store(tmp_path)
+    item = store.index["a"]
+    with_asset = store.ensure_workspace(item)
+    assert with_asset is not None
+    (with_asset / "keep.bin").write_bytes(b"z" * 100)
+
+    result = store.clean_workspace("clean")
+    assert result["removed"] == 0 and result["kept"] == 1
+    assert with_asset.is_dir(), "clean 模式不得删除含用户资产的工作区"
+
+    result = store.clean_workspace("all")
+    assert result["removed"] == 1 and result["freed_bytes"] >= 100
+    assert not with_asset.exists()
+
+
+def test_reclaim_legacy_cache_keeps_v2(tmp_path):
+    """v1 旧根回收只清缓存根下非 v2 的内容，工作区与烘焙事实不受影响。"""
+    store = _edit_store(tmp_path)
+    item = store.index["a"]
+    ws = store.ensure_workspace(item)
+    assert ws is not None
+    facts = store.workspace_root / "facts.json"
+    facts.write_text("{}", encoding="utf-8")
+    legacy_dir = store.cache_root / "v1_stale-dir"
+    legacy_dir.mkdir()
+    (legacy_dir / "a.py").write_bytes(b"q" * 200)
+    legacy_file = store.cache_root / "stray.tmp"
+    legacy_file.write_bytes(b"t" * 10)
+
+    result = store.reclaim_legacy_cache()
+    assert result["removed"] == 2
+    assert not legacy_dir.exists() and not legacy_file.exists()
+    assert ws.is_dir(), "回收旧根不得触碰 v2 工作区"
+    assert facts.is_file(), "回收旧根不得删掉烘焙事实缓存"
+
+
+def test_clean_workspace_rejects_unknown_mode(tmp_path):
+    store = _edit_store(tmp_path)
+    try:
+        store.clean_workspace("nuke")
+    except ValueError as e:
+        assert "nuke" in str(e)
+    else:  # pragma: no cover - 明确失败路径
+        raise AssertionError("未知模式必须拒绝")

@@ -122,6 +122,23 @@ class VenvManager:
         req = file_path.parent / "requirements.txt"
         return req if req.exists() else None
 
+    def install_packages(self, packages: list[str]) -> tuple[list[str], list[str]]:
+        """把若干第三方包装进共享 venv（缺依赖修复路径）；返回 (已装, 失败)。
+
+        逐包装、失败即收集：一个坏包不该拖垮其余依赖。调用方须放入线程池。
+        """
+        installed: list[str] = []
+        failed: list[str] = []
+        with self._lock:
+            if not self._prepare_venv():
+                return [], list(packages)
+            for pkg in packages:
+                if self._pip_install([pkg], timeout=self.BOOTSTRAP_TIMEOUT):
+                    installed.append(pkg)
+                else:
+                    failed.append(pkg)
+        return installed, failed
+
     def clear_all_cache(self) -> int:
         """清理共享 venv 与旧版按示例 venv 缓存，返回清理的目录数量。"""
         with self._lock:  # 与 ensure_python/prepare 互斥：不能并发删除 pip 正在写入的环境

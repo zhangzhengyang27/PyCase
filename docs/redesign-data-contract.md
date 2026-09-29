@@ -177,6 +177,16 @@ load 不建工作区；工作区缺失/损坏时由它自愈重建。单文件�
 | 代码搜索 | 前端在本地全量 code 上搜 | 新增服务端 `search_examples(query)`：元数据内存检索 + **code 按需读文件**，返回 id + 命中原因；前端防抖调用 |
 | 运行/保存/资源/AI | 按 id | 不变（按 id，不传路径）；运行时隐含 `ensure_workspace`，保存写真实文件（原子替换） |
 
+A6 增补（产品化补课，与 §4.4 的清理口径配套）：
+
+| RPC | 作用 | 关键约束 |
+|---|---|---|
+| `storage_report` | 设置入口的占用数据源 | 工作区条目明细（含 `has_assets`）+ v1 旧根占用 + 编辑历史占用；只读 |
+| `clean_workspace(mode)` | 用户按的清理按钮 | `clean` 跳过含用户资产的条目；`all` 需用户显式选择；不受 1GiB 上限约束 |
+| `reclaim_legacy_cache` | v1 旧根一键回收 | 只删缓存根的直接子项，绝不触碰 v2 工作区与烘焙事实缓存 |
+| `list_versions` / `read_version` / `restore_version` | 可恢复编辑 | 快照落在 userData 的编辑历史目录（缓存根之外，不被清理波及）；每例保留最近 10 版；**保存与还原前都会先留快照**，还原可反复回退；`ts` 必须是纯文件名（防路径穿越） |
+| `install_example_deps` | 缺依赖修复 | 包名 = 清单 `requirements` ∪ 派生 `deps` 的映射（剔本地模块与装不上的历史名）；装完刷新模块索引，徽章即时生效 |
+
 其余方法（`run_example`/`save_example`/导入/删除等）签名不变；完整方法表在 B2 落地时补齐金标（G7）——
 **已冻结为 `electron-prototype/shared/protocol.json`**：Python 金标（`tests/test_guard_protocol.py`）
 与 TS 契约测试（`src/renderer/src/__tests__/protocol.spec.ts`）双端钉住同一份名表，增删方法必须同时改它。

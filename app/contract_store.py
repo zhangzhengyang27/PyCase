@@ -20,6 +20,7 @@ import os
 import re
 import shutil
 import tempfile
+import time
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Callable, Iterable
@@ -102,11 +103,16 @@ class ContractStore:
         data_root: Path,
         workspace_root: Path,
         user_dir: Path | None = None,
+        history_root: Path | None = None,
     ) -> None:
         self.collection_dir = Path(collection_dir).resolve()
         self.data_root = Path(data_root).resolve()
-        self.workspace_root = Path(workspace_root).resolve() / WORKSPACE_VERSION
+        # 旧根（DATA_DIR/.json_examples_cache）用于 v1 回收；工作区在其 v2 子目录下
+        self.cache_root = Path(workspace_root).resolve()
+        self.workspace_root = self.cache_root / WORKSPACE_VERSION
         self.user_dir = Path(user_dir).resolve() if user_dir else None
+        # 编辑历史（可恢复编辑）：放在缓存根之外，避免被缓存清理/孤儿回收误删
+        self.history_root = Path(history_root).resolve() if history_root else self.cache_root.parent / "edit_history"
         self._index: dict[str, ExampleItem] = {}
         self._root: ExampleItem | None = None
         self._manifests: dict[str, Manifest] = {}
@@ -126,11 +132,13 @@ class ContractStore:
     def for_base_dir(cls, base_dir: Path, cache_dir: Path | None = None, user_dir: Path | None = None) -> "ContractStore":
         """按 v1 的 (base_dir, cache_dir, user_dir) 口径构造，供测试与迁移期平滑切换。"""
         base = Path(base_dir).resolve()
+        cache_root = Path(cache_dir) if cache_dir else base / WORKSPACE_DIRNAME
         return cls(
             collection_dir=base / "json_examples",
             data_root=base,
-            workspace_root=(Path(cache_dir) if cache_dir else base / WORKSPACE_DIRNAME),
+            workspace_root=cache_root,
             user_dir=user_dir,
+            history_root=Path(cache_root).resolve().parent / "edit_history",
         )
 
     # ------------------------------------------------------------------ 加载
@@ -711,6 +719,8 @@ class ContractStore:
         if not self._is_v2_item(item):
             get_logger(__name__).warning("该集合尚未迁移到契约 v2，编辑只读: %s", item.json_id)
             return False
+        # 可恢复编辑：覆盖前把旧内容留成快照（失败不阻断保存——快照是增益不是关卡）
+        self.snapshot_item(item)
         try:
             _atomic_write_text(item.path, new_code)
         except OSError as e:
@@ -861,6 +871,205 @@ class ContractStore:
             p.is_file() and p.name not in known and p.name != ".manifest.json"
             for p in workspace.rglob("*")
         )
+
+    # ------------------------------------------------------------------ 编辑历史（可恢复编辑）
+    VERSION_KEEP = 10
+
+    def _history_dir(self, item: ExampleItem) -> Path:
+        return self.history_root / safe_name(item.json_id or item.name)
+
+    def snapshot_item(self, item: ExampleItem) -> str | None:
+        """把示例当前真实内容存成一份历史快照，返回快照 ts；无内容或写失败返回 None。
+
+        触发点：保存覆盖前、还原前（保证"还原"本身也可回退）。
+        只依赖真实文件内容，不依赖工作区；保留最近 VERSION_KEEP 份。
+        """
+        try:
+            if not item.path.is_file():
+                return None
+            content = item.path.read_bytes()
+            digest = hashlib.sha256(content).hexdigest()[:8]
+            ts = time.strftime("%Y%m%d-%H%M%S") + f"-{digest}"
+            target = self._history_dir(item) / f"{ts}.py"
+            if target.exists():  # 同秒同内容：已存在则跳过
+                return ts
+            dest_dir = target.parent
+            dest_dir.mkdir(parents=True, exist_ok=True)
+            self._write_atomic(target, lambda tmp: tmp.write_bytes(content))
+        except OSError as e:
+            get_logger(__name__).warning("编辑快照失败（不阻断保存）: %s: %s", item.json_id, e)
+            return None
+        self._prune_versions(item)
+        return ts
+
+    def _version_files(self, item: ExampleItem) -> list[Path]:
+        """快照文件按写入时间新→旧排序。
+
+        不能按文件名排序：时间戳只到秒，同一秒内的多次保存会退化成按内容哈希排，
+        顺序就乱了（可恢复编辑的"最近一版"必须真是最近写的）。mtime 同秒时用名字兜底。
+        """
+        try:
+            files = list(self._history_dir(item).glob("*.py"))
+        except OSError:
+            return []
+
+        def key(p: Path) -> tuple[float, str]:
+            try:
+                return (p.stat().st_mtime, p.name)
+            except OSError:
+                return (0.0, p.name)
+
+        return sorted(files, key=key, reverse=True)
+
+    def _prune_versions(self, item: ExampleItem) -> None:
+        """只保留最近 VERSION_KEEP 份快照。"""
+        files = self._version_files(item)
+        for stale in files[self.VERSION_KEEP:]:
+            try:
+                stale.unlink()
+            except OSError:
+                pass
+
+    def list_versions(self, item: ExampleItem) -> list[dict[str, Any]]:
+        """历史版本列表（新→旧）：ts / bytes / sha256。"""
+        out: list[dict[str, Any]] = []
+        for f in self._version_files(item):
+            try:
+                raw = f.read_bytes()
+            except OSError:
+                continue
+            out.append({"ts": f.stem, "bytes": len(raw), "sha256": hashlib.sha256(raw).hexdigest()})
+        return out
+
+    def read_version(self, item: ExampleItem, ts: str) -> str | None:
+        """读某份历史内容（ts 必须是纯文件名，杜绝路径穿越）。"""
+        if not ts or Path(ts).name != ts:
+            return None
+        target = self._history_dir(item) / f"{ts}.py"
+        try:
+            return target.read_text(encoding="utf-8")
+        except (OSError, UnicodeDecodeError):
+            return None
+
+    def restore_version(self, item: ExampleItem, ts: str) -> bool:
+        """把某份历史内容还原成当前内容（还原前先快照当前，保证可再回退）。"""
+        content = self.read_version(item, ts)
+        if content is None:
+            return False
+        return self.save_item(item, content)
+
+    # ------------------------------------------------------------------ 存储治理（缓存入口）
+    def storage_report(self) -> dict[str, Any]:
+        """存储占用报告：工作区条目明细 + v1 旧根占用（契约 §4.4 的设置入口数据源）。"""
+        entries: list[dict[str, Any]] = []
+        if self.workspace_root.is_dir():
+            for workspace in sorted(self.workspace_root.iterdir()):
+                if not workspace.is_dir() or workspace.name == "v2":
+                    continue
+                size = 0
+                try:
+                    size = sum(p.stat().st_size for p in workspace.rglob("*") if p.is_file())
+                except OSError:
+                    pass
+                ledger = workspace / ".manifest.json"
+                try:
+                    last_used = ledger.stat().st_mtime if ledger.is_file() else workspace.stat().st_mtime
+                except OSError:
+                    last_used = 0.0
+                entries.append(
+                    {
+                        "key": workspace.name,
+                        "bytes": size,
+                        "last_used": round(last_used, 3),
+                        "has_assets": self._has_user_assets(workspace),
+                    }
+                )
+        legacy_bytes = 0
+        legacy_entries = 0
+        for path in self._legacy_paths():
+            try:
+                if path.is_dir():
+                    legacy_bytes += sum(p.stat().st_size for p in path.rglob("*") if p.is_file())
+                else:
+                    legacy_bytes += path.stat().st_size
+                legacy_entries += 1
+            except OSError:
+                continue
+        return {
+            "workspace": {
+                "root": str(self.workspace_root),
+                "bytes": self.workspace_usage(),
+                "max_bytes": DEFAULT_MAX_BYTES,
+                "entries": entries,
+                "asset_entries": sum(1 for e in entries if e["has_assets"]),
+            },
+            "legacy": {"root": str(self.cache_root), "bytes": legacy_bytes, "entries": legacy_entries},
+            "history": {"bytes": self._history_usage()},
+        }
+
+    def _history_usage(self) -> int:
+        if not self.history_root.is_dir():
+            return 0
+        try:
+            return sum(p.stat().st_size for p in self.history_root.rglob("*") if p.is_file())
+        except OSError:
+            return 0
+
+    def _legacy_paths(self) -> list[Path]:
+        """v1 旧根内容：缓存根下除 v2 工作区之外的一切（v1 的按示例目录与残留文件）。"""
+        if not self.cache_root.is_dir():
+            return []
+        try:
+            return [p for p in sorted(self.cache_root.iterdir()) if p.name != WORKSPACE_VERSION]
+        except OSError:
+            return []
+
+    def clean_workspace(self, mode: str = "clean") -> dict[str, int]:
+        """清理工作区：clean = 只清无用户资产的条目；all = 全部清（含资产，需用户显式选择）。
+
+        与 prune 的区别：这是用户按的清理按钮，不受 1GiB 上限影响。
+        """
+        if mode not in ("clean", "all"):
+            raise ValueError(f"未知清理模式: {mode}")
+        removed = 0
+        kept = 0
+        freed = 0
+        if self.workspace_root.is_dir():
+            for workspace in sorted(self.workspace_root.iterdir()):
+                if not workspace.is_dir():
+                    continue
+                if mode == "clean" and self._has_user_assets(workspace):
+                    kept += 1
+                    continue
+                try:
+                    freed += sum(p.stat().st_size for p in workspace.rglob("*") if p.is_file())
+                except OSError:
+                    pass
+                shutil.rmtree(workspace, ignore_errors=True)
+                removed += 1
+        get_logger(__name__).info("工作区清理（%s）：删除 %d 个，保留 %d 个，释放 %d 字节", mode, removed, kept, freed)
+        return {"removed": removed, "kept": kept, "freed_bytes": freed}
+
+    def reclaim_legacy_cache(self) -> dict[str, int]:
+        """回收 v1 旧根（缓存根下非 v2 的内容）：默认设置入口的"一键回收"。
+
+        护栏：只删缓存根的直接子项；绝不触碰 v2 工作区；逐项记日志便于追溯。
+        """
+        removed = 0
+        freed = 0
+        for path in self._legacy_paths():
+            try:
+                if path.is_dir():
+                    freed += sum(p.stat().st_size for p in path.rglob("*") if p.is_file())
+                    shutil.rmtree(path, ignore_errors=True)
+                else:
+                    freed += path.stat().st_size
+                    path.unlink(missing_ok=True)
+                removed += 1
+            except OSError as e:
+                get_logger(__name__).warning("旧缓存回收失败 %s: %s", path, e)
+        get_logger(__name__).info("v1 旧根回收：删除 %d 项，释放 %d 字节", removed, freed)
+        return {"removed": removed, "freed_bytes": freed}
 
     def user_assets(self, item: ExampleItem) -> list[Path]:
         """工作区里的用户资产与运行产物（不在基线清单中的文件）。"""

@@ -699,6 +699,122 @@ async def method_stop_run(req_id: Any, params: dict[str, Any]) -> None:
         _kill(proc)
 
 
+
+
+def _example_packages(store: ContractStore, item: ExampleItem) -> list[str]:
+    """该示例要装的包：清单 requirements ∪ 派生 deps 的包名映射（去重、排序、剔本地/黑名单）。"""
+    from app.facts_cli import EXCLUDED_PKGS, _local_module_names, _norm_pkg  # 复用聚合口径
+    from app.importer import IMPORT_TO_PKG
+
+    entry = store._entry_of(item)
+    names: set[str] = set()
+    for req in (entry.requirements if entry else []) or []:
+        pkg = _norm_pkg(str(req))
+        if pkg and pkg not in EXCLUDED_PKGS:
+            names.add(pkg)
+    local = _local_module_names(REPO_ROOT)
+    facts_entry = store._fact_entry(item) or {}
+    for mod in facts_entry.get("deps") or []:
+        if mod in local:
+            continue
+        pkg = _norm_pkg(IMPORT_TO_PKG.get(mod, mod))
+        if pkg and pkg not in EXCLUDED_PKGS:
+            names.add(pkg)
+    return sorted(names)
+
+# ---------------------------------------------------------------------------
+# 存储治理（A6 缓存入口）：占用报告 / 两档清理 / v1 旧根回收
+# ---------------------------------------------------------------------------
+def method_storage_report(req_id: Any, params: dict[str, Any]) -> None:
+    """返回工作区占用明细 + v1 旧根占用（设置中心「存储」分区的数据源）。"""
+    _result(req_id, _ensure_store().storage_report())
+
+
+def method_clean_workspace(req_id: Any, params: dict[str, Any]) -> None:
+    """清理工作区：clean = 保留含用户资产的条目；all = 全部清理（用户显式选择）。"""
+    mode = str(params.get("mode") or "clean")
+    if mode not in ("clean", "all"):
+        _error(req_id, -32602, "mode 必须是 clean 或 all")
+        return
+    _result(req_id, _ensure_store().clean_workspace(mode))
+
+
+def method_reclaim_legacy_cache(req_id: Any, params: dict[str, Any]) -> None:
+    """回收 v1 旧缓存根（缓存根下非 v2 内容），返回删除项数与释放字节。"""
+    _result(req_id, _ensure_store().reclaim_legacy_cache())
+
+
+# ---------------------------------------------------------------------------
+# 编辑历史（A6 可恢复编辑）：列表 / 取内容 / 还原
+# ---------------------------------------------------------------------------
+def _history_item(example_id: Any) -> ExampleItem | None:
+    """按 id 取示例（历史相关方法共用；不存在返回 None，由调用方报错）。"""
+    _ensure_store()
+    item = _index.get(example_id)
+    return item if isinstance(example_id, str) else None
+
+
+def method_list_versions(req_id: Any, params: dict[str, Any]) -> None:
+    item = _history_item(params.get("id"))
+    if item is None:
+        _error(req_id, -32602, f"示例不存在: {params.get('id')}")
+        return
+    _result(req_id, {"id": item.json_id, "versions": _ensure_store().list_versions(item)})
+
+
+def method_read_version(req_id: Any, params: dict[str, Any]) -> None:
+    item = _history_item(params.get("id"))
+    if item is None:
+        _error(req_id, -32602, f"示例不存在: {params.get('id')}")
+        return
+    ts = str(params.get("ts") or "")
+    content = _ensure_store().read_version(item, ts)
+    if content is None:
+        _error(req_id, -32602, f"版本不存在: {ts}")
+        return
+    _result(req_id, {"id": item.json_id, "ts": ts, "code": content})
+
+
+def method_restore_version(req_id: Any, params: dict[str, Any]) -> None:
+    """还原到某份历史版本（还原前会对当前内容再留一份快照，可反复回退）。"""
+    item = _history_item(params.get("id"))
+    if item is None:
+        _error(req_id, -32602, f"示例不存在: {params.get('id')}")
+        return
+    ts = str(params.get("ts") or "")
+    if not _ensure_store().restore_version(item, ts):
+        _error(req_id, -32600, f"还原失败（版本不存在或写盘失败）: {ts}")
+        return
+    _result(req_id, {"id": item.json_id, "restored": ts})
+
+
+# ---------------------------------------------------------------------------
+# 缺依赖修复（A6 失败恢复）：按派生 import 分析装包并刷新模块索引
+# ---------------------------------------------------------------------------
+async def method_install_example_deps(req_id: Any, params: dict[str, Any]) -> None:
+    """把该示例的依赖装进共享 venv：清单 requirements ∪ 派生 import 分析（去本地模块/黑名单）。
+
+    装完刷新模块索引，让画廊的可运行性徽章立即反映新环境；随后前端可自动重跑。
+    """
+    store = _ensure_store()
+    item = _history_item(params.get("id"))
+    if item is None:
+        _error(req_id, -32602, f"示例不存在: {params.get('id')}")
+        return
+    packages = _example_packages(store, item)
+    if not packages:
+        _result(req_id, {"installed": [], "failed": [], "packages": []})
+        return
+    mgr = _get_venv_manager()
+    installed, failed = await asyncio.to_thread(mgr.install_packages, packages)
+    if installed:
+        # 环境变了：刷新模块索引并清掉可运行性缓存
+        try:
+            store.set_module_python(str(mgr.get_python_executable()))
+        except Exception as e:  # noqa: BLE001 - 索引刷新失败不影响"已装包"这个事实
+            get_logger(__name__).warning("刷新模块索引失败: %s", e)
+    _result(req_id, {"installed": installed, "failed": failed, "packages": packages})
+
 # ---------------------------------------------------------------------------
 # argparse 静态分析（AST，无需执行代码）
 # ---------------------------------------------------------------------------
@@ -1257,6 +1373,14 @@ METHODS = {
     "delete_example": method_delete_example,
     "explain_code": method_explain_code,  # async，流式
     "stop_ai": method_stop_ai,
+    # A6：存储治理 / 编辑历史 / 缺依赖修复
+    "storage_report": method_storage_report,
+    "clean_workspace": method_clean_workspace,
+    "reclaim_legacy_cache": method_reclaim_legacy_cache,
+    "list_versions": method_list_versions,
+    "read_version": method_read_version,
+    "restore_version": method_restore_version,
+    "install_example_deps": method_install_example_deps,  # async
 }
 
 

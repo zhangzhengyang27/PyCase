@@ -14,7 +14,9 @@ import type {
   OpenLogResult,
   PickDirectoryResult,
   SaveTextResult,
-  SearchHit
+  SearchHit,
+  StorageReport,
+  VersionInfo
 } from '../../../shared/protocol'
 
 // 三层绑定恢复（首帧前）：渲染层 main.ts 要等模块加载完才执行，light 用户会闪暗色、
@@ -129,6 +131,19 @@ export interface SidecarAPI {
   onRunFinished: (callback: (data: { run_id: string; exit_code: number }) => void) => () => void
   onRunImages: (callback: (data: { run_id: string; images: string[] }) => void) => () => void
 
+  // A6：存储治理（设置中心「存储」分区）
+  storageReport: () => Promise<StorageReport>
+  cleanWorkspace: (mode: 'clean' | 'all') => Promise<{ removed: number; kept: number; freed_bytes: number }>
+  reclaimLegacyCache: () => Promise<{ removed: number; freed_bytes: number }>
+
+  // A6：编辑历史（可恢复编辑）
+  listVersions: (id: string) => Promise<{ id: string; versions: VersionInfo[] }>
+  readVersion: (id: string, ts: string) => Promise<{ id: string; ts: string; code: string }>
+  restoreVersion: (id: string, ts: string) => Promise<{ id: string; restored: string }>
+
+  // A6：缺依赖修复（失败恢复）
+  installExampleDeps: (id: string) => Promise<{ installed: string[]; failed: string[]; packages: string[] }>
+
   // 通用 sidecar 通知订阅（method 即 sidecar 发出的 notification 方法名，如 ai_explain_chunk）
   onNotification: (method: string, callback: (data: unknown) => void) => () => void
 }
@@ -202,6 +217,15 @@ const sidecarAPI: SidecarAPI = {
     explain: (code: string, fileName?: string) => ipcRenderer.invoke('ai:explain', { code, file_name: fileName }),
     stop: (runId: string) => ipcRenderer.invoke('ai:stop', runId)
   },
+
+  // A6：存储治理 / 编辑历史 / 缺依赖修复
+  storageReport: () => ipcRenderer.invoke('sidecar:storageReport'),
+  cleanWorkspace: (mode: 'clean' | 'all') => ipcRenderer.invoke('sidecar:cleanWorkspace', mode),
+  reclaimLegacyCache: () => ipcRenderer.invoke('sidecar:reclaimLegacyCache'),
+  listVersions: (id: string) => ipcRenderer.invoke('sidecar:listVersions', id),
+  readVersion: (id: string, ts: string) => ipcRenderer.invoke('sidecar:readVersion', { id, ts }),
+  restoreVersion: (id: string, ts: string) => ipcRenderer.invoke('sidecar:restoreVersion', { id, ts }),
+  installExampleDeps: (id: string) => ipcRenderer.invoke('sidecar:installExampleDeps', id),
 
   // 事件订阅（sidecar -> 渲染进程的通知）
   onStatus: (callback) => subscribe('sidecar:status', callback),
