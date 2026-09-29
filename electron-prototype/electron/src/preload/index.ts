@@ -58,6 +58,17 @@ export interface SidecarAPI {
     set: (name: string, value: unknown) => Promise<unknown>
   }
 
+  // 应用与环境（A5.5 帮助面板 / 首启引导页）
+  app: {
+    info: () => Promise<unknown>
+    openLog: () => Promise<unknown>
+  }
+  env: {
+    status: () => Promise<unknown>
+    setRunEnv: (mode: 'shared' | 'system') => Promise<unknown>
+    onProgress: (callback: (data: unknown) => void) => Unsubscribe
+  }
+
   // 窗口控制（Windows frameless 自绘标题栏三键；macOS 侧按钮不展示但仍可用）
   win: {
     minimize: () => Promise<unknown>
@@ -122,6 +133,17 @@ const sidecarAPI: SidecarAPI = {
   store: {
     get: (name: string) => ipcRenderer.invoke('store:get', name),
     set: (name: string, value: unknown) => ipcRenderer.invoke('store:set', name, value)
+  },
+
+  // 应用与环境
+  app: {
+    info: () => ipcRenderer.invoke('app:info'),
+    openLog: () => ipcRenderer.invoke('app:openLog')
+  },
+  env: {
+    status: () => ipcRenderer.invoke('sidecar:envStatus'),
+    setRunEnv: (mode: 'shared' | 'system') => ipcRenderer.invoke('sidecar:setRunEnv', mode),
+    onProgress: (callback: (data: unknown) => void) => subscribe('sidecar:env_progress', callback)
   },
 
   // 窗口控制

@@ -110,6 +110,44 @@ _ai_running: dict[str, threading.Event] = {}
 _bg_tasks: set[asyncio.Task] = set()
 _venv_manager: VenvManager | None = None
 
+# ---------------------------------------------------------------------------
+# 环境准备状态（首启引导页与帮助面板消费；A5.5）
+# ---------------------------------------------------------------------------
+# 阶段推进顺序：preparing（建 venv 装依赖）→ indexing（建示例索引）→ warming（预检可运行性）→ ready
+# 失败进 failed 并带原因；status 供轮询（首启页打开时补一次全量），progress 事件供增量推进
+_ENV_LOG = DATA_DIR / "logs" / "sidecar.log"
+_env_state: dict[str, Any] = {
+    "phase": "starting",
+    "failed_at": "",
+    "started_at": time.time(),
+    "error": "",
+    "log_path": str(_ENV_LOG),
+}
+# 运行解释器模式：'shared'（默认，共享 venv）或 'system'（用户显式选择「用系统 Python 继续」）
+_run_env_mode = "shared"
+
+
+def _env_snapshot() -> dict[str, Any]:
+    """环境状态快照：只读事实 + 解释器模式，缺的字段留空而不是编造。"""
+    mgr = _get_venv_manager()
+    venv_python = mgr.get_python_executable()
+    snap: dict[str, Any] = dict(_env_state)
+    snap["mode"] = _run_env_mode
+    snap["venv_path"] = str(mgr.venv_path)
+    snap["venv_ready"] = venv_python.exists() and not mgr.needs_prepare()
+    snap["python_version"] = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
+    snap["examples"] = len(_index)
+    snap["elapsed_ms"] = int((time.time() - float(_env_state.get("started_at") or time.time())) * 1000)
+    return snap
+
+
+def _set_env_phase(phase: str, error: str = "", failed_at: str = "") -> None:
+    """推进环境阶段并广播（首启页据此显示步骤状态；失败带原因与失败的步骤）。"""
+    _env_state["phase"] = phase
+    _env_state["error"] = error
+    _env_state["failed_at"] = failed_at
+    _notify("env_progress", _env_snapshot())
+
 
 def _on_bg_task_done(task: asyncio.Task) -> None:
     """后台任务收尾：解除强引用并把意外异常写入日志（而非静默消失）。"""
@@ -408,34 +446,48 @@ async def _run_subprocess(
     # 通过 VenvManager 获取项目共享 venv 的解释器（首次运行时自动创建并预装常用库，
     # 示例目录的 requirements.txt 会装入同一环境）；阻塞操作放到线程池执行
     venv_mgr = _get_venv_manager()
-    if venv_mgr.needs_prepare():
+    if _run_env_mode == "system":
+        # 用户显式选择「用系统 Python 继续」：不碰共享环境，直接用系统解释器
+        python_exe = REAL_PYTHON
         _notify(
             "run_output",
             {
                 "run_id": run_id,
-                "text": "[系统] 首次运行：正在初始化共享运行环境（创建 venv 并安装常用依赖，约需几分钟）...\n",
+                "text": "[系统] 已按你的选择使用系统 Python（不覆盖共享环境）；缺依赖的示例会在此模式下报 ImportError\n",
             },
         )
-    try:
-        ok, python_exe = await asyncio.to_thread(venv_mgr.ensure_python, file_path)
-        # 成功路径不输出环境噪音日志，仅在异常时提示回退
-        if not ok:
+    else:
+        if venv_mgr.needs_prepare():
             _notify(
                 "run_output",
                 {
                     "run_id": run_id,
-                    "text": "[系统] 共享虚拟环境创建失败，回退系统 Python\n",
+                    "text": "[系统] 首次运行：正在初始化共享运行环境（创建 venv 并安装常用依赖，约需几分钟）...\n",
                 },
             )
-    except Exception as e:  # noqa: BLE001
-        _notify(
-            "run_output",
-            {
-                "run_id": run_id,
-                "text": f"[系统] 虚拟环境准备失败，回退系统 Python: {e}\n",
-            },
-        )
-        python_exe = REAL_PYTHON
+            _set_env_phase("preparing")
+        try:
+            ok, python_exe = await asyncio.to_thread(venv_mgr.ensure_python, file_path)
+            # 成功路径不输出环境噪音日志，仅在异常时提示回退
+            if not ok:
+                _notify(
+                    "run_output",
+                    {
+                        "run_id": run_id,
+                        "text": "[系统] 共享虚拟环境创建失败，回退系统 Python\n",
+                    },
+                )
+                _set_env_phase("failed", "共享虚拟环境创建失败", failed_at="preparing")
+        except Exception as e:  # noqa: BLE001
+            _notify(
+                "run_output",
+                {
+                    "run_id": run_id,
+                    "text": f"[系统] 虚拟环境准备失败，回退系统 Python: {e}\n",
+                },
+            )
+            _set_env_phase("failed", str(e), failed_at="preparing")
+            python_exe = REAL_PYTHON
 
     # 构建环境变量：使用白名单过滤，避免把用户 shell 中的敏感环境变量
     # （API Key、令牌、密码等）传递给不可信示例
@@ -1094,8 +1146,27 @@ def method_stop_ai(req_id: Any, params: dict[str, Any]) -> None:
 # ---------------------------------------------------------------------------
 # 方法分发表
 # ---------------------------------------------------------------------------
+def method_env_status(req_id: Any, params: dict[str, Any]) -> None:
+    """返回环境准备状态快照（首启引导页/帮助面板消费）。"""
+    _result(req_id, _env_snapshot())
+
+
+def method_set_run_env(req_id: Any, params: dict[str, Any]) -> None:
+    """切换运行解释器模式：shared（默认，共享 venv）或 system（用系统 Python 继续）。"""
+    global _run_env_mode
+    mode = str(params.get("mode") or "")
+    if mode not in ("shared", "system"):
+        _error(req_id, -32602, "mode 必须是 shared 或 system")
+        return
+    _run_env_mode = mode
+    get_logger(__name__).info("运行解释器模式切换为: %s", mode)
+    _result(req_id, _env_snapshot())
+
+
 METHODS = {
     "ping": method_ping,
+    "env_status": method_env_status,
+    "set_run_env": method_set_run_env,
     "list_examples": method_list_examples,
     "get_example": method_get_example,
     "parse_args": method_parse_args,
@@ -1174,18 +1245,33 @@ async def _stdin_reader() -> None:
 
 
 def _warmup_venv() -> None:
-    """后台预热共享 venv：创建 .venv 并预装常用依赖，用户浏览界面时并行完成。"""
+    """后台预热共享 venv：创建 .venv 并预装常用依赖，用户浏览界面时并行完成。
+
+    每推进一步都广播 env_progress（首启引导页据此显示步骤状态），失败带原因；
+    预热失败不影响 sidecar 本身，首次运行时会重试。
+    """
     try:
+        _set_env_phase("preparing")
+        if _run_env_mode == "system":
+            get_logger(__name__).info("已选择系统解释器模式，跳过共享环境准备")
+            _set_env_phase("ready")
+            return
         if _get_venv_manager().prepare():
             get_logger(__name__).info("共享运行环境已就绪: %s", _get_venv_manager().venv_path)
+            _set_env_phase("indexing")
             # venv 就绪后构建模块索引并批量预热可运行性状态，
             # 让画廊首屏就带 run_status 徽章（判定全部为内存集合运算）
             store = _ensure_store()
             store.set_module_python(str(_get_venv_manager().get_python_executable()))
+            _set_env_phase("warming")
             _ = [store.ensure_run_status(it) for it in list(_index.values())]
             get_logger(__name__).info("可运行性状态预热完成: %d 个示例", len(_index))
+            _set_env_phase("ready")
+        else:
+            _set_env_phase("failed", "共享依赖安装未完成", failed_at="preparing")
     except Exception as e:  # noqa: BLE001 - 预热失败不影响 sidecar，首次运行时会重试
         get_logger(__name__).warning("共享运行环境预热失败: %s", e)
+        _set_env_phase("failed", str(e), failed_at=str(_env_state.get("phase") or "preparing"))
 
 
 def main() -> None:
@@ -1197,7 +1283,8 @@ def main() -> None:
         if stream is not None and hasattr(stream, "reconfigure"):
             stream.reconfigure(encoding="utf-8", errors="backslashreplace")
     # INFO 级日志走 stderr（不污染 JSON-RPC stdout），否则 venv 创建等关键过程不可见
-    configure_logging(level=logging.INFO)
+    _ENV_LOG.parent.mkdir(parents=True, exist_ok=True)
+    configure_logging(level=logging.INFO, log_file=str(_ENV_LOG))
     # 启动时发一条 ready 通知，让 Electron 知道 sidecar 已就绪
     _notify("sidecar_ready", {"version": "0.10.0", "app_dir": str(APP_DIR)})
     # 后台预热共享 venv（线程内阻塞安装依赖，不阻碍 JSON-RPC 事件循环）

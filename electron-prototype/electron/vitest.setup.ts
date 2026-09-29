@@ -49,6 +49,32 @@ function createSidecarStub() {
       stop: vi.fn(async () => ({ ok: true }))
     },
 
+    app: {
+      info: vi.fn(async () => ({ name: 'PyCase', version: '0.10.0', electron: '33.0.0' })),
+      openLog: vi.fn(async () => ({ ok: true }))
+    },
+
+    env: {
+      status: vi.fn(async () => ({
+        phase: 'ready',
+        mode: 'shared',
+        venv_path: '/tmp/PyCase/.venv',
+        venv_ready: true,
+        python_version: '3.13.0',
+        examples: 1496
+      })),
+      setRunEnv: vi.fn(async () => ({ phase: 'ready', mode: 'system' })),
+      onProgress: vi.fn(() => noopUnsub)
+    },
+
+    win: {
+      minimize: vi.fn(async () => ({ ok: true })),
+      toggleMaximize: vi.fn(async () => true),
+      close: vi.fn(async () => ({ ok: true })),
+      isMaximized: vi.fn(async () => false),
+      onMaximizedChange: vi.fn(() => noopUnsub)
+    },
+
     onStatus: vi.fn(() => noopUnsub),
     onRunOutput: vi.fn(() => noopUnsub),
     onRunFinished: vi.fn(() => noopUnsub),

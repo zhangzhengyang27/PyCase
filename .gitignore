@@ -5,6 +5,9 @@
 # JSON 示例物化缓存（可随时由 JSON 重建，非源码）
 .json_examples_cache/
 
+# sidecar 日志（开发态 DATA_DIR = 仓库根；打包态走 userData）
+logs/
+
 # 共享运行环境：所有示例统一使用仓库根 .venv（由 venv_manager 自动创建）
 .venv/
 

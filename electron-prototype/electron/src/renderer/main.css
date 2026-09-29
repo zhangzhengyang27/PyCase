@@ -393,6 +393,27 @@
     color: var(--accent-text);
   }
 
+  /* 步骤状态标记（首启引导页）：进行中转环 / 待完成空心环 */
+  .spinner {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 1.5px solid var(--line-strong);
+    border-top-color: var(--accent);
+    animation: spin 900ms linear infinite;
+  }
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+  .ring {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 1.5px solid var(--line-strong);
+  }
+
   /* 状态行：彩色圆点 + 中性文字（v2 状态语言） */
   .stat-dot {
     width: 6px;

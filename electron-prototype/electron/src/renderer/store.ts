@@ -865,6 +865,112 @@ export async function downloadImage(url: string, name: string): Promise<void> {
 
 
 // ===========================================================================
+// 环境准备状态与全局层开关（A5.5：首启引导页 / 帮助面板）
+// ---------------------------------------------------------------------------
+// 环境事实由 sidecar 上报（env_status + env_progress 通知），前端不猜：
+// phase 推进顺序 preparing → indexing → warming → ready，失败进 failed 并带原因。
+// ===========================================================================
+export interface EnvStatus {
+  phase: 'starting' | 'preparing' | 'indexing' | 'warming' | 'ready' | 'failed'
+  /** 失败发生在哪一步（sidecar 上报；仅 phase=failed 时有意义） */
+  failed_at?: 'starting' | 'preparing' | 'indexing' | 'warming'
+  started_at?: number
+  elapsed_ms?: number
+  error?: string
+  log_path?: string
+  mode: 'shared' | 'system'
+  venv_path?: string
+  venv_ready?: boolean
+  python_version?: string
+  examples?: number
+}
+
+export const envStatus = ref<EnvStatus | null>(null)
+export const onboardingOpen = ref(false)
+export const helpOpen = ref(false)
+export const appInfo = ref<{ name?: string; version?: string; electron?: string }>({})
+
+function applyEnvStatus(next: unknown): void {
+  if (next && typeof next === 'object') envStatus.value = next as EnvStatus
+}
+
+/** 订阅环境阶段推进 + 拉一次当前状态（首启页打开时补全量）。 */
+export function initEnvEvents(): void {
+  window.sidecar?.env?.onProgress((data) => applyEnvStatus(data))
+  void refreshEnvStatus()
+}
+
+export async function refreshEnvStatus(): Promise<void> {
+  try {
+    applyEnvStatus(await api.envStatus())
+  } catch (err) {
+    console.error('[env] 读取环境状态失败:', err)
+  }
+}
+
+export async function loadAppInfo(): Promise<void> {
+  try {
+    appInfo.value = (await api.appInfo()) as { name?: string; version?: string; electron?: string }
+  } catch (err) {
+    console.error('[env] 读取应用信息失败:', err)
+  }
+}
+
+/** 首启引导：只在本地标记缺失时展示（首帧后，不等 sidecar ready）。 */
+export async function loadOnboarding(): Promise<void> {
+  try {
+    const seen = (await api.storeGet('onboarding')) as { seen?: boolean } | null
+    onboardingOpen.value = !seen?.seen
+  } catch {
+    onboardingOpen.value = true
+  }
+}
+
+export async function dismissOnboarding(): Promise<void> {
+  onboardingOpen.value = false
+  try {
+    await api.storeSet('onboarding', { seen: true, at: Date.now() })
+  } catch (err) {
+    console.error('[env] 写入引导标记失败:', err)
+  }
+}
+
+/** 「用系统 Python 继续」：切换运行解释器模式（sidecar 侧生效，不改共享环境）。 */
+export async function useSystemPython(): Promise<void> {
+  try {
+    applyEnvStatus(await api.setRunEnv('system'))
+  } catch (err) {
+    console.error('[env] 切换解释器模式失败:', err)
+  }
+}
+
+/** 「重试」：重启 sidecar（其启动流程会重新预热共享环境并重发阶段事件）。 */
+export async function retryEnvPrepare(): Promise<void> {
+  try {
+    await api.restart()
+    await refreshEnvStatus()
+  } catch (err) {
+    console.error('[env] 重试环境准备失败:', err)
+  }
+}
+
+export async function openLog(): Promise<void> {
+  try {
+    const r = (await api.openLog()) as { ok?: boolean; error?: string }
+    if (r && r.ok === false && r.error) pushToast('error', r.error)
+  } catch (err) {
+    console.error('[env] 打开日志失败:', err)
+  }
+}
+
+export function openHelp(): void {
+  helpOpen.value = true
+}
+export function closeHelp(): void {
+  helpOpen.value = false
+}
+
+// ===========================================================================
 // 冒烟 / E2E 测试钩子：入口 HTML 带 ?smoke=1 时由 main.ts 挂到 window.__app，
 // 主进程的 runSmokeTest / runE2ETest 借此驱动 Vue 应用（生产入口不注入）
 // ===========================================================================
@@ -930,7 +1036,16 @@ export function getTestApi(): Record<string, unknown> {
     runStatusText: () => runStatusText.value,
     outputText: () => surfaces.detail.lines.map((l) => l.text).join(''),
     detailHistory: () => detailHistory.value,
-    assets: () => assets.value
+    assets: () => assets.value,
+    // A5.5：环境状态与全局层开关
+    envStatus: () => envStatus.value,
+    openHelp: () => openHelp(),
+    helpOpen: () => helpOpen.value,
+    onboardingOpen: () => onboardingOpen.value,
+    dismissOnboarding: () => dismissOnboarding(),
+    showOnboarding: () => {
+      onboardingOpen.value = true
+    }
   }
 }
 

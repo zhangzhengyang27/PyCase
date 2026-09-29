@@ -1,6 +1,6 @@
 # 帮助与首启 · 设计稿（A5.5 对稿物）
 
-> 状态：**已对稿**（2026-09-29，3 项待决均拍板，见 §7）｜ 代表页稿：[a5.5-help-onboarding.html](a5.5-help-onboarding.html)
+> 状态：**已实现**（2026-09-29；对稿结论见 §7，实现差异与验收见 §8）｜ 代表页稿：[a5.5-help-onboarding.html](a5.5-help-onboarding.html)
 > 视觉语言沿用 [视觉基线 v2](redesign-visual-baseline.md)（三层绑定 + token）；本稿**不引入任何新颜色**，
 > 页稿里的令牌块由脚本从 `electron-prototype/electron/src/renderer/src/theme.css` 原样摘取。
 
@@ -82,8 +82,9 @@ mac/win 的对话框按钮序沿用 `.d-actions`（mac 主操作最右 / win 最
 | 已看过引导 | 无 | 复用现有 `store:set('onboarding', …)`（无需新接口） |
 | 示例库规模 / 用户集合数 | 渲染层 store 已有 | 直接消费 |
 
-> 上述 RPC/IPC 属 **B2（sidecar 重写）/ B3（渲染层与壳）** 的范围；本稿只锁定**字段与状态口径**，
-> 实现时按 B 轨的协议设计落地，避免 A 轨自行发明通信方式。
+> 实现说明（2026-09-29）：经确认**本批把最小协议一起补了**（而非等 B2），字段与状态口径即上表；
+> 新增 RPC = `env_status` / `set_run_env`，新增通知 = `env_progress`，新增 IPC = `app:info` / `app:openLog`；
+> sidecar 日志落 `<DATA_DIR>/logs/sidecar.log`（「查看准备日志」打开它）。B2 重写协议时按此口径收敛。
 
 ## 5. 与 A6 的边界
 
@@ -110,3 +111,33 @@ mac/win 的对话框按钮序沿用 `.d-actions`（mac 主操作最右 / win 最
 2. **侧栏入口文案 = 「帮助」**，hover 提示「帮助与快捷键（⌘/）」；面板标题仍为「帮助与快捷键」。
    侧栏不加长、条目数不变。
 3. **保留三步用法卡片**：首启页同时回答「能干什么」与「环境好了没」；准备期间有内容可读。
+
+## 8. 实现记录与验收（2026-09-29）
+
+**落地内容**
+- `R/components/HelpSheet.vue`（帮助面板）、`R/components/OnboardingView.vue`（首启页）；
+  侧栏 footer 新增「帮助」（hover 提示「帮助与快捷键（⌘/）」），全局键 `⌘/` · `Ctrl /` 开关；
+  首启页在首帧后按本地标记（`userData/onboarding.json`）决定是否展示，`开始浏览/跳过引导` 写标记。
+- sidecar：`env_status`（快照）/ `set_run_env`（shared|system）/ `env_progress`（阶段推进通知）；
+  阶段 = preparing → indexing → warming → ready，失败带 `error` 与 `failed_at`；日志落盘。
+- 主进程/preload：`app:info`（版本 + Electron）、`app:openLog`、`sidecar:envStatus` / `sidecar:setRunEnv`、
+  `env.onProgress` 订阅；`STORE_WHITELIST` 增加 `onboarding`（名字即文件名，白名单是唯一写盘入口）。
+- 「用系统 Python 继续」= 显式切到系统解释器（不碰共享环境），运行时会打印一行说明；
+  缺依赖的示例在该模式下会 ImportError——这是知情选择的结果，不是回退失败。
+
+**实现与稿子的差异（三处，均已按实现核对）**
+1. 已用时从「事件里的 elapsed_ms」改为**按 sidecar 的 started_at 实时推算** —— 稿子画的是静态数字，
+   真机上事件之间会停住不动，观感是卡的。
+2. 失败步骤定位用 sidecar 上报的 `failed_at`，而不是前端按阶段推 —— 稿子未规定，实现取真实数据。
+3. 稿子里 `.alertline` 的图标是内联 svg；实现改用 Lucide `ShieldAlert`（图标单一来源约束）。
+
+**验收证据**
+- `npm run smoke` 新增两段走查：
+  - 全局层：`⌘/` 打开帮助 → 键位表 ≥7 条、含安全边界、环境信息含真实 Python 版本、Esc 关闭；
+  - 首启：`store.set('onboarding', null)` → 展示 → 步骤标记 ≥4 个、环境字段来自 `env_status`、
+    「开始浏览」关闭并写入标记、store 状态复位。
+- 组件测试 `R/components/__tests__/overlays.spec.ts`（14 条）：键位表与平台化修饰键、环境信息取真实来源、
+  Esc 不冒泡、失败态三出口、`failed_at` 定位、就绪态无不确定进度、标记写入、win 主操作最左。
+- 侧车协议 `tests/test_sidecar.py` 的 `TestEnvStatus`（3 条；把 `set_run_env` 的参数校验退化为照单全收后该用例 FAIL）。
+- 截图：`help.png` / `onboarding.png`（真实 Electron 窗口，步骤状态来自 sidecar 的 indexing 阶段）。
+- 全量门禁：typecheck / vitest 250 / pytest 129 / 对比度 142 / ruff（含 sidecar）/ doc-refs 全绿。

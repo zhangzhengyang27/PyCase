@@ -149,6 +149,14 @@ export const api = {
     request('ai:explain', (c: string, f: string) => bridge.ai.explain(c, f), [code, fileName]),
   aiStop: (runId: string) => request('ai:stop', (id: string) => bridge.ai.stop(id), [runId]),
 
+  // 环境准备状态（A5.5 首启引导页 / 帮助面板）
+  envStatus: () => request('env_status', () => bridge.env.status(), []),
+  setRunEnv: (mode: 'shared' | 'system') => request('set_run_env', () => bridge.env.setRunEnv(mode), [mode]),
+
+  // 应用信息与日志（帮助面板「环境信息」段、首启页「查看准备日志」）
+  appInfo: () => request('app:info', () => bridge.app.info(), []),
+  openLog: () => request('app:openLog', () => bridge.app.openLog(), []),
+
   // 其他
   restart: () => bridge.restart()
 }

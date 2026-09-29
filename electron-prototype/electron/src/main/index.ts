@@ -1,6 +1,6 @@
 // Electron 主进程：管理窗口、spawn Python sidecar、桥接 IPC。
 
-import { app, BrowserWindow, ipcMain, dialog, Menu, type MenuItemConstructorOptions } from 'electron'
+import { app, BrowserWindow, ipcMain, dialog, Menu, shell, type MenuItemConstructorOptions } from 'electron'
 import { spawn, type ChildProcess } from 'node:child_process'
 import path from 'node:path'
 import os from 'node:os'
@@ -370,9 +370,28 @@ ipcMain.handle('window:close', (event) => {
 ipcMain.handle('window:isMaximized', (event) => senderWindow(event)?.isMaximized() ?? false)
 
 // ---------------------------------------------------------------------------
+// IPC 处理：应用与环境信息（帮助面板「环境信息」段、首启页「查看准备日志」）
+// ---------------------------------------------------------------------------
+ipcMain.handle('app:info', () => ({
+  name: app.name,
+  version: app.getVersion(),
+  electron: process.versions.electron
+}))
+
+ipcMain.handle('app:openLog', async () => {
+  // 日志由 sidecar 写在 <DATA_DIR>/logs/sidecar.log（DATA_DIR 由 DESKTOP_APP_DATA_DIR 决定）
+  const dir = process.env.DESKTOP_APP_DATA_DIR || app.getAppPath()
+  const logPath = path.join(dir, 'logs', 'sidecar.log')
+  const err = await shell.openPath(logPath)
+  return err ? { ok: false, error: `无法打开日志：${err}`, path: logPath } : { ok: true, path: logPath }
+})
+
+// ---------------------------------------------------------------------------
 // IPC 处理：渲染进程 -> sidecar
 // ---------------------------------------------------------------------------
 ipcMain.handle('sidecar:ping', () => callSidecar('ping'))
+ipcMain.handle('sidecar:envStatus', () => callSidecar('env_status'))
+ipcMain.handle('sidecar:setRunEnv', (_e, mode: string) => callSidecar('set_run_env', { mode }))
 ipcMain.handle('sidecar:listExamples', () => callSidecar('list_examples'))
 ipcMain.handle('sidecar:getExample', (_e, id: string) => callSidecar('get_example', { id }))
 ipcMain.handle('sidecar:parseArgs', (_e, id: string) => callSidecar('parse_args', { id }))
@@ -564,7 +583,8 @@ ipcMain.handle('sidecar:restart', async () => {
 // 用户数据存储：小 JSON 文件写入 userData（打包后 Resources 只读，禁止写应用目录）
 // 白名单约束文件名，防止路径穿越；原子写（tmp + rename）
 // ---------------------------------------------------------------------------
-const STORE_WHITELIST = new Set(['history', 'favorites', 'aiSettings', 'viewPrefs', 'safetyPrefs', 'runPrefs'])
+// onboarding：首启引导是否已看过（A5.5）；名字即文件名，白名单是唯一写盘入口
+const STORE_WHITELIST = new Set(['history', 'favorites', 'aiSettings', 'viewPrefs', 'safetyPrefs', 'runPrefs', 'onboarding'])
 
 function storeFile(name: string): string {
   if (!STORE_WHITELIST.has(name)) throw new Error(`非法的存储名: ${name}`)
@@ -684,6 +704,8 @@ function runSmokeTest(): void {
         const n = await mainWindow!.webContents.executeJavaScript('window.__app ? window.__app.examples().length : 0') as number
         return n > 100
       }, 'Vue 应用加载示例')
+      // 首启页在首次运行时是全屏遮罩，会盖住后续截图与点击：先收起（其自身的走查放到最后）
+      await mainWindow!.webContents.executeJavaScript('window.__app && window.__app.dismissOnboarding && window.__app.dismissOnboarding()')
       // 壳与导航走查（A2）：在真实窗口里量三层绑定与平台几何，而不是看截图
       step = '壳与导航走查'
       const shell = await mainWindow!.webContents.executeJavaScript(`(async () => {
@@ -1112,6 +1134,23 @@ function runSmokeTest(): void {
         out.activeBg = active ? getComputedStyle(active).backgroundColor : 'NO-ACTIVE';
         out.footText = (palette.lastElementChild?.textContent || '').trim();
 
+        // 帮助面板：⌘/ 打开 → 键位表 + 环境信息取自真实来源 → Esc 关闭
+        window.dispatchEvent(new KeyboardEvent('keydown', { key: '/', metaKey: true, ctrlKey: true, bubbles: true }));
+        await sleep(400);
+        const help = document.querySelector('[aria-label="帮助与快捷键"]');
+        out.helpOpen = !!help;
+        if (help) {
+          out.helpKbds = help.querySelectorAll('kbd').length;
+          out.helpHasSafety = (help.textContent || '').includes('不是安全沙箱');
+          // 断言用整段文本：环境信息段在面板末尾，截断取样会漏
+          out.helpHasPython = new RegExp('Python [0-9]+[.][0-9]+').test(help.textContent || '');
+          out.helpHasVersion = !!(window.__app.envStatus() && window.__app.envStatus().venv_path);
+          window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }));
+          await sleep(250);
+          out.helpClosed = !document.querySelector('[aria-label="帮助与快捷键"]');
+          // 关帮助不得连带关掉底下的命令面板？（此处面板已先关，仅校验互不干扰）
+        }
+
         // 2) 高危确认：经 store 打开一个高危示例并触发运行（四个入口都汇聚到同一守卫），
         //    走的是真实链路而非注入状态；确认弹层出现后立即取消，不真跑
         const app = window.__app;
@@ -1158,6 +1197,13 @@ function runSmokeTest(): void {
         if (!String(o.footText || '').includes(String(o.modKey))) {
           problems.push(`面板底部提示缺平台修饰键 ${o.modKey}：${o.footText}`)
         }
+        // 帮助面板（A5.5 板 1）
+        if (!o.helpOpen) problems.push('⌘/ 未打开帮助面板')
+        if ((o.helpKbds as number) < 7) problems.push(`帮助键位表不足 7 条（${o.helpKbds}）`)
+        if (!o.helpHasSafety) problems.push('帮助缺安全边界段')
+        if (!o.helpHasPython) problems.push('帮助的环境信息未显示 Python 版本（未接真实来源？）')
+        if (o.helpHasVersion !== true) problems.push('渲染层未持有 sidecar 的 env_status')
+        if (o.helpClosed !== true) problems.push('Esc 未关闭帮助面板')
         // 高危确认（板 4）
         if (!o.dialogOpen) problems.push('高危卡片未触发确认弹层')
         if (!o.alertline) problems.push('确认弹层缺 .alertline')
@@ -1190,6 +1236,9 @@ function runSmokeTest(): void {
           }
         }
         await shot('palette.png')
+        await mainWindow!.webContents.executeJavaScript('window.__app.openHelp()')
+        await new Promise((r) => setTimeout(r, 500))
+        await shot('help.png')
         await mainWindow!.webContents.executeJavaScript('window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }))')
         await new Promise((r) => setTimeout(r, 400))
         // 详情页仍开着：重新触发一次确认弹层再截图（弹层在面板之下，需先关面板）
@@ -1204,6 +1253,68 @@ function runSmokeTest(): void {
         if (cancel) cancel.click();
         await sleep(200);
       })()`)
+      // 首启引导页走查（A5.5 板 2/3）：展示 → 状态来自 sidecar → 开始浏览写标记并关闭
+      step = '首启引导走查'
+      const ob = await mainWindow!.webContents.executeJavaScript(`(async () => {
+        const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+        try {
+        const app = window.__app;
+        if (!app || !app.showOnboarding) return { fatal: '__app 未注入或缺少 showOnboarding' };
+        const out = {};
+        await window.sidecar.store.set('onboarding', null);
+        app.showOnboarding();
+        await sleep(500);
+        const card = document.querySelector('[data-testid="onboarding"]');
+        out.open = !!card;
+        if (!card) return { fatal: '首启引导页未展示' };
+        out.text = (card.textContent || '').slice(0, 200);
+        out.hasStart = /开始浏览/.test(card.textContent || '');
+        out.steps = card.querySelectorAll('.stat-dot, .ring, .spinner').length;
+        // 环境事实必须来自 sidecar：比对刚拉到的 env_status
+        const st = await window.sidecar.env.status();
+        out.envPhase = st.phase;
+        out.envPython = st.python_version;
+        out.cardHasPython = (card.textContent || '').includes('Python');
+        // 「开始浏览」：写标记 + 关闭
+        const start = Array.from(card.querySelectorAll('button')).find((b) => b.textContent.includes('开始浏览'));
+        if (!start) return { fatal: '首启页缺「开始浏览」' };
+        start.click();
+        await sleep(500);
+        out.closed = !document.querySelector('[data-testid="onboarding"]');
+        const saved = await window.sidecar.store.get('onboarding');
+        out.flagSeen = !!(saved && saved.seen);
+        out.storeOpen = app.onboardingOpen();
+        return out;
+        } catch (e) { return { fatal: 'probe exception: ' + ((e && e.message) || String(e)) }; }
+      })()`) as Record<string, unknown>
+      {
+        const o = ob as Record<string, unknown>
+        if (o.fatal) throw new Error(`首启引导走查: ${o.fatal}`)
+        const problems: string[] = []
+        if (!o.open) problems.push('首启页未展示')
+        if (!o.hasStart) problems.push('缺「开始浏览」入口')
+        if ((o.steps as number) < 4) problems.push(`步骤标记不足（${o.steps}）`)
+        if (!o.envPhase) problems.push('未取到 sidecar 环境状态')
+        if (!o.envPython) problems.push('sidecar 未上报 Python 版本')
+        if (!o.cardHasPython) problems.push('首启页未呈现环境信息（数据未接线？）')
+        if (o.closed !== true) problems.push('「开始浏览」未关闭首启页')
+        if (o.flagSeen !== true) problems.push('未写入首启标记（会每次启动都弹）')
+        if (o.storeOpen !== false) problems.push('store 的 onboardingOpen 未复位')
+        if (problems.length) throw new Error('首启引导走查失败: ' + problems.join('; '))
+        console.log(`[smoke] 首启走查通过：phase=${o.envPhase} python=${o.envPython} 步骤标记 ${o.steps} 个，标记已写入`)
+        if (process.env.SMOKE_SHOTS) {
+          try {
+            await mainWindow!.webContents.executeJavaScript('window.__app.showOnboarding()')
+            await new Promise((r) => setTimeout(r, 500))
+            const shot = await mainWindow!.webContents.capturePage()
+            fs.writeFileSync(path.join(process.env.SMOKE_SHOTS, 'onboarding.png'), shot.toPNG())
+            await mainWindow!.webContents.executeJavaScript('window.__app.dismissOnboarding()')
+            await new Promise((r) => setTimeout(r, 200))
+          } catch (e) {
+            console.error('[smoke] 截图失败(onboarding.png):', (e as Error).message)
+          }
+        }
+      }
       // 5) 用户集合导入/删除链路：tmp 目录 → import → 数量与标记 → delete → 复原
       step = '用户集合导入/删除'
       const tmpImportDir = fs.mkdtempSync(path.join(os.tmpdir(), 'smoke-import-'))

@@ -5,6 +5,7 @@
 // 平台差异一律走 token 与 data-platform 选择器，模板内不再出现平台判断分支以外的硬编码。
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import {
+  CircleHelp,
   Copy,
   FolderUp,
   LayoutGrid,
@@ -35,8 +36,16 @@ import {
   galleryExamples,
   initAIEvents,
   initRunEvents,
+  closeHelp,
+  dismissOnboarding,
+  helpOpen,
+  initEnvEvents,
   loadAISettings,
   loadAll,
+  loadAppInfo,
+  loadOnboarding,
+  onboardingOpen,
+  openHelp,
   loading,
   openAISettings,
   openImportWizard,
@@ -47,6 +56,8 @@ import {
   type ViewKey
 } from './store'
 import GalleryView from './components/GalleryView.vue'
+import HelpSheet from './components/HelpSheet.vue'
+import OnboardingView from './components/OnboardingView.vue'
 import ToolboxView from './components/ToolboxView.vue'
 import DetailPage from './components/DetailPage.vue'
 import RunnerView from './components/RunnerView.vue'
@@ -145,6 +156,11 @@ function onGlobalKey(e: KeyboardEvent): void {
   if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
     e.preventDefault()
     paletteOpen.value = !paletteOpen.value
+  } else if ((e.metaKey || e.ctrlKey) && e.key === '/') {
+    // ⌘/ · Ctrl / 打开/关闭帮助（与 ⌘K 同族，不冲突）
+    e.preventDefault()
+    if (helpOpen.value) closeHelp()
+    else openHelp()
   }
 }
 
@@ -160,6 +176,10 @@ onMounted(async () => {
   // 运行输出/结束/图片通知订阅 + AI 流式事件订阅（全局一次）
   initRunEvents()
   initAIEvents()
+  // 环境阶段订阅（首启页/帮助面板）+ 应用信息 + 首启标记（首帧后，不等 sidecar ready）
+  initEnvEvents()
+  void loadAppInfo()
+  void loadOnboarding()
   void loadAISettings()
   try {
     await api.ping()
@@ -242,6 +262,10 @@ onBeforeUnmount(() => {
           <Settings :size="16" :stroke-width="1.5" class="shrink-0" />
           <span class="truncate">设置</span>
         </button>
+        <button class="navitem app-no-drag" title="帮助与快捷键（⌘/）" @click="openHelp()">
+          <CircleHelp :size="16" :stroke-width="1.5" class="shrink-0" />
+          <span class="truncate">帮助</span>
+        </button>
         <button class="navitem app-no-drag" :title="`当前：${THEME_META[themePref].label}`" @click="toggleTheme">
           <component :is="THEME_META[themePref].icon" :size="16" :stroke-width="1.5" class="shrink-0" />
           <span class="truncate">{{ THEME_META[themePref].label }}</span>
@@ -306,6 +330,8 @@ onBeforeUnmount(() => {
     <HighRiskConfirmModal />
     <ImportWizardModal />
     <CommandPalette v-if="paletteOpen" @close="paletteOpen = false" />
+    <HelpSheet v-if="helpOpen" @close="closeHelp()" />
+    <OnboardingView v-if="onboardingOpen" @dismiss="dismissOnboarding()" />
     <AppToast />
   </div>
 </template>

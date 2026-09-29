@@ -323,6 +323,43 @@ class TestCollectImages:
 # ---------------------------------------------------------------------------
 # 资源上传保护测试
 # ---------------------------------------------------------------------------
+class TestEnvStatus:
+    """环境状态协议（A5.5）：首启页与帮助面板消费，字段必须是可核对的真实值。"""
+
+    def test_snapshot_reports_facts(self):
+        snap = server._env_snapshot()
+        assert set(["phase", "started_at", "error", "log_path", "mode", "venv_path", "venv_ready", "python_version"]).issubset(snap)
+        assert snap["mode"] == "shared"
+        assert snap["phase"] in ("starting", "preparing", "indexing", "warming", "ready", "failed")
+        # 版本串取自当前解释器，不是写死的
+        assert snap["python_version"] == f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
+
+    def test_set_run_env_validates_mode(self):
+        sent = []
+        with patch.object(server, "_result", lambda rid, res: sent.append(res)):
+            server.method_set_run_env("1", {"mode": "system"})
+        assert server._run_env_mode == "system"
+        assert sent and sent[-1]["mode"] == "system"
+
+        errs = []
+        with patch.object(server, "_error", lambda rid, code, msg: errs.append((code, msg))):
+            server.method_set_run_env("2", {"mode": "wat"})
+        assert errs and errs[-1][0] == -32602
+        assert server._run_env_mode == "system"  # 非法值不改状态
+
+    def test_phase_transition_broadcasts_and_keeps_error(self):
+        events = []
+        with patch.object(server, "_notify", lambda m, p: events.append((m, p))):
+            server._set_env_phase("failed", "pip 安装超时")
+        assert events and events[-1][0] == "env_progress"
+        assert events[-1][1]["phase"] == "failed"
+        assert events[-1][1]["error"] == "pip 安装超时"
+        # 还原，避免影响其它用例
+        server._env_state["phase"] = "starting"
+        server._env_state["error"] = ""
+        server._run_env_mode = "shared"
+
+
 class TestCollectAssets:
     """资源面板列出的是用户资源：受保护文件（脚本 / requirements.txt）不得混入——
     它们删不掉，列出来只会给出"能删但删不掉"的死入口（A4 走查发现）。"""
