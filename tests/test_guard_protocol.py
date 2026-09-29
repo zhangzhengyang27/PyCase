@@ -35,27 +35,9 @@ def _workspace_of(example_id: str) -> Path:
     store = server._ensure_store()
     return store.workspace_of(server._index[example_id])
 
-# 契约 §5 的完整方法表（金标）：改动必须同步 docs/redesign-data-contract.md §5
-GOLDEN_METHODS = {
-    "ping",
-    "env_status",
-    "set_run_env",
-    "list_examples",
-    "get_example",
-    "search_examples",
-    "parse_args",
-    "save_example",
-    "run_example",
-    "stop_run",
-    "upload_asset",
-    "list_assets",
-    "delete_asset",
-    "scan_import_source",
-    "import_examples",
-    "delete_example",
-    "explain_code",
-    "stop_ai",
-}
+# 协议名表（跨语言单一来源）：electron-prototype/shared/protocol.json
+PROTOCOL_JSON = ROOT / "electron-prototype" / "shared" / "protocol.json"
+GOLDEN_METHODS = set(json.loads(PROTOCOL_JSON.read_text(encoding="utf-8"))["rpc_methods"])
 
 RUN_STATUS_STATES = {"runnable", "risky", "broken", "empty", "unknown"}
 

@@ -25,8 +25,9 @@ export default defineConfig({
   },
   test: {
     environment: 'jsdom',
-    // 组件测试与组件同目录（__tests__/），符合 Vitest 惯例，避免再开一个顶层 tests/。
-    include: ['src/renderer/components/__tests__/**/*.spec.ts'],
+    // 测试与源码同目录（__tests__/），符合 Vitest 惯例，避免再开一个顶层 tests/：
+    // 组件测试在 components/__tests__/，纯逻辑/契约测试在 src/renderer/src/__tests__/。
+    include: ['src/renderer/**/__tests__/**/*.spec.ts'],
     // 每个测试文件独立环境；全局桩（window.sidecar / matchMedia）集中在这里。
     setupFiles: ['./vitest.setup.ts'],
     globals: false,

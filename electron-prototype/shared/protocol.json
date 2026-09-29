@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "说明": "RPC 协议方法表与通知通道的唯一来源；Python 金标（tests/test_guard_protocol.py）与 TS 客户端（shared/protocol.ts 的契约测试）都读它。增删方法必须先改这里 + docs/redesign-data-contract.md §5。",
+  "rpc_methods": [
+    "ping",
+    "env_status",
+    "set_run_env",
+    "list_examples",
+    "get_example",
+    "search_examples",
+    "parse_args",
+    "save_example",
+    "run_example",
+    "stop_run",
+    "upload_asset",
+    "list_assets",
+    "delete_asset",
+    "scan_import_source",
+    "import_examples",
+    "delete_example",
+    "explain_code",
+    "stop_ai"
+  ],
+  "notifications": [
+    "sidecar_ready",
+    "run_output",
+    "run_finished",
+    "run_images",
+    "env_progress",
+    "ai_explain_chunk",
+    "ai_explain_done",
+    "ai_explain_error"
+  ],
+  "local_events": ["status"],
+  "namespaces": {
+    "store": ["get", "set"],
+    "app": ["info", "openLog"],
+    "env": ["status", "setRunEnv", "onProgress"],
+    "win": ["minimize", "toggleMaximize", "close", "isMaximized", "onMaximizedChange"],
+    "ai": ["getSettings", "setSettings", "explain", "stop"],
+    "file": ["pickDirectory", "saveTextFile", "downloadResultImage"]
+  }
+}

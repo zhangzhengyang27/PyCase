@@ -555,3 +555,14 @@ def test_delete_last_example_removes_collection_file(tmp_path):
     root = store.load()
     coll_names = [c.name for c in root.children]
     assert not any("mine" in n for n in coll_names)
+
+
+def test_version_single_source_is_in_sync():
+    """版本号单一来源（仓库根 VERSION）与各处生成物一致——CI 门禁的本地等价。"""
+    from app._version import __version__ as app_version
+
+    version = (APP_DIR / "VERSION").read_text(encoding="utf-8").strip()
+    assert app_version == version
+    pkg = json.loads((APP_DIR / "electron-prototype" / "electron" / "package.json").read_text(encoding="utf-8"))
+    assert pkg["version"] == version
+    assert f'version = "{version}"' in (APP_DIR / "pyproject.toml").read_text(encoding="utf-8")

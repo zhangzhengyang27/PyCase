@@ -86,6 +86,7 @@ else:
     REAL_PYTHON = sys.executable
 
 from app import importer  # noqa: E402
+from app._version import __version__ as APP_VERSION  # noqa: E402
 from app.contract_store import ContractStore  # noqa: E402
 from app.logger import configure_logging, get_logger  # noqa: E402
 from app.migration import migrate_user_collections  # noqa: E402
@@ -1379,7 +1380,7 @@ def main() -> None:
         except (ValueError, OSError):  # 非主线程/平台不支持时保持默认行为
             pass
     # 启动时发一条 ready 通知，让 Electron 知道 sidecar 已就绪
-    _notify("sidecar_ready", {"version": "0.10.0", "app_dir": str(APP_DIR)})
+    _notify("sidecar_ready", {"version": APP_VERSION, "app_dir": str(APP_DIR)})
     # 后台预热共享 venv（线程内阻塞安装依赖，不阻碍 JSON-RPC 事件循环）
     threading.Thread(target=_warmup_venv, name="venv-warmup", daemon=True).start()
     try:

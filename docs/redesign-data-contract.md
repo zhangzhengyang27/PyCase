@@ -177,7 +177,9 @@ load 不建工作区；工作区缺失/损坏时由它自愈重建。单文件�
 | 代码搜索 | 前端在本地全量 code 上搜 | 新增服务端 `search_examples(query)`：元数据内存检索 + **code 按需读文件**，返回 id + 命中原因；前端防抖调用 |
 | 运行/保存/资源/AI | 按 id | 不变（按 id，不传路径）；运行时隐含 `ensure_workspace`，保存写真实文件（原子替换） |
 
-其余方法（`run_example`/`save_example`/导入/删除等）签名不变；完整方法表在 B2 落地时补齐金标（G7）。
+其余方法（`run_example`/`save_example`/导入/删除等）签名不变；完整方法表在 B2 落地时补齐金标（G7）——
+**已冻结为 `electron-prototype/shared/protocol.json`**：Python 金标（`tests/test_guard_protocol.py`）
+与 TS 契约测试（`src/renderer/src/__tests__/protocol.spec.ts`）双端钉住同一份名表，增删方法必须同时改它。
 上传资源与运行产物所在目录 = §4.2 的工作区；用户示例删除 = 清单条目 + 真实文件 + 工作区三处同步清理。
 
 ## 6. 迁移工具（B2 落地）

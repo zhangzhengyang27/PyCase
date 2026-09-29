@@ -14,6 +14,9 @@
 import { afterEach, vi } from 'vitest'
 import { enableAutoUnmount } from '@vue/test-utils'
 
+// 版本取自 package.json（唯一来源 = 仓库根 VERSION，由 scripts/sync_version.py 同步）
+import pkg from './package.json'
+
 /** 与 src/preload/index.ts 的 SidecarAPI 保持同形的空实现。 */
 function createSidecarStub() {
   const noopUnsub = () => {}
@@ -50,7 +53,7 @@ function createSidecarStub() {
     },
 
     app: {
-      info: vi.fn(async () => ({ name: 'PyCase', version: '0.10.0', electron: '33.0.0' })),
+      info: vi.fn(async () => ({ name: 'PyCase', version: pkg.version, electron: '33.0.0' })),
       openLog: vi.fn(async () => ({ ok: true }))
     },
 

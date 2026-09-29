@@ -40,6 +40,10 @@ jobs:
           python -m app.facts_cli check
           python -m app.facts_cli requirements --check
 
+      # 版本号单一来源：VERSION 与 package.json / pyproject / app/_version.py 必须一致
+      - name: 版本一致性门禁
+        run: python scripts/sync_version.py --check
+
       - name: pytest
         run: pytest tests/ -q --tb=short
 
