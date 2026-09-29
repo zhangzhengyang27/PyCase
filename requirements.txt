@@ -1,4 +1,4 @@
-# 全项目共享依赖清单（自动生成，勿手改）：python scripts/gen_shared_requirements.py
+# 全项目共享依赖清单（自动生成，勿手改）：python -m app.facts_cli requirements
 # 模型：本项目是一个应用，json_examples 里的示例是它的模块；
 # 共享 .venv 首次创建时由 venv_manager 按本清单安装。
 

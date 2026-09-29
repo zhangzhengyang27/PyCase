@@ -88,6 +88,7 @@ else:
 from app import importer  # noqa: E402
 from app.contract_store import ContractStore  # noqa: E402
 from app.logger import configure_logging, get_logger  # noqa: E402
+from app.migration import migrate_user_collections  # noqa: E402
 from app.models import ExampleItem  # noqa: E402
 from app.venv_manager import VenvManager  # noqa: E402
 
@@ -180,7 +181,9 @@ def _build_store() -> ContractStore:
     - 内置清单在 ``APP_DIR/json_examples``；用户集合在可写根的 ``user_examples/``；
     - 集合树根 = REPO_ROOT（原位示例的 ``../topics`` 相对此根解析）；
     - 工作区根 = ``DATA_DIR/.json_examples_cache``（打包版 APP_DIR 只读，故用 DATA_DIR）。
+    - 旧用户集合（v1 内联 code）在启动时自动迁移到 v2（契约 §2.4，含备份）。
     """
+    migrate_user_collections(_USER_DIR, _USER_DIR.parent)
     return ContractStore(
         collection_dir=APP_DIR / "json_examples",
         data_root=REPO_ROOT,
@@ -1085,26 +1088,18 @@ def method_import_examples(req_id: Any, params: dict[str, Any]) -> None:
     _USER_DIR.mkdir(parents=True, exist_ok=True)
     # 全中文等非 ASCII 名称 slug 化后只剩下划线，回退通用名
     slug = importer.slugify(name).strip("_") or "user_collection"
-    final = _USER_DIR / f"{slug}.json"
-    n = 1
-    while final.exists():  # 集合文件重名：加后缀，不覆盖既有用户数据
+    n = 0
+    manifest_path = None
+    while manifest_path is None:
+        candidate = slug if n == 0 else f"{slug}_{n + 1}"
+        if not (_USER_DIR / f"{candidate}.json").exists() and not (_USER_DIR / candidate).exists():
+            manifest_path = candidate
         n += 1
-        final = _USER_DIR / f"{slug}_{n}.json"
     try:
-        # 临时文件 + 原子替换（与 save_item 同一防护）
-        tmp = final.with_name(final.name + ".tmp")
-        try:
-            tmp.write_text(
-                json.dumps(
-                    {"name": name, "description": payload["description"], "examples": imported},
-                    ensure_ascii=False,
-                    indent=2,
-                ),
-                encoding="utf-8",
-            )
-            os.replace(tmp, final)
-        finally:
-            tmp.unlink(missing_ok=True)
+        # 契约 v2：先落真实源码（暂存目录整体 rename）→ 原子替换清单 → 失败回滚
+        importer.write_user_collection(
+            _USER_DIR, manifest_path, name, payload["description"], imported
+        )
     except OSError as e:
         _error(req_id, -32603, f"写入用户集合失败: {e}")
         return
@@ -1114,7 +1109,7 @@ def method_import_examples(req_id: Any, params: dict[str, Any]) -> None:
         {
             "imported": len(imported),
             "skipped": payload["skipped"],
-            "collection": final.stem,
+            "collection": manifest_path,
             "total": len(_index),
         },
     )

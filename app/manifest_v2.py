@@ -11,8 +11,10 @@
 from __future__ import annotations
 
 import json
+import os
 import re
 from dataclasses import dataclass, field
+from functools import lru_cache
 from pathlib import Path
 from typing import Any, Literal
 
@@ -272,6 +274,17 @@ def load_manifest(path: Path) -> Manifest:
     )
 
 
+@lru_cache(maxsize=64)
+def _canonical_cached(path: str) -> str:
+    """realpath 缓存：集合根与清单目录在一次加载里会被问上千次，realpath 有 lstat 成本。"""
+    return os.path.realpath(path)
+
+
+@lru_cache(maxsize=256)
+def _manifest_dir(manifest_path: str) -> str:
+    return os.path.dirname(manifest_path)
+
+
 def resolve_entry_file(
     manifest_path: Path, entry: ManifestEntry, data_root: Path
 ) -> Path | None:
@@ -280,14 +293,22 @@ def resolve_entry_file(
     ``data_root`` = 集合树根（内置 = 仓库根；用户集合 = user_examples 的父目录）。
     契约 §2.3 的"解析后仍在集合根内"校验落在这里：``../topics/x.py`` 这类原位引用合法，
     而任何解析到集合树之外的路径都拒绝（否则 file 会变成数据外泄通道）。
+
+    性能：整条路径用字符串算（集合根、清单目录均带缓存），只在最后构造一个 ``Path``——
+    1496 条各构造十来个 Path 对象是冷启动预算里最大的一笔开销。
     """
     if not entry.file:
         return None
-    root = Path(data_root).resolve()
-    candidate = (Path(manifest_path).parent / entry.file).resolve()
-    if not candidate.is_relative_to(root):  # py3.9+：越界即拒
+    root = _canonical_cached(str(data_root))
+    parent = _manifest_dir(str(manifest_path))
+    rel = entry.file
+    if ".." in rel.split("/") or os.path.isabs(rel):
+        candidate = os.path.realpath(os.path.join(parent, rel))
+    else:
+        candidate = os.path.join(parent, rel)
+    if candidate != root and not candidate.startswith(root + os.sep):
         return None
-    return candidate
+    return Path(candidate)
 
 
 def entry_code(

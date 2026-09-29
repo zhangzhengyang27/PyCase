@@ -28,6 +28,7 @@ for _p in (str(SIDECAR_DIR), str(ROOT)):
         sys.path.insert(0, _p)
 
 import server  # noqa: E402
+from app.migration import migrate_user_collections  # noqa: E402
 from app.models import ExampleItem  # noqa: E402
 
 REPO_CACHE = ROOT / ".json_examples_cache"
@@ -435,3 +436,48 @@ def test_g6_import_without_candidates_writes_nothing(tmp_path):
         result = env.captured[0]["result"]
         assert result["imported"] == 0 and result["collection"] is None
         assert list(server._USER_DIR.glob("*.json")) == []
+
+
+def test_g6_import_writes_v2_shape(tmp_path):
+    """导入产物与内置同构（契约 §2.4）：清单 v2 + file 指向真实源码，无内联 code。"""
+    with _RpcEnv(tmp_path):
+        src = tmp_path / "src"
+        src.mkdir()
+        (src / "hi.py").write_text("print('hi')\n", encoding="utf-8")
+
+        server.method_import_examples(1, {"source_path": str(src), "name": "my-lib"})
+
+        manifest = next(server._USER_DIR.glob("*.json"))
+        data = json.loads(manifest.read_text(encoding="utf-8"))
+        assert data["schema_version"] == 2
+        entry = data["examples"][0]
+        assert "code" not in entry and entry["file"] == "my-lib/hi.py"
+        real = server._USER_DIR / entry["file"]
+        assert real.read_text(encoding="utf-8") == "print('hi')\n"
+        # 索引里的条目直接指向真实文件（不再是 v1 的工作区占位路径）
+        assert server._index[entry["id"]].path == real
+
+
+def test_g6_user_collection_auto_migration(tmp_path):
+    """旧用户集合（v1 内联 code）在运行时自动迁移到 v2，并留下可回滚备份。"""
+    user_dir = tmp_path / "user_examples"
+    user_dir.mkdir()
+    (user_dir / "legacy.json").write_text(
+        json.dumps(
+            {"name": "legacy", "examples": [{"id": "old", "name": "old.py", "code": "print('old')\n"}]},
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+
+    ts = migrate_user_collections(user_dir, tmp_path)
+    assert ts is not None
+    data = json.loads((user_dir / "legacy.json").read_text(encoding="utf-8"))
+    assert data["schema_version"] == 2
+    entry = data["examples"][0]
+    assert "code" not in entry and (user_dir / entry["file"]).read_text(encoding="utf-8") == "print('old')\n"
+    backups = list((user_dir / ".backup").glob("*/legacy.json"))
+    assert backups, "自动迁移必须留备份（可回滚）"
+
+    # 已是 v2：再跑一次不产生计划（幂等）
+    assert migrate_user_collections(user_dir, tmp_path) is None

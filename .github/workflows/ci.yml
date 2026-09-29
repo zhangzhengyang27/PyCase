@@ -33,6 +33,13 @@ jobs:
       - name: 文档引用防漂移
         run: python3 scripts/check_doc_refs.py
 
+      # 派生数据门禁：烘焙事实索引必须与真实源码树一致（改了数据没重跑 bake 即红），
+      # 依赖清单必须与「清单 requirements + 烘焙 import 分析」的聚合结果一致
+      - name: 派生数据门禁（facts / requirements）
+        run: |
+          python -m app.facts_cli check
+          python -m app.facts_cli requirements --check
+
       - name: pytest
         run: pytest tests/ -q --tb=short
 

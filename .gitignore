@@ -5,6 +5,9 @@
 # JSON 示例物化缓存（可随时由 JSON 重建，非源码）
 .json_examples_cache/
 
+# 数据迁移备份（契约 §6.2：集合根下 .backup/<ts>/ 保留本地回滚能力，不入库）
+json_examples/.backup/
+
 # sidecar 日志（开发态 DATA_DIR = 仓库根；打包态走 userData）
 logs/
 

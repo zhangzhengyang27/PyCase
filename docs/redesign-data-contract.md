@@ -241,3 +241,44 @@ load 不建工作区；工作区缺失/损坏时由它自愈重建。单文件�
 
 由此确立的硬约束：v1 应用不可读 v2 清单（单向破坏）——由迁移备份/回滚与"逐条校验通过才放行"兜底；
 `scripts/` 生成器类脚本退役，依赖汇总由 B2 提供只读清单的最小替代。
+
+## 10. 落地记录（2026-09-29，B2）
+
+### 10.1 内置数据迁移（已执行）
+
+- 演练：G8 在完整副本上跑通 dry-run → apply → verify → rollback（现固化为 `tests/test_guard_migration.py` 的语料版）；
+- 真实数据：`python -m app.migration_cli --dry-run` 报 **14 集合 / 1496 条 / 0 错误 0 警告 / create 1426 · 原位 70**，
+  与 B1 审计分类逐一对应；`--apply` 通过**逐条复验**（条数、id 集合、`code`↔真实文件逐字节、元数据字段）；
+  `--verify` 独立复验通过。备份留在 `json_examples/.backup/<ts>/`（已 gitignore，可 `--rollback`）；
+- 迁移后形态：`json_examples/` 下每个集合一个同名目录，真实源码树就位 + 14 个只存元数据的清单；`examples_assets/` 下补写 31 个目录型缺档文件。
+
+### 10.2 烘焙事实索引（§3.2，已落地）
+
+- 产物：`json_examples/facts.json`（1496 条 · 14 清单哈希 · 488KB），构建期由 `python -m app.facts_cli bake` 生成，随包分发；
+- 头部：清单 schema 版本 + **facts 规则版本**（评分/安全/静态/主题谓词任一变更即失效）+ 生成时间；
+  逐条存 `sha256/size/file` 与派生事实（`imports/deps/quality/risk_*/static/theme`）；
+- 命中与失配：load 时**逐文件哈希**校验，命中即用（实测 1496 个文件全量哈希 ≈ 15ms）；
+  失配**逐条**复用命中项、只重算变化项（与全量重算逐字段等价，由 `test_g1_facts_reuse_equals_full_rebuild` 钉住），
+  并把结果写入缓存根 `…/.json_examples_cache/v2/facts.json`，下次启动即命中；
+- `run_status` 的缺依赖维度不烘焙：运行时 = 静态事实 + 模块索引合成（优先级与 `compute_run_status` 一致）；
+- 冷启动实测：索引就绪 **43–46ms**（预算 50ms；其中哈希校验 15ms、清单解析 6ms、条目构建约 20ms）；
+  启动路径零写盘（命中随包烘焙时，用例断言缓存根在 load 后无新文件）。
+
+### 10.3 依赖清单最小替代（scripts 退役）
+
+`python -m app.facts_cli requirements` 取代 `scripts/gen_shared_requirements.py`：
+输入 = 清单 `requirements` 元数据 + 烘焙 `deps`（import 分析），保留原脚本的两条判据——
+本地模块名不入清单（示例项目自带的 `common`/`config`/`ternary_new` 等）与装不上的历史名黑名单。
+**实测输出与退役脚本逐行一致（46 包）**；仓库根 `requirements.txt` 已按新工具重新生成。
+
+### 10.4 用户集合（与内置同构）
+
+- 导入即 v2：`app.importer.write_user_collection` 先落真实源码（暂存目录整体 rename）再原子替换清单，失败回滚不留半成品；
+- 旧集合自动迁移：启动时 `migrate_user_collections`（dry-run → apply → 复验，含备份）；任何错误只跳过并保持 v1 只读；
+- 用户集合的 `file` 以 `user_examples` 的父目录为集合树根解析（打包态在 userData 下，与仓库根不同源）。
+
+### 10.5 门禁增补
+
+- CI 新增「派生数据门禁」：`app.facts_cli check`（烘焙索引与真实树一致）+ `requirements --check`；
+- 护栏新增：G1 烘焙一致性 / 冷启动预算 / 增量=全量等价、G7 协议金标、工作区治理（上限 LRU / 孤儿回收 / 资产保全）、
+  G8 语料化演练与拒写、导入 v2 形态与自动迁移。

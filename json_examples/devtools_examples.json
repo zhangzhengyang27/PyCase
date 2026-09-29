@@ -12,7 +12,7 @@
    "title": "大文件 TopN 查找器",
    "description": "递归找出目录下最大的 N 个文件，人类可读体积。",
    "requirements": [],
-   "code": "\"\"\"大文件 TopN：python devtool_bigfile.py <目录> [--top 10]\"\"\"\nimport argparse\nfrom pathlib import Path\n\n\ndef human(n):\n    for unit in (\"B\", \"KB\", \"MB\", \"GB\", \"TB\"):\n        if n < 1024:\n            return f\"{n:.1f}{unit}\"\n        n /= 1024\n    return f\"{n:.1f}PB\"\n\n\ndef main():\n    ap = argparse.ArgumentParser(description=\"递归查找最大的 N 个文件\")\n    ap.add_argument(\"directory\", nargs=\"?\", default=\".\")\n    ap.add_argument(\"--top\", type=int, default=10)\n    args = ap.parse_args()\n\n    files = [(f.stat().st_size, f) for f in Path(args.directory).rglob(\"*\") if f.is_file()]\n    files.sort(reverse=True)\n    for size, p in files[: args.top]:\n        print(f\"{human(size):>10}  {p}\")\n\n\nif __name__ == \"__main__\":\n    main()\n"
+   "file": "devtools_examples/devtool_bigfile-topn.py"
   },
   {
    "id": "tools_dev-dupe-cleaner",
@@ -26,7 +26,7 @@
    "title": "重复文件清理器",
    "description": "内容哈希分组重复文件，支持 --delete 自动清理（保留首份）。",
    "requirements": [],
-   "code": "\"\"\"重复文件清理：默认只报告，--delete 执行清理。\"\"\"\nimport argparse\nimport hashlib\nfrom collections import defaultdict\nfrom pathlib import Path\n\n\ndef main():\n    ap = argparse.ArgumentParser()\n    ap.add_argument(\"directory\", nargs=\"?\", default=\".\")\n    ap.add_argument(\"--delete\", action=\"store_true\", help=\"删除重复（保留每组第一个）\")\n    args = ap.parse_args()\n\n    groups = defaultdict(list)\n    for p in Path(args.directory).rglob(\"*\"):\n        if p.is_file() and p.stat().st_size < 512 * 1024 * 1024:\n            groups[hashlib.md5(p.read_bytes()).hexdigest()].append(p)\n\n    freed = 0\n    for paths in groups.values():\n        if len(paths) < 2:\n            continue\n        print(\"重复组:\", [str(p) for p in paths])\n        for dup in paths[1:]:\n            freed += dup.stat().st_size\n            if args.delete:\n                dup.unlink()\n    print(f\"{'已删除' if args.delete else '可释放'}: {freed / 1024:.0f} KB\")\n\n\nif __name__ == \"__main__\":\n    main()\n"
+   "file": "devtools_examples/devtool_dupe-cleaner.py"
   },
   {
    "id": "tools_dev-empty-dir-sweep",
@@ -40,7 +40,7 @@
    "title": "空目录清扫器",
    "description": "递归删除全部空目录（自底向上）。",
    "requirements": [],
-   "code": "\"\"\"空目录清扫：自底向上删除空目录。\"\"\"\nimport argparse\nfrom pathlib import Path\n\n\ndef main():\n    ap = argparse.ArgumentParser()\n    ap.add_argument(\"directory\", nargs=\"?\", default=\".\")\n    ap.add_argument(\"--apply\", action=\"store_true\")\n    args = ap.parse_args()\n    base = Path(args.directory)\n\n    removed = 0\n    for d in sorted(base.rglob(\"*\"), key=lambda p: -len(p.parts)):\n        if d.is_dir() and not any(d.iterdir()):\n            print(\"空目录:\", d)\n            if args.apply:\n                d.rmdir()\n            removed += 1\n    print(f\"{'已删除' if args.apply else '发现'} {removed} 个空目录\")\n\n\nif __name__ == \"__main__\":\n    main()\n"
+   "file": "devtools_examples/devtool_empty-dir-sweep.py"
   },
   {
    "id": "tools_dev-dir-sync",
@@ -54,7 +54,7 @@
    "title": "目录同步器",
    "description": "rsync 精简版：按 (路径, 大小, mtime) 增量复制。",
    "requirements": [],
-   "code": "\"\"\"目录同步：源 → 目标 增量复制（新增/更新才拷贝）。\"\"\"\nimport argparse\nimport shutil\nfrom pathlib import Path\n\n\ndef main():\n    ap = argparse.ArgumentParser()\n    ap.add_argument(\"src\")\n    ap.add_argument(\"dst\")\n    args = ap.parse_args()\n    src, dst = Path(args.src), Path(args.dst)\n\n    copied = 0\n    for f in src.rglob(\"*\"):\n        if not f.is_file():\n            continue\n        rel = f.relative_to(src)\n        target = dst / rel\n        if (target.exists() and target.stat().st_mtime >= f.stat().st_mtime\n                and target.stat().st_size == f.stat().st_size):\n            continue\n        target.parent.mkdir(parents=True, exist_ok=True)\n        shutil.copy2(f, target)\n        copied += 1\n        print(\"+\", rel)\n    print(f\"同步完成：新增/更新 {copied} 个文件\")\n\n\nif __name__ == \"__main__\":\n    main()\n"
+   "file": "devtools_examples/devtool_dir-sync.py"
   },
   {
    "id": "tools_dev-secure-shred",
@@ -68,7 +68,7 @@
    "title": "敏感文件粉碎器",
    "description": "随机覆写多次后删除，防恢复删除。",
    "requirements": [],
-   "code": "\"\"\"文件粉碎：随机覆写 3 遍 + 改名 + 删除。\"\"\"\nimport argparse\nimport os\nfrom pathlib import Path\n\n\ndef shred(path: Path, passes: int = 3):\n    size = path.stat().st_size\n    with open(path, \"r+b\") as f:\n        for _ in range(passes):\n            f.seek(0)\n            f.write(os.urandom(size))\n            f.flush()\n            os.fsync(f.fileno())\n    path.rename(path.with_name(path.name + \".shredded\"))\n    path.unlink()\n\n\ndef main():\n    ap = argparse.ArgumentParser()\n    ap.add_argument(\"files\", nargs=\"+\")\n    ap.add_argument(\"--passes\", type=int, default=3)\n    args = ap.parse_args()\n    for f in args.files:\n        p = Path(f)\n        if p.exists():\n            shred(p, args.passes)\n            print(\"已粉碎:\", f)\n\n\nif __name__ == \"__main__\":\n    main()\n"
+   "file": "devtools_examples/devtool_secure-shred.py"
   },
   {
    "id": "tools_dev-archive-tool",
@@ -82,7 +82,7 @@
    "title": "统一压缩解压器",
    "description": "zip/tar.gz 一键压缩与解压（按扩展名自动分派）。",
    "requirements": [],
-   "code": "\"\"\"压缩/解压：zip 与 tar.gz 统一接口。\"\"\"\nimport argparse\nimport tarfile\nimport zipfile\nfrom pathlib import Path\n\n\ndef pack(folder, out):\n    if out.suffix == \".zip\":\n        with zipfile.ZipFile(out, \"w\", zipfile.ZIP_DEFLATED) as zf:\n            for f in Path(folder).rglob(\"*\"):\n                if f.is_file():\n                    zf.write(f, f.relative_to(folder))\n    else:\n        with tarfile.open(out, \"w:gz\") as tf:\n            tf.add(folder, arcname=Path(folder).name)\n\n\ndef unpack(archive, dest):\n    dest = Path(dest)\n    dest.mkdir(exist_ok=True)\n    if archive.suffix == \".zip\":\n        zipfile.ZipFile(archive).extractall(dest)\n    else:\n        tarfile.open(archive).extractall(dest)\n\n\ndef main():\n    ap = argparse.ArgumentParser()\n    sub = ap.add_subparsers(dest=\"mode\", required=True)\n    p1 = sub.add_parser(\"pack\"); p1.add_argument(\"folder\"); p1.add_argument(\"out\")\n    p2 = sub.add_parser(\"unpack\"); p2.add_argument(\"archive\"); p2.add_argument(\"dest\")\n    args = ap.parse_args()\n    if args.mode == \"pack\":\n        pack(args.folder, args.out); print(\"已压缩 ->\", args.out)\n    else:\n        unpack(args.archive, args.dest); print(\"已解压 ->\", args.dest)\n\n\nif __name__ == \"__main__\":\n    main()\n"
+   "file": "devtools_examples/devtool_archive-tool.py"
   },
   {
    "id": "tools_dev-tmp-sweep",
@@ -96,7 +96,7 @@
    "title": "临时文件清理器",
    "description": "按修改时间清理 N 天前的临时文件。",
    "requirements": [],
-   "code": "\"\"\"临时清理：删除 mtime 超过 N 天的 .tmp/.log/.cache 文件。\"\"\"\nimport argparse\nimport time\nfrom pathlib import Path\n\n\ndef main():\n    ap = argparse.ArgumentParser()\n    ap.add_argument(\"directory\", nargs=\"?\", default=\".\")\n    ap.add_argument(\"--days\", type=int, default=7)\n    ap.add_argument(\"--apply\", action=\"store_true\")\n    args = ap.parse_args()\n    cutoff = time.time() - args.days * 86400\n\n    freed = 0\n    for p in Path(args.directory).rglob(\"*\"):\n        if (p.is_file() and p.suffix in {\".tmp\", \".log\", \".cache\"}\n                and p.stat().st_mtime < cutoff):\n            freed += p.stat().st_size\n            print(\"清理:\", p)\n            if args.apply:\n                p.unlink()\n    print(f\"{'已清理' if args.apply else '可清理'} {freed / 1024:.0f} KB\")\n\n\nif __name__ == \"__main__\":\n    main()\n"
+   "file": "devtools_examples/devtool_tmp-sweep.py"
   },
   {
    "id": "tools_dev-tree-print",
@@ -110,7 +110,7 @@
    "title": "目录树打印",
    "description": "tree 命令的 Python 版（支持深度与忽略规则）。",
    "requirements": [],
-   "code": "\"\"\"目录树：tree 命令复刻。\"\"\"\nimport argparse\nfrom pathlib import Path\n\n\ndef walk(d: Path, prefix: str, depth: int, max_depth: int, ignores: set):\n    if depth > max_depth:\n        return\n    entries = sorted(d.iterdir(), key=lambda p: (p.is_file(), p.name))\n    entries = [e for e in entries if e.name not in ignores]\n    for i, e in enumerate(entries):\n        last = i == len(entries) - 1\n        print(prefix + (\"└── \" if last else \"├── \") + e.name + (\"/\" if e.is_dir() else \"\"))\n        if e.is_dir():\n            walk(e, prefix + (\"    \" if last else \"│   \"), depth + 1, max_depth, ignores)\n\n\ndef main():\n    ap = argparse.ArgumentParser()\n    ap.add_argument(\"directory\", nargs=\"?\", default=\".\")\n    ap.add_argument(\"--depth\", type=int, default=3)\n    ap.add_argument(\"--ignore\", nargs=\"*\", default=[\"node_modules\", \".git\", \"__pycache__\"])\n    args = ap.parse_args()\n    print(Path(args.directory).resolve().name + \"/\")\n    walk(Path(args.directory), \"\", 1, args.depth, set(args.ignore))\n\n\nif __name__ == \"__main__\":\n    main()\n"
+   "file": "devtools_examples/devtool_tree-print.py"
   },
   {
    "id": "tools_dev-file-watch",
@@ -124,7 +124,7 @@
    "title": "文件变更监听",
    "description": "mtime 轮询监听目录变更（无第三方依赖）。",
    "requirements": [],
-   "code": "\"\"\"文件监听：轮询 mtime，变更即提示。\"\"\"\nimport argparse\nimport time\nfrom pathlib import Path\n\n\ndef snapshot(d):\n    return {p: p.stat().st_mtime for p in d.rglob(\"*\") if p.is_file()}\n\n\ndef main():\n    ap = argparse.ArgumentParser()\n    ap.add_argument(\"directory\", nargs=\"?\", default=\".\")\n    ap.add_argument(\"--interval\", type=float, default=1.0)\n    ap.add_argument(\"--duration\", type=float, default=10, help=\"监听秒数\")\n    args = ap.parse_args()\n    base = Path(args.directory)\n    before = snapshot(base)\n    deadline = time.monotonic() + args.duration\n    print(f\"监听 {base}（{args.duration}s）…\")\n    while time.monotonic() < deadline:\n        time.sleep(args.interval)\n        now = snapshot(base)\n        for p in now.keys() - before.keys():\n            print(\"新增:\", p)\n        for p in before.keys() - now.keys():\n            print(\"删除:\", p)\n        for p in now.keys() & before.keys():\n            if now[p] != before[p]:\n                print(\"修改:\", p)\n        before = now\n\n\nif __name__ == \"__main__\":\n    main()\n"
+   "file": "devtools_examples/devtool_file-watch.py"
   },
   {
    "id": "tools_dev-quick-find",
@@ -138,7 +138,7 @@
    "title": "快速文件查找",
    "description": "按名称正则全盘搜索（fd 的精简版）。",
    "requirements": [],
-   "code": "\"\"\"快速查找：名称正则 + 类型过滤。\"\"\"\nimport argparse\nimport re\nfrom pathlib import Path\n\n\ndef main():\n    ap = argparse.ArgumentParser()\n    ap.add_argument(\"pattern\", help=\"名称正则\")\n    ap.add_argument(\"directory\", nargs=\"?\", default=\".\")\n    ap.add_argument(\"--type\", choices=[\"f\", \"d\"], default=\"f\")\n    ap.add_argument(\"--limit\", type=int, default=50)\n    args = ap.parse_args()\n    rx = re.compile(args.pattern, re.IGNORECASE)\n\n    count = 0\n    for p in Path(args.directory).rglob(\"*\"):\n        if len(p.parts) > 2 and any(x in p.parts for x in (\"node_modules\", \".git\")):\n            continue\n        if (p.is_file() if args.type == \"f\" else p.is_dir()) and rx.search(p.name):\n            print(p)\n            count += 1\n            if count >= args.limit:\n                break\n    print(f\"共 {count} 个（上限 {args.limit}）\")\n\n\nif __name__ == \"__main__\":\n    main()\n"
+   "file": "devtools_examples/devtool_quick-find.py"
   },
   {
    "id": "tools_dev-encoding-fix",
@@ -152,7 +152,7 @@
    "title": "编码修复器",
    "description": "批量检测并转换 GBK/Latin 文本到 UTF-8。",
    "requirements": [],
-   "code": "\"\"\"编码修复：GBK/Latin1 → UTF-8 批量转换。\"\"\"\nimport argparse\nfrom pathlib import Path\n\n\ndef decode_flexible(data: bytes):\n    for enc in (\"utf-8\", \"gbk\", \"latin-1\"):\n        try:\n            return data.decode(enc), enc\n        except (UnicodeDecodeError, UnicodeError):\n            continue\n    return None, None\n\n\ndef main():\n    ap = argparse.ArgumentParser()\n    ap.add_argument(\"directory\", nargs=\"?\", default=\".\")\n    ap.add_argument(\"--ext\", nargs=\"*\", default=[\".txt\", \".csv\", \".md\"])\n    ap.add_argument(\"--apply\", action=\"store_true\")\n    args = ap.parse_args()\n\n    for p in Path(args.directory).rglob(\"*\"):\n        if p.suffix not in args.ext or not p.is_file():\n            continue\n        text, enc = decode_flexible(p.read_bytes())\n        if text is None:\n            print(\"无法识别:\", p)\n        elif enc != \"utf-8\":\n            print(f\"{p}: {enc} -> utf-8\")\n            if args.apply:\n                p.write_text(text, encoding=\"utf-8\")\n\n\nif __name__ == \"__main__\":\n    main()\n"
+   "file": "devtools_examples/devtool_encoding-fix.py"
   },
   {
    "id": "tools_dev-md-toc",
@@ -166,7 +166,7 @@
    "title": "Markdown 目录生成",
    "description": "提取标题层级生成 TOC，锚点自动转写。",
    "requirements": [],
-   "code": "\"\"\"Markdown TOC：把 # 标题生成目录并打印。\"\"\"\nimport argparse\nimport re\nfrom pathlib import Path\n\n\ndef anchor(text):\n    return re.sub(r\"[^\\w\\u4e00-\\u9fff- ]\", \"\", text).strip().replace(\" \", \"-\").lower()\n\n\ndef main():\n    ap = argparse.ArgumentParser()\n    ap.add_argument(\"file\")\n    args = ap.parse_args()\n    lines = Path(args.file).read_text(encoding=\"utf-8\").splitlines()\n    for line in lines:\n        m = re.match(r\"^(#{1,4})\\s+(.+)\", line)\n        if m:\n            depth, title = len(m.group(1)), m.group(2).strip()\n            print(\"  \" * (depth - 1) + f\"- [{title}](#{anchor(title)})\")\n\n\nif __name__ == \"__main__\":\n    main()\n"
+   "file": "devtools_examples/devtool_md-toc.py"
   },
   {
    "id": "tools_dev-csv-json-convert",
@@ -180,7 +180,7 @@
    "title": "CSV ↔ JSON 互转",
    "description": "带类型推断的双向转换器。",
    "requirements": [],
-   "code": "\"\"\"CSV ↔ JSON：python xxx.py csv2json data.csv / json2csv data.json\"\"\"\nimport argparse\nimport csv\nimport json\nfrom pathlib import Path\n\n\ndef typed(v):\n    for cast in (int, float):\n        try:\n            return cast(v)\n        except ValueError:\n            pass\n    return v\n\n\ndef main():\n    ap = argparse.ArgumentParser()\n    ap.add_argument(\"mode\", choices=[\"csv2json\", \"json2csv\"])\n    ap.add_argument(\"file\")\n    args = ap.parse_args()\n    src = Path(args.file)\n\n    if args.mode == \"csv2json\":\n        rows = list(csv.DictReader(src.open(encoding=\"utf-8\")))\n        rows = [{k: typed(v) for k, v in r.items()} for r in rows]\n        out = src.with_suffix(\".json\")\n        out.write_text(json.dumps(rows, ensure_ascii=False, indent=1), encoding=\"utf-8\")\n        print(f\"-> {out}（{len(rows)} 行）\")\n    else:\n        rows = json.loads(src.read_text(encoding=\"utf-8\"))\n        out = src.with_suffix(\".csv\")\n        with out.open(\"w\", newline=\"\", encoding=\"utf-8\") as f:\n            writer = csv.DictWriter(f, fieldnames=list(rows[0]))\n            writer.writeheader()\n            writer.writerows(rows)\n        print(f\"-> {out}（{len(rows)} 行）\")\n\n\nif __name__ == \"__main__\":\n    main()\n"
+   "file": "devtools_examples/devtool_csv-json-convert.py"
   },
   {
    "id": "tools_dev-text-diff",
@@ -194,7 +194,7 @@
    "title": "文本对比工具",
    "description": "difflib unified diff，两个文件逐行对比。",
    "requirements": [],
-   "code": "\"\"\"文本 diff：unified 风格输出。\"\"\"\nimport argparse\nimport difflib\nfrom pathlib import Path\n\n\ndef main():\n    ap = argparse.ArgumentParser()\n    ap.add_argument(\"a\")\n    ap.add_argument(\"b\")\n    args = ap.parse_args()\n    a = Path(args.a).read_text(encoding=\"utf-8\").splitlines()\n    b = Path(args.b).read_text(encoding=\"utf-8\").splitlines()\n    diff = difflib.unified_diff(a, b, fromfile=args.a, tofile=args.b, lineterm=\"\")\n    changed = 0\n    for line in diff:\n        print(line)\n        changed += line[:1] in \"+-\"\n    print(f\"变更行: {changed}\")\n\n\nif __name__ == \"__main__\":\n    main()\n"
+   "file": "devtools_examples/devtool_text-diff.py"
   },
   {
    "id": "tools_dev-loc-counter",
@@ -208,7 +208,7 @@
    "title": "代码行数统计",
    "description": "cloc 精简版：按扩展名统计代码/注释/空行。",
    "requirements": [],
-   "code": "\"\"\"代码统计：按扩展名汇总行数。\"\"\"\nimport argparse\nfrom collections import defaultdict\nfrom pathlib import Path\n\n\ndef count_file(p):\n    code = comment = blank = 0\n    for line in p.read_text(encoding=\"utf-8\", errors=\"ignore\").splitlines():\n        s = line.strip()\n        if not s:\n            blank += 1\n        elif s.startswith((\"#\", \"//\")):\n            comment += 1\n        else:\n            code += 1\n    return code, comment, blank\n\n\ndef main():\n    ap = argparse.ArgumentParser()\n    ap.add_argument(\"directory\", nargs=\"?\", default=\".\")\n    args = ap.parse_args()\n    stats = defaultdict(lambda: [0, 0, 0, 0])\n    for p in Path(args.directory).rglob(\"*\"):\n        if p.is_file() and p.suffix in {\".py\", \".js\", \".ts\", \".vue\", \".mjs\"} and \"node_modules\" not in p.parts:\n            c, cm, b = count_file(p)\n            s = stats[p.suffix]\n            s[0] += c; s[1] += cm; s[2] += b; s[3] += 1\n    print(f\"{'类型':<6}{'文件':>5}{'代码':>8}{'注释':>8}{'空行':>8}\")\n    for ext, (c, cm, b, n) in sorted(stats.items(), key=lambda x: -x[1][0]):\n        print(f\"{ext:<6}{n:>5}{c:>8}{cm:>8}{b:>8}\")\n\n\nif __name__ == \"__main__\":\n    main()\n"
+   "file": "devtools_examples/devtool_loc-counter.py"
   },
   {
    "id": "tools_dev-json-tool",
@@ -222,7 +222,7 @@
    "title": "JSON 格式化校验",
    "description": "格式化/压缩/校验三合一。",
    "requirements": [],
-   "code": "\"\"\"JSON 工具：format | minify | check\"\"\"\nimport argparse\nimport json\nfrom pathlib import Path\n\n\ndef main():\n    ap = argparse.ArgumentParser()\n    ap.add_argument(\"mode\", choices=[\"format\", \"minify\", \"check\"])\n    ap.add_argument(\"file\")\n    args = ap.parse_args()\n    src = Path(args.file)\n    try:\n        data = json.loads(src.read_text(encoding=\"utf-8\"))\n    except json.JSONDecodeError as e:\n        print(f\"JSON 非法: {e}\")\n        raise SystemExit(1)\n    if args.mode == \"check\":\n        print(\"JSON 合法，顶层类型:\", type(data).__name__)\n    elif args.mode == \"format\":\n        src.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding=\"utf-8\")\n        print(\"已格式化 ->\", src)\n    else:\n        src.write_text(json.dumps(data, ensure_ascii=False, separators=(\",\", \":\")), encoding=\"utf-8\")\n        print(\"已压缩 ->\", src)\n\n\nif __name__ == \"__main__\":\n    main()\n"
+   "file": "devtools_examples/devtool_json-tool.py"
   },
   {
    "id": "tools_dev-yaml-json-convert",
@@ -238,7 +238,7 @@
    "requirements": [
     "pyyaml"
    ],
-   "code": "\"\"\"YAML ↔ JSON：python xxx.py yaml2json config.yaml\"\"\"\nimport argparse\nimport json\nfrom pathlib import Path\n\nimport yaml\n\n\ndef main():\n    ap = argparse.ArgumentParser()\n    ap.add_argument(\"mode\", choices=[\"yaml2json\", \"json2yaml\"])\n    ap.add_argument(\"file\")\n    args = ap.parse_args()\n    src = Path(args.file)\n    if args.mode == \"yaml2json\":\n        data = yaml.safe_load(src.read_text(encoding=\"utf-8\"))\n        out = src.with_suffix(\".json\")\n        out.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding=\"utf-8\")\n    else:\n        data = json.loads(src.read_text(encoding=\"utf-8\"))\n        out = src.with_suffix(\".yaml\")\n        out.write_text(yaml.dump(data, allow_unicode=True, sort_keys=False), encoding=\"utf-8\")\n    print(\"->\", out)\n\n\nif __name__ == \"__main__\":\n    main()\n"
+   "file": "devtools_examples/devtool_yaml-json-convert.py"
   },
   {
    "id": "tools_dev-secret-scanner",
@@ -252,7 +252,7 @@
    "title": "敏感信息扫描器",
    "description": "扫描代码里的密钥/密码/token 泄漏。",
    "requirements": [],
-   "code": "\"\"\"泄漏扫描：密钥/密码/AK-SK 正则排查。\"\"\"\nimport argparse\nimport re\nfrom pathlib import Path\n\nRULES = [\n    (\"AWS AK\", re.compile(r\"AKIA[0-9A-Z]{16}\")),\n    (\"私钥块\", re.compile(r\"-----BEGIN (RSA |EC )?PRIVATE KEY-----\")),\n    (\"通用密码\", re.compile(r\"\"\"(?i)(password|passwd|pwd)\\s*[=:（(]\\s*['\\\"]?[^\\s'\\\"()（）]{6,}\"\"\")),\n    (\"Bearer token\", re.compile(r\"eyJ[A-Za-z0-9_-]{20,}\\.[A-Za-z0-9_-]{10,}\")),\n    (\"国内云 AK\", re.compile(r\"(?:LTAI|AKID)[A-Za-z0-9]{12,}\")),\n]\n\n\ndef main():\n    ap = argparse.ArgumentParser()\n    ap.add_argument(\"directory\", nargs=\"?\", default=\".\")\n    args = ap.parse_args()\n    hits = 0\n    for p in Path(args.directory).rglob(\"*\"):\n        if not p.is_file() or p.suffix not in {\".py\", \".js\", \".ts\", \".json\", \".yaml\", \".yml\", \".md\", \".env\", \".sh\"}:\n            continue\n        if any(x in p.parts for x in (\"node_modules\", \".git\")):\n            continue\n        for i, line in enumerate(p.read_text(encoding=\"utf-8\", errors=\"ignore\").splitlines(), 1):\n            for name, rx in RULES:\n                if rx.search(line):\n                    hits += 1\n                    print(f\"⚠ {p}:{i} [{name}] {line.strip()[:70]}\")\n    print(f\"扫描完成，{hits} 处可疑\")\n\n\nif __name__ == \"__main__\":\n    main()\n"
+   "file": "devtools_examples/devtool_secret-scanner.py"
   },
   {
    "id": "tools_dev-bulk-replace",
@@ -266,7 +266,7 @@
    "title": "批量查找替换",
    "description": "多文件正则替换（含预览与备份）。",
    "requirements": [],
-   "code": "\"\"\"批量替换：python xxx.py 目录 旧文本 新文本 --ext .py .md\"\"\"\nimport argparse\nfrom pathlib import Path\n\n\ndef main():\n    ap = argparse.ArgumentParser()\n    ap.add_argument(\"directory\")\n    ap.add_argument(\"old\")\n    ap.add_argument(\"new\")\n    ap.add_argument(\"--ext\", nargs=\"*\", default=[\".py\", \".md\", \".txt\"])\n    ap.add_argument(\"--apply\", action=\"store_true\")\n    args = ap.parse_args()\n\n    changed = 0\n    for p in Path(args.directory).rglob(\"*\"):\n        if p.suffix not in args.ext or not p.is_file():\n            continue\n        text = p.read_text(encoding=\"utf-8\", errors=\"ignore\")\n        if args.old not in text:\n            continue\n        n = text.count(args.old)\n        print(f\"{p}: {n} 处\")\n        changed += n\n        if args.apply:\n            p.write_text(text.replace(args.old, args.new), encoding=\"utf-8\")\n    print(f\"{'已替换' if args.apply else '可替换'} {changed} 处\")\n\n\nif __name__ == \"__main__\":\n    main()\n"
+   "file": "devtools_examples/devtool_bulk-replace.py"
   },
   {
    "id": "tools_dev-line-endings",
@@ -280,7 +280,7 @@
    "title": "换行符规范化",
    "description": "CRLF/LF/Tab 批量统一（跨平台协作必备）。",
    "requirements": [],
-   "code": "\"\"\"换行符规范化：CRLF→LF，Tab→4 空格。\"\"\"\nimport argparse\nfrom pathlib import Path\n\n\ndef main():\n    ap = argparse.ArgumentParser()\n    ap.add_argument(\"directory\", nargs=\"?\", default=\".\")\n    ap.add_argument(\"--ext\", nargs=\"*\", default=[\".py\", \".js\", \".ts\", \".md\"])\n    ap.add_argument(\"--apply\", action=\"store_true\")\n    args = ap.parse_args()\n\n    fixed = 0\n    for p in Path(args.directory).rglob(\"*\"):\n        if p.suffix not in args.ext or not p.is_file():\n            continue\n        raw = p.read_bytes()\n        new = raw.replace(b\"\\r\\n\", b\"\\n\").replace(b\"\\t\", b\"    \")\n        if new != raw:\n            print(\"规范化:\", p)\n            fixed += 1\n            if args.apply:\n                p.write_bytes(new)\n    print(f\"{'已修复' if args.apply else '可修复'} {fixed} 个文件\")\n\n\nif __name__ == \"__main__\":\n    main()\n"
+   "file": "devtools_examples/devtool_line-endings.py"
   },
   {
    "id": "tools_dev-speed-test",
@@ -296,7 +296,7 @@
    "requirements": [
     "requests"
    ],
-   "code": "\"\"\"网速测试：下载 1MB×3 次取均值。\"\"\"\nimport time\nimport requests\n\nsizes = []\nfor i in range(3):\n    t0 = time.monotonic()\n    data = requests.get(\"https://httpbin.org/bytes/1048576\", timeout=30).content\n    secs = time.monotonic() - t0\n    sizes.append(len(data) / secs / 1024 / 1024)\n    print(f\"第{i + 1}次: {sizes[-1]:.2f} MB/s\")\nprint(f\"平均: {sum(sizes) / len(sizes):.2f} MB/s\")\n"
+   "file": "devtools_examples/devtool_speed-test.py"
   },
   {
    "id": "tools_dev-ip-lookup",
@@ -312,7 +312,7 @@
    "requirements": [
     "requests"
    ],
-   "code": "\"\"\"IP 查询：出口 IP 与服务商。\"\"\"\nimport requests\n\nresp = requests.get(\"https://api.ipify.org?format=json\", timeout=10)\nip = resp.json()[\"ip\"]\nprint(\"出口 IP:\", ip)\ntry:\n    info = requests.get(f\"https://ipapi.co/{ip}/json/\", timeout=10).json()\n    print(\"归属:\", info.get(\"country_name\"), info.get(\"city\"), info.get(\"org\"))\nexcept requests.RequestException:\n    print(\"归属查询失败（不影响 IP 获取）\")\n"
+   "file": "devtools_examples/devtool_ip-lookup.py"
   },
   {
    "id": "tools_dev-port-check",
@@ -326,7 +326,7 @@
    "title": "端口连通检查",
    "description": "TCP 端口批量连通性检测（本机/局域网巡检用）。",
    "requirements": [],
-   "code": "\"\"\"端口检查：socket 探测目标主机端口列表。\"\"\"\nimport argparse\nimport socket\n\n\ndef main():\n    ap = argparse.ArgumentParser()\n    ap.add_argument(\"host\")\n    ap.add_argument(\"--ports\", nargs=\"*\", type=int, default=[80, 443, 22, 3306, 6379])\n    ap.add_argument(\"--timeout\", type=float, default=1.5)\n    args = ap.parse_args()\n    for port in args.ports:\n        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:\n            s.settimeout(args.timeout)\n            result = s.connect_ex((args.host, port)) == 0\n        print(f\"{args.host}:{port:<6} {'开放' if result else '关闭'}\")\n\n\nif __name__ == \"__main__\":\n    main()\n"
+   "file": "devtools_examples/devtool_port-check.py"
   },
   {
    "id": "tools_dev-http-headers-inspect",
@@ -342,7 +342,7 @@
    "requirements": [
     "requests"
    ],
-   "code": "\"\"\"响应头检查：缓存与安全配置一览。\"\"\"\nimport argparse\nimport requests\n\nINTERESTING = [\"Cache-Control\", \"Content-Type\", \"Content-Encoding\", \"Server\",\n               \"Strict-Transport-Security\", \"Content-Security-Policy\",\n               \"Access-Control-Allow-Origin\", \"ETag\"]\n\n\ndef main():\n    ap = argparse.ArgumentParser()\n    ap.add_argument(\"url\")\n    args = ap.parse_args()\n    resp = requests.get(args.url, timeout=10)\n    print(\"状态:\", resp.status_code)\n    for h in INTERESTING:\n        v = resp.headers.get(h)\n        if v:\n            print(f\"  {h}: {v[:60]}\")\n    missing = [h for h in (\"Strict-Transport-Security\", \"Content-Security-Policy\") if h not in resp.headers]\n    print(\"缺失安全头:\", missing or \"无\")\n"
+   "file": "devtools_examples/devtool_http-headers-inspect.py"
   },
   {
    "id": "tools_dev-site-monitor",
@@ -358,7 +358,7 @@
    "requirements": [
     "requests"
    ],
-   "code": "\"\"\"站点监控：循环探测 + 告警落盘。\"\"\"\nimport argparse\nimport time\nfrom pathlib import Path\nimport requests\n\nSITES = [\"https://httpbin.org/status/200\", \"https://api.github.com\"]\n\n\ndef check(url):\n    try:\n        return requests.get(url, timeout=8).status_code, None\n    except requests.RequestException as e:\n        return 0, str(e)\n\n\ndef main():\n    ap = argparse.ArgumentParser()\n    ap.add_argument(\"--rounds\", type=int, default=3)\n    ap.add_argument(\"--interval\", type=int, default=5)\n    args = ap.parse_args()\n    log = Path(\"monitor.log\")\n    for r in range(args.rounds):\n        for url in SITES:\n            code, err = check(url)\n            line = f\"{time.strftime('%H:%M:%S')} {url} -> {code or err}\"\n            print(line)\n            if code >= 400 or err:\n                with log.open(\"a\", encoding=\"utf-8\") as f:\n                    f.write(line + \"\\n\")\n        time.sleep(args.interval)\n    print(\"告警日志:\", log if log.exists() else \"（无告警）\")\n"
+   "file": "devtools_examples/devtool_site-monitor.py"
   },
   {
    "id": "tools_dev-qrcode-gen",
@@ -375,7 +375,7 @@
     "qrcode",
     "pillow"
    ],
-   "code": "\"\"\"二维码生成：python xxx.py '文本或链接' -o qr.png\"\"\"\nimport argparse\n\nimport qrcode\n\n\ndef main():\n    ap = argparse.ArgumentParser()\n    ap.add_argument(\"text\")\n    ap.add_argument(\"-o\", \"--output\", default=\"qrcode.png\")\n    args = ap.parse_args()\n    img = qrcode.make(args.text)\n    img.save(args.output)\n    print(f\"已生成 {args.output}（{img.size[0]}×{img.size[1]}）\")\n\n\nif __name__ == \"__main__\":\n    main()\n"
+   "file": "devtools_examples/devtool_qrcode-gen.py"
   },
   {
    "id": "tools_dev-url-batch-check",
@@ -391,7 +391,7 @@
    "requirements": [
     "requests"
    ],
-   "code": "\"\"\"URL 体检：HEAD 批量检查死链。\"\"\"\nimport concurrent.futures\nimport requests\n\nurls = [\n    \"https://httpbin.org/status/200\",\n    \"https://httpbin.org/status/404\",\n    \"https://api.github.com\",\n]\n\ndef check(u):\n    try:\n        return u, requests.head(u, timeout=8, allow_redirects=True).status_code\n    except requests.RequestException as e:\n        return u, str(type(e).__name__)\n\nwith concurrent.futures.ThreadPoolExecutor(8) as pool:\n    for url, code in pool.map(check, urls):\n        mark = \"✓\" if isinstance(code, int) and code < 400 else \"✗\"\n        print(f\"{mark} {code}  {url}\")\n"
+   "file": "devtools_examples/devtool_url-batch-check.py"
   },
   {
    "id": "tools_dev-dns-lookup",
@@ -405,7 +405,7 @@
    "title": "DNS 解析查询",
    "description": "域名 → A 记录/规范名/反查。",
    "requirements": [],
-   "code": "\"\"\"DNS 查询：socket 标准库版。\"\"\"\nimport argparse\nimport socket\n\n\ndef main():\n    ap = argparse.ArgumentParser()\n    ap.add_argument(\"domain\")\n    args = ap.parse_args()\n    try:\n        infos = socket.getaddrinfo(args.domain, 443, socket.AF_INET)\n        ips = sorted({info[4][0] for info in infos})\n        print(f\"{args.domain} -> {ips}\")\n    except socket.gaierror as e:\n        print(\"解析失败:\", e)\n    try:\n        print(\"规范名:\", socket.gethostbyaddr(socket.gethostbyname(args.domain))[0])\n    except socket.herror:\n        pass\n\n\nif __name__ == \"__main__\":\n    main()\n"
+   "file": "devtools_examples/devtool_dns-lookup.py"
   },
   {
    "id": "tools_dev-html2text",
@@ -422,7 +422,7 @@
     "requests",
     "beautifulsoup4"
    ],
-   "code": "\"\"\"正文提取：脚本+样式剔除，块级标签换行。\"\"\"\nfrom bs4 import BeautifulSoup\n\nHTML = \"\"\"\n<html><head><style>body{color:red}</style><script>var x=1;</script></head>\n<body><h1>标题</h1><p>第一段正文。</p><p>第二段，含<a href=\"#\">链接</a>。</p></body></html>\"\"\"\nsoup = BeautifulSoup(HTML, \"html.parser\")\nfor tag in soup([\"style\", \"script\", \"noscript\"]):\n    tag.decompose()\ntext = soup.get_text(\"\\n\")\nlines = [ln.strip() for ln in text.splitlines() if ln.strip()]\nprint(\"\\n\".join(lines))\n"
+   "file": "devtools_examples/devtool_html2text.py"
   },
   {
    "id": "tools_dev-git-branch-report",
@@ -436,7 +436,7 @@
    "title": "Git 分支报告",
    "description": "列出本地分支与最近提交时间（清理依据）。",
    "requirements": [],
-   "code": "\"\"\"Git 分支报告：按最近提交排序。\"\"\"\nimport argparse\nimport subprocess\nfrom pathlib import Path\n\n\ndef git(*args):\n    return subprocess.run([\"git\", *args], capture_output=True, text=True).stdout\n\n\ndef main():\n    ap = argparse.ArgumentParser()\n    ap.add_argument(\"repo\", nargs=\"?\", default=\".\")\n    args = ap.parse_args()\n    if not Path(args.repo, \".git\").exists():\n        print(\"不是 git 仓库\")\n        return\n    branches = git(\"-C\", args.repo, \"branch\", \"--format=%(committerdate:short)%09%(refname:short)\").splitlines()\n    rows = []\n    for line in branches:\n        date, _, name = line.partition(\"\t\")\n        rows.append((date, name))\n    for date, name in sorted(rows, reverse=True):\n        print(f\"{date[:19]}  {name}\")\n    print(\"（已合并分支可用 git branch --merged 查看，再 -d 清理）\")\n\n\nif __name__ == \"__main__\":\n    main()\n"
+   "file": "devtools_examples/devtool_git-branch-report.py"
   },
   {
    "id": "tools_dev-git-stats",
@@ -450,7 +450,7 @@
    "title": "Git 提交统计",
    "description": "按作者统计提交数与增删行。",
    "requirements": [],
-   "code": "\"\"\"Git 统计：shortlog + numstat。\"\"\"\nimport subprocess\nfrom collections import defaultdict\n\n\ndef git(*args):\n    return subprocess.run([\"git\", *args], capture_output=True, text=True).stdout\n\nby_author = defaultdict(lambda: [0, 0, 0])\nshortlog = git(\"log\", \"--format=%an|%h\")\nfor line in shortlog.splitlines():\n    author = line.split(\"|\")[0]\n    by_author[author][0] += 1\nnumstat = git(\"log\", \"--numstat\", \"--format=\")\nfor line in numstat.splitlines():\n    if not line.strip():\n        continue\n    add, dele, _ = line.split(\"\\t\")\n    author = None\n    for a in by_author:\n        if a:\n            author = a  # 简化：不计归属粒度\n            break\n    if author:\n        by_author[author][1] += int(add or 0) if add.isdigit() else 0\n        by_author[author][2] += int(dele or 0) if dele.isdigit() else 0\nfor author, (commits, add, dele) in sorted(by_author.items(), key=lambda x: -x[1][0]):\n    print(f\"{author:<16} 提交 {commits:>4}  +{add} -{dele}\")\n"
+   "file": "devtools_examples/devtool_git-stats.py"
   },
   {
    "id": "tools_dev-gitignore-gen",
@@ -464,7 +464,7 @@
    "title": "gitignore 生成器",
    "description": "按项目类型拼装 .gitignore 模板。",
    "requirements": [],
-   "code": "\"\"\"gitignore 生成：python xxx.py python node macos > .gitignore\"\"\"\nimport argparse\n\nTEMPLATES = {\n    \"python\": \"__pycache__/\\n*.py[cod]\\n.venv/\\n*.egg-info/\\n.pytest_cache/\\n.mypy_cache/\\ndist/\",\n    \"node\": \"node_modules/\\nout/\\n*.tsbuildinfo\\n.env.local\",\n    \"macos\": \".DS_Store\\n._*\",\n    \"ide\": \".idea/\\n.vscode/\",\n    \"python-notebook\": \".ipynb_checkpoints/\",\n}\n\n\ndef main():\n    ap = argparse.ArgumentParser()\n    ap.add_argument(\"stacks\", nargs=\"+\", choices=TEMPLATES)\n    args = ap.parse_args()\n    print(\"# 由 gitignore-gen 生成\")\n    for stack in args.stacks:\n        print(f\"\\n# --- {stack} ---\\n{TEMPLATES[stack]}\")\n\n\nif __name__ == \"__main__\":\n    main()\n"
+   "file": "devtools_examples/devtool_gitignore-gen.py"
   },
   {
    "id": "tools_dev-json2dataclass",
@@ -478,7 +478,7 @@
    "title": "JSON → dataclass",
    "description": "由 JSON 样本推断生成 dataclass 定义。",
    "requirements": [],
-   "code": "\"\"\"JSON → dataclass：样本推断字段类型。\"\"\"\nimport argparse\nimport json\n\n\ndef py_type(v):\n    if isinstance(v, bool): return \"bool\"\n    if isinstance(v, int): return \"int\"\n    if isinstance(v, float): return \"float\"\n    if isinstance(v, dict): return \"dict[str, object]\"\n    if isinstance(v, list): return \"list\"\n    return \"str\"\n\n\ndef main():\n    ap = argparse.ArgumentParser()\n    ap.add_argument(\"file\")\n    ap.add_argument(\"--class-name\", default=\"Item\")\n    args = ap.parse_args()\n    sample = json.loads(__import__(\"pathlib\").Path(args.file).read_text(encoding=\"utf-8\"))\n    if isinstance(sample, list) and sample:\n        sample = sample[0]\n    fields = [f\"    {k}: {py_type(v)}\" for k, v in sample.items()]\n    print(f\"@dataclass\\nclass {args.class_name}:\\n\" + \"\\n\".join(fields))\n\n\nif __name__ == \"__main__\":\n    main()\n"
+   "file": "devtools_examples/devtool_json2dataclass.py"
   },
   {
    "id": "tools_dev-regex-playground",
@@ -492,7 +492,7 @@
    "title": "正则测试器",
    "description": "模式 + 样本文本 → 全部匹配与分组展示。",
    "requirements": [],
-   "code": "\"\"\"正则测试：pattern + 样本 → 匹配详情。\"\"\"\nimport argparse\nimport re\n\n\ndef main():\n    ap = argparse.ArgumentParser()\n    ap.add_argument(\"pattern\")\n    ap.add_argument(\"sample\")\n    args = ap.parse_args()\n    rx = re.compile(args.pattern)\n    matches = list(rx.finditer(args.sample))\n    if not matches:\n        print(\"无匹配\")\n        return\n    for m in matches:\n        print(f\"[{m.start()}:{m.end()}] {m.group()!r}\")\n        for gi, g in enumerate(m.groups() or [], 1):\n            if g is not None:\n                print(f\"   组{gi}: {g!r}\")\n    print(f\"共 {len(matches)} 处匹配\")\n\n\nif __name__ == \"__main__\":\n    main()\n"
+   "file": "devtools_examples/devtool_regex-playground.py"
   },
   {
    "id": "tools_dev-uuid-gen",
@@ -506,7 +506,7 @@
    "title": "UUID/短 ID 生成器",
    "description": "uuid4 / 短 ID / 序列号多种模式。",
    "requirements": [],
-   "code": "\"\"\"ID 生成：uuid4 / 短ID / 序列号。\"\"\"\nimport argparse\nimport secrets\nimport uuid\n\n\ndef main():\n    ap = argparse.ArgumentParser()\n    ap.add_argument(\"--mode\", choices=[\"uuid\", \"short\", \"serial\"], default=\"uuid\")\n    ap.add_argument(\"-n\", type=int, default=3)\n    args = ap.parse_args()\n    for _ in range(args.n):\n        if args.mode == \"uuid\":\n            print(uuid.uuid4())\n        elif args.mode == \"short\":\n            print(secrets.token_urlsafe(8))\n        else:\n            print(time_id := f\"{__import__('time').strftime('%Y%m%d')}-{secrets.token_hex(4).upper()}\")\n\n\nif __name__ == \"__main__\":\n    main()\n"
+   "file": "devtools_examples/devtool_uuid-gen.py"
   },
   {
    "id": "tools_dev-hash-checksum",
@@ -520,7 +520,7 @@
    "title": "哈希校验器",
    "description": "多算法文件校验和（MD5/SHA1/SHA256）。",
    "requirements": [],
-   "code": "\"\"\"哈希校验：文件多算法指纹。\"\"\"\nimport argparse\nimport hashlib\nfrom pathlib import Path\n\n\ndef main():\n    ap = argparse.ArgumentParser()\n    ap.add_argument(\"file\")\n    ap.add_argument(\"--algo\", nargs=\"*\", default=[\"md5\", \"sha1\", \"sha256\"])\n    args = ap.parse_args()\n    data = Path(args.file).read_bytes()\n    for algo in args.algo:\n        h = hashlib.new(algo, data).hexdigest()\n        print(f\"{algo:<8} {h}  {Path(args.file).name}\")\n\n\nif __name__ == \"__main__\":\n    main()\n"
+   "file": "devtools_examples/devtool_hash-checksum.py"
   },
   {
    "id": "tools_dev-jwt-decode",
@@ -534,7 +534,7 @@
    "title": "JWT 解码器",
    "description": "不解签验证码，仅解码 header/payload 查看。",
    "requirements": [],
-   "code": "\"\"\"JWT 解码：base64 分段解码（不验证签名）。\"\"\"\nimport argparse\nimport base64\nimport json\nfrom datetime import datetime\n\n\ndef b64d(seg):\n    return json.loads(base64.urlsafe_b64decode(seg + \"=\" * (-len(seg) % 4)))\n\n\ndef main():\n    ap = argparse.ArgumentParser()\n    ap.add_argument(\"token\")\n    args = ap.parse_args()\n    header, payload, _ = args.token.split(\".\")\n    h, p = b64d(header), b64d(payload)\n    print(\"Header:\", json.dumps(h, ensure_ascii=False, indent=1))\n    print(\"Payload:\", json.dumps(p, ensure_ascii=False, indent=1))\n    if \"exp\" in p:\n        exp = datetime.fromtimestamp(p[\"exp\"])\n        print(\"过期时间:\", exp, \"（已过期)\" if exp < datetime.now() else \"（有效）\")\n\n\nif __name__ == \"__main__\":\n    main()\n"
+   "file": "devtools_examples/devtool_jwt-decode.py"
   },
   {
    "id": "tools_dev-ts-converter",
@@ -548,7 +548,7 @@
    "title": "时间戳转换器",
    "description": "时间戳 ↔ 日期互转（当前/指定/反向）。",
    "requirements": [],
-   "code": "\"\"\"时间戳转换：now | <epoch> | --date '2026-01-01 10:00'\"\"\"\nimport argparse\nfrom datetime import datetime\n\n\ndef main():\n    ap = argparse.ArgumentParser()\n    ap.add_argument(\"value\", nargs=\"?\", default=\"now\")\n    ap.add_argument(\"--date\", help=\"反向：日期字符串转时间戳\")\n    args = ap.parse_args()\n    if args.date:\n        dt = datetime.fromisoformat(args.date)\n        print(int(dt.timestamp()))\n    elif args.value == \"now\":\n        now = datetime.now()\n        print(\"时间戳:\", int(now.timestamp()), \"|\", now.strftime(\"%Y-%m-%d %H:%M:%S\"))\n    else:\n        ts = int(args.value)\n        print(datetime.fromtimestamp(ts).strftime(\"%Y-%m-%d %H:%M:%S\"))\n\n\nif __name__ == \"__main__\":\n    main()\n"
+   "file": "devtools_examples/devtool_ts-converter.py"
   },
   {
    "id": "tools_dev-env-checker",
@@ -562,7 +562,7 @@
    "title": ".env 校验器",
    "description": "对比 .env 与 .env.example 的缺失/多余键。",
    "requirements": [],
-   "code": "\"\"\".env 校验：缺失键与多余键清单。\"\"\"\nimport argparse\nfrom pathlib import Path\n\n\ndef load_keys(path):\n    if not Path(path).exists():\n        return {}\n    keys = {}\n    for line in Path(path).read_text(encoding=\"utf-8\").splitlines():\n        line = line.strip()\n        if line and not line.startswith(\"#\") and \"=\" in line:\n            k, v = line.split(\"=\", 1)\n            keys[k] = v\n    return keys\n\n\ndef main():\n    ap = argparse.ArgumentParser()\n    ap.add_argument(\"--env\", default=\".env\")\n    ap.add_argument(\"--example\", default=\".env.example\")\n    args = ap.parse_args()\n    env, example = load_keys(args.env), load_keys(args.example)\n    missing = [k for k in example if k not in env]\n    extra = [k for k in env if k not in example]\n    empty = [k for k, v in env.items() if not v]\n    if missing: print(\"缺失键:\", missing)\n    if extra: print(\"多余键:\", extra)\n    if empty: print(\"空值键:\", empty)\n    if not (missing or extra or empty): print(\".env 与 example 一致\")\n\n\nif __name__ == \"__main__\":\n    main()\n"
+   "file": "devtools_examples/devtool_env-checker.py"
   },
   {
    "id": "tools_dev-indent-fix",
@@ -576,7 +576,7 @@
    "title": "缩进规范化",
    "description": "Tab→空格、行尾空白清理（PEP8 卫生）。",
    "requirements": [],
-   "code": "\"\"\"缩进修复：Tab→4空格 + 行尾空白。\"\"\"\nimport argparse\nfrom pathlib import Path\n\n\ndef main():\n    ap = argparse.ArgumentParser()\n    ap.add_argument(\"files\", nargs=\"+\")\n    ap.add_argument(\"--apply\", action=\"store_true\")\n    args = ap.parse_args()\n    for f in args.files:\n        p = Path(f)\n        lines = p.read_text(encoding=\"utf-8\").split(\"\\n\")\n        fixed = [ln.replace(\"\\t\", \"    \").rstrip() for ln in lines]\n        if fixed != lines:\n            print(\"规范化:\", p)\n            if args.apply:\n                p.write_text(\"\\n\".join(fixed), encoding=\"utf-8\")\n\n\nif __name__ == \"__main__\":\n    main()\n"
+   "file": "devtools_examples/devtool_indent-fix.py"
   },
   {
    "id": "tools_dev-todo-scanner",
@@ -590,7 +590,7 @@
    "title": "TODO/FIXME 扫描",
    "description": "全库扫描未完成标记并按文件汇总。",
    "requirements": [],
-   "code": "\"\"\"TODO 扫描：TODO/FIXME/HACK/XXX 全库清单。\"\"\"\nimport argparse\nimport re\nfrom collections import defaultdict\nfrom pathlib import Path\n\nRX = re.compile(r\"\\b(TODO|FIXME|HACK|XXX)\\b[:：]?\\s*(.*)\")\n\n\ndef main():\n    ap = argparse.ArgumentParser()\n    ap.add_argument(\"directory\", nargs=\"?\", default=\".\")\n    args = ap.parse_args()\n    by_file = defaultdict(list)\n    for p in Path(args.directory).rglob(\"*\"):\n        if p.suffix not in {\".py\", \".js\", \".ts\", \".vue\", \".mjs\"} or \"node_modules\" in p.parts:\n            continue\n        for i, line in enumerate(p.read_text(encoding=\"utf-8\", errors=\"ignore\").splitlines(), 1):\n            m = RX.search(line)\n            if m:\n                by_file[str(p)].append((i, m.group(1), m.group(2)[:50]))\n    for f, marks in sorted(by_file.items()):\n        print(f)\n        for i, kind, text in marks:\n            print(f\"  L{i} [{kind}] {text}\")\n    print(f\"共 {sum(len(v) for v in by_file.values())} 处未完成标记\")\n\n\nif __name__ == \"__main__\":\n    main()\n"
+   "file": "devtools_examples/devtool_todo-scanner.py"
   },
   {
    "id": "tools_dev-sys-top-processes",
@@ -606,7 +606,7 @@
    "requirements": [
     "psutil"
    ],
-   "code": "\"\"\"进程榜：CPU 与内存 Top10。\"\"\"\nimport argparse\n\nimport psutil\n\n\ndef main():\n    ap = argparse.ArgumentParser()\n    ap.add_argument(\"--by\", choices=[\"cpu\", \"mem\"], default=\"cpu\")\n    args = ap.parse_args()\n    import time\n    procs = list(psutil.process_iter([\"pid\", \"name\"]))\n    for p in procs:\n        try:\n            p.cpu_percent(interval=None)  # 首次调用置零，建立采样基线\n        except psutil.Error:\n            pass\n    time.sleep(0.5)\n    for p in procs:\n        try:\n            p.info[\"cpu_percent\"] = p.cpu_percent(interval=None)\n            p.info[\"memory_percent\"] = p.memory_percent()\n        except psutil.Error:\n            p.info[\"cpu_percent\"] = p.info[\"memory_percent\"] = 0.0\n    key = (lambda p: p.info[\"memory_percent\"] or 0) if args.by == \"mem\" else (lambda p: p.info[\"cpu_percent\"] or 0)\n    for p in sorted(procs, key=key, reverse=True)[:10]:\n        print(f\"{p.info['pid']:>7}  {p.info['name'][:26]:<26} \"\n              f\"CPU {p.info['cpu_percent'] or 0:5.1f}%  MEM {p.info['memory_percent'] or 0:5.1f}%\")\n\n\nif __name__ == \"__main__\":\n    main()\n"
+   "file": "devtools_examples/devtool_sys-top-processes.py"
   },
   {
    "id": "tools_dev-sys-disk-gauge",
@@ -622,7 +622,7 @@
    "requirements": [
     "psutil"
    ],
-   "code": "\"\"\"磁盘仪表：分区使用率进度条。\"\"\"\nimport psutil\n\nfor part in psutil.disk_partitions():\n    try:\n        u = psutil.disk_usage(part.mountpoint)\n    except PermissionError:\n        continue\n    pct = u.percent / 100\n    bar = \"█\" * int(pct * 24) + \"░\" * (24 - int(pct * 24))\n    warn = \" ⚠️\" if u.percent > 90 else \"\"\n    print(f\"{part.mountpoint:<14} {bar} {u.percent:5.1f}%  \"\n          f\"剩余 {u.free / 1024**3:.0f}GB/{u.total / 1024**3:.0f}GB{warn}\")\n"
+   "file": "devtools_examples/devtool_sys-disk-gauge.py"
   },
   {
    "id": "tools_dev-sys-battery",
@@ -638,7 +638,7 @@
    "requirements": [
     "psutil"
    ],
-   "code": "\"\"\"电池状态：电量与预估续航。\"\"\"\nimport psutil\n\nbat = psutil.sensors_battery()\nif bat is None:\n    print(\"未检测到电池（台式机）\")\nelse:\n    plug = \"充电中 ⚡\" if bat.power_plugged else \"电池供电\"\n    print(f\"电量 {bat.percent:.0f}%  {plug}\")\n    if bat.secsleft and bat.secsleft != psutil.POWER_TIME_UNLIMITED and bat.secsleft > 0:\n        h, m = divmod(bat.secsleft // 60, 60)\n        print(f\"预估剩余 {h}小时{m}分钟\")\n"
+   "file": "devtools_examples/devtool_sys-battery.py"
   },
   {
    "id": "tools_dev-sys-info-report",
@@ -654,7 +654,7 @@
    "requirements": [
     "psutil"
    ],
-   "code": "\"\"\"系统报告：平台/硬件/Python 环境。\"\"\"\nimport platform\nimport sys\n\nimport psutil\n\nprint(\"系统:\", platform.platform())\nprint(\"主机名:\", platform.node())\nprint(\"CPU:\", platform.machine(), psutil.cpu_count(logical=True), \"逻辑核\")\nmem = psutil.virtual_memory()\nprint(f\"内存: {mem.total / 1024**3:.0f}GB（可用 {mem.available / 1024**3:.1f}GB）\")\ndisk = psutil.disk_usage(\"/\")\nprint(f\"根盘: {disk.total / 1024**3:.0f}GB（已用 {disk.percent:.0f}%）\")\nprint(\"Python:\", sys.version.split()[0], \"@\", sys.executable)\n"
+   "file": "devtools_examples/devtool_sys-info-report.py"
   },
   {
    "id": "tools_dev-pwd-strength",
@@ -668,7 +668,7 @@
    "title": "密码强度检查",
    "description": "长度/字符集/常见弱口令模式评分。",
    "requirements": [],
-   "code": "\"\"\"密码强度：评分 0-100 与改进建议。\"\"\"\nimport argparse\nimport re\n\nWEAK = {\"password\", \"123456\", \"qwerty\", \"admin888\", \"111111\", \"abc123\"}\n\n\ndef score(pwd):\n    s = 0\n    notes = []\n    if len(pwd) >= 8: s += 20\n    else: notes.append(\"长度不足 8 位\")\n    if len(pwd) >= 14: s += 15\n    if re.search(r\"[a-z]\", pwd) and re.search(r\"[A-Z]\", pwd): s += 20\n    else: notes.append(\"建议混合大小写\")\n    if re.search(r\"\\d\", pwd): s += 20\n    else: notes.append(\"建议包含数字\")\n    if re.search(r\"[^\\w]\", pwd): s += 15\n    else: notes.append(\"建议包含符号\")\n    if pwd.lower() in WEAK: return 0, [\"常见弱口令，必须更换\"]\n    if not re.search(r\"(.)\\1{2,}\", pwd): s += 10\n    else: notes.append(\"避免连续重复字符\")\n    return min(100, s), notes\n\n\ndef main():\n    ap = argparse.ArgumentParser()\n    ap.add_argument(\"password\")\n    args = ap.parse_args()\n    s, notes = score(args.password)\n    level = \"弱\" if s < 40 else \"中\" if s < 70 else \"强\"\n    print(f\"强度: {s}/100（{level}）\")\n    for n in notes:\n        print(\"  -\", n)\n\n\nif __name__ == \"__main__\":\n    main()\n"
+   "file": "devtools_examples/devtool_pwd-strength.py"
   },
   {
    "id": "tools_dev-pwd-vault",
@@ -682,7 +682,7 @@
    "title": "本地密码保险库",
    "description": "主口令派生密钥的离线密码库（自担风险演示）。",
    "requirements": [],
-   "code": "\"\"\"密码保险库：主口令 + 盐 派生 keystream 的本地加密存储（教学级实现，生产请用 keyring/1Password）。\"\"\"\nimport argparse\nimport base64\nimport hashlib\nimport json\nfrom pathlib import Path\n\nVAULT = Path(\"vault.enc.json\")\n\n\nimport os\n\n\ndef keystream(master: str, salt: bytes, size: int):\n    out = b\"\"\n    counter = 0\n    while len(out) < size:\n        out += hashlib.sha256(master.encode() + salt + str(counter).encode()).digest()\n        counter += 1\n    return out[:size]\n\n\ndef xor(data: bytes, key: bytes) -> bytes:\n    return bytes(a ^ b for a, b in zip(data, key))\n\n\ndef main():\n    ap = argparse.ArgumentParser()\n    ap.add_argument(\"mode\", choices=[\"add\", \"get\", \"list\"])\n    ap.add_argument(\"site\")\n    ap.add_argument(\"--master\", required=True)\n    args = ap.parse_args()\n    if VAULT.exists():\n        blob = json.loads(VAULT.read_text())\n        salt, data = bytes.fromhex(blob[\"salt\"]), bytes.fromhex(blob[\"data\"])\n        vault = json.loads(xor(data, keystream(args.master, salt, len(data))))\n    else:\n        salt, vault = os.urandom(16), {}\n    if args.mode == \"add\":\n        import getpass\n        vault[args.site] = getpass.getpass(\"密码: \")\n    elif args.mode == \"get\":\n        print(vault.get(args.site) or \"<未记录>\")\n    else:\n        print(\"站点:\", sorted(vault))\n    plain = json.dumps(vault, ensure_ascii=False).encode()\n    data = xor(plain, keystream(args.master, salt, len(plain)))\n    VAULT.write_text(json.dumps({\"salt\": salt.hex(), \"data\": data.hex()}))\n\n\nif __name__ == \"__main__\":\n    main()\n"
+   "file": "devtools_examples/devtool_pwd-vault.py"
   },
   {
    "id": "tools_dev-expense-tracker",
@@ -696,7 +696,7 @@
    "title": "花销记账本",
    "description": "SQLite 记账：记一笔/月度分类汇总。",
    "requirements": [],
-   "code": "\"\"\"记账本：add <分类> <金额> [备注] | report [月份]\"\"\"\nimport argparse\nimport sqlite3\nfrom collections import defaultdict\n\nDB = \"expenses.db\"\n\n\ndef main():\n    ap = argparse.ArgumentParser()\n    ap.add_argument(\"cmd\", choices=[\"add\", \"report\"])\n    ap.add_argument(\"args\", nargs=\"*\")\n    args = ap.parse_args()\n    conn = sqlite3.connect(DB)\n    conn.execute(\"CREATE TABLE IF NOT EXISTS expenses (date TEXT, category TEXT, amount REAL, note TEXT)\")\n    if args.cmd == \"add\" and len(args.args) >= 2:\n        from datetime import date\n        cat, amount = args.args[0], float(args.args[1])\n        note = args.args[2] if len(args.args) > 2 else \"\"\n        conn.execute(\"INSERT INTO expenses VALUES (?, ?, ?, ?)\", (date.today().isoformat(), cat, amount, note))\n        conn.commit()\n        print(f\"已记: {cat} ¥{amount}\")\n    else:\n        month = args.args[0] if args.args else __import__(\"datetime\").date.today().strftime(\"%Y-%m\")\n        by_cat = defaultdict(float)\n        for cat, amount in conn.execute(\"SELECT category, amount FROM expenses WHERE date LIKE ?\", (month + \"%\",)):\n            by_cat[cat] += amount\n        total = sum(by_cat.values())\n        for cat in sorted(by_cat, key=by_cat.get, reverse=True):\n            print(f\"{cat:<10} ¥{by_cat[cat]:>8.2f}  {'█' * int(by_cat[cat] / max(total, 1) * 20)}\")\n        print(f\"{'合计':<10} ¥{total:>8.2f}\")\n    conn.close()\n\n\nif __name__ == \"__main__\":\n    main()\n"
+   "file": "devtools_examples/devtool_expense-tracker.py"
   },
   {
    "id": "tools_dev-unit-convert-pro",
@@ -710,7 +710,7 @@
    "title": "科学单位换算",
    "description": "长度/重量/温度/数据量/角度 五域换算。",
    "requirements": [],
-   "code": "\"\"\"单位换算：python xxx.py 5 km mile | 100 f c\"\"\"\nimport argparse\n\nLENGTH = {\"m\": 1, \"km\": 1000, \"mile\": 1609.344, \"ft\": 0.3048, \"inch\": 0.0254}\nWEIGHT = {\"kg\": 1, \"g\": 0.001, \"lb\": 0.453592, \"oz\": 0.02835}\nDATA = {\"MB\": 1, \"KB\": 1 / 1024, \"GB\": 1024, \"TB\": 1024 ** 2}\n\n\ndef main():\n    ap = argparse.ArgumentParser()\n    ap.add_argument(\"value\", type=float)\n    ap.add_argument(\"src\")\n    ap.add_argument(\"dst\")\n    args = ap.parse_args()\n    v, src, dst = args.value, args.src.lower(), args.dst.lower()\n    if {src, dst} <= set(LENGTH):\n        print(f\"{v * LENGTH[src] / LENGTH[dst]:.4f} {dst}\")\n    elif {src, dst} <= set(WEIGHT):\n        print(f\"{v * WEIGHT[src] / WEIGHT[dst]:.4f} {dst}\")\n    elif {src, dst} <= set(DATA):\n        print(f\"{v * DATA[src.upper()] / DATA[dst.upper()]:.4f} {dst.upper()}\")\n    elif src == \"c\" and dst == \"f\":\n        print(f\"{v * 9 / 5 + 32:.2f} °F\")\n    elif src == \"f\" and dst == \"c\":\n        print(f\"{(v - 32) * 5 / 9:.2f} °C\")\n    else:\n        print(\"不支持的单位对\")\n\n\nif __name__ == \"__main__\":\n    main()\n"
+   "file": "devtools_examples/devtool_unit-convert-pro.py"
   },
   {
    "id": "tools_dev-color-tool",
@@ -724,7 +724,7 @@
    "title": "颜色转换器",
    "description": "HEX ↔ RGB ↔ HSL 三向转换。",
    "requirements": [],
-   "code": "\"\"\"颜色转换：#3498db rgb | 52,152,219 hex\"\"\"\nimport argparse\nimport colorsys\n\n\ndef hex2rgb(h):\n    h = h.lstrip(\"#\")\n    return tuple(int(h[i:i + 2], 16) for i in (0, 2, 4))\n\n\ndef rgb2hex(rgb):\n    return \"#%02x%02x%02x\" % rgb\n\n\ndef main():\n    ap = argparse.ArgumentParser()\n    ap.add_argument(\"value\")\n    args = ap.parse_args()\n    v = args.value\n    if v.startswith(\"#\"):\n        rgb = hex2rgb(v)\n        h, l, s = colorsys.rgb_to_hls(*[x / 255 for x in rgb])\n        print(f\"RGB: {rgb}  HSL: ({h * 360:.0f}, {s * 100:.0f}%, {l * 100:.0f}%)\")\n    elif \",\" in v:\n        rgb = tuple(int(x) for x in v.split(\",\"))\n        h, l, s = colorsys.rgb_to_hls(*[x / 255 for x in rgb])\n        print(f\"HEX: {rgb2hex(rgb)}  HSL: ({h * 360:.0f}, {s * 100:.0f}%, {l * 100:.0f}%)\")\n    else:\n        print(\"输入 #hex 或 r,g,b\")\n\n\nif __name__ == \"__main__\":\n    main()\n"
+   "file": "devtools_examples/devtool_color-tool.py"
   },
   {
    "id": "tools_img2-batch-resize",
@@ -739,7 +739,7 @@
    "requirements": [
     "pillow"
    ],
-   "code": "\"\"\"批量缩放：python xxx.py <目录> --max-side 1600\"\"\"\nimport argparse\nfrom pathlib import Path\n\nfrom PIL import Image\n\nSUPPORTED = {\".jpg\", \".jpeg\", \".png\", \".webp\", \".bmp\"}\n\n\ndef main():\n    ap = argparse.ArgumentParser()\n    ap.add_argument(\"directory\")\n    ap.add_argument(\"--max-side\", type=int, default=1600)\n    ap.add_argument(\"--quality\", type=int, default=85)\n    args = ap.parse_args()\n\n    out = Path(args.directory) / \"resized\"\n    out.mkdir(exist_ok=True)\n    for p in sorted(Path(args.directory).iterdir()):\n        if p.suffix.lower() not in SUPPORTED or not p.is_file():\n            continue\n        with Image.open(p) as im:\n            im = im.convert(\"RGB\")\n            scale = min(1.0, args.max_side / max(im.size))\n            if scale < 1.0:\n                im = im.resize((int(im.width * scale), int(im.height * scale)), Image.LANCZOS)\n            dest = out / (p.stem + \".jpg\")\n            im.save(dest, \"JPEG\", quality=args.quality, optimize=True)\n        print(f\"{p.name} -> {dest.name} ({im.size[0]}×{im.size[1]})\")\n\n\nif __name__ == \"__main__\":\n    main()\n"
+   "file": "devtools_examples/imgtool2_batch-resize.py"
   },
   {
    "id": "tools_img2-batch-convert",
@@ -754,7 +754,7 @@
    "requirements": [
     "pillow"
    ],
-   "code": "\"\"\"格式转换：python xxx.py <目录> --to webp\"\"\"\nimport argparse\nfrom pathlib import Path\n\nfrom PIL import Image\n\nSUPPORTED = {\".jpg\", \".jpeg\", \".png\", \".webp\", \".bmp\", \".tiff\"}\n\n\ndef main():\n    ap = argparse.ArgumentParser()\n    ap.add_argument(\"directory\")\n    ap.add_argument(\"--to\", choices=[\"png\", \"jpg\", \"webp\"], default=\"webp\")\n    ap.add_argument(\"--quality\", type=int, default=85)\n    args = ap.parse_args()\n    fmt = \"JPEG\" if args.to in (\"jpg\", \"jpeg\") else args.to.upper()\n\n    for p in sorted(Path(args.directory).iterdir()):\n        if p.suffix.lower() not in SUPPORTED or not p.is_file():\n            continue\n        with Image.open(p) as im:\n            im = im.convert(\"RGB\") if fmt == \"JPEG\" else im\n            dest = p.with_suffix(\".\" + args.to)\n            im.save(dest, fmt, quality=args.quality)\n        print(f\"{p.name} -> {dest.name}\")\n\n\nif __name__ == \"__main__\":\n    main()\n"
+   "file": "devtools_examples/imgtool2_batch-convert.py"
   },
   {
    "id": "tools_img2-batch-crop-ratio",
@@ -769,7 +769,7 @@
    "requirements": [
     "pillow"
    ],
-   "code": "\"\"\"比例裁剪：python xxx.py <目录> --ratio 16:9\"\"\"\nimport argparse\nfrom pathlib import Path\n\nfrom PIL import Image\n\nSUPPORTED = {\".jpg\", \".jpeg\", \".png\", \".webp\"}\n\n\ndef center_crop(im, rw, rh):\n    target = rw / rh\n    w, h = im.size\n    cur = w / h\n    if cur > target:  # 太宽，裁左右\n        new_w = int(h * target)\n        box = ((w - new_w) // 2, 0, (w + new_w) // 2, h)\n    else:             # 太高，裁上下\n        new_h = int(w / target)\n        box = (0, (h - new_h) // 2, w, (h + new_h) // 2)\n    return im.crop(box)\n\n\ndef main():\n    ap = argparse.ArgumentParser()\n    ap.add_argument(\"directory\")\n    ap.add_argument(\"--ratio\", default=\"16:9\")\n    args = ap.parse_args()\n    rw, rh = (int(x) for x in args.ratio.split(\":\"))\n\n    out = Path(args.directory) / \"cropped\"\n    out.mkdir(exist_ok=True)\n    for p in sorted(Path(args.directory).iterdir()):\n        if p.suffix.lower() not in SUPPORTED or not p.is_file():\n            continue\n        with Image.open(p) as im:\n            cropped = center_crop(im.convert(\"RGB\"), rw, rh)\n            dest = out / (p.stem + \".jpg\")\n            cropped.save(dest, \"JPEG\", quality=88)\n        print(f\"{p.name} -> {dest.name} {cropped.size}\")\n\n\nif __name__ == \"__main__\":\n    main()\n"
+   "file": "devtools_examples/imgtool2_batch-crop-ratio.py"
   },
   {
    "id": "tools_img2-contact-sheet",
@@ -784,7 +784,7 @@
    "requirements": [
     "pillow"
    ],
-   "code": "\"\"\"拼贴墙：python xxx.py <目录> --cols 4 --cell 240\"\"\"\nimport argparse\nfrom pathlib import Path\n\nfrom PIL import Image, ImageDraw\n\nSUPPORTED = {\".jpg\", \".jpeg\", \".png\", \".webp\"}\n\n\ndef main():\n    ap = argparse.ArgumentParser()\n    ap.add_argument(\"directory\")\n    ap.add_argument(\"--cols\", type=int, default=4)\n    ap.add_argument(\"--cell\", type=int, default=240)\n    ap.add_argument(\"-o\", default=\"contact_sheet.jpg\")\n    args = ap.parse_args()\n\n    imgs = []\n    for p in sorted(Path(args.directory).iterdir()):\n        if p.suffix.lower() in SUPPORTED and p.is_file():\n            im = Image.open(p).convert(\"RGB\")\n            im.thumbnail((args.cell, args.cell))\n            imgs.append((p.name, im))\n    if not imgs:\n        print(\"无图片\")\n        return\n    rows = (len(imgs) + args.cols - 1) // args.cols\n    sheet = Image.new(\"RGB\", (args.cols * (args.cell + 8) + 8, rows * (args.cell + 26) + 8), \"#181c24\")\n    d = ImageDraw.Draw(sheet)\n    for i, (name, im) in enumerate(imgs):\n        x = 8 + (i % args.cols) * (args.cell + 8)\n        y = 8 + (i // args.cols) * (args.cell + 26)\n        sheet.paste(im, (x + (args.cell - im.width) // 2, y + (args.cell - im.height) // 2))\n        d.text((x, y + args.cell + 4), name[:28], fill=\"#cfd8e3\")\n    sheet.save(args.o, quality=88)\n    print(f\"拼贴 {len(imgs)} 张 -> {args.o}\")\n\n\nif __name__ == \"__main__\":\n    main()\n"
+   "file": "devtools_examples/imgtool2_contact-sheet.py"
   },
   {
    "id": "tools_img2-batch-watermark",
@@ -799,7 +799,7 @@
    "requirements": [
     "pillow"
    ],
-   "code": "\"\"\"批量水印：python xxx.py <目录> --text '© 2026' --mode corner|tile\"\"\"\nimport argparse\nfrom pathlib import Path\n\nfrom PIL import Image, ImageDraw, ImageFont\n\nSUPPORTED = {\".jpg\", \".jpeg\", \".png\", \".webp\"}\n\n\ndef main():\n    ap = argparse.ArgumentParser()\n    ap.add_argument(\"directory\")\n    ap.add_argument(\"--text\", default=\"© 示例库\")\n    ap.add_argument(\"--mode\", choices=[\"corner\", \"tile\"], default=\"corner\")\n    ap.add_argument(\"--opacity\", type=int, default=110)\n    args = ap.parse_args()\n\n    out = Path(args.directory) / \"watermarked\"\n    out.mkdir(exist_ok=True)\n    try:\n        font = ImageFont.truetype(\"/System/Library/Fonts/PingFang.ttc\", 22)\n    except OSError:\n        font = ImageFont.load_default()\n\n    for p in sorted(Path(args.directory).iterdir()):\n        if p.suffix.lower() not in SUPPORTED or not p.is_file():\n            continue\n        base = Image.open(p).convert(\"RGBA\")\n        layer = Image.new(\"RGBA\", base.size, (0, 0, 0, 0))\n        d = ImageDraw.Draw(layer)\n        if args.mode == \"corner\":\n            d.text((base.width - 130, base.height - 40), args.text,\n                   fill=(255, 255, 255, args.opacity), font=font)\n        else:\n            for y in range(0, base.height, 90):\n                for x in range(0, base.width, 200):\n                    d.text((x, y), args.text, fill=(255, 255, 255, args.opacity), font=font)\n        result = Image.alpha_composite(base, layer).convert(\"RGB\")\n        dest = out / p.name\n        result.save(dest, quality=90)\n        print(f\"{p.name} -> {dest.name}\")\n\n\nif __name__ == \"__main__\":\n    main()\n"
+   "file": "devtools_examples/imgtool2_batch-watermark.py"
   },
   {
    "id": "tools_img2-dominant-color",
@@ -814,7 +814,7 @@
    "requirements": [
     "pillow"
    ],
-   "code": "\"\"\"主色调：缩图 + 量化取出现最多的颜色。\"\"\"\nimport argparse\nfrom PIL import Image\n\nSUPPORTED = {\".jpg\", \".jpeg\", \".png\", \".webp\"}\n\n\ndef main():\n    ap = argparse.ArgumentParser()\n    ap.add_argument(\"image\")\n    ap.add_argument(\"--top\", type=int, default=5)\n    args = ap.parse_args()\n    im = Image.open(args.image).convert(\"RGB\")\n    im.thumbnail((80, 80))\n    counts = {}\n    for px in im.getdata():\n        quant = (px[0] // 16 * 16, px[1] // 16 * 16, px[2] // 16 * 16)\n        counts[quant] = counts.get(quant, 0) + 1\n    total = sum(counts.values())\n    for (r, g, b), n in sorted(counts.items(), key=lambda x: -x[1])[:args.top]:\n        print(f\"#{r:02x}{g:02x}{b:02x}  {100 * n / total:5.1f}%  {'█' * int(100 * n / total / 4)}\")\n\n\nif __name__ == \"__main__\":\n    main()\n"
+   "file": "devtools_examples/imgtool2_dominant-color.py"
   },
   {
    "id": "tools_img2-gif-extract",
@@ -829,7 +829,7 @@
    "requirements": [
     "pillow"
    ],
-   "code": "\"\"\"GIF 拆帧：python xxx.py anim.gif -o frames\"\"\"\nimport argparse\nfrom pathlib import Path\n\nfrom PIL import Image, ImageSequence\n\n\ndef main():\n    ap = argparse.ArgumentParser()\n    ap.add_argument(\"gif\")\n    ap.add_argument(\"-o\", default=\"frames\")\n    args = ap.parse_args()\n    out = Path(args.o)\n    out.mkdir(exist_ok=True)\n    with Image.open(args.gif) as im:\n        for i, frame in enumerate(ImageSequence.Iterator(im)):\n            frame.convert(\"RGB\").save(out / f\"frame_{i:03d}.png\")\n    print(f\"已导出 {i + 1} 帧 -> {out}\")\n\n\nif __name__ == \"__main__\":\n    main()\n"
+   "file": "devtools_examples/imgtool2_gif-extract.py"
   },
   {
    "id": "tools_img2-gif-compose",
@@ -844,7 +844,7 @@
    "requirements": [
     "pillow"
    ],
-   "code": "\"\"\"合成 GIF：python xxx.py frame_*.png 所在目录 -o out.gif --fps 8\"\"\"\nimport argparse\nfrom pathlib import Path\n\nfrom PIL import Image\n\n\ndef main():\n    ap = argparse.ArgumentParser()\n    ap.add_argument(\"directory\")\n    ap.add_argument(\"-o\", default=\"out.gif\")\n    ap.add_argument(\"--fps\", type=int, default=8)\n    ap.add_argument(\"--width\", type=int, default=480)\n    args = ap.parse_args()\n    frames = []\n    for p in sorted(Path(args.directory).glob(\"*.png\")):\n        im = Image.open(p).convert(\"RGB\")\n        scale = args.width / im.width\n        frames.append(im.resize((args.width, int(im.height * scale))))\n    if not frames:\n        print(\"无 PNG 帧\")\n        return\n    duration = int(1000 / args.fps)\n    frames[0].save(args.o, save_all=True, append_images=frames[1:],\n                   duration=duration, loop=0)\n    print(f\"已合成 {len(frames)} 帧 -> {args.o}\")\n\n\nif __name__ == \"__main__\":\n    main()\n"
+   "file": "devtools_examples/imgtool2_gif-compose.py"
   },
   {
    "id": "tools_img2-batch-enhance",
@@ -859,7 +859,7 @@
    "requirements": [
     "pillow"
    ],
-   "code": "\"\"\"画质调整：python xxx.py <目录> --brightness 1.1 --contrast 1.15\"\"\"\nimport argparse\nfrom pathlib import Path\n\nfrom PIL import Image, ImageEnhance\n\nSUPPORTED = {\".jpg\", \".jpeg\", \".png\", \".webp\"}\n\n\ndef main():\n    ap = argparse.ArgumentParser()\n    ap.add_argument(\"directory\")\n    ap.add_argument(\"--brightness\", type=float, default=1.0)\n    ap.add_argument(\"--contrast\", type=float, default=1.0)\n    ap.add_argument(\"--saturation\", type=float, default=1.0)\n    args = ap.parse_args()\n\n    out = Path(args.directory) / \"enhanced\"\n    out.mkdir(exist_ok=True)\n    for p in sorted(Path(args.directory).iterdir()):\n        if p.suffix.lower() not in SUPPORTED or not p.is_file():\n            continue\n        with Image.open(p) as im:\n            im = im.convert(\"RGB\")\n            if args.brightness != 1.0:\n                im = ImageEnhance.Brightness(im).enhance(args.brightness)\n            if args.contrast != 1.0:\n                im = ImageEnhance.Contrast(im).enhance(args.contrast)\n            if args.saturation != 1.0:\n                im = ImageEnhance.Color(im).enhance(args.saturation)\n            dest = out / p.name\n            im.save(dest, quality=90)\n        print(f\"{p.name} -> {dest.name}\")\n\n\nif __name__ == \"__main__\":\n    main()\n"
+   "file": "devtools_examples/imgtool2_batch-enhance.py"
   },
   {
    "id": "tools_img2-img-info-report",
@@ -874,7 +874,7 @@
    "requirements": [
     "pillow"
    ],
-   "code": "\"\"\"图片报告：目录内图片尺寸/格式/体积一览。\"\"\"\nimport argparse\nfrom pathlib import Path\n\nfrom PIL import Image\n\nSUPPORTED = {\".jpg\", \".jpeg\", \".png\", \".webp\", \".gif\", \".bmp\"}\n\n\ndef main():\n    ap = argparse.ArgumentParser()\n    ap.add_argument(\"directory\", nargs=\"?\", default=\".\")\n    args = ap.parse_args()\n    total = 0\n    print(f\"{'文件':<30}{'尺寸':<12}{'格式':<6}{'体积':>9}\")\n    for p in sorted(Path(args.directory).iterdir()):\n        if p.suffix.lower() not in SUPPORTED or not p.is_file():\n            continue\n        with Image.open(p) as im:\n            kb = p.stat().st_size / 1024\n            total += kb\n            print(f\"{p.name[:28]:<30}{f'{im.width}×{im.height}':<12}{im.format:<6}{kb:>7.0f}KB\")\n    print(f\"合计 {total:.0f} KB\")\n\n\nif __name__ == \"__main__\":\n    main()\n"
+   "file": "devtools_examples/imgtool2_img-info-report.py"
   },
   {
    "id": "tools_img2-rounded-border",
@@ -889,7 +889,7 @@
    "requirements": [
     "pillow"
    ],
-   "code": "\"\"\"圆角边框：python xxx.py <目录> --radius 24 --border 3\"\"\"\nimport argparse\nfrom pathlib import Path\n\nfrom PIL import Image, ImageDraw\n\nSUPPORTED = {\".jpg\", \".jpeg\", \".png\", \".webp\"}\n\n\ndef rounded(im, radius):\n    mask = Image.new(\"L\", im.size, 0)\n    d = ImageDraw.Draw(mask)\n    d.rounded_rectangle([0, 0, im.width - 1, im.height - 1], radius=radius, fill=255)\n    out = Image.new(\"RGBA\", im.size)\n    out.paste(im, (0, 0), mask)\n    return out\n\n\ndef main():\n    ap = argparse.ArgumentParser()\n    ap.add_argument(\"directory\")\n    ap.add_argument(\"--radius\", type=int, default=24)\n    ap.add_argument(\"--border\", type=int, default=0)\n    args = ap.parse_args()\n    out = Path(args.directory) / \"styled\"\n    out.mkdir(exist_ok=True)\n    for p in sorted(Path(args.directory).iterdir()):\n        if p.suffix.lower() not in SUPPORTED or not p.is_file():\n            continue\n        with Image.open(p) as im:\n            im = rounded(im.convert(\"RGB\"), args.radius)\n            if args.border:\n                d = ImageDraw.Draw(im)\n                d.rounded_rectangle([0, 0, im.width - 1, im.height - 1],\n                                    radius=args.radius, outline=\"#ffffff\", width=args.border)\n            dest = out / (p.stem + \".png\")\n            im.save(dest)\n        print(f\"{p.name} -> {dest.name}\")\n\n\nif __name__ == \"__main__\":\n    main()\n"
+   "file": "devtools_examples/imgtool2_rounded-border.py"
   },
   {
    "id": "tools_media-media-probe",
@@ -904,7 +904,7 @@
    "requirements": [
     "ffmpeg"
    ],
-   "code": "import shutil\nimport subprocess\nimport sys\n\nFFMPEG = shutil.which(\"ffmpeg\")\nFFPROBE = shutil.which(\"ffprobe\")\nif not FFMPEG:\n    print(\"未找到 ffmpeg（brew install ffmpeg / apt install ffmpeg）\")\n    sys.exit(1)\n\ndef probe(path):\n    \"\"\"ffprobe 取时长/码率/分辨率（JSON）。\"\"\"\n    r = subprocess.run(\n        [FFPROBE, \"-v\", \"quiet\", \"-print_format\", \"json\", \"-show_format\", \"-show_streams\", str(path)],\n        capture_output=True, text=True)\n    import json as _json\n    return _json.loads(r.stdout or \"{}\")\n\n\ndef main():\n    import argparse\n    ap = argparse.ArgumentParser()\n    ap.add_argument(\"media\", nargs=\"+\")\n    args = ap.parse_args()\n    for path in args.media:\n        info = probe(path)\n        fmt = info.get(\"format\", {})\n        v = next((s for s in info.get(\"streams\", []) if s.get(\"codec_type\") == \"video\"), {})\n        print(f\"{path}\")\n        print(f\"  时长 {float(fmt.get('duration', 0)):.1f}s | \"\n              f\"{v.get('width', '?')}×{v.get('height', '?')} | \"\n              f\"{v.get('codec_name', '?')} | {int(fmt.get('bit_rate', 0)) // 1024} kbps\")\n\n\nif __name__ == \"__main__\":\n    main()\n"
+   "file": "devtools_examples/media_media-probe.py"
   },
   {
    "id": "tools_media-media-convert",
@@ -919,7 +919,7 @@
    "requirements": [
     "ffmpeg"
    ],
-   "code": "\"\"\"格式转换：python xxx.py input.mov [-o output.mp4]\"\"\"\nimport argparse\nfrom pathlib import Path\n\nimport shutil\nimport subprocess\nimport sys\n\nFFMPEG = shutil.which(\"ffmpeg\")\nFFPROBE = shutil.which(\"ffprobe\")\nif not FFMPEG:\n    print(\"未找到 ffmpeg（brew install ffmpeg / apt install ffmpeg）\")\n    sys.exit(1)\n\n\ndef main():\n    ap = argparse.ArgumentParser()\n    ap.add_argument(\"input\")\n    ap.add_argument(\"-o\", \"--output\")\n    args = ap.parse_args()\n    src = Path(args.input)\n    dest = Path(args.output or src.with_suffix(\".mp4\"))\n    r = subprocess.run([FFMPEG, \"-y\", \"-i\", str(src),\n                        \"-c:v\", \"libx264\", \"-preset\", \"medium\", \"-crf\", \"20\",\n                        \"-c:a\", \"aac\", \"-b:a\", \"128k\", str(dest)],\n                       capture_output=True, text=True)\n    if r.returncode == 0:\n        print(f\"转换完成 -> {dest} ({dest.stat().st_size // 1024 // 1024} MB)\")\n    else:\n        print(\"失败:\", r.stderr.strip().splitlines()[-1] if r.stderr else r.returncode)\n\n\nif __name__ == \"__main__\":\n    main()\n"
+   "file": "devtools_examples/media_media-convert.py"
   },
   {
    "id": "tools_media-media-compress",
@@ -934,7 +934,7 @@
    "requirements": [
     "ffmpeg"
    ],
-   "code": "\"\"\"视频压缩：python xxx.py input.mp4 --crf 26 --preset fast\"\"\"\nimport argparse\nfrom pathlib import Path\n\nimport shutil\nimport subprocess\nimport sys\n\nFFMPEG = shutil.which(\"ffmpeg\")\nFFPROBE = shutil.which(\"ffprobe\")\nif not FFMPEG:\n    print(\"未找到 ffmpeg（brew install ffmpeg / apt install ffmpeg）\")\n    sys.exit(1)\n\n\ndef main():\n    ap = argparse.ArgumentParser()\n    ap.add_argument(\"input\")\n    ap.add_argument(\"--crf\", type=int, default=26, help=\"18 高质量 ~ 28 高压缩\")\n    ap.add_argument(\"--preset\", default=\"fast\")\n    args = ap.parse_args()\n    src = Path(args.input)\n    dest = src.with_name(src.stem + \"_compressed.mp4\")\n    before = src.stat().st_size\n    r = subprocess.run([FFMPEG, \"-y\", \"-i\", str(src), \"-c:v\", \"libx264\",\n                        \"-preset\", args.preset, \"-crf\", str(args.crf),\n                        \"-c:a\", \"aac\", \"-b:a\", \"96k\", str(dest)],\n                       capture_output=True, text=True)\n    if r.returncode == 0:\n        after = dest.stat().st_size\n        print(f\"{before // 1024 // 1024} MB -> {after // 1024 // 1024} MB \"\n              f\"（{100 - after * 100 // before}% 缩减）\")\n    else:\n        print(\"失败:\", r.stderr.strip().splitlines()[-1] if r.stderr else r.returncode)\n\n\nif __name__ == \"__main__\":\n    main()\n"
+   "file": "devtools_examples/media_media-compress.py"
   },
   {
    "id": "tools_media-media-extract-audio",
@@ -949,7 +949,7 @@
    "requirements": [
     "ffmpeg"
    ],
-   "code": "\"\"\"提取音频：python xxx.py input.mp4 -o audio.mp3\"\"\"\nimport argparse\nfrom pathlib import Path\n\nimport shutil\nimport subprocess\nimport sys\n\nFFMPEG = shutil.which(\"ffmpeg\")\nFFPROBE = shutil.which(\"ffprobe\")\nif not FFMPEG:\n    print(\"未找到 ffmpeg（brew install ffmpeg / apt install ffmpeg）\")\n    sys.exit(1)\n\n\ndef main():\n    ap = argparse.ArgumentParser()\n    ap.add_argument(\"input\")\n    ap.add_argument(\"-o\", \"--output\")\n    ap.add_argument(\"--bitrate\", default=\"192k\")\n    args = ap.parse_args()\n    src = Path(args.input)\n    dest = Path(args.output or src.with_suffix(\".mp3\"))\n    r = subprocess.run([FFMPEG, \"-y\", \"-i\", str(src), \"-vn\",\n                        \"-c:a\", \"libmp3lame\", \"-b:a\", args.bitrate, str(dest)],\n                       capture_output=True, text=True)\n    print(f\"提取完成 -> {dest}（{dest.stat().st_size // 1024} KB）\" if r.returncode == 0\n          else \"失败: \" + (r.stderr.strip().splitlines()[-1] if r.stderr else str(r.returncode)))\n\n\nif __name__ == \"__main__\":\n    main()\n"
+   "file": "devtools_examples/media_media-extract-audio.py"
   },
   {
    "id": "tools_media-media-trim",
@@ -964,7 +964,7 @@
    "requirements": [
     "ffmpeg"
    ],
-   "code": "\"\"\"裁剪：python xxx.py input.mp4 --start 00:00:10 --duration 30\"\"\"\nimport argparse\nfrom pathlib import Path\n\nimport shutil\nimport subprocess\nimport sys\n\nFFMPEG = shutil.which(\"ffmpeg\")\nFFPROBE = shutil.which(\"ffprobe\")\nif not FFMPEG:\n    print(\"未找到 ffmpeg（brew install ffmpeg / apt install ffmpeg）\")\n    sys.exit(1)\n\n\ndef main():\n    ap = argparse.ArgumentParser()\n    ap.add_argument(\"input\")\n    ap.add_argument(\"--start\", default=\"00:00:00\")\n    ap.add_argument(\"--duration\", type=float, default=10)\n    ap.add_argument(\"-o\", \"--output\")\n    args = ap.parse_args()\n    src = Path(args.input)\n    dest = Path(args.output or src.with_name(src.stem + \"_clip\" + src.suffix))\n    r = subprocess.run([FFMPEG, \"-y\", \"-ss\", args.start, \"-i\", str(src),\n                        \"-t\", str(args.duration), \"-c\", \"copy\", str(dest)],\n                       capture_output=True, text=True)\n    print(f\"裁剪完成 -> {dest}\" if r.returncode == 0 else \"失败: \" + r.stderr[-120:])\n\n\nif __name__ == \"__main__\":\n    main()\n"
+   "file": "devtools_examples/media_media-trim.py"
   },
   {
    "id": "tools_media-media-volume",
@@ -979,7 +979,7 @@
    "requirements": [
     "ffmpeg"
    ],
-   "code": "\"\"\"音量：python xxx.py input.mp4 --gain 1.5 | --normalize\"\"\"\nimport argparse\nfrom pathlib import Path\n\nimport shutil\nimport subprocess\nimport sys\n\nFFMPEG = shutil.which(\"ffmpeg\")\nFFPROBE = shutil.which(\"ffprobe\")\nif not FFMPEG:\n    print(\"未找到 ffmpeg（brew install ffmpeg / apt install ffmpeg）\")\n    sys.exit(1)\n\n\ndef main():\n    ap = argparse.ArgumentParser()\n    ap.add_argument(\"input\")\n    ap.add_argument(\"--gain\", type=float, default=1.0, help=\"音量倍数\")\n    ap.add_argument(\"--normalize\", action=\"store_true\", help=\"loudnorm 响度归一化\")\n    args = ap.parse_args()\n    src = Path(args.input)\n    dest = src.with_name(src.stem + \"_vol\" + src.suffix)\n    if args.normalize:\n        af = \"loudnorm=I=-16:TP=-1.5:LRA=11\"\n    else:\n        af = f\"volume={args.gain}\"\n    r = subprocess.run([FFMPEG, \"-y\", \"-i\", str(src), \"-af\", af,\n                        \"-c:v\", \"copy\", str(dest)], capture_output=True, text=True)\n    print(f\"完成 -> {dest}\" if r.returncode == 0 else \"失败: \" + r.stderr[-120:])\n\n\nif __name__ == \"__main__\":\n    main()\n"
+   "file": "devtools_examples/media_media-volume.py"
   },
   {
    "id": "tools_media-media-screenshot",
@@ -994,7 +994,7 @@
    "requirements": [
     "ffmpeg"
    ],
-   "code": "\"\"\"截图：单帧 --at 00:00:30，或 --every 5 批量截帧。\"\"\"\nimport argparse\nfrom pathlib import Path\n\nimport shutil\nimport subprocess\nimport sys\n\nFFMPEG = shutil.which(\"ffmpeg\")\nFFPROBE = shutil.which(\"ffprobe\")\nif not FFMPEG:\n    print(\"未找到 ffmpeg（brew install ffmpeg / apt install ffmpeg）\")\n    sys.exit(1)\n\n\ndef main():\n    ap = argparse.ArgumentParser()\n    ap.add_argument(\"input\")\n    ap.add_argument(\"--at\", default=\"00:00:05\", help=\"单帧时间点\")\n    ap.add_argument(\"--every\", type=float, default=0, help=\"每 N 秒一帧（批量模式）\")\n    ap.add_argument(\"-o\", default=\"frame.png\")\n    args = ap.parse_args()\n    if args.every > 0:\n        r = subprocess.run([FFMPEG, \"-y\", \"-i\", args.input, \"-vf\",\n                            f\"fps=1/{args.every}\", \"shot_%03d.png\"], capture_output=True, text=True)\n        print(\"批量截帧完成\" if r.returncode == 0 else \"失败\")\n    else:\n        r = subprocess.run([FFMPEG, \"-y\", \"-ss\", args.at, \"-i\", args.input,\n                            \"-frames:v\", \"1\", args.o], capture_output=True, text=True)\n        print(f\"截图 -> {args.o}\" if r.returncode == 0 else \"失败\")\n\n\nif __name__ == \"__main__\":\n    main()\n"
+   "file": "devtools_examples/media_media-screenshot.py"
   },
   {
    "id": "tools_media-media-concat",
@@ -1009,7 +1009,7 @@
    "requirements": [
     "ffmpeg"
    ],
-   "code": "\"\"\"合并：python xxx.py a.mp4 b.mp4 c.mp4 -o merged.mp4\"\"\"\nimport argparse\nfrom pathlib import Path\n\nimport shutil\nimport subprocess\nimport sys\n\nFFMPEG = shutil.which(\"ffmpeg\")\nFFPROBE = shutil.which(\"ffprobe\")\nif not FFMPEG:\n    print(\"未找到 ffmpeg（brew install ffmpeg / apt install ffmpeg）\")\n    sys.exit(1)\n\n\ndef main():\n    ap = argparse.ArgumentParser()\n    ap.add_argument(\"inputs\", nargs=\"+\")\n    ap.add_argument(\"-o\", default=\"merged.mp4\")\n    args = ap.parse_args()\n    if len(args.inputs) < 2:\n        print(\"至少两个输入\")\n        return\n    import tempfile\n    lst = tempfile.NamedTemporaryFile(\"w\", suffix=\".txt\", delete=False)\n    for p in args.inputs:\n        lst.write(f\"file '{Path(p).resolve()}'\\n\")\n    lst.close()\n    r = subprocess.run([FFMPEG, \"-y\", \"-f\", \"concat\", \"-safe\", \"0\",\n                        \"-i\", lst.name, \"-c\", \"copy\", args.o],\n                       capture_output=True, text=True)\n    Path(lst.name).unlink()\n    print(f\"合并 {len(args.inputs)} 段 -> {args.o}\" if r.returncode == 0 else \"失败（编码不一致时先统一转码）\")\n\n\nif __name__ == \"__main__\":\n    main()\n"
+   "file": "devtools_examples/media_media-concat.py"
   },
   {
    "id": "tools_media-media-strip-audio",
@@ -1024,7 +1024,7 @@
    "requirements": [
     "ffmpeg"
    ],
-   "code": "\"\"\"去音轨：python xxx.py input.mp4\"\"\"\nimport argparse\nfrom pathlib import Path\n\nimport shutil\nimport subprocess\nimport sys\n\nFFMPEG = shutil.which(\"ffmpeg\")\nFFPROBE = shutil.which(\"ffprobe\")\nif not FFMPEG:\n    print(\"未找到 ffmpeg（brew install ffmpeg / apt install ffmpeg）\")\n    sys.exit(1)\n\n\ndef main():\n    ap = argparse.ArgumentParser()\n    ap.add_argument(\"input\")\n    args = ap.parse_args()\n    src = Path(args.input)\n    dest = src.with_name(src.stem + \"_mute\" + src.suffix)\n    r = subprocess.run([FFMPEG, \"-y\", \"-i\", str(src), \"-an\", \"-c:v\", \"copy\", str(dest)],\n                       capture_output=True, text=True)\n    print(f\"静音版 -> {dest}\" if r.returncode == 0 else \"失败\")\n\n\nif __name__ == \"__main__\":\n    main()\n"
+   "file": "devtools_examples/media_media-strip-audio.py"
   },
   {
    "id": "tools_media-media-audio-compress",
@@ -1039,7 +1039,7 @@
    "requirements": [
     "ffmpeg"
    ],
-   "code": "\"\"\"音频压缩：python xxx.py input.wav --bitrate 96k\"\"\"\nimport argparse\nfrom pathlib import Path\n\nimport shutil\nimport subprocess\nimport sys\n\nFFMPEG = shutil.which(\"ffmpeg\")\nFFPROBE = shutil.which(\"ffprobe\")\nif not FFMPEG:\n    print(\"未找到 ffmpeg（brew install ffmpeg / apt install ffmpeg）\")\n    sys.exit(1)\n\n\ndef main():\n    ap = argparse.ArgumentParser()\n    ap.add_argument(\"input\")\n    ap.add_argument(\"--bitrate\", default=\"128k\")\n    ap.add_argument(\"--codec\", choices=[\"libmp3lame\", \"aac\", \"opus\"], default=\"libmp3lame\")\n    args = ap.parse_args()\n    src = Path(args.input)\n    ext = {\"libmp3lame\": \".mp3\", \"aac\": \".m4a\", \"opus\": \".opus\"}[args.codec]\n    dest = src.with_name(src.stem + \"_small\" + ext)\n    before = src.stat().st_size // 1024\n    r = subprocess.run([FFMPEG, \"-y\", \"-i\", str(src), \"-c:a\", args.codec,\n                        \"-b:a\", args.bitrate, str(dest)], capture_output=True, text=True)\n    after = dest.stat().st_size // 1024 if dest.exists() else 0\n    print(f\"{before} KB -> {after} KB ({dest.name})\" if r.returncode == 0 else \"失败\")\n\n\nif __name__ == \"__main__\":\n    main()\n"
+   "file": "devtools_examples/media_media-audio-compress.py"
   },
   {
    "id": "tools_media-media-batch-convert",
@@ -1054,7 +1054,7 @@
    "requirements": [
     "ffmpeg"
    ],
-   "code": "\"\"\"批量转码：python xxx.py <目录> --crf 24\"\"\"\nimport argparse\nfrom concurrent.futures import ThreadPoolExecutor\nfrom pathlib import Path\n\nimport shutil\nimport subprocess\nimport sys\n\nFFMPEG = shutil.which(\"ffmpeg\")\nFFPROBE = shutil.which(\"ffprobe\")\nif not FFMPEG:\n    print(\"未找到 ffmpeg（brew install ffmpeg / apt install ffmpeg）\")\n    sys.exit(1)\n\n\ndef convert(p, crf):\n    dest = p.with_suffix(\".mp4\")\n    if dest.exists():\n        return f\"跳过（已存在）: {dest.name}\"\n    r = subprocess.run([FFMPEG, \"-y\", \"-i\", str(p), \"-c:v\", \"libx264\",\n                        \"-crf\", str(crf), \"-c:a\", \"aac\", str(dest)],\n                       capture_output=True, text=True)\n    return f\"{'✓' if r.returncode == 0 else '✗'} {p.name} -> {dest.name}\"\n\n\ndef main():\n    ap = argparse.ArgumentParser()\n    ap.add_argument(\"directory\")\n    ap.add_argument(\"--crf\", type=int, default=24)\n    ap.add_argument(\"--workers\", type=int, default=2)\n    args = ap.parse_args()\n    videos = [p for p in Path(args.directory).iterdir()\n              if p.suffix.lower() in {\".mov\", \".avi\", \".mkv\", \".webm\", \".flv\"} and p.is_file()]\n    with ThreadPoolExecutor(args.workers) as pool:\n        for line in pool.map(lambda p: convert(p, args.crf), videos):\n            print(line)\n\n\nif __name__ == \"__main__\":\n    main()\n"
+   "file": "devtools_examples/media_media-batch-convert.py"
   },
   {
    "id": "tools_media-media-gif",
@@ -1069,7 +1069,10 @@
    "requirements": [
     "ffmpeg"
    ],
-   "code": "\"\"\"视频转 GIF：python xxx.py clip.mp4 --start 5 --duration 3 --width 480\"\"\"\nimport argparse\nfrom pathlib import Path\n\nimport shutil\nimport subprocess\nimport sys\n\nFFMPEG = shutil.which(\"ffmpeg\")\nFFPROBE = shutil.which(\"ffprobe\")\nif not FFMPEG:\n    print(\"未找到 ffmpeg（brew install ffmpeg / apt install ffmpeg）\")\n    sys.exit(1)\n\n\ndef main():\n    ap = argparse.ArgumentParser()\n    ap.add_argument(\"input\")\n    ap.add_argument(\"--start\", type=float, default=0)\n    ap.add_argument(\"--duration\", type=float, default=3)\n    ap.add_argument(\"--width\", type=int, default=480)\n    ap.add_argument(\"--fps\", type=int, default=12)\n    ap.add_argument(\"-o\", default=\"out.gif\")\n    args = ap.parse_args()\n    vf = (f\"fps={args.fps},scale={args.width}:-1:flags=lanczos,\"\n          \"split[a][b];[a]palettegen[p];[b][p]paletteuse\")\n    r = subprocess.run([FFMPEG, \"-y\", \"-ss\", str(args.start), \"-t\", str(args.duration),\n                        \"-i\", args.input, \"-vf\", vf, args.o], capture_output=True, text=True)\n    if r.returncode == 0:\n        size = Path(args.o).stat().st_size // 1024\n        print(f\"已生成 {args.o}（{size} KB）\")\n    else:\n        print(\"失败:\", r.stderr[-120:])\n\n\nif __name__ == \"__main__\":\n    main()\n"
+   "file": "devtools_examples/media_media-gif.py"
   }
- ]
+ ],
+ "schema_version": 2,
+ "name": "devtools_examples",
+ "description": ""
 }

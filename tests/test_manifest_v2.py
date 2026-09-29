@@ -204,10 +204,10 @@ class TestPathBoundary:
 
 
 class TestRealData:
-    """对着真实数据跑一遍：v1 兼容窗口内必须零错误。"""
+    """对着真实数据跑一遍：迁移后全部为 v2 且零错误。"""
 
     def test_shipped_collections_load_without_errors(self):
-        manifests = sorted((ROOT / "json_examples").glob("*.json"))
+        manifests = [p for p in sorted((ROOT / "json_examples").glob("*.json")) if p.name != "facts.json"]
         assert len(manifests) == 14
         total = 0
         for path in manifests:
@@ -215,6 +215,8 @@ class TestRealData:
             assert (
                 m.report.errors == []
             ), f"{path.name}: {[i.message for i in m.report.errors]}"
-            assert m.is_v1, f"{path.name} 尚未迁移，应仍为 v1"
+            assert not m.is_v1, f"{path.name} 仍是 v1，迁移未完成"
+            assert all(e.file for e in m.entries), f"{path.name} 有条目缺 file"
+            assert all(not e.code for e in m.entries), f"{path.name} 仍带内联 code"
             total += len(m.entries)
         assert total == 1496

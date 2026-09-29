@@ -6,34 +6,39 @@
   基线刷新只动基线文件，**用户资产与运行产物永不删**；
 - 清单是真相源：保存编辑直接原子写真实文件，不再回写内联 code。
 
-派生事实（质量分 / 风险 / 静态状态）仍在本模块内惰性计算——契约 §3.2 的烘焙索引
-（构建期产出 + 启动哈希校验）是后续增量，接口已在 ``facts_fingerprint`` 预留。
+派生事实（质量分 / 风险 / 静态状态 / import 清单 / 内容哈希）走**烘焙索引**（契约 §3.2）：
+构建期用 ``bake_facts`` 产出 ``json_examples/facts.json`` 随包分发，load 时逐文件哈希校验命中即用；
+失配条目当场重算并写缓存根，下次启动即命中。未迁移的 v1 条目回退惰性计算。
 """
 
 from __future__ import annotations
 
+import dataclasses
 import hashlib
 import json
 import os
 import re
 import shutil
 import tempfile
-import dataclasses
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Callable, Iterable
+from typing import Any, Callable, Iterable
 
+from . import facts as facts_mod
 from .importer import extract_imports
 from .logger import get_logger
 from .manifest_v2 import Manifest, ManifestEntry, entry_code, load_manifest, resolve_entry_file
 from .models import ExampleItem
 from .quality import QualityScorer
-from .run_status import ModuleIndex, compute_run_status
+from .run_status import MISSING_DEPS, ModuleIndex, compute_run_status
 from .security import RiskLevel
 
 WORKSPACE_DIRNAME = ".json_examples_cache"
 WORKSPACE_VERSION = "v2"
 DEFAULT_MAX_BYTES = 1024**3  # 契约 §4.4：默认 1GiB
+
+# 静态终态：不需要再过"缺依赖"维度的状态（与 compute_run_status 的优先级一致）
+_TERMINAL_STATIC = facts_mod.TERMINAL_STATIC
 
 
 @dataclass
@@ -112,6 +117,10 @@ class ContractStore:
         self._run_status: dict[str, str] = {}
         self._module_index: ModuleIndex | None = None
         self._categories: tuple[str, ...] = ("topics", "tools", "projects")
+        # 派生事实（契约 §3.2）：id → 烘焙条目；facts_source 记录本次是从哪来的
+        self._facts: dict[str, Any] = {}
+        self._facts_ready = False
+        self.facts_source = "unloaded"
 
     @classmethod
     def for_base_dir(cls, base_dir: Path, cache_dir: Path | None = None, user_dir: Path | None = None) -> "ContractStore":
@@ -126,7 +135,7 @@ class ContractStore:
 
     # ------------------------------------------------------------------ 加载
     def load(self) -> ExampleItem:
-        """读清单 + 真实树建索引；**不落盘**（契约 §3.1）。"""
+        """读清单 + 真实树建索引（契约 §3.1：零写盘，派生事实走烘焙索引）。"""
         root = ExampleItem(name="Python 示例仓库", path=self.data_root, is_dir=True, category="root", repo_root=self.data_root)
         self._index.clear()
         self._manifests.clear()
@@ -136,12 +145,104 @@ class ContractStore:
                 root.children.append(collection)
         self._root = root
         self._refresh_categories()
+        self._adopt_facts()
         return root
 
+    # ------------------------------------------------------------ 烘焙事实索引
+    def facts_shipped_path(self) -> Path:
+        """随包分发的烘焙事实（构建期产出，打包版只读）。"""
+        return self.collection_dir / facts_mod.FACTS_FILENAME
+
+    def facts_cache_path(self) -> Path:
+        """本机重建后的缓存副本（开发/失配时写这里，不污染真相源）。"""
+        return self.workspace_root / facts_mod.FACTS_FILENAME
+
+    def _adopt_facts(self) -> None:
+        """载入派生事实索引：随包烘焙优先，其次缓存副本；都没有才全量重算。
+
+        失配不是"全丢"：逐条按文件哈希判定，命中条目直接复用、变化条目当场重算，
+        结果与全量重算逐字段等价（adopt 与 build 的等价性由测试钉住）。
+        """
+        # 先置位再计算：重算条目会经 import_tags/theme_key 回读事实，
+        # 置位可避免"载入中"状态下再次进入本函数（无限递归）。
+        self._facts_ready = True
+        self._facts = {}
+        for source, path in (("shipped", self.facts_shipped_path()), ("cache", self.facts_cache_path())):
+            data = facts_mod.load(path)
+            if data is None:
+                continue
+            items, status = facts_mod.adopt(data, self)
+            self._facts = items
+            self._facts_ready = True
+            self.facts_source = source if status == "hit" else f"{source}-partial"
+            if status != "hit":
+                self._persist_facts()
+            get_logger(__name__).info(
+                "派生事实索引：来源=%s 状态=%s 条目=%d 指纹=%s",
+                source,
+                status,
+                len(items),
+                facts_mod.fingerprint(facts_mod.make_data(self, items)),
+            )
+            return
+        data = facts_mod.build(self)
+        self._facts = data["items"]
+        self._facts_ready = True
+        self.facts_source = "rebuilt"
+        self._persist_facts(data)
+        get_logger(__name__).info("派生事实索引：全新烘焙 %d 条", len(self._facts))
+
+    def _ensure_facts(self) -> None:
+        """取事实前确保已载入（load 之外的入口，如直接构造 store 的测试）。"""
+        if not self._facts_ready:
+            self._adopt_facts()
+
+    def _persist_facts(self, data: dict[str, Any] | None = None) -> None:
+        """把事实写进缓存根（best-effort：打包版缓存根不可写时只记日志）。"""
+        payload = data if data is not None else facts_mod.make_data(self, self._facts)
+        try:
+            self.workspace_root.mkdir(parents=True, exist_ok=True)
+            self._write_atomic(
+                self.facts_cache_path(),
+                lambda tmp: tmp.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8"),
+            )
+        except OSError as e:
+            get_logger(__name__).warning("派生事实索引写入缓存失败: %s", e)
+
+    def bake_facts(self, dest: Path | None = None) -> dict[str, Any]:
+        """构建期全量烘焙；``dest`` 给定则落盘（工具入口用）。"""
+        data = facts_mod.build(self)
+        if dest is not None:
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            self._write_atomic(
+                dest, lambda tmp: tmp.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
+            )
+        return data
+
+    def fact(self, item: ExampleItem, key: str) -> Any:
+        """读单条烘焙事实字段；未命中返回 None（调用方回退惰性计算）。"""
+        entry = self._fact_entry(item)
+        return entry.get(key) if entry is not None else None
+
+    def _fact_entry(self, item: ExampleItem) -> dict[str, Any] | None:
+        """单条烘焙事实整行；无烘焙数据返回 None。
+
+        「有事实但值为 None」（如 theme 未命中主题）与「没有事实」必须区分，
+        故取码走整行而不是 ``fact(item, key) is not None``。
+        """
+        self._ensure_facts()
+        entry = self._facts.get(item.json_id or str(item.path))
+        return entry if isinstance(entry, dict) else None
+
     def _iter_manifests(self) -> list[Path]:
-        paths = sorted(self.collection_dir.glob("*.json")) if self.collection_dir.is_dir() else []
+        """清单文件列表（排除烘焙事实文件——它与清单同目录但不是集合）。"""
+        paths = (
+            [p for p in sorted(self.collection_dir.glob("*.json")) if p.name != facts_mod.FACTS_FILENAME]
+            if self.collection_dir.is_dir()
+            else []
+        )
         if self.user_dir and self.user_dir.is_dir():
-            paths.extend(sorted(self.user_dir.glob("*.json")))
+            paths.extend(p for p in sorted(self.user_dir.glob("*.json")) if p.name != facts_mod.FACTS_FILENAME)
         return paths
 
     def _load_collection(self, manifest_path: Path) -> ExampleItem | None:
@@ -171,7 +272,7 @@ class ContractStore:
         return coll_root
 
     def _build_item(self, manifest: Manifest, entry: ManifestEntry, coll_root: ExampleItem) -> ExampleItem | None:
-        real_path = resolve_entry_file(manifest.path, entry, self.data_root)
+        real_path = resolve_entry_file(manifest.path, entry, self._root_for(manifest.path))
         if real_path is None and not entry.code:
             # 契约 §2.3：既无 file（v2）也无内联 code（v1 兼容）＝没有内容来源，
             # 与 v1 一致跳过该条（记警告，fail-visible 而非收进树里当空壳示例）
@@ -195,16 +296,30 @@ class ContractStore:
         item.parent = coll_root
         item.tags = list(entry.tags)
         # dir 字段退役：项目分组键改为从真实路径相对集合树根派生（契约 §2.2）
-        item.source_dir = entry.source_dir or self._project_key(item.path)
+        item.source_dir = entry.source_dir or self._project_key(item.path, manifest.path)
         item.quality_score = None
         self._index[entry.id] = item
         self._manifests[entry.id] = manifest
         return item
 
-    def _project_key(self, real_path: Path) -> str | None:
-        """项目分组键：topics/tools/projects 下的一级（或二级）目录相对路径。"""
+    def _root_for(self, manifest_path: Path) -> Path:
+        """该清单的集合树根：内置 = 仓库根；用户集合 = user_examples 的父目录（契约 §2.3）。
+
+        打包版的用户集合在可写根（userData）下，与仓库根不同源；
+        用同一个根去解析会让用户集合的 ``file`` 全部判越界而被丢弃。
+        """
+        if self.user_dir is not None and manifest_path.parent == self.user_dir:
+            return self.user_dir.parent
+        return self.data_root
+
+    def _project_key(self, real_path: Path, manifest_path: Path) -> str | None:
+        """项目分组键：topics/tools/projects 下的一级（或二级）目录相对路径。
+
+        入参已是规范化路径（resolve_entry_file 的产物），不再做 realpath——
+        1500 次多余 lstat 是冷启动预算里最容易被忽视的一笔开销。
+        """
         try:
-            rel = real_path.resolve().relative_to(self.data_root)
+            rel = real_path.relative_to(self._root_for(manifest_path))
         except (OSError, ValueError):
             return None
         parts = rel.parts
@@ -247,7 +362,8 @@ class ContractStore:
         entry = self._entry_of(item)
         if entry is None:
             return item.code or ""
-        return entry_code(self._manifests[item.json_id or ""].path, entry, self.data_root) or ""
+        manifest = self._manifests[item.json_id or ""]
+        return entry_code(manifest.path, entry, self._root_for(manifest.path)) or ""
 
     def _entry_of(self, item: ExampleItem) -> ManifestEntry | None:
         manifest = self._manifests.get(item.json_id or "")
@@ -290,10 +406,14 @@ class ContractStore:
         """第三方 import 清单（去 stdlib、顶层模块名、小写排序）。
 
         与渲染层 ``FilterEngine.extractImportTags`` 同口径；v2 不再下发 code，
-        改由服务端算好随列表下发（契约 §3.2 / §5）。
+        改由服务端算好随列表下发（契约 §3.2 / §5）。优先取烘焙事实。
         """
         key = item.json_id or str(item.path)
         if key not in self._import_tags:
+            baked = self.fact(item, "imports")
+            if baked is not None:
+                self._import_tags[key] = list(baked)
+                return self._import_tags[key]
             mods = extract_imports(self.get_code(item))
             self._import_tags[key] = sorted(
                 {m.split(".")[0].lower() for m in mods if m and m.split(".")[0].lower() not in _STDLIB}
@@ -308,6 +428,10 @@ class ContractStore:
         """
         key = item.json_id or str(item.path)
         if key in self._theme_key:
+            return self._theme_key[key]
+        entry = self._fact_entry(item)
+        if entry is not None and "theme" in entry:
+            self._theme_key[key] = entry["theme"]
             return self._theme_key[key]
         code = self.get_code(item)
         code_lower = code.lower()
@@ -341,8 +465,12 @@ class ContractStore:
         return item
 
     def ensure_quality_score(self, item: ExampleItem) -> int:
-        """质量分：评分器按路径读盘，v1 兼容期先经工作区把内联 code 落成文件。"""
+        """质量分：优先取烘焙事实；未命中才按路径读盘评分。"""
         if item.quality_score is not None:
+            return item.quality_score
+        baked = self.fact(item, "quality")
+        if baked is not None:
+            item.quality_score = int(baked)
             return item.quality_score
         try:
             item.quality_score = self._scorer.score(self._analysis_item(item)).score
@@ -351,41 +479,67 @@ class ContractStore:
         return item.quality_score
 
     def ensure_risk_findings(self, item: ExampleItem) -> list[dict]:
-        """HIGH 风险明细（与运行前确认弹窗同源）；content 由本层给出，避免重复读盘。"""
+        """HIGH 风险明细（与运行前确认弹窗同源）；优先取烘焙事实，未命中才现算。"""
         key = item.json_id or str(item.path)
         if key not in self._risk_findings:
+            baked = self.fact(item, "risk_findings")
+            if baked is not None:
+                self._risk_findings[key] = list(baked)
+                return self._risk_findings[key]
             report = self._checker.check(self._analysis_item(item).path, key, content=self.get_code(item))
             self._risk_findings[key] = [{"description": r.description, "category": r.category} for r in report.risk_details if r.level == RiskLevel.HIGH]
         return self._risk_findings[key]
 
     def ensure_risk_high(self, item: ExampleItem) -> bool:
+        baked = self.fact(item, "risk_high")
+        if baked is not None:
+            return bool(baked)
         return bool(self.ensure_risk_findings(item))
 
     def ensure_run_status(self, item: ExampleItem) -> str:
         key = item.json_id or str(item.path)
         if key in self._run_status:
             return self._run_status[key]
-        code = self.get_code(item)
-        status = compute_run_status(
-            code,
-            example_id=item.json_id,
-            local_dirs=[self._analysis_item(item).path.parent],
-            checker=self._checker,
-            module_index=self._module_index,
-        )
+        static = self.fact(item, "static")
+        if static is not None:
+            # 烘焙的是静态态；缺依赖维度依赖运行环境，运行时用模块索引合成
+            status = self._combine_status(static, self.fact(item, "deps") or [])
+        else:
+            status = compute_run_status(
+                self.get_code(item),
+                example_id=item.json_id,
+                local_dirs=[self._analysis_item(item).path.parent],
+                checker=self._checker,
+                module_index=self._module_index,
+            )
         self._run_status[key] = status
         return status
+
+    def _combine_status(self, static: str, deps: list[str]) -> str:
+        """静态态 + 模块索引 → 最终状态（优先级与 compute_run_status 一致）。"""
+        if static in _TERMINAL_STATIC:
+            return static
+        if self._module_index is not None and self._module_index.available:
+            if self._module_index.missing_modules(set(deps)):
+                return MISSING_DEPS
+        return static
 
     def set_module_python(self, python_exe: str | None) -> None:
         self._module_index = ModuleIndex(python_exe) if python_exe else None
         self._run_status.clear()
 
     def invalidate(self, item: ExampleItem) -> None:
+        """编辑后失效该示例的派生事实：内存缓存 + 烘焙条目一并丢弃。
+
+        烘焙文件不立即重写（契约 §3.2：下次启动按哈希失配重算），
+        但本进程内必须立刻反映新内容——后续访问走惰性计算路径。
+        """
         key = item.json_id or str(item.path)
         self._run_status.pop(key, None)
         self._risk_findings.pop(key, None)
         self._import_tags.pop(key, None)
         self._theme_key.pop(key, None)
+        self._facts.pop(key, None)
         item.quality_score = None
 
     # ------------------------------------------------------------------ 工作区
@@ -410,8 +564,9 @@ class ContractStore:
             return item.path.parent
         entry = self._entry_of(item)
         if entry and entry.source_dir:
-            candidate = (self.data_root / entry.source_dir).resolve()
-            if candidate.is_dir() and candidate.is_relative_to(self.data_root):
+            root = self._root_for(item.json_file or self.collection_dir)
+            candidate = (root / entry.source_dir).resolve()
+            if candidate.is_dir() and candidate.is_relative_to(root):
                 return candidate
         return None
 
@@ -656,18 +811,47 @@ class ContractStore:
         return removed
 
     def collect_garbage(self) -> int:
-        """孤儿回收：工作区不在当前索引键集合中就清理（后台缓慢进行，有日志）。"""
+        """孤儿回收：工作区不在当前索引键集合中就清理（后台缓慢进行，有日志）。
+
+        含用户资产（不在账本里的上传文件/运行产物）的孤儿**不静默删除**：
+        用户的东西只能由用户显式清理（契约 §4.4），这里只计数并记日志。
+        """
         if not self.workspace_root.is_dir():
             return 0
         alive = {safe_name(key) for key in self._index}
         removed = 0
+        kept = 0
         for workspace in self.workspace_root.iterdir():
-            if workspace.is_dir() and workspace.name not in alive:
-                shutil.rmtree(workspace, ignore_errors=True)
-                removed += 1
+            if not workspace.is_dir() or workspace.name in alive:
+                continue
+            if self._has_user_assets(workspace):
+                kept += 1
+                continue
+            shutil.rmtree(workspace, ignore_errors=True)
+            removed += 1
         if removed:
             get_logger(__name__).info("孤儿工作区回收 %d 个", removed)
+        if kept:
+            get_logger(__name__).warning("孤儿工作区含用户资产，保留待人工清理: %d 个", kept)
         return removed
+
+    @staticmethod
+    def _has_user_assets(workspace: Path) -> bool:
+        """工作区里是否存在账本之外的文件（用户上传/运行产物）。
+
+        没有账本时按"有资产"处理（保守：宁可留着，也不静默删掉来历不明的文件）。
+        """
+        ledger = workspace / ".manifest.json"
+        if not ledger.is_file():
+            return any(p.is_file() for p in workspace.rglob("*"))
+        try:
+            known = set(json.loads(ledger.read_text(encoding="utf-8")).get("files", {}))
+        except (OSError, json.JSONDecodeError):
+            return True
+        return any(
+            p.is_file() and p.name not in known and p.name != ".manifest.json"
+            for p in workspace.rglob("*")
+        )
 
     def user_assets(self, item: ExampleItem) -> list[Path]:
         """工作区里的用户资产与运行产物（不在基线清单中的文件）。"""
@@ -679,22 +863,6 @@ class ContractStore:
         except (OSError, json.JSONDecodeError):
             known = set()
         return [p for p in sorted(workspace.iterdir()) if p.is_file() and p.name not in known and p.name != ".manifest.json"]
-
-
-def facts_fingerprint(store: ContractStore) -> str:
-    """派生事实指纹（契约 §3.2 的烘焙索引头部用）：清单哈希 + 逐文件内容哈希。
-
-    烘焙本身是后续增量；这里先给出稳定指纹，供哈希校验与「失配即全量重算」使用。
-    """
-    h = hashlib.sha256()
-    for manifest_path in store._iter_manifests():
-        h.update(manifest_path.name.encode("utf-8"))
-        h.update(hashlib.sha256(manifest_path.read_bytes()).hexdigest().encode("ascii"))
-    for key in sorted(store.index):
-        item = store.index[key]
-        if item.path.is_file():
-            h.update(item.path.read_bytes())
-    return h.hexdigest()
 
 
 def iter_manifests(store: ContractStore) -> Iterable[Path]:

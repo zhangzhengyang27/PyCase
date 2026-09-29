@@ -18,7 +18,7 @@ import json
 import sys
 from pathlib import Path
 
-from .migration import MigrationPlan, apply_plan, build_plan, rollback, verify_migration
+from .migration import MigrationPlan, apply_plan, backup_root_of, build_plan, rollback, verify_migration
 
 ROOT = Path(__file__).resolve().parent.parent
 BUILTIN_ROOT = ROOT / "json_examples"
@@ -37,10 +37,6 @@ def _report(plan: MigrationPlan) -> None:
     print(json.dumps(s, ensure_ascii=False, indent=1))
     for issue in plan.issues:
         print(f"  [{issue.level}] {issue.code} {issue.where}: {issue.message}")
-
-
-def _backup_root_of(manifest: Path) -> Path:
-    return manifest.parent / ".backup"
 
 
 def _snapshot(plan: MigrationPlan) -> dict[Path, dict]:
@@ -76,7 +72,7 @@ def main(argv: list[str] | None = None) -> int:
             print("[apply] 校验发现错误，拒绝执行（报告非空即拒写）", file=sys.stderr)
             return 1
         snapshot = _snapshot(plan)
-        ts, backup_dirs = apply_plan(plan, _backup_root_of)
+        ts, backup_dirs = apply_plan(plan, backup_root_of)
         issues = verify_migration(
             [m.path for m in plan.manifests], snapshot, plan.renamed_ids
         )

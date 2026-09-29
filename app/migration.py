@@ -23,6 +23,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Callable, Iterable
 
+from .logger import get_logger
 from .manifest_v2 import SCHEMA_VERSION, load_manifest
 
 # 迁移只改这些字段，其余原样保留（未知字段不丢弃）
@@ -108,15 +109,14 @@ def build_plan(
         [builtin_root, user_root] if user_root else [builtin_root]
     ):
         m = load_manifest(manifest_path)
-        for issue in m.report.errors:
-            plan.issues.append(
-                PlanIssue(
-                    "error",
-                    issue.code,
-                    f"{manifest_path.name}:{issue.entry}",
-                    issue.message,
+        # 校验报告全量上报（警告也进 plan.issues，让 dry-run 输出完整）：
+        # 阻断落盘的只有 error（CLI 的"报告非空即拒写"= errors 非空）；
+        # 警告是数据质量提示（如 id 字符集 22 条），不阻塞迁移。
+        for level, issues in (("error", m.report.errors), ("warning", m.report.warnings)):
+            for issue in issues:
+                plan.issues.append(
+                    PlanIssue(level, issue.code, f"{manifest_path.name}:{issue.entry}", issue.message)
                 )
-            )
 
         if not m.is_v1:
             continue  # 已是 v2：不重复迁移
@@ -359,6 +359,10 @@ def verify_migration(
                 "description",
                 "requirements",
             ):
+                if key not in old:
+                    # v1 未声明的字段：迁移引入默认值属于"补齐"（与顶层 name 补齐同类），
+                    # 旧数据本就没有的事实不存在漂移；已声明的字段仍必须逐字保持
+                    continue
                 # 归一后比较：v1 里缺失字段（None）与 v2 的空列表/空串是同一事实
                 default = [] if key in ("tags", "requirements") else ""
                 if (old.get(key) if old.get(key) is not None else default) != (
@@ -454,3 +458,37 @@ def _prune_empty_parents(path: Path, stop: Path) -> None:
             parent.rmdir()
         except OSError:
             return  # 非空或已被别的流程清理：停手
+
+
+def backup_root_of(manifest: Path) -> Path:
+    """备份位置：集合根下 ``.backup/``（契约 §6.2，已 gitignore）。"""
+    return manifest.parent / ".backup"
+
+
+def migrate_user_collections(user_dir: Path, data_root: Path) -> str | None:
+    """运行时自动迁移旧用户集合（契约 §2.4）：dry-run → apply → 复验，含备份。
+
+    内置集合的迁移是显式动作（CLI + 演练）；用户集合在用户机器上无从手动执行，
+    故在应用启动时自动完成一次，全程有备份可回滚。任何错误都不阻塞启动：
+    迁移失败的用户集合保持 v1 只读可用（fail-visible，下一次启动再试）。
+    返回备份时间戳（未迁移返回 None）。
+    """
+    user_dir = Path(user_dir)
+    if not user_dir.is_dir():
+        return None
+    log = get_logger(__name__)
+    plan = build_plan(user_dir, data_root, None)
+    if not plan.manifests:
+        return None
+    if plan.errors:
+        log.error("用户集合迁移校验未通过，本次跳过（保持 v1 只读）: %s", [i.message for i in plan.errors[:3]])
+        return None
+    snapshot = {m.path: json.loads(m.path.read_text(encoding="utf-8")) for m in plan.manifests}
+    ts, backup_dirs = apply_plan(plan, backup_root_of)
+    issues = verify_migration([m.path for m in plan.manifests], snapshot, plan.renamed_ids)
+    if issues:
+        log.error("用户集合迁移复验未通过，已回滚: %s", [f"{i.code}: {i.message}" for i in issues[:3]])
+        rollback(backup_dirs)
+        return None
+    log.info("用户集合已自动迁移到契约 v2：%d 个集合，备份 %s", len(plan.manifests), ts)
+    return ts

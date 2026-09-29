@@ -1,16 +1,19 @@
-"""示例导入核心：目录中真实 .py → JSON 集合 payload 的纯内存构建。
+"""示例导入核心：目录中真实 .py → 集合 payload 的纯内存构建 + v2 落盘。
 
 单一实现供两个调用方复用（防止逻辑分叉）：
 - sidecar RPC ``import_examples``（应用内导入向导；PyInstaller 打包须包含本模块，
   因此逻辑必须位于 ``app/`` 包而非 ``scripts/``）
 - ``scripts/migrate_to_json.py``（CLI 批量迁移薄壳，仅保留编排与写盘）
 
-导入产物**不写 ``dir`` 字段**：用户目录没有稳定仓库根，运行时走单文件物化
-（同目录兄弟模块暂不解析，限制见 docs/json-examples.md）。
+导入产物的形态 = 契约 v2（与内置集合同构）：``write_user_collection`` 把每个示例
+写成 ``<user_dir>/<集合>/<name>`` 真实文件，清单只存元数据 + ``file``。
 """
 
 import ast
+import json
+import os
 import re
+import shutil
 import warnings
 from pathlib import Path
 
@@ -369,3 +372,44 @@ def import_directory(
         "skipped": skipped,
         "stats": {"scanned": len(py_files), "imported": len(examples), "skipped": len(skipped)},
     }
+
+
+def write_user_collection(
+    user_dir: Path, slug: str, name: str, description: str, entries: list[dict]
+) -> Path:
+    """把导入结果落成 v2 用户集合：``<user_dir>/<slug>/<name>`` 真实文件 + 清单。
+
+    契约 §2.4：用户集合与内置**同构**（清单只存元数据 + ``file`` 指向真实源码），
+    因此这里先落源码再原子替换清单——中途失败不留半成品：
+    - 源码写进 ``.<slug>.staging`` 暂存目录，整体 rename 成 ``<slug>/``（原子）；
+    - 清单写失败时回滚刚 rename 的源码目录，并清掉暂存目录。
+    """
+    user_dir = Path(user_dir)
+    staging = user_dir / f".{slug}.staging"
+    src_dir = user_dir / slug
+    manifest = user_dir / f"{slug}.json"
+    shutil.rmtree(staging, ignore_errors=True)
+    staging.mkdir(parents=True)
+    try:
+        for spec in entries:
+            (staging / spec["name"]).write_text(spec.pop("code", ""), encoding="utf-8")
+        if src_dir.exists():
+            raise FileExistsError(f"集合目录已存在: {src_dir}")
+        os.replace(staging, src_dir)
+        payload = {
+            "schema_version": 2,
+            "name": name,
+            "description": description,
+            "examples": [{**spec, "file": f"{slug}/{spec['name']}"} for spec in entries],
+        }
+        tmp = manifest.with_name(manifest.name + ".tmp")
+        try:
+            tmp.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+            os.replace(tmp, manifest)
+        finally:
+            tmp.unlink(missing_ok=True)
+    except OSError:
+        shutil.rmtree(staging, ignore_errors=True)
+        shutil.rmtree(src_dir, ignore_errors=True)
+        raise
+    return manifest

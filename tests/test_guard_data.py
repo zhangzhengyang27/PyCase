@@ -13,17 +13,25 @@
 对应 docs/redesign-plan.md 的 G1（真相源金标）、G2（原子写）、G3（安全三态/不 fail-open）。
 """
 
+import hashlib
 import json
 import os
 import shutil
+import time
 from pathlib import Path
 
+from app import facts as facts_mod
 from app.contract_store import ContractStore
 from app.models import ExampleItem
 from app.run_status import BROKEN, EMPTY, RISKY, RUNNABLE
 from app.security import SecurityChecker
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
+
+
+def _manifest_paths(store: ContractStore) -> list[Path]:
+    """集合清单（排除同目录的烘焙事实文件）。"""
+    return [p for p in sorted(store.collection_dir.glob("*.json")) if p.name != "facts.json"]
 
 
 # --------------------------------------------------------------------- 公共工具
@@ -94,28 +102,91 @@ def _workspace_snapshot(store: ContractStore) -> tuple[bool, frozenset[str]]:
 
 
 def test_g1_dataset_index_golden():
-    """全量真相源金标（冻结基线 2026-09-29）：14 个集合 / 1496 条示例。
+    """全量真相源金标（基线 2026-09-29，迁移后）：14 个集合 / 1496 条示例。
 
     数字是刻意写死的：重构期间真相源规模不得漂移；确需增删示例时连同本基线一起更新。
-    v2 观测点：load = 只读清单 + 真实树建索引（**零写盘**，契约 §3.1）；源码按需
-    ``store.get_code`` 取（v1 兼容期读清单内联 code，迁移后读真实文件）。
+    v2 观测点：load = 只读清单 + 真实树建索引（**零写盘**，契约 §3.1）；
+    条目全部为已迁移形态（清单带 file、无内联 code），源码按需读真实文件。
     """
     store = ContractStore.for_base_dir(base_dir=REPO_ROOT)
-    assert len(sorted(store.collection_dir.glob("*.json"))) == 14
+    assert len(_manifest_paths(store)) == 14
+    assert (store.collection_dir / "facts.json").is_file(), "随包烘焙事实索引必须存在"
     before = _workspace_snapshot(store)  # 启动前的工作区现状
     items = _flat(store.load())
+    assert store.facts_source == "shipped", "内置数据的派生事实应命中随包烘焙索引"
     assert _workspace_snapshot(store) == before, "load 必须零写盘（契约 §3.1）"
     assert len(items) == 1496
     # 内容等价：全部条目的源码都能按需取到（取不到即真相源内容缺失）
     missing = [i.json_id for i in items.values() if not store.get_code(i).strip()]
     assert missing == []
-    # v2 形态的条目（清单带 file）直接对真实树断言：文件存在且与取到的源码逐字节一致
+    # v2 形态：清单带 file、无内联 code；条目路径即真实文件且与取到的源码逐字节一致
+    v1_leftovers = [i.json_id for i in items.values() if store._is_v2_item(i) is False]
+    assert v1_leftovers == [], f"仍有未迁移条目: {v1_leftovers[:5]}"
     mismatched = [
         i.json_id
         for i in items.values()
-        if i.path.is_file() and i.path.read_text(encoding="utf-8") != store.get_code(i)
+        if not i.path.is_file() or i.path.read_text(encoding="utf-8") != store.get_code(i)
     ]
     assert mismatched == []
+
+
+def test_g1_shipped_facts_match_real_tree():
+    """烘焙索引与真实树逐条一致（契约 §3.2 的"内容哈希与烘焙索引一致"）。"""
+    store = ContractStore.for_base_dir(base_dir=REPO_ROOT)
+    store.load()
+    data = facts_mod.load(store.facts_shipped_path())
+    assert data is not None, "facts.json 缺失或版本不符"
+    items, status = facts_mod.adopt(data, store)
+    assert status == "hit", "烘焙索引未命中真实树（改过数据后需重跑 app.facts_cli bake）"
+    assert set(items) == set(store.index)
+    for key, entry in items.items():
+        item = store.index[key]
+        assert entry["sha256"] == hashlib.sha256(item.path.read_bytes()).hexdigest()
+
+
+def test_g1_cold_start_index_ready_under_budget():
+    """冷启动到 list_examples 索引就绪 < 50ms（契约 §8；不含 venv 引导）。
+
+    取 3 次加载的最小值：本机 CI/负载会让单次测量抖动，预算判的是"能多快"，
+    不是"平均多快"；超过预算说明加载路径引入了新的每条目开销（realpath/读盘）。
+    """
+    times = []
+    for _ in range(3):
+        store = ContractStore.for_base_dir(base_dir=REPO_ROOT)
+        t0 = time.perf_counter()
+        store.load()
+        times.append((time.perf_counter() - t0) * 1000)
+    best = min(times)
+    assert store.facts_source == "shipped"
+    assert best < 50, f"冷启动索引就绪 {best:.1f}ms 超预算（3 次: {[round(t, 1) for t in times]}）"
+
+
+def test_g1_facts_reuse_equals_full_rebuild(tmp_path):
+    """增量采纳（哈希命中复用 + 失配重算）必须与全量重算逐字段等价。"""
+    _make_root(tmp_path)
+    _write_v2_collection(
+        tmp_path,
+        "demo",
+        [
+            {"id": "a", "name": "a.py", "code": "import turtle\nprint('a')\n"},
+            {"id": "b", "name": "b.py", "code": "print('b')\n"},
+        ],
+    )
+    store = ContractStore.for_base_dir(base_dir=tmp_path)
+    store.load()
+    baked = store.bake_facts()
+
+    # 改一个文件的真实内容：只有该条重算，其余哈希命中复用
+    (tmp_path / "json_examples" / "demo" / "b.py").write_text("print('B2')\n", encoding="utf-8")
+    store2 = ContractStore.for_base_dir(base_dir=tmp_path)
+    store2.load()
+    reused, status = facts_mod.adopt(baked, store2)
+    assert status == "partial"
+
+    store3 = ContractStore.for_base_dir(base_dir=tmp_path)
+    store3.load()
+    full = store3.bake_facts()
+    assert reused == full["items"]
 
 
 def test_g1_dir_example_materializes_siblings_and_run_path(tmp_path):
@@ -381,3 +452,16 @@ def test_g3_asyncio_run_is_not_subprocess(tmp_path):
 
     report = SecurityChecker().check(path)
     assert not any("subprocess" in r for r in report.risks)
+
+
+def test_g1_requirements_aggregate_matches_repo_file():
+    """仓库根 requirements.txt 必须等于「清单 requirements + 烘焙 import 分析」聚合结果。
+
+    这是退役的 scripts/gen_shared_requirements.py 的等价替代门禁：
+    数据变了没重跑聚合 → 这里与 CI 一起变红（否则共享 venv 会缺包）。
+    """
+    from app.facts_cli import REQUIREMENTS_OUT, collect_requirements, render_requirements
+
+    store = ContractStore.for_base_dir(base_dir=REPO_ROOT)
+    store.load()
+    assert REQUIREMENTS_OUT.read_text(encoding="utf-8") == render_requirements(collect_requirements(store))
