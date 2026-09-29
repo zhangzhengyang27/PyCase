@@ -14,9 +14,9 @@ if (!rootEl.hasAttribute('data-platform')) rootEl.setAttribute('data-platform', 
 if (!rootEl.hasAttribute('data-accent')) {
   rootEl.setAttribute('data-accent', localStorage.getItem('app-accent') === 'brand' ? 'brand' : 'system')
 }
-document
-  .querySelector('meta[name="theme-color"]')
-  ?.setAttribute('content', resolvedTheme === 'light' ? '#ffffff' : '#1e1e1e')
+// theme-color 取窗口底色令牌（不留字面色值，避免与 token 漂移）
+const metaEl = document.querySelector('meta[name="theme-color"]')
+metaEl?.setAttribute('content', getComputedStyle(rootEl).getPropertyValue('--bg-window').trim())
 
 createApp(App).mount('#app')
 

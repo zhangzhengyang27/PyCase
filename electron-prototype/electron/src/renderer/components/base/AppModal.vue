@@ -97,22 +97,22 @@ onBeforeUnmount(() => {
 
 <template>
   <Teleport to="body">
-    <div class="fixed inset-0 z-[1000] flex items-center justify-center bg-black/50 p-6" @click.self="emit('close')">
+    <div class="scrim z-[1000] flex items-center justify-center p-6" @click.self="emit('close')">
       <div
         ref="panelRef"
         role="dialog"
         aria-modal="true"
         :aria-label="title"
         tabindex="-1"
-        class="bg-panel border border-line-subtle rounded-panel shadow-elev-3 max-w-[92vw] max-h-[86vh] flex flex-col animate-modal-in outline-none"
+        class="bg-panel border border-line-hairline rounded-overlay shadow-elev-3 max-w-[92vw] max-h-[86vh] flex flex-col animate-modal-in outline-none"
         :style="{ width: width, transform: `translate(${dx}px, ${dy}px)` }"
       >
         <div
-          class="flex items-center justify-between px-4 h-11 border-b border-line-subtle shrink-0 select-none"
+          class="flex items-center justify-between px-4 h-11 border-b border-line-hairline shrink-0 select-none"
           :class="draggable ? 'cursor-grab active:cursor-grabbing' : ''"
           @pointerdown="draggable && onHeaderDown($event)"
         >
-          <span class="text-title font-[590] text-ink">{{ title }}</span>
+          <span class="text-title font-semibold text-ink">{{ title }}</span>
           <button
             class="w-6 h-6 flex items-center justify-center rounded-control text-ink-mute hover:text-ink hover:bg-hover cursor-pointer border-0 bg-transparent"
             title="关闭"
@@ -125,7 +125,7 @@ onBeforeUnmount(() => {
         <div class="px-4 py-3.5 overflow-y-auto overscroll-contain">
           <slot />
         </div>
-        <div v-if="$slots.footer" class="flex justify-end gap-2 px-4 py-3 border-t border-line-subtle shrink-0">
+        <div v-if="$slots.footer" class="flex justify-end gap-2 px-4 py-3 border-t border-line-hairline shrink-0">
           <slot name="footer" />
         </div>
       </div>

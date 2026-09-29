@@ -1076,6 +1076,134 @@ function runSmokeTest(): void {
         }
         console.log(`[smoke] 详情走查通过：标签 ${d.tabs} 选中 ${d.tabSelected} 标签行高 ${d.tabRowH} 终端底 ${d.consoleBg} 字重 ${(d.weights as string[]).join('/')}`)
       }
+      // 全局层走查（A5）：命令面板选中语义（板 3）+ 高危确认弹层按钮序与危险语义（板 4）
+      step = '全局层走查'
+      const overlay = await mainWindow!.webContents.executeJavaScript(`(async () => {
+        const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+        const root = document.documentElement;
+        const isWin = root.getAttribute('data-platform') === 'win';
+        const reg = (el) => el ? el.getBoundingClientRect() : null;
+        const out = { isWin, modKey: isWin ? 'Ctrl' : '\u2318' };
+        const token = (name) => {
+          const probe = document.createElement('div');
+          probe.style.cssText = 'position:absolute;visibility:hidden;' + name;
+          document.body.appendChild(probe);
+          const v = getComputedStyle(probe);
+          const res = [v.backgroundColor, v.color].join('|');
+          probe.remove();
+          return res;
+        };
+        out.expectAccentBg = token('background:var(--accent)').split('|')[0];
+        out.expectSubtleBg = token('background:var(--bg-subtle)').split('|')[0];
+        out.expectDangerText = token('color:var(--status-red)').split('|')[1];
+
+        // 1) 命令面板：真实快捷键打开
+        window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true, ctrlKey: true, bubbles: true }));
+        await sleep(500);
+        // 结构锚点：搜索框 → 搜索行 → 面板（版本无关，避免用 A5 才有的类名做定位）
+        const input = document.querySelector('input[aria-label="全局搜索示例"]');
+        const palette = input ? input.parentElement && input.parentElement.parentElement : null;
+        out.paletteOpen = !!palette;
+        if (!palette) return { fatal: '命令面板未打开' };
+        const rows = Array.from(palette.querySelectorAll('[data-active]'));
+        out.rows = rows.length;
+        const active = rows.find((r) => r.getAttribute('data-active') === 'true');
+        out.hasActive = !!active;
+        out.activeBg = active ? getComputedStyle(active).backgroundColor : 'NO-ACTIVE';
+        out.footText = (palette.lastElementChild?.textContent || '').trim();
+
+        // 2) 高危确认：经 store 打开一个高危示例并触发运行（四个入口都汇聚到同一守卫），
+        //    走的是真实链路而非注入状态；确认弹层出现后立即取消，不真跑
+        const app = window.__app;
+        const risky = app.examples().find((e) => e.risk_high);
+        out.riskyId = risky ? risky.id : null;
+        if (!risky) return { fatal: '数据里没有 risk_high 示例，无法走查确认弹层' };
+        await app.openDetail(risky.id);
+        await sleep(700);
+        app.runFromDetail();
+        await sleep(900);
+        const dialog = document.querySelector('[role="dialog"]');
+        out.dialogOpen = !!dialog;
+        if (dialog) {
+          out.alertline = !!dialog.querySelector('.alertline');
+          const al = dialog.querySelector('.alertline');
+          out.alertBg = al ? getComputedStyle(al).backgroundColor : 'MISSING';
+          out.alertIconColor = al && al.querySelector('svg') ? getComputedStyle(al.querySelector('svg')).color : 'MISSING';
+          const act = dialog.querySelector('.d-actions');
+          out.hasActions = !!act;
+          if (act) {
+            const btns = Array.from(act.querySelectorAll('button'));
+            out.btns = btns.map((b) => b.textContent.trim());
+            const danger = btns.find((b) => b.textContent.includes('仍要运行'));
+            const cancel = btns.find((b) => b.textContent.includes('取消'));
+            out.dangerColor = danger ? getComputedStyle(danger).color : 'MISSING';
+            if (danger && cancel) {
+              const d = reg(danger), c = reg(cancel);
+              out.order = d.left < c.left ? 'danger-first' : 'cancel-first';
+            }
+          }
+        }
+        return out;
+      })()`) as Record<string, unknown>
+      {
+        const o = overlay as Record<string, unknown>
+        if (o.fatal) throw new Error(`全局层走查: ${o.fatal}`)
+        const problems: string[] = []
+        // 命令面板（板 3）
+        if (!o.paletteOpen) problems.push('命令面板未打开')
+        if ((o.rows as number) < 1) problems.push('命令面板无行')
+        if (!o.hasActive) problems.push('命令面板无选中行')
+        const expectBg = o.isWin ? o.expectSubtleBg : o.expectAccentBg
+        if (o.activeBg !== expectBg) problems.push(`面板选中底 ${o.activeBg} != ${expectBg}`)
+        if (!String(o.footText || '').includes(String(o.modKey))) {
+          problems.push(`面板底部提示缺平台修饰键 ${o.modKey}：${o.footText}`)
+        }
+        // 高危确认（板 4）
+        if (!o.dialogOpen) problems.push('高危卡片未触发确认弹层')
+        if (!o.alertline) problems.push('确认弹层缺 .alertline')
+        if (o.isWin) {
+          if (o.alertBg === 'rgba(0, 0, 0, 0)') problems.push('win 弹层未使用 InfoBar 语义底')
+          if (o.order !== 'danger-first') problems.push(`win 按钮序应为危险在前（当前 ${o.order}）`)
+        } else {
+          if (o.alertBg !== 'rgba(0, 0, 0, 0)') problems.push(`mac 弹层应为平面（当前底 ${o.alertBg}）`)
+          if (o.order !== 'cancel-first') problems.push(`mac 按钮序应为主操作最后（当前 ${o.order}）`)
+        }
+        if (o.dangerColor !== o.expectDangerText) {
+          problems.push(`危险按钮不是红字（${o.dangerColor} != ${o.expectDangerText}）`)
+        }
+        if (problems.length) throw new Error('全局层走查失败: ' + problems.join('; '))
+        console.log(
+          `[smoke] 全局层走查通过：面板 ${o.rows} 行 选中底 ${o.activeBg} 底部「${o.footText}」；弹层 ${o.btns} 序 ${o.order} 危险色 ${o.dangerColor}`
+        )
+      }
+      // 走查取证：面板 →（关面板后）高危确认弹层，各截一张
+      if (process.env.SMOKE_SHOTS) {
+        const shot = async (name: string): Promise<void> => {
+          try {
+            await new Promise((r) => setTimeout(r, 400))
+            fs.writeFileSync(
+              path.join(process.env.SMOKE_SHOTS!, name),
+              (await mainWindow!.webContents.capturePage()).toPNG()
+            )
+          } catch (e) {
+            console.error(`[smoke] 截图失败(${name}):`, (e as Error).message)
+          }
+        }
+        await shot('palette.png')
+        await mainWindow!.webContents.executeJavaScript('window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }))')
+        await new Promise((r) => setTimeout(r, 400))
+        // 详情页仍开着：重新触发一次确认弹层再截图（弹层在面板之下，需先关面板）
+        await mainWindow!.webContents.executeJavaScript('window.__app.runFromDetail()')
+        await new Promise((r) => setTimeout(r, 700))
+        await shot('highrisk-dialog.png')
+      }
+      // 收尾：取消高危确认，避免残留弹层影响后续探针
+      await mainWindow!.webContents.executeJavaScript(`(async () => {
+        const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+        const cancel = Array.from(document.querySelectorAll('[role="dialog"] .d-actions button')).find((b) => b.textContent.includes('取消'));
+        if (cancel) cancel.click();
+        await sleep(200);
+      })()`)
       // 5) 用户集合导入/删除链路：tmp 目录 → import → 数量与标记 → delete → 复原
       step = '用户集合导入/删除'
       const tmpImportDir = fs.mkdtempSync(path.join(os.tmpdir(), 'smoke-import-'))

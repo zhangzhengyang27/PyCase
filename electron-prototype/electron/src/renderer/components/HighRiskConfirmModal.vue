@@ -1,6 +1,8 @@
 <script setup lang="ts">
-// HighRiskConfirmModal：高危示例运行前二次确认（AppModal 基础件，模板沿用 AssetsPanel 删除确认）
-// 明确告知安全边界：子进程隔离不是沙箱，第三方库内部行为不受静态扫描覆盖。
+// HighRiskConfirmModal：高危示例运行前二次确认（视觉基线 v2 / 页稿板 4）
+// mac = 图标 + 中性文字（平面）；win = Fluent InfoBar 语义底；
+// 危险按钮用红字而非红色填充；按钮序按平台（mac 主操作最右 / win 最左）。
+// 文案明确安全边界：子进程隔离不是沙箱，第三方库内部行为不受静态扫描覆盖。
 import { computed, ref } from 'vue'
 import { ShieldAlert } from 'lucide-vue-next'
 import { examples, pendingHighRiskRun, resolveHighRiskRun } from '../store'
@@ -20,10 +22,10 @@ const findings = computed(() => target.value?.risk_findings || [])
 <template>
   <AppModal v-if="pendingHighRiskRun && target" title="运行高危示例" width="480px" @close="resolveHighRiskRun(false, false)">
     <div class="flex flex-col gap-3">
-      <div class="flex items-start gap-2.5 p-3 rounded-control bg-danger-bg text-danger">
-        <ShieldAlert :size="18" class="shrink-0 mt-0.5" />
-        <div class="text-control leading-[1.6]">
-          <p class="m-0 font-[590]">「{{ target.title || target.name }}」包含以下高危操作：</p>
+      <div class="alertline">
+        <ShieldAlert :size="18" :stroke-width="1.5" />
+        <div>
+          <p class="m-0 font-semibold text-ink">「{{ target.title || target.name }}」包含以下高危操作：</p>
           <ul class="m-0 mt-1.5 pl-4 space-y-1">
             <li v-for="(f, i) in findings" :key="i">{{ f.description }}</li>
           </ul>
@@ -39,8 +41,10 @@ const findings = computed(() => target.value?.risk_findings || [])
       </label>
     </div>
     <template #footer>
-      <BaseButton variant="ghost" @click="resolveHighRiskRun(false, false)">取消</BaseButton>
-      <BaseButton variant="danger" @click="resolveHighRiskRun(true, skip)">仍要运行</BaseButton>
+      <div class="d-actions">
+        <BaseButton variant="ghost" @click="resolveHighRiskRun(false, false)">取消</BaseButton>
+        <BaseButton class="d-primary" variant="danger" @click="resolveHighRiskRun(true, skip)">仍要运行</BaseButton>
+      </div>
     </template>
   </AppModal>
 </template>

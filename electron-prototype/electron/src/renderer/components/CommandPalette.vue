@@ -5,8 +5,11 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { Clock, CornerDownLeft, FileCode2, Play, Search, Wrench } from 'lucide-vue-next'
 import { examples, openDetail, runFromCard, runHistory } from '../store'
+import { modKeyLabel } from '../src/platform'
 
 const emit = defineEmits<{ close: [] }>()
+
+const modKey = modKeyLabel()
 
 const query = ref('')
 const idx = ref(0)
@@ -79,6 +82,11 @@ function openItem(item: PaletteItem, run = false): void {
 }
 
 function onKeydown(e: KeyboardEvent): void {
+  // 面板是最上层：Esc/方向键/Enter 一律由面板消费，不再向下传给底下的弹层
+  // （否则一次 Esc 会同时关掉面板与其下方的对话框）
+  if (e.key === 'Escape' || e.key === 'ArrowDown' || e.key === 'ArrowUp' || e.key === 'Enter') {
+    e.stopPropagation()
+  }
   if (e.key === 'Escape') {
     e.preventDefault()
     emit('close')
@@ -106,10 +114,11 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown, true))
 
 <template>
   <Teleport to="body">
-    <div class="fixed inset-0 z-[1200] flex items-start justify-center pt-[14vh] bg-black/50 px-6" @click.self="emit('close')">
-      <div class="w-[560px] max-w-full bg-panel border border-line-subtle rounded-panel shadow-elev-3 overflow-hidden animate-modal-in">
-        <div class="flex items-center gap-2.5 px-3.5 h-11 border-b border-line-subtle">
-          <Search :size="15" class="text-ink-faint shrink-0" />
+    <div class="scrim z-[1200] flex items-start justify-center pt-[14vh] px-6" @click.self="emit('close')">
+      <div class="w-[560px] max-w-full bg-card border border-line-hairline rounded-overlay shadow-elev-3 overflow-hidden animate-modal-in">
+        <!-- 搜索行（页稿板 3：44px 高，输入占主，右侧 Esc 提示） -->
+        <div class="flex items-center gap-2.5 px-3 h-11 border-b border-line-hairline">
+          <Search :size="15" :stroke-width="1.5" class="text-ink-mute shrink-0" />
           <input
             ref="inputEl"
             v-model="query"
@@ -119,20 +128,19 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown, true))
             spellcheck="false"
             class="flex-1 bg-transparent border-0 outline-none text-body text-ink placeholder:text-ink-faint"
           />
-          <kbd class="px-1 py-px text-badge font-mono bg-card border border-line-subtle rounded-badge text-ink-faint shrink-0">Esc</kbd>
+          <kbd class="px-1 py-px text-caption font-mono border border-line-hairline rounded-control text-ink-mute shrink-0">Esc</kbd>
         </div>
 
-        <div ref="listEl" class="max-h-[380px] overflow-y-auto p-1.5">
+        <div ref="listEl" class="max-h-[380px] overflow-y-auto py-1.5">
           <!-- 空查询：最近运行分组（行容器用 div role=button：内嵌「运行」钮不允许 button 套 button） -->
           <template v-if="!query.trim() && recents.length">
-            <div class="flex items-center gap-1.5 px-2.5 pt-1.5 pb-1 text-caption text-ink-faint">
-              <Clock :size="11" /> 最近运行
+            <div class="flex items-center gap-1.5 px-3 pt-1.5 pb-1 text-caption text-ink-mute">
+              <Clock :size="12" :stroke-width="1.5" /> 最近运行
             </div>
             <div
               v-for="(item, i) in recents"
               :key="`r-${item.id}`"
-              class="w-full flex items-center gap-2.5 h-9 px-2.5 rounded-control bg-transparent text-control cursor-pointer text-left border-0"
-              :class="i === idx ? 'bg-accent/15 text-ink' : 'text-ink-dim hover:bg-hover hover:text-ink'"
+              class="p-row mx-1.5"
               :data-active="i === idx"
               role="button"
               tabindex="0"
@@ -141,48 +149,52 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown, true))
               @keydown.enter.prevent="openItem(item)"
               @keydown.space.prevent="openItem(item)"
             >
-              <FileCode2 :size="14" class="shrink-0 text-ink-faint" />
-              <span class="truncate">{{ item.name }}</span>
+              <FileCode2 :size="14" :stroke-width="1.5" class="shrink-0 text-ink-mute" />
+              <span class="r-name truncate">{{ item.name }}</span>
               <span class="ml-auto flex items-center gap-1 shrink-0">
                 <button
-                  class="flex items-center gap-1 px-1.5 h-5 rounded-badge border border-line-subtle bg-transparent text-caption text-ink-mute hover:text-ink hover:border-line-strong cursor-pointer"
+                  class="r-mark flex items-center gap-1 px-1.5 h-5 rounded-control border border-line-hairline bg-transparent text-caption text-ink-mute hover:text-ink hover:border-line-strong cursor-pointer"
                   title="直接运行（面板内 Cmd+Enter）"
                   aria-label="直接运行"
                   @click.stop="openItem(item, true)"
                 >
-                  <Play :size="10" /> 运行
+                  <Play :size="10" :stroke-width="1.5" /> 运行
                 </button>
               </span>
             </div>
           </template>
 
           <!-- 示例分组 -->
-          <div class="flex items-center gap-1.5 px-2.5 pt-1.5 pb-1 text-caption text-ink-faint">
-            <Search :size="11" /> {{ query.trim() ? '匹配结果' : '示例' }}
+          <div class="flex items-center gap-1.5 px-3 pt-1.5 pb-1 text-caption text-ink-mute">
+            <Search :size="12" :stroke-width="1.5" /> {{ query.trim() ? '匹配结果' : '示例' }}
           </div>
-          <div v-if="matches.length === 0" class="px-2.5 py-3 text-control text-ink-faint">
+          <div v-if="matches.length === 0" class="px-3 py-3 text-control text-ink-mute">
             {{ query.trim() ? '没有匹配的示例' : '库中暂无示例' }}
           </div>
           <button
             v-for="(item, i) in matches"
             :key="`m-${item.id}`"
-            class="w-full flex items-center gap-2.5 h-9 px-2.5 rounded-control border-0 bg-transparent text-control cursor-pointer text-left"
-            :class="(query.trim() ? i : recents.length + i) === idx ? 'bg-accent/15 text-ink' : 'text-ink-dim hover:bg-hover hover:text-ink'"
+            class="p-row mx-1.5"
             :data-active="(query.trim() ? i : recents.length + i) === idx"
             @click="openItem(item)"
             @mousemove="idx = (query.trim() ? i : recents.length + i)"
           >
-            <component :is="item.category === 'tools' ? Wrench : FileCode2" :size="14" class="shrink-0 text-ink-faint" />
-            <span class="truncate">{{ item.name }}</span>
-            <span v-if="item.category" class="shrink-0 text-caption text-ink-faint">{{ item.category }}</span>
-            <CornerDownLeft v-if="(query.trim() ? i : recents.length + i) === idx" :size="12" class="ml-auto shrink-0 text-ink-faint" />
+            <component :is="item.category === 'tools' ? Wrench : FileCode2" :size="14" :stroke-width="1.5" class="shrink-0 text-ink-mute" />
+            <span class="r-name truncate">{{ item.name }}</span>
+            <span v-if="item.category" class="shrink-0 text-caption text-ink-mute">{{ item.category }}</span>
+            <CornerDownLeft
+              v-if="(query.trim() ? i : recents.length + i) === idx"
+              :size="12"
+              :stroke-width="1.5"
+              class="r-mark ml-auto shrink-0 text-ink-mute"
+            />
           </button>
         </div>
 
-        <div class="flex items-center gap-3 px-3.5 h-7 border-t border-line-subtle text-caption text-ink-faint">
+        <div class="flex items-center gap-3 px-3 h-8 border-t border-line-hairline text-caption text-ink-mute">
           <span>↑↓ 选择</span>
           <span>↵ 打开详情</span>
-          <span>⌘↵ 直接运行</span>
+          <span>{{ modKey }}↵ 直接运行</span>
         </div>
       </div>
     </div>

@@ -285,6 +285,103 @@
     box-shadow: var(--focus-shadow);
   }
 
+  /* 弹层遮罩：mac 略深（材质分层更明显），win 略浅（Fluent 习惯） */
+  .scrim {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.38);
+  }
+  html[data-platform='win'] .scrim {
+    background: rgba(0, 0, 0, 0.3);
+  }
+
+  /* 命令面板 / 列表弹层的行：mac 选中 = 强调填充；win 选中 = 中性填充 + 强调文字 */
+  .p-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    height: 32px;
+    padding: 0 10px;
+    border: 0;
+    border-radius: var(--r-control);
+    background: transparent;
+    color: var(--text-secondary);
+    font-family: var(--font-ui);
+    font-size: var(--fs-body);
+    text-align: left;
+    cursor: pointer;
+  }
+  .p-row .r-name {
+    color: var(--text-primary);
+    min-width: 0;
+  }
+  .p-row:hover,
+  .p-row[data-hover='true'] {
+    background: var(--bg-hover);
+  }
+  html[data-platform='mac'] .p-row[data-active='true'] {
+    background: var(--accent);
+    color: var(--on-accent);
+  }
+  html[data-platform='mac'] .p-row[data-active='true'] .r-name {
+    color: var(--on-accent);
+  }
+  html[data-platform='win'] .p-row[data-active='true'] {
+    background: var(--bg-subtle);
+  }
+  html[data-platform='win'] .p-row[data-active='true'] .r-name {
+    color: var(--text-primary);
+  }
+  html[data-platform='win'] .p-row[data-active='true'] .r-mark {
+    color: var(--accent-text);
+  }
+  .p-row:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-shadow);
+  }
+
+  /* 警告行（高危确认等）：mac 平面（图标 + 中性文字）；win 用 Fluent InfoBar 语义底 */
+  .alertline {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin: 10px 0 4px;
+    color: var(--text-secondary);
+    font-size: var(--fs-body);
+    line-height: 1.6;
+  }
+  .alertline > svg {
+    color: var(--status-amber);
+    flex: none;
+    margin-top: 2px;
+  }
+  html[data-platform='win'] .alertline {
+    margin: 12px 0 6px;
+    padding: 10px 12px;
+    border: 1px solid var(--line-hairline);
+    border-radius: var(--r-card);
+    background: var(--status-info-bg);
+    color: var(--text-primary);
+  }
+
+  /* 对话框按钮序：mac 右对齐（主操作最右）；win 左对齐（主操作最左） */
+  .d-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 14px;
+    width: 100%;
+  }
+  html[data-platform='mac'] .d-actions {
+    justify-content: flex-end;
+  }
+  html[data-platform='win'] .d-actions {
+    justify-content: flex-start;
+  }
+  html[data-platform='win'] .d-actions .d-primary {
+    order: -1;
+  }
+
   /* 终端/代码输出面：跟随主题（深 #1A1A1A / 浅 #FFFFFF），等宽、行高松弛 */
   .console {
     background: var(--bg-console);

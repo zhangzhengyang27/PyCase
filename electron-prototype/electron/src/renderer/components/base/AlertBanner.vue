@@ -8,10 +8,14 @@ withDefaults(defineProps<{ title: string; type?: 'error' | 'warning' }>(), { typ
 <template>
   <div
     role="alert"
-    class="flex items-start gap-2 px-3 py-2.5 rounded-control border text-control"
-    :class="type === 'error' ? 'border-danger/30 bg-danger-bg text-ink' : 'border-warn/30 bg-warn-bg text-ink'"
+    class="flex items-start gap-2 px-3 py-2.5 rounded-card border border-line-hairline bg-card text-control text-ink"
   >
-    <AlertTriangle :size="14" :class="type === 'error' ? 'text-danger' : 'text-warn'" class="shrink-0 mt-0.5" />
+    <AlertTriangle
+      :size="14"
+      :stroke-width="1.5"
+      :class="type === 'error' ? 'text-danger' : 'text-warn'"
+      class="shrink-0 mt-0.5"
+    />
     <div class="min-w-0 flex-1">{{ title }}</div>
     <slot />
   </div>

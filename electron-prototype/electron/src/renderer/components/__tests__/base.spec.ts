@@ -226,7 +226,7 @@ describe('AppModal', () => {
 
   it('点击遮罩自身（@click.self）关闭', async () => {
     const w = mountModal()
-    const backdrop = document.body.querySelector('.fixed.inset-0') as HTMLElement
+    const backdrop = document.body.querySelector('.scrim') as HTMLElement
     backdrop.dispatchEvent(new MouseEvent('click', { bubbles: true }))
     await w.vm.$nextTick()
     expect(w.emitted('close')).toHaveLength(1)
@@ -331,11 +331,13 @@ describe('AlertBanner', () => {
 
   it('type 默认 error，warning 切换配色类', () => {
     const err = mount(AlertBanner, { props: { title: 'x' } })
-    expect(err.get('[role="alert"]').classes()).toContain('bg-danger-bg')
+    // v2：横幅不再用 14% 色底，改为卡片面 + 语义色图标（危险/警告靠图标与文字色区分）
+    expect(err.get('[role="alert"]').classes()).toContain('bg-card')
+    expect(err.get('[role="alert"]').find('svg').classes()).toContain('text-danger')
     expect(err.find('svg').classes()).toContain('text-danger')
 
     const warn = mount(AlertBanner, { props: { title: 'x', type: 'warning' } })
-    expect(warn.get('[role="alert"]').classes()).toContain('bg-warn-bg')
+    expect(warn.get('[role="alert"]').find('svg').classes()).toContain('text-warn')
     expect(warn.find('svg').classes()).toContain('text-warn')
   })
 

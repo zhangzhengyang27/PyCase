@@ -23,6 +23,7 @@ import {
   type LucideIcon
 } from 'lucide-vue-next'
 import { api } from './src/sidecar-client'
+import { modKeyLabel } from './src/platform'
 import { statusDotCls } from './src/utils'
 import { applyMonacoTheme } from './monaco'
 import {
@@ -83,10 +84,8 @@ function applyTheme(pref: ThemePref): void {
 }
 
 // 平台来自 preload（process.platform 写入的 data-platform），渲染层不猜平台：
-// 键盘提示、窗口控制区、平台专属文案都由它派生
-const platform = ref<'mac' | 'win'>(document.documentElement.getAttribute('data-platform') === 'win' ? 'win' : 'mac')
-const isMac = computed(() => platform.value === 'mac')
-const modKey = computed(() => (isMac.value ? '⌘' : 'Ctrl'))
+// 键盘提示、平台专属文案都经 src/platform.ts 派生（窗口三键在 CSS 层按平台显隐）
+const modKey = ref(modKeyLabel())
 
 // Windows 自绘标题栏：最大化状态由主进程回推
 const maximized = ref(false)

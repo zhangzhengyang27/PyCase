@@ -44,7 +44,7 @@ const inputCls = computed(() => [
   props.error
     ? 'border-danger hover:border-danger focus:border-danger'
     : 'border-line hover:border-line-strong focus:border-accent',
-  'w-full rounded-control bg-page px-2.5 text-ink outline-none transition-[border-color,box-shadow] duration-[120ms] placeholder:text-ink-faint',
+  'w-full rounded-control bg-page px-2.5 text-ink outline-none transition-[border-color,box-shadow] dur-fast placeholder:text-ink-faint',
   props.type === 'password' && props.showPassword ? 'pr-8' : ''
 ])
 </script>
@@ -68,7 +68,7 @@ const inputCls = computed(() => [
       <button
         v-if="type === 'password' && showPassword"
         type="button"
-        class="absolute right-1.5 top-1/2 -translate-y-1/2 w-5 h-5 flex items-center justify-center border-0 bg-transparent text-ink-faint hover:text-ink cursor-pointer"
+        class="absolute right-1.5 top-1/2 -translate-y-1/2 w-5 h-5 flex items-center justify-center border-0 bg-transparent text-ink-mute hover:text-ink cursor-pointer"
         :title="passwordVisible ? '隐藏密码' : '显示密码'"
         @click="passwordVisible = !passwordVisible"
       >

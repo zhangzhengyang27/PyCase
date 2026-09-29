@@ -111,13 +111,6 @@ export function runStatusHint(status: string | undefined): string {
   }
 }
 
-// 按钮基类（带 subtle 边框、5px/12px 内边距）
-const BTN_BASE_CLS =
-  "inline-flex items-center gap-1 px-3 py-[5px] border border-line-subtle rounded-md bg-transparent text-[12px] font-[510] font-sans cursor-pointer whitespace-nowrap tracking-[-0.005em] leading-[1.4] transition-all duration-[120ms] active:scale-[0.97] disabled:opacity-[0.35] disabled:cursor-not-allowed";
-export const BTN_GHOST_CLS = `${BTN_BASE_CLS} text-ink-dim hover:bg-hover hover:text-ink`;
-export const BTN_PRIMARY_CLS = `${BTN_BASE_CLS} bg-accent border-accent text-white shadow-elev-1 enabled:hover:bg-accent-hover enabled:hover:shadow-elev-2`;
-export const BTN_DANGER_CLS = `${BTN_BASE_CLS} bg-danger text-white enabled:hover:opacity-90`;
-
 // ---------------------------------------------------------------------------
 // Tailwind 类名常量：JS 会整体替换 className 的元素必须在这里给出完整工具类串
 // （JS 赋值 className 会覆盖 HTML 上的静态工具类，散落字面量容易漏基础类）

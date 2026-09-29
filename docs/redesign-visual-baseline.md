@@ -317,11 +317,21 @@ Lucide 单一来源（stroke 1.5，round cap/join），尺寸三档 14 / 16 / 20
 - **Monaco 主题色解析**：构建产物把 `#ffffff` 压成 `#fff`、把 `rgba(...)` 压成 8 位十六进制，而 `monaco.ts` 的取色助手只认 6 位 → 抛 `Illegal value for token color`，且 5% 的行高亮被当成不透明黑（实机截图为黑条）。现统一规范化 3/4/6/8 位并预乘 alpha，语法色与行高亮均实测正常。
 - **资源面板列出 `requirements.txt`**：它是受保护文件（删不掉），却出现在资源列表里形成「能删但删不掉」的死入口。`_collect_assets` 改为复用保护名单过滤，并补 `tests/test_sidecar.py` 的 `TestCollectAssets` 两条守卫（退回旧谓词时该用例 FAIL）。
 
-未退役（各有归属批次）：
-- #3 余下 11 处非标字重（全在 A5 的弹窗组件里）。
-- #6 的组件层字面量残量（A5，B3 校验归零）。
-- #10 原生 confirm 三处（A5 自绘对话框批）。
-- 详情页 E2E 走查目标示例此前指向 `cli_greeting.py`（数据里不存在，harness 一直不可用），已改用真实示例并跑通全链路。
+**A5 落地进度**（全局层面 / 弹层批）：
+
+已退役：
+- **#3 字重 → 全仓归零**。`BaseButton` 余量、AI 设置、导入向导、AppModal / AppEmpty / AppEmpty 等全部改 400/500/600；`src/utils.ts` 里无调用方的 `BTN_*` 常量（含 510 与 `duration-[120ms]`）作为死代码删除。`R/` 下 `font-[*]` / `font-weight` 实测 **0 处**非标值（A1 §7「排版」验收项达成）。
+- **#6 组件层颜色字面量 → 代码侧归零**。`category-meta` 的 `hue`/`cls` 死字段删除（只留语义图标 `CATEGORY_ICONS`），`main.ts` 的 theme-color 改读 `--bg-window` 令牌，弹层/横幅/输入框字面量全部 token 化；代码内十六进制颜色计数 = **0**（余下 1 处在 `monaco.ts` 注释里）。
+- 弹层语言：`.scrim`（mac .38 / win .30）、`.p-row`（mac 选中 = 强调填充 / win 选中 = 中性填充 + 强调文字）、`.alertline`（mac 平面 / win InfoBar 语义底）、`.d-actions`（mac 右对齐主操作最右 / win 左对齐主操作最左）。命令面板、高危确认、导入向导、AI 设置全部套用；危险按钮统一为红字（`variant="danger"` → `.btn-danger-deep`）。
+- 新增 `R/src/platform.ts`：渲染层读平台的唯一入口（`currentPlatform` / `modKeyLabel`），App 与命令面板共用，快捷键提示随平台显示 ⌘ / Ctrl。
+
+顺带修掉的既有缺陷：
+- **Esc 穿透**：命令面板的 Esc 只 `preventDefault` 不 `stopPropagation`，一次 Esc 会同时关掉面板与其下方的高危确认弹窗（AppModal 也监听 Escape）。现在面板在捕获阶段消费 Esc/方向键/Enter。
+
+未退役：
+- #10 原生 confirm 三处（A5 范围外的自绘对话框迁移，随对应页面处理）。
+- emoji：`R/src/types.ts:25` 一处注释（B3 文档清理）。
+- 帮助与首启**不存在于代码库**（无组件、页稿也没有）；经确认不在本批范围，单列一批（首启环境可视化本属 A6）。
 
 ### 7.2 Token 映射（v1 → v2）
 

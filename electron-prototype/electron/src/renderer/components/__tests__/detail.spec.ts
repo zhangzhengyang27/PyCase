@@ -768,7 +768,7 @@ describe('CommandPalette', () => {
 
   it('点击遮罩自身关闭面板', async () => {
     const w = mountPalette()
-    const mask = document.body.querySelector('.fixed.inset-0') as HTMLElement
+    const mask = document.body.querySelector('.scrim') as HTMLElement
     mask.dispatchEvent(new MouseEvent('click', { bubbles: true }))
     await nextTick()
     expect(w.emitted('close')).toHaveLength(1)

@@ -134,16 +134,16 @@ async function runImport(): Promise<void> {
         <span v-if="skipped.length">，跳过 {{ skipped.length }} 个（空文件 / 缓存目录）</span>。
         与现有示例同名的 id 会自动加后缀，不会覆盖内置库。
       </p>
-      <div class="max-h-[320px] overflow-y-auto border border-line-subtle rounded-panel divide-y divide-line-subtle">
+      <div class="max-h-[320px] overflow-y-auto border border-line-hairline rounded-card divide-y divide-line-hairline">
         <div v-for="f in files" :key="f.id" class="flex items-center gap-2.5 h-9 px-2.5 text-control">
           <span class="font-mono text-[11px] text-ink truncate flex-1" :title="f.id">{{ f.id }}</span>
           <span
             v-for="req in f.requirements.slice(0, 2)"
             :key="req"
-            class="px-1.5 py-px rounded-badge text-[10px] bg-warn-bg text-warn shrink-0"
+            class="inline-flex items-center gap-1 shrink-0 text-caption text-warn"
             >{{ req }}</span
           >
-          <span class="text-caption text-ink-faint font-mono shrink-0">{{ formatFileSize(f.bytes) }}</span>
+          <span class="text-caption text-ink-mute font-mono shrink-0">{{ formatFileSize(f.bytes) }}</span>
         </div>
       </div>
     </div>
@@ -151,7 +151,7 @@ async function runImport(): Promise<void> {
     <!-- 第 3 步：结果 -->
     <div v-else class="flex flex-col items-center gap-3 py-4">
       <CheckCircle2 :size="36" class="text-ok" />
-      <p class="m-0 text-body text-ink font-[590]">已导入 {{ result?.imported }} 个示例</p>
+      <p class="m-0 text-body font-semibold text-ink">已导入 {{ result?.imported }} 个示例</p>
       <p class="m-0 text-control text-ink-dim">
         集合「{{ result?.collection || collName }}」已加入画廊
         <span v-if="result?.skippedCount">，跳过 {{ result?.skippedCount }} 个文件</span>。

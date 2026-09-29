@@ -104,13 +104,13 @@ async function save(): Promise<void> {
   <AppModal v-if="aiSettingsOpen" title="设置" width="440px" @close="closeAISettings()">
     <div class="flex flex-col gap-3.5">
       <section>
-        <h3 class="m-0 mb-2 text-control font-[590] text-ink">AI 代码解释</h3>
+        <h3 class="m-0 mb-2 text-control font-semibold text-ink">AI 代码解释</h3>
         <p class="text-control text-ink-mute mb-3 leading-[1.5]">
           API Key 仅保存在本机 userData，不会写入代码、日志或上传。请求会发送到 DeepSeek 服务器。
         </p>
         <div class="flex flex-col gap-3.5">
           <label class="flex flex-col gap-1.5">
-            <span class="text-caption font-[590] text-ink-dim">模型 <span class="text-danger">*</span></span>
+            <span class="text-caption font-semibold text-ink-dim">模型 <span class="text-danger">*</span></span>
             <BaseInput
               :id="FIELD_IDS.model"
               :model-value="model"
@@ -121,7 +121,7 @@ async function save(): Promise<void> {
             />
           </label>
           <label class="flex flex-col gap-1.5">
-            <span class="text-caption font-[590] text-ink-dim">Base URL <span class="text-danger">*</span></span>
+            <span class="text-caption font-semibold text-ink-dim">Base URL <span class="text-danger">*</span></span>
             <BaseInput
               :id="FIELD_IDS.baseUrl"
               :model-value="baseUrl"
@@ -133,7 +133,7 @@ async function save(): Promise<void> {
             />
           </label>
           <label class="flex flex-col gap-1.5">
-            <span class="text-caption font-[590] text-ink-dim">API Key（已配置时留空保持不变）</span>
+            <span class="text-caption font-semibold text-ink-dim">API Key（已配置时留空保持不变）</span>
             <BaseInput
               :id="FIELD_IDS.apiKey"
               :model-value="key"
@@ -149,8 +149,8 @@ async function save(): Promise<void> {
         </div>
       </section>
 
-      <section class="border-t border-line-subtle pt-3.5">
-        <h3 class="m-0 mb-2 text-control font-[590] text-ink">运行</h3>
+      <section class="border-t border-line-hairline pt-3.5">
+        <h3 class="m-0 mb-2 text-control font-semibold text-ink">运行</h3>
         <div class="flex items-center gap-2">
           <span class="shrink-0 text-control text-ink-dim">超时</span>
           <BaseSelect
@@ -167,18 +167,18 @@ async function save(): Promise<void> {
             <option value="300">5 分钟</option>
           </BaseSelect>
         </div>
-        <p class="m-0 mt-1.5 text-caption text-ink-faint leading-[1.5]">
+        <p class="m-0 mt-1.5 text-caption text-ink-mute leading-[1.5]">
           运行超过该时长将被强制终止。长动画、游戏类示例（Pygame）建议放宽。
         </p>
       </section>
 
-      <section class="border-t border-line-subtle pt-3.5">
-        <h3 class="m-0 mb-2 text-control font-[590] text-ink">安全</h3>
+      <section class="border-t border-line-hairline pt-3.5">
+        <h3 class="m-0 mb-2 text-control font-semibold text-ink">安全</h3>
         <label class="flex items-center gap-2 text-control text-ink-dim cursor-pointer select-none">
           <input v-model="highRiskConfirm" type="checkbox" class="w-4 h-4 accent-accent cursor-pointer rounded" />
           高危示例运行前弹出确认
         </label>
-        <p class="m-0 mt-1.5 text-caption text-ink-faint leading-[1.5]">
+        <p class="m-0 mt-1.5 text-caption text-ink-mute leading-[1.5]">
           关闭后，含高危操作（系统命令 / 文件删除等）的示例将不经确认直接运行。
         </p>
       </section>

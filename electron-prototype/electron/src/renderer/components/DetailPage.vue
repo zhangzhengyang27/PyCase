@@ -8,7 +8,7 @@ import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { ArrowLeft, ChevronRight, Play, Save, Sparkles, Square, Star, Trash2 } from 'lucide-vue-next'
 import { qualityTextCls, runStatusDotCls, runStatusHint, runStatusLabel, runStatusTextCls } from '../src/utils'
 import { categoryIcon } from '../src/icons'
-import { CATEGORY_META } from '../src/category-meta'
+import { CATEGORY_ICONS } from '../src/category-meta'
 import { sectionIcon } from '../src/section-icons'
 import { sectionKeyOf } from '../src/overview'
 import {
@@ -64,8 +64,8 @@ const title = computed(() => {
   const base = ex.value.title || (ex.value.name || '').replace(/\.py$/i, '').replace(/[-_]/g, ' ')
   return base.replace(/\.py$/i, '') + (isDirty.value ? ' ●' : '')
 })
-const meta = computed(() => CATEGORY_META[ex.value?.category || ''] || CATEGORY_META.topics)
-const metaIcon = computed(() => meta.value?.icon ?? categoryIcon(ex.value?.category || ''))
+// 分类图标：收录分类走语义图标，未知分类回退 categoryIcon（全部已知分类都有图标）
+const metaIcon = computed(() => CATEGORY_ICONS[ex.value?.category || ''] ?? categoryIcon(ex.value?.category || ''))
 // 可运行性徽章：与卡片（ExampleCard / ExampleListItem）保持同一口径——
 // runnable 是正向状态不占视觉，risky 由高危徽章承担展示（见 utils.ts 中
 // RUN_STATUS_LABELS 上方的注释）。若直接拿 runStatusLabel() 判定，详情页会多出一个
@@ -124,8 +124,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
         <div class="flex items-center gap-2 min-w-0">
           <span class="text-title font-semibold text-ink truncate tracking-[-0.005em]" :title="title">{{ title }}</span>
           <span
-            v-if="meta"
-            class="inline-flex items-center px-1.5 py-px rounded-control border border-line-subtle text-caption uppercase tracking-[0.03em] text-ink-mute shrink-0"
+            class="inline-flex items-center px-1.5 py-px rounded-control border border-line-hairline text-caption uppercase tracking-[0.03em] text-ink-mute shrink-0"
             >{{ ex.category }}</span
           >
           <span
