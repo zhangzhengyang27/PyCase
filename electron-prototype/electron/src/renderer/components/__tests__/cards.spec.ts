@@ -19,7 +19,7 @@ import OutputPanel from '../OutputPanel.vue'
 import { runStatusHint } from '../../src/utils'
 import type { RunHistoryEntry } from '../../src/types'
 import { activeCategory, activeSectionTags, activeTheme, examples, favOnly, galleryMode, sortBy, viewMode, type VExample } from '../../src/store/catalog'
-import { argsLoading, clearSurface, currentArgs, isDirty, isRunning, pendingBackfillTokens, selectedId, surfaceState } from '../../src/store/detail'
+import { argsError, argsLoading, clearSurface, currentArgs, isDirty, isRunning, pendingBackfillTokens, selectedId, surfaceState } from '../../src/store/detail'
 import { getTestApi } from '../../src/store/index'
 import { favorites, runHistory } from '../../src/store/prefs'
 
@@ -576,6 +576,24 @@ describe('ArgsForm', () => {
 
     expect(w.text()).toBe('解析参数中…')
     expect(w.find('input').exists()).toBe(false)
+  })
+
+  it('解析失败时显示错误与「重试解析」，不再静默成"没有参数"（A6 失败恢复）', async () => {
+    const ex = { id: 't1', name: 'alpha.py', category: 'topics', path: '/tmp/alpha.py' }
+    examples.value = [ex as never]
+    selectedId.value = 't1'
+    argsError.value = "[parseArgs] 解析器崩了（错误码 -32602）"
+    const w = mount(ArgsForm)
+
+    const box = w.get('[data-testid="args-error"]')
+    expect(box.text()).toContain('参数解析失败')
+    expect(box.text()).toContain('-32602')
+
+    vi.mocked(window.sidecar.parseArgs).mockResolvedValue({ args: [], count: 0 })
+    await box.get('button').trigger('click')
+    await flushPromises()
+    expect(window.sidecar.parseArgs).toHaveBeenCalledWith('t1')
+    expect(argsError.value).toBe('')
   })
 
   it('无参数时不渲染任何内容', () => {

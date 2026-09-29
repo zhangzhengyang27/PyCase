@@ -177,6 +177,34 @@ describe('DetailPage', () => {
     return track(mount(DetailPage, { attachTo: document.body }))
   }
 
+  it('缺依赖时给出「安装依赖」入口：点击后装依赖并按结果重跑（A6 失败恢复）', async () => {
+    vi.mocked(window.sidecar.installExampleDeps).mockResolvedValue({
+      installed: ['requests'],
+      failed: [],
+      packages: ['requests']
+    })
+    const w = mountDetail({ run_status: 'missing_deps' })
+    const btn = w.get('[data-testid="install-deps"]')
+    expect(btn.text()).toContain('安装依赖')
+
+    await btn.trigger('click')
+    await flushPromises()
+
+    expect(window.sidecar.installExampleDeps).toHaveBeenCalledWith('t1')
+    // 装完即重跑（用户点这个按钮的意图）
+    expect(window.sidecar.runExample).toHaveBeenCalled()
+    expect(toasts.value.some((t) => t.text.includes('已安装 1 个依赖'))).toBe(true)
+  })
+
+  it('运行输出出现 ImportError 时同样给出安装入口（清单漏声明的漏网场景）', async () => {
+    const w = mountDetail({ run_status: 'runnable' })
+    expect(w.find('[data-testid="install-deps"]').exists()).toBe(false)
+
+    surfaceState('detail').lines.push({ text: "ModuleNotFoundError: No module named 'requests'", cls: 'base' })
+    await nextTick()
+    expect(w.find('[data-testid="install-deps"]').exists()).toBe(true)
+  })
+
   it('未选中示例时不渲染详情区，选中后渲染头部标题与分类', () => {
     const empty = track(mount(DetailPage, { attachTo: document.body }))
     expect(empty.find('section').exists()).toBe(false)

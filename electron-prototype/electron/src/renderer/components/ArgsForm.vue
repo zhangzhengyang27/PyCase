@@ -4,7 +4,7 @@
 // - 收集：布尔开关按 checked 推 flag；其余非空值按位置/选项展开
 // - 回填：-开头 token 匹配 spec.flags（布尔开关勾选，其余取下一个 token），非 - 按位置顺序
 import { nextTick, onBeforeUnmount, reactive, ref, watch } from 'vue'
-import { argsLoading, currentArgs, pendingBackfillTokens, registerArgsCollector, registerArgsSetter, registerArgsValidator, requiredArgsMissing, type ArgSpec } from '../src/store/detail'
+import { argsError, argsLoading, currentArgs, pendingBackfillTokens, registerArgsCollector, registerArgsSetter, registerArgsValidator, requiredArgsMissing, retryParseArgs, type ArgSpec } from '../src/store/detail'
 
 const ARG_FIELD_CLS = 'flex flex-col gap-1 min-w-[160px] flex-1'
 const ARG_FIELD_CHECKBOX_CLS = 'flex flex-row items-center gap-2 flex-1'
@@ -140,6 +140,17 @@ onBeforeUnmount(() => registerArgsValidator(null))
 
 <template>
   <div v-if="argsLoading" class="px-3 py-2 text-caption text-ink-mute">解析参数中…</div>
+  <!-- 解析失败不再静默：明确告诉用户"参数没读到"以及为什么，并给出重试 -->
+  <div v-else-if="argsError" class="px-3 py-2 border-t border-line-subtle" data-testid="args-error">
+    <p class="m-0 text-caption text-danger leading-[1.5]">参数解析失败：{{ argsError }}</p>
+    <p class="m-0 mt-0.5 text-caption text-ink-mute leading-[1.5]">
+      按无参数运行可能失败；可重试解析，或在代码里检查 argparse 定义。
+    </p>
+    <button type="button" class="mt-1.5 text-caption text-accent hover:underline cursor-pointer bg-transparent border-0 p-0"
+            @click="retryParseArgs()">
+      重试解析
+    </button>
+  </div>
   <template v-else-if="currentArgs.length > 0">
     <div class="px-3 pt-2 pb-3 flex flex-wrap gap-x-5 gap-y-3 border-t border-line-subtle">
       <div v-for="(spec, idx) in currentArgs" :key="spec.dest + idx" :class="isBool(spec) ? ARG_FIELD_CHECKBOX_CLS : ARG_FIELD_CLS">

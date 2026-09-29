@@ -25,12 +25,13 @@ import {
 } from 'lucide-vue-next'
 import { api } from './src/sidecar-client'
 import { createWindowControls, modKeyLabel } from './src/platform'
+import AlertBanner from './components/base/AlertBanner.vue'
 import { statusDotCls } from './src/utils'
 import { applyMonacoTheme } from './monaco'
 import { aiPanelOpen, aiSettingsOpen, initAIEvents, loadAISettings, openAISettings } from './src/store/ai'
 import { activeView, examples, filtered, galleryExamples, loading, toolboxItems, toolsTotal, type ViewKey } from './src/store/catalog'
 import { initRunEvents, runStatusText, selectedId } from './src/store/detail'
-import { closeHelp, dismissOnboarding, helpOpen, initEnvEvents, loadAppInfo, loadOnboarding, onboardingOpen, openHelp } from './src/store/env'
+import { closeHelp, dismissOnboarding, helpOpen, initEnvEvents, loadAppInfo, loadOnboarding, onboardingOpen, openHelp, openLog, retryEnvPrepare } from './src/store/env'
 import { openImportWizard } from './src/store/import'
 import { loadAll } from './src/store/index'
 import GalleryView from './components/GalleryView.vue'
@@ -47,6 +48,12 @@ import CommandPalette from './components/CommandPalette.vue'
 import AppToast from './components/base/AppToast.vue'
 
 const sidecarReady = ref<'checking' | 'ready' | 'error'>('checking')
+/** sidecar 退出信息（失败恢复出口的数据源）：熔断时给"重启/看日志"，未熔断则说明会自动重启 */
+const sidecarExit = ref<{ code: number | null; crashed: boolean; autoRestartDisabled: boolean }>({
+  code: null,
+  crashed: false,
+  autoRestartDisabled: false
+})
 // 主题三态偏好（dark/light/system）；appliedTheme 是 system 解析后的实际生效主题
 type ThemePref = 'dark' | 'light' | 'system'
 const systemDark = window.matchMedia('(prefers-color-scheme: dark)')
@@ -173,8 +180,17 @@ onMounted(async () => {
   // sidecar 就绪/重启：重载全部数据（与旧窗口 bootstrap + onStatus 语义一致）
   api.on('status', (data) => {
     sidecarReady.value = data.ready ? 'ready' : 'error'
+    if (data.ready) {
+      sidecarExit.value = { code: null, crashed: false, autoRestartDisabled: false }
+      loadAll()
+    } else {
+      sidecarExit.value = {
+        code: data.code ?? null,
+        crashed: !!data.crashed,
+        autoRestartDisabled: !!data.autoRestartDisabled
+      }
+    }
     refreshStatusDot()
-    if (data.ready) loadAll()
   })
 
   await loadAll()
@@ -285,6 +301,28 @@ onBeforeUnmount(() => {
             <X :size="15" :stroke-width="1.5" />
           </button>
         </span>
+      </div>
+
+      <!-- 失败恢复出口（审计 A2）：崩溃/熔断事件原先渲染层零订阅者，现在给出动作 -->
+      <div v-if="sidecarReady === 'error'" class="px-3 pt-2.5 shrink-0" data-testid="sidecar-down">
+        <AlertBanner
+          :title="
+            sidecarExit.crashed
+              ? `示例引擎已停止运行（退出码 ${sidecarExit.code ?? '未知'}）。${
+                  sidecarExit.autoRestartDisabled ? '短时间多次崩溃，已停止自动重启。' : ''
+                }`
+              : `示例引擎已断开（退出码 ${sidecarExit.code ?? '未知'}），正在自动重启…`
+          "
+        >
+          <button class="ml-2 text-caption text-accent hover:underline cursor-pointer bg-transparent border-0 p-0 shrink-0"
+                  data-testid="sidecar-restart" @click="retryEnvPrepare()">
+            重启引擎
+          </button>
+          <button class="ml-3 text-caption text-ink-dim hover:underline cursor-pointer bg-transparent border-0 p-0 shrink-0"
+                  @click="openLog()">
+            查看日志
+          </button>
+        </AlertBanner>
       </div>
 
       <main class="flex-1 min-h-0 min-w-0 flex bg-page">

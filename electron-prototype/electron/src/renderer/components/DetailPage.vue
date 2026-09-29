@@ -5,7 +5,7 @@
 // <980px 窄屏由 flex 布局自然挤压（右栏 min-width 约束）。快捷键不变：
 // Cmd+S 保存 / Cmd+Enter 运行 / Cmd+. 停止。
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
-import { ArrowLeft, ChevronRight, Play, Save, Sparkles, Square, Star, Trash2 } from 'lucide-vue-next'
+import { ArrowLeft, ChevronRight, PackagePlus, Play, Save, Sparkles, Square, Star, Trash2 } from 'lucide-vue-next'
 import { qualityTextCls, runStatusDotCls, runStatusHint, runStatusLabel, runStatusTextCls } from '../src/utils'
 import { categoryIcon } from '../src/icons'
 import { CATEGORY_ICONS } from '../src/category-meta'
@@ -13,7 +13,7 @@ import { sectionIcon } from '../src/section-icons'
 import { sectionKeyOf } from '../src/overview'
 import { explainSelectedCode } from '../src/store/ai'
 import { assets } from '../src/store/assets'
-import { closeDetail, clearSurface, currentArgs, isDirty, isRunning, saving, saveExample, selectedExample, selectedId, surfaceState, runFromDetail, runStatusText } from '../src/store/detail'
+import { closeDetail, clearSurface, currentArgs, installDepsAndRerun, installingDeps, isDirty, isRunning, saving, saveExample, selectedExample, selectedId, surfaceState, runFromDetail, runStatusText } from '../src/store/detail'
 import { deleteUserExample } from '../src/store/import'
 import { isFavorite, toggleFavorite } from '../src/store/prefs'
 import { stopRun } from '../src/store/detail'
@@ -34,6 +34,15 @@ const DOT_CLS: Record<string, string> = {
 }
 
 const argsCollapsed = ref(false)
+/**
+ * 是否给出「安装依赖」入口：静态判定缺依赖，或本次运行输出出现 ImportError。
+ * 后者覆盖"清单没声明依赖、静态也没判定出来"的漏网情况（审计 A3 的核心场景）。
+ */
+const needsDeps = computed(() => {
+  if (selectedExample.value?.run_status === 'missing_deps') return true
+  const out = surfaceState('detail').lines
+  return out.some((l) => /ModuleNotFoundError|ImportError/.test(l.text))
+})
 const activeTab = ref<'output' | 'assets' | 'history'>('output')
 // 删除用户集合示例（确认弹窗由本组件持有；删除动作在 store，成功后自动关闭详情）
 const confirmDelete = ref(false)
@@ -174,6 +183,12 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
         </BaseButton>
         <BaseButton v-else variant="primary" size="lg" :disabled="!selectedId" title="运行 (Cmd+Enter)" @click="runFromDetail()">
           <Play :size="13" /> 运行
+        </BaseButton>
+        <!-- 缺依赖修复路径（审计 A3）：装完自动重跑，让"体检结论"有出口 -->
+        <BaseButton v-if="needsDeps" :loading="installingDeps" :disabled="isRunning"
+                    title="把该示例的第三方依赖装进共享环境后重跑"
+                    data-testid="install-deps" @click="installDepsAndRerun()">
+          <PackagePlus :size="13" /> 安装依赖
         </BaseButton>
       </div>
     </div>

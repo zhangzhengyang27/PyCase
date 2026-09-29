@@ -170,7 +170,9 @@ function spawnSidecar(): void {
       sidecarReady = false
       // 拒绝所有挂起的请求
       for (const [id, req] of pendingRequests) {
-        req.reject(new Error('sidecar 进程已退出'))
+        const err = new Error('sidecar 进程已退出') as Error & { code?: number }
+        err.code = -32001 // 自定义：sidecar 不可用（渲染层据此提示重启而不是重试）
+        req.reject(err)
         pendingRequests.delete(id)
       }
       broadcast('sidecar:status', { ready: false, code })
@@ -211,7 +213,7 @@ interface SidecarMessage {
   method?: string
   params?: Record<string, unknown>
   result?: unknown
-  error?: { message?: string }
+  error?: { code?: number; message?: string }
 }
 
 function handleSidecarMessage(line: string): void {
@@ -247,7 +249,10 @@ function handleSidecarMessage(line: string): void {
   if (req) {
     pendingRequests.delete(msg.id)
     if (msg.error) {
-      req.reject(new Error(msg.error.message || 'sidecar 错误'))
+      // 错误码必须带出去：渲染层要能按类型分支（C4），只留 message 等于把协议信息丢在半路
+      const err = new Error(msg.error.message || 'sidecar 错误') as Error & { code?: number }
+      err.code = typeof msg.error.code === 'number' ? msg.error.code : undefined
+      req.reject(err)
     } else {
       req.resolve(msg.result)
     }
@@ -260,7 +265,9 @@ function callSidecar(method: string, params: Record<string, unknown> = {}): Prom
     const msg = JSON.stringify({ jsonrpc: '2.0', id, method, params })
 
     if (!sidecarProcess) {
-      reject(new Error('sidecar 未启动'))
+      const err = new Error('sidecar 未启动') as Error & { code?: number }
+      err.code = -32001
+      reject(err)
       return
     }
 
@@ -276,7 +283,9 @@ function callSidecar(method: string, params: Record<string, unknown> = {}): Prom
     setTimeout(() => {
       if (pendingRequests.has(id)) {
         pendingRequests.delete(id)
-        reject(new Error(`请求超时: ${method}`))
+        const err = new Error(`请求超时: ${method}`) as Error & { code?: number }
+        err.code = -32002 // 自定义：请求超时
+        reject(err)
       }
     }, 120000)
   })
@@ -1454,6 +1463,71 @@ function runSmokeTest(): void {
           }
         }
         fs.rmSync(tmpImportDir, { recursive: true, force: true })
+      }
+      // A6 走查：存储分区数字 / 崩溃恢复出口 / 缺依赖修复入口
+      step = 'A6 产品化走查'
+      {
+        // 1) 存储分区：打开设置 → 读到 sidecar 的真实占用
+        const storage = (await mainWindow!.webContents.executeJavaScript(`(async () => {
+          const app = window.__app;
+          await app.loadStorageReport();
+          const report = app.storageReport();
+          return { hasReport: !!report, wsBytes: report?.workspace?.bytes ?? -1, legacy: report?.legacy?.entries ?? -1 };
+        })()`)) as { hasReport: boolean; wsBytes: number; legacy: number }
+        if (!storage.hasReport || storage.wsBytes < 0) {
+          throw new Error(`存储报告异常: ${JSON.stringify(storage)}`)
+        }
+        const sidecarReport = (await callSidecar('storage_report')) as { legacy: { entries: number } }
+        if (storage.legacy !== sidecarReport.legacy.entries) {
+          throw new Error(`前端存储数字与 sidecar 不一致: ${storage.legacy} != ${sidecarReport.legacy.entries}`)
+        }
+
+        // 2) 崩溃恢复出口：主进程发一条"熔断"状态 → 横幅出现且带动作 → 发 ready → 横幅消失
+        mainWindow!.webContents.send('sidecar:status', {
+          ready: false,
+          code: 9,
+          crashed: true,
+          autoRestartDisabled: true
+        })
+        const down = (await mainWindow!.webContents.executeJavaScript(`(async () => {
+          const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+          await sleep(300);
+          const el = document.querySelector('[data-testid="sidecar-down"]');
+          const out = {
+            shown: !!el,
+            text: el ? el.textContent.slice(0, 120) : '',
+            hasRestart: !!document.querySelector('[data-testid="sidecar-restart"]')
+          };
+          return out;
+        })()`)) as { shown: boolean; text: string; hasRestart: boolean }
+        if (!down.shown || !down.hasRestart || !down.text.includes('退出码 9')) {
+          throw new Error(`崩溃横幅异常: ${JSON.stringify(down)}`)
+        }
+        mainWindow!.webContents.send('sidecar:status', { ready: true })
+        const up = (await mainWindow!.webContents.executeJavaScript(`(async () => {
+          const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+          await sleep(400);
+          return !document.querySelector('[data-testid="sidecar-down"]');
+        })()`)) as boolean
+        if (!up) throw new Error('sidecar 恢复后横幅未消失')
+
+        // 3) 缺依赖修复入口：挑一个 missing_deps 示例打开详情，断言按钮在场（不真装包）
+        const deps = (await mainWindow!.webContents.executeJavaScript(`(async () => {
+          const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+          const app = window.__app;
+          const target = app.examples().find((e) => e.run_status === 'missing_deps');
+          if (!target) return { skipped: true };
+          await app.openDetail(target.id);
+          await sleep(800);
+          return { skipped: false, has: !!document.querySelector('[data-testid="install-deps"]'), id: target.id };
+        })()`)) as { skipped: boolean; has?: boolean; id?: string }
+        if (!deps.skipped && !deps.has) {
+          throw new Error(`缺依赖示例未出现安装入口: ${JSON.stringify(deps)}`)
+        }
+        console.log(
+          `[smoke] A6 走查通过：存储报告一致（旧根 ${storage.legacy} 项）· 崩溃横幅出现/消失正常 · ` +
+            (deps.skipped ? '缺依赖入口（库中无 missing_deps 示例，跳过）' : `缺依赖入口 ${deps.id}`)
+        )
       }
       // 留 8s 让渲染进程完成 Monaco 初始化与列表渲染，捕获潜在 console error
       step = '渲染层错误观察窗'

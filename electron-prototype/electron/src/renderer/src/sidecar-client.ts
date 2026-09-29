@@ -114,12 +114,20 @@ bridge.onNotification('ai_explain_error', (data) => safeDispatch('aiExplainError
 // -------------------------------------------------------------------------
 // 请求封装：错误归一化（保留原始 message，附加方法名前缀）
 // -------------------------------------------------------------------------
+/** 带协议错误码的客户端错误（-326xx = JSON-RPC 标准，-3200x = 主进程本地补充）。 */
+export interface SidecarError extends Error {
+  code?: number
+  method?: string
+}
+
 async function request<T>(method: string, fn: () => Promise<T>): Promise<T> {
   try {
     return await fn()
   } catch (err) {
     const message = err && err instanceof Error ? err.message : String(err)
-    const wrapped = new Error(`[${method}] ${message}`)
+    const wrapped = new Error(`[${method}] ${message}`) as SidecarError
+    wrapped.code = (err as SidecarError)?.code
+    wrapped.method = method
     console.error('[sidecar-client] 请求失败:', wrapped.message)
     throw wrapped
   }

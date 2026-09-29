@@ -6,7 +6,7 @@ import { computed, reactive, ref, shallowRef } from 'vue'
 import { pushToast } from '../../toast'
 import * as FilterEngine from '../filter-engine'
 import { invalidateExampleVisual } from '../overview'
-import { api } from '../sidecar-client'
+import { api, type SidecarError } from '../sidecar-client'
 import { examples, loadExamples } from './catalog'
 import type { RunHistoryEntry } from '../types'
 import { recordHistory, runHistory, runTimeout, setSkipHighRiskConfirm, skipHighRiskConfirm } from './prefs'
@@ -47,6 +47,10 @@ export const currentArgs = ref<ArgSpec[]>([])
 export const argsLoading = ref(false)
 // 参数回填令牌（历史重跑）：ArgsForm 在参数装载完成后消费
 export const pendingBackfillTokens = ref<string[] | null>(null)
+/** 参数解析失败信息（非空时参数区显式报错并可重试，不再静默空参数区） */
+export const argsError = ref('')
+/** 依赖安装进行中（详情页「安装依赖」按钮的 loading 态） */
+export const installingDeps = ref(false)
 
 // 运行态（同窗口同时刻至多一个运行；输出汇固定 detail，运行器视图步骤 4 迁移）
 export const isRunning = ref(false)
@@ -156,15 +160,19 @@ export async function openDetail(id: string): Promise<ArgSpec[]> {
   // 参数解析与资源列表并行；带序号防过期响应（旧版竞态的响应式等价物）
   const seq = ++_openDetailSeq
   argsLoading.value = true
+  argsError.value = ''
   const argsPromise = (async () => {
     try {
-      const result = (await api.parseArgs(id)) as { args?: ArgSpec[] }
+      const result = await api.parseArgs(id)
       if (seq !== _openDetailSeq) return []
       currentArgs.value = result.args || []
     } catch (err) {
       console.error('解析参数失败:', err)
       if (seq !== _openDetailSeq) return []
       currentArgs.value = []
+      // 显式失败态：用户看到"解析失败 + 重试"，而不是"这个示例没有参数"
+      const code = (err as SidecarError)?.code
+      argsError.value = `${(err as Error).message}${typeof code === 'number' ? `（错误码 ${code}）` : ''}`
     } finally {
       if (seq === _openDetailSeq) argsLoading.value = false
     }
@@ -174,6 +182,44 @@ export async function openDetail(id: string): Promise<ArgSpec[]> {
   return argsPromise
 }
 let _openDetailSeq = 0
+
+/** 参数解析失败后的重试（沿用当前选中项）。 */
+export function retryParseArgs(): Promise<ArgSpec[]> {
+  return selectedId.value ? openDetail(selectedId.value) : Promise.resolve([])
+}
+
+/**
+ * 缺依赖修复：装该示例的依赖 → 刷新后可运行性徽章 → 若当前就在详情页则直接重跑。
+ * 入口在详情页头部（run_status=missing_deps 时出现），对应审计 A3「缺依赖无修复路径」。
+ */
+export async function installDepsAndRerun(): Promise<void> {
+  const id = selectedId.value
+  if (!id || installingDeps.value) return
+  installingDeps.value = true
+  appendOutput('▶ 正在安装该示例的依赖（按派生 import 分析）…\n', 'system')
+  try {
+    const result = await api.installExampleDeps(id)
+    if (result.packages.length === 0) {
+      appendOutput('[系统] 未识别到需要安装的第三方依赖\n', 'system')
+      return
+    }
+    if (result.failed.length > 0) {
+      appendOutput(`[错误] 这些包安装失败：${result.failed.join(', ')}\n`, 'error')
+      pushToast('error', `有 ${result.failed.length} 个依赖安装失败`)
+    } else {
+      appendOutput(`[系统] 依赖已安装：${result.installed.join(', ')}\n`, 'system')
+      pushToast('success', `已安装 ${result.installed.length} 个依赖`)
+    }
+  } catch (err) {
+    appendOutput(`[错误] 安装依赖失败: ${(err as Error).message}\n`, 'error')
+    pushToast('error', `安装失败: ${(err as Error).message}`)
+    return
+  } finally {
+    installingDeps.value = false
+  }
+  // 装完即重跑（这是用户点这个按钮的意图）
+  if (selectedId.value === id) runFromDetail()
+}
 
 export function closeDetail(): void {
   if (isDirty.value && !window.confirm('当前示例有未保存的修改，丢弃并返回？')) return
@@ -367,6 +413,9 @@ export function detailTestHooks(): Record<string, unknown> {
       pendingBackfillTokens.value = tokens
     },
     runFromDetail: () => runFromDetail(),
+    argsError: () => argsError.value,
+    retryParseArgs: () => retryParseArgs(),
+    installDepsAndRerun: () => installDepsAndRerun(),
     isRunning: () => isRunning.value,
     runStatusText: () => runStatusText.value,
     outputText: () => surfaces.detail.lines.map((l) => l.text).join(''),
