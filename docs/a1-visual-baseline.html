@@ -56,7 +56,8 @@ html {
   --bg-subtle: rgba(255, 255, 255, .10); --bg-inset: rgba(0, 0, 0, .22);
   --bg-card-hover: #323236;
   --text-primary: #F5F5F7; --text-secondary: #B6B6BD; --text-tertiary: #A0A0A6; --text-quaternary: #71717A;
-  --text-console: #D6D6D6;
+  --text-console: #D6D6D6; --text-gutter: #6E6E76;
+  --code-kw: #569CD6; --code-str: #CE9178; --code-num: #B5CEA8; --code-cmt: #6A9955; --code-fn: #DCDCAA;
   --line-hairline: rgba(255, 255, 255, .10); --line-strong: rgba(255, 255, 255, .20);
   --shadow-card: 0 1px 2px rgba(0, 0, 0, .30);
   --shadow-overlay: 0 12px 40px rgba(0, 0, 0, .55);
@@ -74,7 +75,9 @@ html[data-theme="light"] {
   /* macOS 浅色 */
   --bg-window: #FFFFFF; --bg-chrome: #F2F2F2; --bg-card: #FFFFFF;
   --bg-sidebar: rgba(246, 246, 248, .62); --bg-sidebar-fallback: #F2F2F4;
-  --bg-console: #1A1A1A;
+  --bg-console: #FFFFFF;
+  --text-console: #1D1D1F; --text-gutter: #8E8E94;
+  --code-kw: #0550AE; --code-str: #A31515; --code-num: #0B6A3F; --code-cmt: #1F7A3A; --code-fn: #795E26;
   --bg-hover: rgba(0, 0, 0, .05); --bg-pressed: rgba(0, 0, 0, .09);
   --bg-subtle: rgba(0, 0, 0, .08); --bg-inset: rgba(0, 0, 0, .05);
   --bg-card-hover: #FAFAFC;
@@ -94,7 +97,6 @@ html[data-platform="win"] {
   /* Windows 深色（Mica 语义：以下为材质基色，实际窗口可透出桌面模糊） */
   --bg-window: #202020; --bg-chrome: #202020; --bg-card: rgba(255, 255, 255, .051);
   --bg-sidebar: #242424; --bg-sidebar-fallback: #242424;
-  --bg-console: #1A1A1A;
   --bg-hover: rgba(255, 255, 255, .06); --bg-pressed: rgba(255, 255, 255, .03);
   --bg-subtle: rgba(255, 255, 255, .09); --bg-inset: rgba(255, 255, 255, .06);
   --bg-card-hover: rgba(255, 255, 255, .07);
@@ -354,8 +356,8 @@ html[data-platform="win"] .chip-ic { background: var(--bg-card); }
   padding: 10px 0; font-family: var(--font-mono); font-size: 11.5px; line-height: 1.75; color: var(--text-console); overflow: hidden;
 }
 .code-pane .ln { display: flex; gap: 12px; padding: 0 12px; white-space: pre; }
-.code-pane .ln > .no { color: #6E6E76; width: 18px; text-align: right; flex: none; user-select: none; }
-.kw { color: #569CD6; } .str { color: #CE9178; } .num { color: #B5CEA8; } .cmt { color: #6A9955; } .fn { color: #DCDCAA; }
+.code-pane .ln > .no { color: var(--text-gutter); width: 18px; text-align: right; flex: none; user-select: none; }
+.kw { color: var(--code-kw); } .str { color: var(--code-str); } .num { color: var(--code-num); } .cmt { color: var(--code-cmt); } .fn { color: var(--code-fn); }
 .side-pane { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 10px; }
 .panel { border: 1px solid var(--line-hairline); border-radius: var(--r-card); background: var(--bg-card); }
 .panel .p-head { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-bottom: 1px solid var(--line-hairline); font-size: var(--fs-caption); color: var(--text-tertiary); }
@@ -544,7 +546,7 @@ html[data-platform="win"] .mac-only { display: none; }
 <!-- ================= 板 2：详情 + 运行输出 ================= -->
 <section class="board" id="b2">
   <div class="board-head"><span class="no">2</span><h2>示例详情 + 运行输出</h2>
-    <p>看：标题层级、标签/元信息、代码区与终端恒暗、主按钮与危险动作的克制</p></div>
+    <p>看：标题层级、标签/元信息、代码区与终端跟随主题、主按钮与危险动作的克制</p></div>
   <div class="win">
     <div class="wall"></div>
     <div class="titlebar-win">
@@ -734,7 +736,7 @@ html[data-platform="win"] .mac-only { display: none; }
           <div class="sw"><div class="box" style="background:var(--bg-chrome)"></div><div class="lb">工具栏 chrome</div><div class="vl mono" id="v-chrome"></div></div>
           <div class="sw"><div class="box" style="background:var(--bg-sidebar-fallback)"></div><div class="lb">侧栏 sidebar（材质）</div><div class="vl mono">材质层，回退实色</div></div>
           <div class="sw"><div class="box" style="background:var(--bg-card)"></div><div class="lb">卡片 card</div><div class="vl mono" id="v-card"></div></div>
-          <div class="sw"><div class="box" style="background:var(--bg-console)"></div><div class="lb">终端 console</div><div class="vl mono">#1A1A1A（恒暗）</div></div>
+          <div class="sw"><div class="box" style="background:var(--bg-console)"></div><div class="lb">终端 console</div><div class="vl mono" id="v-console"></div></div>
         </div>
       </div>
       <div class="spec-sec"><h4>文字<small>text · primary/secondary/tertiary 达 AA；quaternary 仅装饰</small></h4>
@@ -844,6 +846,7 @@ function readout() {
   const g = n => cs.getPropertyValue(n).trim();
   const put = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
   put('v-window', g('--bg-window')); put('v-chrome', g('--bg-chrome')); put('v-card', g('--bg-card'));
+  put('v-console', g('--bg-console') + ' / 文字 ' + g('--text-console'));
   put('v-t1', g('--text-primary')); put('v-t2', g('--text-secondary')); put('v-t3', g('--text-tertiary')); put('v-t4', g('--text-quaternary'));
   put('v-acc', g('--accent')); put('v-acch', g('--accent-hover')); put('v-accp', g('--accent-pressed')); put('v-acct', g('--accent-text'));
   put('v-ok', g('--status-green')); put('v-warn', g('--status-amber')); put('v-danger', g('--status-red'));

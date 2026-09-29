@@ -123,13 +123,30 @@ def checks(t: dict[str, str]) -> list[tuple[str, str, str, float, float, str]]:
             add(f"{cat}.{name}", t[f"text-{name}"], surf, fg_rgb, bg_rgb, threshold)
 
     add(
-        "console-text",
+        "console.text",
         t["text-console"],
         "console",
         to_rgb(t["text-console"]),
         console,
         4.5,
     )
+    add(
+        "console.gutter",
+        t["text-gutter"],
+        "console",
+        to_rgb(t["text-gutter"]),
+        console,
+        2.5,
+    )
+    for part in ("kw", "str", "num", "cmt", "fn"):
+        add(
+            f"code.{part}",
+            t[f"code-{part}"],
+            "console",
+            to_rgb(t[f"code-{part}"]),
+            console,
+            4.5,
+        )
 
     for family in ("system", "brand"):
         add(
