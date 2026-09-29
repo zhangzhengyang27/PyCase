@@ -11,26 +11,12 @@ import { categoryIcon } from '../src/icons'
 import { CATEGORY_ICONS } from '../src/category-meta'
 import { sectionIcon } from '../src/section-icons'
 import { sectionKeyOf } from '../src/overview'
-import {
-  assets,
-  closeDetail,
-  clearSurface,
-  currentArgs,
-  deleteUserExample,
-  explainSelectedCode,
-  isDirty,
-  isFavorite,
-  isRunning,
-  saving,
-  saveExample,
-  selectedExample,
-  selectedId,
-  stopRun,
-  surfaceState,
-  toggleFavorite,
-  runFromDetail,
-  runStatusText
-} from '../store'
+import { explainSelectedCode } from '../src/store/ai'
+import { assets } from '../src/store/assets'
+import { closeDetail, clearSurface, currentArgs, isDirty, isRunning, saving, saveExample, selectedExample, selectedId, surfaceState, runFromDetail, runStatusText } from '../src/store/detail'
+import { deleteUserExample } from '../src/store/import'
+import { isFavorite, toggleFavorite } from '../src/store/prefs'
+import { stopRun } from '../src/store/detail'
 import ArgsForm from './ArgsForm.vue'
 import MonacoEditor from './MonacoEditor.vue'
 import OutputPanel from './OutputPanel.vue'

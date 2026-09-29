@@ -3,7 +3,8 @@
 // 骨架照 AISettingsModal（store 可见性 + watch 复位），列表行样式照 CommandPalette。
 import { computed, ref, watch } from 'vue'
 import { CheckCircle2, FolderOpen } from 'lucide-vue-next'
-import { closeImportWizard, importWizardOpen, loadAll } from '../store'
+import { closeImportWizard, importWizardOpen } from '../src/store/import'
+import { loadAll } from '../src/store/index'
 import { pushToast } from '../toast'
 import { api } from '../src/sidecar-client'
 import { formatFileSize } from '../src/utils'

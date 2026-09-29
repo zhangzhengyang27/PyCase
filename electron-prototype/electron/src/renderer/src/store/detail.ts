@@ -1,0 +1,375 @@
+// detail.ts：详情页与运行生命周期域。
+//
+// 职责：选中示例、参数表单（注册式接线）、Monaco 编辑与保存、运行发起与高危确认、
+// 输出面（detail/runner 两个 sink）、运行事件订阅与历史记录、历史重跑。
+import { computed, reactive, ref, shallowRef } from 'vue'
+import { pushToast } from '../../toast'
+import * as FilterEngine from '../filter-engine'
+import { invalidateExampleVisual } from '../overview'
+import { api } from '../sidecar-client'
+import { examples, loadExamples } from './catalog'
+import type { RunHistoryEntry } from '../types'
+import { recordHistory, runHistory, runTimeout, setSkipHighRiskConfirm, skipHighRiskConfirm } from './prefs'
+import { assets, loadAssets } from './assets'
+
+export interface ArgSpec {
+  name: string
+  flags: string[]
+  dest: string
+  type: string
+  default?: unknown
+  help?: string
+  choices?: unknown[]
+  required?: boolean
+  action?: string
+  is_positional?: boolean
+  nargs?: string | number | null
+  metavar?: string | null
+}
+
+export interface OutputLine {
+  text: string
+  cls: 'base' | 'system' | 'error' | 'success'
+}
+
+export interface OutputImage {
+  url: string
+  name: string
+}
+
+const MAX_OUTPUT_LINES = 5000
+// 详情态
+export const selectedId = ref<string | null>(null)
+export const originalCode = ref('')
+export const isDirty = ref(false)
+export const saving = ref(false)
+export const currentArgs = ref<ArgSpec[]>([])
+export const argsLoading = ref(false)
+// 参数回填令牌（历史重跑）：ArgsForm 在参数装载完成后消费
+export const pendingBackfillTokens = ref<string[] | null>(null)
+
+// 运行态（同窗口同时刻至多一个运行；输出汇固定 detail，运行器视图步骤 4 迁移）
+export const isRunning = ref(false)
+export const currentRunId = ref<string | null>(null)
+export const currentRunMeta = ref<{ id: string; name: string; args: string[]; startedAt: number } | null>(null)
+export const runStatusText = ref('就绪')
+/** 运行超时（秒）：超时强制终止；设置弹窗「运行」分区可调，存 runPrefs */
+export const runSink = ref<OutputSurface>('detail')
+export type OutputSurface = 'detail' | 'runner'
+export type OutputDot = 'idle' | 'running' | 'success' | 'error'
+export interface SurfaceState {
+  lines: OutputLine[]
+  images: OutputImage[]
+  dot: OutputDot
+  truncated: boolean
+}
+const surfaces = reactive<Record<OutputSurface, SurfaceState>>({
+  detail: { lines: [], images: [], dot: 'idle', truncated: false },
+  runner: { lines: [], images: [], dot: 'idle', truncated: false }
+})
+export function surfaceState(s: OutputSurface): SurfaceState {
+  return surfaces[s]
+}
+// run_id 回包到达前产生的早期输出缓冲（旧实现此处会丢行，这里补上）
+let _earlyOutputBuffer: OutputLine[] = []
+
+export const selectedExample = computed(() => examples.value.find((e) => e.id === selectedId.value) || null)
+export const detailHistory = computed(() =>
+  selectedId.value ? runHistory.value.filter((h) => h.id === selectedId.value).slice(0, 20) : []
+)
+/**
+ * 参数是否「既没有默认值、也没有用户填的值」。
+ *
+ * 注意 sidecar 对**没有**默认值的参数返回 `"default": null`（不是省略、也不是 undefined），
+ * 所以这里必须同时判 null 与 undefined —— 只判 `=== undefined` 会让整个必填门禁永远为假
+ * （曾经如此：提示文案、字段红框、runFromCard 的拦截全是死代码）。
+ */
+function isRequiredArgUnset(a: ArgSpec): boolean {
+  const noDefault = a.default === undefined || a.default === null
+  return !!a.required && noDefault && a.action !== 'store_true' && a.action !== 'store_false'
+}
+
+// 表单值（用户已填的内容）存在 ArgsForm 组件局部的 reactive 里，store 侧读不到，
+// 因此由表单反向注册一个「按当前值判断是否仍缺必填项」的校验器。
+// 未注册时（例如详情页未挂载表单）回退到纯 spec 判定。
+const _argsValidator = shallowRef<(() => boolean) | null>(null)
+
+export function registerArgsValidator(fn: (() => boolean) | null): void {
+  _argsValidator.value = fn
+}
+
+/**
+ * 是否存在「必填但没有值」的参数。
+ * 「有默认值」即视为已满足——必填不等于「必须由用户输入」（见 isRequiredArgUnset）。
+ */
+export const requiredArgsMissing = computed(() =>
+  _argsValidator.value ? _argsValidator.value() : currentArgs.value.some(isRequiredArgUnset)
+)
+
+function appendOutput(text: string, cls: OutputLine['cls'] = 'base', surface: OutputSurface = 'detail'): void {
+  const state = surfaces[surface]
+  const lines = state.lines
+  if (lines.length >= MAX_OUTPUT_LINES) {
+    const removeCount = Math.floor(MAX_OUTPUT_LINES * 0.1)
+    lines.splice(0, removeCount)
+    if (!state.truncated) {
+      state.truncated = true
+      lines.unshift({ text: `[系统] 输出超过 ${MAX_OUTPUT_LINES} 行，已自动截断，仅保留最近的输出`, cls: 'system' })
+    }
+  }
+  lines.push({ text, cls })
+}
+
+function resetOutputSurface(surface: OutputSurface): void {
+  const state = surfaces[surface]
+  state.lines = []
+  state.images = []
+  state.truncated = false
+  state.dot = 'running'
+}
+
+export function clearSurface(surface: OutputSurface): void {
+  const state = surfaces[surface]
+  state.lines = []
+  state.images = []
+  state.truncated = false
+  state.dot = 'idle'
+  if (!isRunning.value) runStatusText.value = '就绪'
+}
+
+/** 打开详情页：返回参数解析 Promise（卡片「运行」据此决定自动运行或引导填参） */
+export async function openDetail(id: string): Promise<ArgSpec[]> {
+  const ex = examples.value.find((e) => e.id === id)
+  if (!ex) return []
+  // 未保存的编辑不得静默丢弃：切换到不同示例前需要确认
+  if (selectedId.value && selectedId.value !== id && isDirty.value && !window.confirm('当前示例有未保存的修改，丢弃并继续？')) {
+    return []
+  }
+  if (selectedId.value !== id) {
+    selectedId.value = id
+    originalCode.value = ex.code || ''
+    isDirty.value = false
+    resetOutputSurface('detail')
+    runStatusText.value = '就绪'
+    assets.value = []
+  }
+  // 参数解析与资源列表并行；带序号防过期响应（旧版竞态的响应式等价物）
+  const seq = ++_openDetailSeq
+  argsLoading.value = true
+  const argsPromise = (async () => {
+    try {
+      const result = (await api.parseArgs(id)) as { args?: ArgSpec[] }
+      if (seq !== _openDetailSeq) return []
+      currentArgs.value = result.args || []
+    } catch (err) {
+      console.error('解析参数失败:', err)
+      if (seq !== _openDetailSeq) return []
+      currentArgs.value = []
+    } finally {
+      if (seq === _openDetailSeq) argsLoading.value = false
+    }
+    return currentArgs.value
+  })()
+  void loadAssets(id)
+  return argsPromise
+}
+let _openDetailSeq = 0
+
+export function closeDetail(): void {
+  if (isDirty.value && !window.confirm('当前示例有未保存的修改，丢弃并返回？')) return
+  selectedId.value = null
+}
+
+// Monaco 实例由组件注册进来；内容变更与取值都经它
+export let editor: { getValue: () => string; setValue: (v: string) => void; getSelectedText?: () => string } | null = null
+let _argsCollector: (() => string[]) | null = null
+let _argsSetter: ((idx: number, v: string) => void) | null = null
+
+export function registerEditor(fn: typeof editor): void {
+  editor = fn
+}
+export function registerArgsCollector(fn: (() => string[]) | null): void {
+  _argsCollector = fn
+}
+export function registerArgsSetter(fn: ((idx: number, v: string) => void) | null): void {
+  _argsSetter = fn
+}
+
+export function onEditorContentChanged(code: string): void {
+  if (selectedId.value) isDirty.value = code !== originalCode.value
+}
+
+export async function saveExample(): Promise<void> {
+  const id = selectedId.value
+  const ed = editor
+  if (!id || !isDirty.value || saving.value || !ed) return
+  const newCode = ed.getValue()
+  saving.value = true
+  try {
+    const result = (await api.saveExample(id, newCode)) as { json_file?: string; path?: string }
+    // 保存期间可能已切换示例：只允许写回保存时那个示例的状态
+    if (selectedId.value !== id) return
+    originalCode.value = newCode
+    isDirty.value = false
+    const ex = examples.value.find((e) => e.id === id)
+    if (ex) {
+      ex.code = newCode
+      // 同步重建筛选预处理缓存与参数解析（argparse 定义可能变化）
+      ex._importTags = FilterEngine.extractImportTags(newCode)
+      ex._codeLower = newCode.toLowerCase()
+      ex._tagsAll = FilterEngine.allTagsOf(ex)
+      invalidateExampleVisual(ex)
+      void openDetail(id) // 重载参数（保持选中，isDirty 已复位）
+    }
+    appendOutput(`[系统] 已保存: ${result.json_file || result.path || id}\n`, 'system')
+    pushToast('success', '示例已保存并回写 JSON')
+  } catch (err) {
+    appendOutput(`[错误] 保存失败: ${(err as Error).message}\n`, 'error')
+    pushToast('error', `保存失败: ${(err as Error).message}`)
+  } finally {
+    saving.value = false
+  }
+}
+
+export function runFromDetail(): void {
+  if (isRunning.value || !selectedId.value) return
+  const args = _argsCollector ? _argsCollector() : []
+  // 必填项确实没有值（既无 default、用户也没填）时不起跑：collectArgs 已在上面置错
+  // 并聚焦首个缺失字段，这里只负责拦住这次运行。有默认值的必填项不会被拦。
+  if (requiredArgsMissing.value) return
+  void startRun(selectedId.value, args, 'detail')
+}
+
+/** 卡片「运行」入口：必填参数缺失则留在表单引导填写，否则按表单值自动运行 */
+export async function runFromCard(id: string): Promise<void> {
+  const args = await openDetail(id)
+  if (selectedId.value !== id) return // 等待期间用户已切换
+  if (requiredArgsMissing.value) return
+  runFromDetail()
+}
+
+export const pendingHighRiskRun = ref<{ id: string; args: string[]; sink: OutputSurface } | null>(null)
+
+/** 高危确认开关（设置弹窗「安全」分区）：与确认弹窗的「不再提示」共用同一持久化键 */
+export function resolveHighRiskRun(proceed: boolean, skip: boolean): void {
+  const pending = pendingHighRiskRun.value
+  pendingHighRiskRun.value = null
+  if (skip && pending) setSkipHighRiskConfirm(true)
+  if (pending && proceed) void beginRun(pending.id, pending.args, pending.sink)
+}
+
+export async function startRun(id: string, args: string[], sink: OutputSurface = 'detail'): Promise<void> {
+  const ex = examples.value.find((e) => e.id === id)
+  if (!ex) return
+  if (ex.risk_high && !skipHighRiskConfirm.value) {
+    pendingHighRiskRun.value = { id, args, sink }
+    return
+  }
+  await beginRun(id, args, sink)
+}
+
+/** 调整并持久化运行超时（秒） */
+async function beginRun(id: string, args: string[], sink: OutputSurface = 'detail'): Promise<void> {
+  const ex = examples.value.find((e) => e.id === id)
+  if (!ex) return
+  runSink.value = sink
+  isRunning.value = true
+  resetOutputSurface(sink)
+  runStatusText.value = '运行中…'
+  appendOutput(`▶ 运行: ${ex.name}\n`, 'system', sink)
+  if (args.length > 0) appendOutput(`  参数: ${args.join(' ')}\n`, 'system', sink)
+  currentRunMeta.value = { id, name: ex.name, args, startedAt: Date.now() }
+  _earlyOutputBuffer = []
+  try {
+    const params: { id: string; timeout: number; args?: string[] } = { id, timeout: runTimeout.value }
+    if (args.length > 0) params.args = args
+    const result = (await api.runExample(params)) as { run_id?: string }
+    currentRunId.value = result.run_id || null
+    appendOutput(`  run_id: ${currentRunId.value}\n`, 'system', sink)
+    // 补放 run_id 回包前到达的早期输出
+    for (const line of _earlyOutputBuffer) surfaces[runSink.value].lines.push(line)
+    _earlyOutputBuffer = []
+  } catch (err) {
+    appendOutput(`[错误] 启动失败: ${(err as Error).message}\n`, 'error', sink)
+    isRunning.value = false
+    currentRunMeta.value = null
+    surfaces[sink].dot = 'error'
+    runStatusText.value = '启动失败'
+  }
+}
+
+export async function stopRun(): Promise<void> {
+  if (!currentRunId.value) return
+  try {
+    await api.stopRun(currentRunId.value)
+    appendOutput('\n[系统] 已发送停止指令\n', 'system')
+  } catch (err) {
+    appendOutput(`[错误] 停止失败: ${(err as Error).message}\n`, 'error')
+  }
+}
+
+export function initRunEvents(): void {
+  api.on('runOutput', (data) => {
+    if (data.run_id !== currentRunId.value) {
+      // run_id 回包前的早期输出进缓冲，避免丢弃
+      if (isRunning.value && currentRunId.value === null) {
+        _earlyOutputBuffer.push({ text: data.text || '', cls: 'base' })
+      }
+      return
+    }
+    const text = data.text || ''
+    const cls: OutputLine['cls'] = text.startsWith('[系统]') || text.startsWith('[错误]') ? 'system' : 'base'
+    appendOutput(text, cls, runSink.value)
+  })
+  api.on('runImages', (data) => {
+    if (data.run_id !== currentRunId.value) return
+    surfaces[runSink.value].images = (data.images || []).map((url: string) => ({
+      url,
+      name: decodeURIComponent(url.split('/').pop() || 'image')
+    }))
+  })
+  api.on('runFinished', (data) => {
+    if (data.run_id !== currentRunId.value) return
+    const exitCode = data.exit_code
+    const sink = runSink.value
+    if (exitCode === 0) {
+      appendOutput('✓ 运行成功 (exit code: 0)\n', 'success', sink)
+      surfaces[sink].dot = 'success'
+      runStatusText.value = '运行成功'
+    } else {
+      appendOutput(`✗ 运行失败 (exit code: ${exitCode})\n`, 'error', sink)
+      surfaces[sink].dot = 'error'
+      runStatusText.value = '运行失败'
+    }
+    if (currentRunMeta.value) recordHistory(currentRunMeta.value, exitCode)
+    isRunning.value = false
+    currentRunMeta.value = null
+    currentRunId.value = null
+  })
+}
+
+
+
+
+
+
+// ---------------------------------------------------------------------------
+// 测试钩子（详情页与运行）：由 store/index.ts 的 getTestApi 组合成 window.__app
+// ---------------------------------------------------------------------------
+export function detailTestHooks(): Record<string, unknown> {
+  return {
+    openDetail: (id: string) => openDetail(id),
+    selectedId: () => selectedId.value,
+    currentArgs: () => currentArgs.value,
+    setArgValue: (idx: number, v: string) => _argsSetter?.(idx, v),
+    collectArgs: () => _argsCollector?.() || [],
+    backfillArgs: (tokens: string[]) => {
+      pendingBackfillTokens.value = tokens
+    },
+    runFromDetail: () => runFromDetail(),
+    isRunning: () => isRunning.value,
+    runStatusText: () => runStatusText.value,
+    outputText: () => surfaces.detail.lines.map((l) => l.text).join(''),
+    detailHistory: () => detailHistory.value
+  }
+}

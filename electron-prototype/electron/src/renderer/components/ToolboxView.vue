@@ -7,21 +7,9 @@ import { computed, reactive } from 'vue'
 import { ChevronDown, ChevronUp, SearchX, Star } from 'lucide-vue-next'
 import { buildToolboxGroups } from '../src/toolbox-groups'
 import { toolboxIcon } from '../src/section-icons'
-import {
-  examples,
-  favOnly,
-  isFavorite,
-  loadError,
-  loading,
-  openDetail,
-  runFromCard,
-  sortBy,
-  sortVExamples,
-  toggleFavorite,
-  toolboxItems,
-  toolsTotal,
-  toolSearchQuery
-} from '../store'
+import { examples, favOnly, loadError, loading, sortBy, sortVExamples, toolboxItems, toolsTotal, toolSearchQuery } from '../src/store/catalog'
+import { openDetail, runFromCard } from '../src/store/detail'
+import { isFavorite, toggleFavorite } from '../src/store/prefs'
 import ExampleCard from './ExampleCard.vue'
 import SkeletonCard from './base/SkeletonCard.vue'
 import AppEmpty from './base/AppEmpty.vue'

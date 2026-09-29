@@ -4,7 +4,7 @@
 // value 变化（切换示例）经 watch 同步 setValue；内容变更回调到 store 判定 isDirty。
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { applyMonacoTheme, currentMonacoTheme, monaco } from '../monaco'
-import { onEditorContentChanged, originalCode, registerEditor, selectedId } from '../store'
+import { onEditorContentChanged, originalCode, registerEditor, selectedId } from '../src/store/detail'
 
 const container = ref<HTMLDivElement | null>(null)
 let editor: monaco.editor.IStandaloneCodeEditor | null = null

@@ -5,7 +5,8 @@
 // 改动快捷键时必须同步本表——smoke 会断言条目数与平台化修饰键。
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { CornerDownLeft, FileCode2, Play, Search, ShieldAlert, X } from 'lucide-vue-next'
-import { appInfo, envStatus, examples, openLog } from '../store'
+import { examples } from '../src/store/catalog'
+import { appInfo, envStatus, openLog } from '../src/store/env'
 import { modKeyLabel } from '../src/platform'
 
 const emit = defineEmits<{ close: [] }>()

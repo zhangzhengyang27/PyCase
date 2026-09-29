@@ -4,7 +4,9 @@
 // Cmd+Enter 直接运行，Esc 关闭。数据全部来自 store 派生。
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { Clock, CornerDownLeft, FileCode2, Play, Search, Wrench } from 'lucide-vue-next'
-import { examples, openDetail, runFromCard, runHistory } from '../store'
+import { examples } from '../src/store/catalog'
+import { openDetail, runFromCard } from '../src/store/detail'
+import { runHistory } from '../src/store/prefs'
 import { modKeyLabel } from '../src/platform'
 
 const emit = defineEmits<{ close: [] }>()

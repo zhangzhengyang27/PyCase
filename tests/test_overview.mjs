@@ -1,10 +1,14 @@
 // overview.ts 纯函数单元测试：主题互斥分区 + 标签分区/综合项目 + others 兜底桶 + 质量降序预览
+//
+// v2 口径：主题判定认服务端下发的 theme_key（列表不含 code，判据在服务端，
+// 见 src/themes.ts 与 app/contract_store.py::theme_key）。夹具因此给 theme_key，
+// 而不是像 v1 那样塞 code 让前端跑正则。
 import { createRendererLoader } from "./renderer-loader.mjs";
 
 const { assignSections, TAG_SECTIONS, tagSectionLabel, PROJECTS_SECTION_META } = createRendererLoader().load("overview");
 
-function ex(id, { code = "", name = id, tags = [], quality } = {}) {
-  return { id, name, category: "topics", path: `x/${id}`, code, tags, quality_score: quality };
+function ex(id, { theme = null, name = id, tags = [], quality } = {}) {
+  return { id, name, category: "topics", path: `x/${id}`, theme_key: theme, tags, quality_score: quality };
 }
 
 let failed = 0;
@@ -35,12 +39,12 @@ console.log("assignSections");
 // 2. 互斥分配：一张卡只出现在一个分区（THEMES 顺序 first-match）
 {
   const examples = [
-    ex("t1", { code: "import turtle\nturtle.forward(10)" }),
-    ex("g1", { code: "import pygame\npygame.init()" }),
-    ex("cv1", { code: "import cv2\ncv2.imread('a.png')" }),
-    ex("pil1", { code: "from PIL import Image\nImage.open('a.png')" }),
-    ex("viz1", { code: "import matplotlib.pyplot as plt\nplt.plot([1,2])" }),
-    ex("plain1", { code: "print('hello')" }),
+    ex("t1", { theme: "turtle" }),
+    ex("g1", { theme: "games" }),
+    ex("cv1", { theme: "opencv" }),
+    ex("pil1", { theme: "images" }),
+    ex("viz1", { theme: "viz" }),
+    ex("plain1", {}),
   ];
   const sections = assignSections(examples);
   const all = sections.flatMap((s) => s.items.map((e) => e.id));
@@ -54,20 +58,22 @@ console.log("assignSections");
   check("无命中卡进 others", byKey.others.join() === "plain1");
 }
 
-// 3. 多主题命中时只进第一个命中分区（turtle 优先级最高）
+// 3. 一张卡只会出现在一个分区（theme_key 由服务端 first-match 定死，客户端按 key 归位）
 {
-  const sections = assignSections([ex("multi", { code: "import turtle\nimport pygame" })]);
-  const inGames = sections.find((s) => s.key === "games").items.length;
-  const inTurtle = sections.find((s) => s.key === "turtle").items.length;
-  check("双命中卡只进 turtle", inTurtle === 1 && inGames === 0);
+  const sections = assignSections([ex("multi", { theme: "turtle" }), ex("g2", { theme: "games" })]);
+  const inGames = sections.find((s) => s.key === "games").items.map((e) => e.id);
+  const inTurtle = sections.find((s) => s.key === "turtle").items.map((e) => e.id);
+  check("按 theme_key 归位且互斥", inTurtle.join() === "multi" && inGames.join() === "g2");
+  const unknownKey = assignSections([ex("weird", { theme: "not-a-theme" })]);
+  check("未知 theme_key 落 others（不静默吞掉）", unknownKey.find((s) => s.key === "others").items.map((e) => e.id).join() === "weird");
 }
 
 // 4. 预览按质量分降序，同分按 id 稳定
 {
   const examples = [
-    ex("b-low", { code: "import turtle", quality: 50 }),
-    ex("a-high", { code: "import turtle", quality: 90 }),
-    ex("c-high", { code: "import turtle", quality: 90 }),
+    ex("b-low", { theme: "turtle", quality: 50 }),
+    ex("a-high", { theme: "turtle", quality: 90 }),
+    ex("c-high", { theme: "turtle", quality: 90 }),
   ];
   const items = assignSections(examples).find((s) => s.key === "turtle").items;
   check("质量降序 + 同分按 id", items.map((e) => e.id).join() === "a-high,c-high,b-low");
@@ -77,16 +83,16 @@ console.log("assignSections");
 //    未命中主题的 projects 进综合项目区（先于标签组），tools 命中谓词照常进主题区
 {
   const examples = [
-    { ...ex("proj1", { code: "import pygame" }), category: "projects" },
-    { ...ex("tool1", { code: "import pygame" }), category: "tools" },
+    { ...ex("proj1", {}), category: "projects" },
+    { ...ex("tool1", { theme: "games" }), category: "tools" },
     { ...ex("proj2", { tags: ["flask"] }), category: "projects" },
   ];
   const sections = assignSections(examples);
   const games = sections.find((s) => s.key === "games");
   const projects = sections.find((s) => s.key === "projects");
   const webapp = sections.find((s) => s.key === "tag:webapp");
-  check("projects 不进 games（谓词排除）", !games.items.some((e) => e.id === "proj1"));
-  check("tools 命中谓词照常进 games", games.items.some((e) => e.id === "tool1"));
+  check("projects 未命中主题即进综合项目区", !games.items.some((e) => e.id === "proj1"));
+  check("tools 命中主题照常进主题区", games.items.some((e) => e.id === "tool1"));
   check("projects 落入综合项目区（先于标签组）", projects.items.map((e) => e.id).join() === "proj1,proj2");
   check("flask 项目不进 Web 应用区", !webapp.items.some((e) => e.id === "proj2"));
 }
@@ -98,7 +104,7 @@ console.log("assignSections");
     ex("net1", { tags: ["网络"] }),
     ex("both1", { tags: ["web-crawling", "python-basics"] }),
     ex("db1", { tags: ["databases"] }),
-    ex("plain1", { code: "print('x')" }),
+    ex("plain1", {}),
   ]);
   const byKey = Object.fromEntries(sections.map((s) => [s.key, s.items.map((e) => e.id)]));
   check("web-crawling 进网络爬虫区", byKey["tag:crawling"].includes("crawl1"));
@@ -106,6 +112,7 @@ console.log("assignSections");
   check("双组命中取声明序靠前者（语言基础 > 网络爬虫）", byKey["tag:basics"].includes("both1") && !byKey["tag:crawling"].includes("both1"));
   check("databases 进数据库区", byKey["tag:database"].includes("db1"));
   check("无标签且未命中主题进 others", byKey.others.includes("plain1"));
+  check("空库时 others 分节不出现", !assignSections([]).some((s) => s.key === "others"));
 }
 
 // 7. tagSectionLabel：结果条范围标题反查

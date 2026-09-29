@@ -1,7 +1,7 @@
 // vitest.setup.ts：组件测试的全局环境桩。
 //
 // 为什么需要「全局」而不是每个测试各自 mock：
-//   store.ts 在模块顶层 `import { api } from './src/sidecar-client'`，而
+//   store 各域在模块顶层 `import { api } from '../sidecar-client'`，而
 //   sidecar-client.ts 又在模块顶层立刻读 `window.sidecar` 并调用
 //   bridge.onStatus/onRunOutput/onRunFinished/onRunImages/onNotification。
 //   也就是说：只要某个组件 import 了 '../store'，window.sidecar 就必须在

@@ -18,28 +18,10 @@ import OutputPanel from '../OutputPanel.vue'
 
 import { runStatusHint } from '../../src/utils'
 import type { RunHistoryEntry } from '../../src/types'
-import {
-  activeCategory,
-  activeSectionTags,
-  activeTheme,
-  argsLoading,
-  clearSurface,
-  currentArgs,
-  examples,
-  favorites,
-  favOnly,
-  galleryMode,
-  getTestApi,
-  isDirty,
-  isRunning,
-  pendingBackfillTokens,
-  runHistory,
-  selectedId,
-  sortBy,
-  surfaceState,
-  viewMode,
-  type VExample
-} from '../../store'
+import { activeCategory, activeSectionTags, activeTheme, examples, favOnly, galleryMode, sortBy, viewMode, type VExample } from '../../src/store/catalog'
+import { argsLoading, clearSurface, currentArgs, isDirty, isRunning, pendingBackfillTokens, selectedId, surfaceState } from '../../src/store/detail'
+import { getTestApi } from '../../src/store/index'
+import { favorites, runHistory } from '../../src/store/prefs'
 
 // getTestApi() 的声明返回 Record<string, unknown>（它是给 E2E 探针用的宽类型），
 // 这里只挑本文件用到的几个钩子做窄化，避免把 unknown 散落到每处断言。

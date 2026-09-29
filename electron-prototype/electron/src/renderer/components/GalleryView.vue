@@ -4,20 +4,9 @@
 // 新增清单密度（viewMode）与筛选芯片结果条（BrowseToolbar）。
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { SearchX } from 'lucide-vue-next'
-import {
-  examples,
-  filtered,
-  galleryLimit,
-  galleryMode,
-  isFavorite,
-  loadError,
-  loading,
-  openDetail,
-  runFromCard,
-  shownGallery,
-  toggleFavorite,
-  viewMode
-} from '../store'
+import { examples, filtered, galleryLimit, galleryMode, loadError, loading, shownGallery, viewMode } from '../src/store/catalog'
+import { openDetail, runFromCard } from '../src/store/detail'
+import { isFavorite, toggleFavorite } from '../src/store/prefs'
 import ExampleCard from './ExampleCard.vue'
 import ExampleListItem from './ExampleListItem.vue'
 import BrowseToolbar from './BrowseToolbar.vue'

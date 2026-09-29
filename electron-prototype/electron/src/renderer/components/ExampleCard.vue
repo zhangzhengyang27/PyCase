@@ -9,7 +9,7 @@ import { exampleIcon } from '../src/icons'
 import { qualityTextCls, runStatusDotCls, runStatusHint, runStatusLabel, runStatusTextCls } from '../src/utils'
 import { sectionIcon } from '../src/section-icons'
 import { sectionKeyOf } from '../src/overview'
-import type { VExample } from '../store'
+import type { VExample } from '../src/store/catalog'
 
 const props = defineProps<{ ex: VExample; selected?: boolean; faved?: boolean; enterIndex?: number }>()
 const emit = defineEmits<{ open: []; fav: []; run: [] }>()

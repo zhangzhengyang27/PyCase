@@ -6,19 +6,7 @@ import { computed } from 'vue'
 import { ArrowLeft, LayoutGrid, List, X } from 'lucide-vue-next'
 import { THEMES } from '../src/themes'
 import { tagSectionLabel, PROJECTS_SECTION_META } from '../src/overview'
-import {
-  activeCategory,
-  activeSectionTags,
-  activeTheme,
-  clearAllFilters,
-  filtered,
-  galleryChips,
-  galleryMode,
-  persistViewPrefs,
-  removeChip,
-  sortBy,
-  viewMode
-} from '../store'
+import { activeCategory, activeSectionTags, activeTheme, clearAllFilters, filtered, galleryChips, galleryMode, persistViewPrefs, removeChip, sortBy, viewMode } from '../src/store/catalog'
 import BaseSelect from './base/BaseSelect.vue'
 
 // 范围标题：主题 > 分区标签组 > 项目区 > 全部示例（三种范围在 store 内互斥）

@@ -4,15 +4,8 @@
 // 安全（高危确认开关，即 HighRiskConfirmModal「不再提示」的恢复入口）。
 // 字段输入即时校验，保存时全量拦截，校验失败聚焦第一个错误字段。
 import { computed, nextTick, reactive, ref, watch } from 'vue'
-import {
-  aiSettings,
-  aiSettingsOpen,
-  closeAISettings,
-  runTimeout,
-  setRunTimeout,
-  setSkipHighRiskConfirm,
-  skipHighRiskConfirm
-} from '../store'
+import { aiSettings, aiSettingsOpen, closeAISettings } from '../src/store/ai'
+import { runTimeout, setRunTimeout, setSkipHighRiskConfirm, skipHighRiskConfirm } from '../src/store/prefs'
 import { pushToast } from '../toast'
 import { api } from '../src/sidecar-client'
 import AppModal from './base/AppModal.vue'

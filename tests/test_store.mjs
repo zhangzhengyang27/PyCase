@@ -1,10 +1,13 @@
-// store.ts 单元测试：Vue 渲染层的状态编排（示例加载 / 派生筛选 / 收藏 / 偏好 / 高危门）
+// store 域单元测试：Vue 渲染层的状态编排（示例加载 / 派生筛选 / 收藏 / 偏好 / 高危门）
 //
-// 通过 renderer-loader 加载真实 store.ts —— 'vue' 从工程 node_modules 真实加载
-// （ref/computed/watch 都是真响应式，不是桩），仅以替身替换两个副作用依赖：
-//   './toast'              → pushToast 空实现（DOM 提示）
-//   './src/sidecar-client' → 受控的 api 桩（IPC 边界）
-// store.ts 是模块级单例，各用例之间靠 resetState() 归零状态。
+// 分域后（B3-3）逐个加载真实模块并拍平成一个命名空间，断言一字不改：
+//   store/catalog（示例目录/筛选）· store/detail（详情/运行）· store/prefs（持久化）
+//   · store/index（启动装载 loadAll）
+// 'vue' 从工程 node_modules 真实加载（ref/computed/watch 都是真响应式，不是桩），
+// 仅以替身替换两个副作用依赖：
+//   '../../toast'        → pushToast 空实现（DOM 提示）
+//   '../sidecar-client'  → 受控的 api 桩（IPC 边界）
+// 各域都是模块级单例，各用例之间靠 resetState() 归零状态。
 import { createRendererLoader } from "./renderer-loader.mjs";
 
 globalThis.window = { confirm: () => true };
@@ -34,20 +37,35 @@ const api = {
     return { run_id: "run-1" };
   },
   parseArgs: async () => ({ args: argFixtures }),
-  listAssets: async () => ({ assets: [] })
+  listAssets: async () => ({ assets: [] }),
+  // 服务端检索（契约 §5）：v2 列表不含 code，代码搜索由 sidecar 按需读文件后回命中原因
+  searchExamples: async (query) => {
+    calls.push(["searchExamples", query]);
+    return { query, hits: query === "pygame" ? [{ id: "t2", reason: "code" }] : [] };
+  }
 };
 
-const S = createRendererLoader(
-  { "./toast": { pushToast: () => {} }, "./src/sidecar-client": { api } },
+// mock 键 = 源码里的字面说明符（域文件在 src/store/ 下，故为 '../../toast' / '../sidecar-client'）
+const loader = createRendererLoader(
+  { "../../toast": { pushToast: () => {} }, "../sidecar-client": { api } },
   { packages: ["vue"] }
-).load("store");
+);
+// 注意用 "src/store/xxx" 形式的键：加载器内部把相对导入解析成同一形式，
+// 否则同一个模块会被加载两份（模块级单例各持一份状态，断言会莫名其妙地失败）
+const S = Object.assign(
+  {},
+  loader.load("src/store/catalog"),
+  loader.load("src/store/detail"),
+  loader.load("src/store/prefs"),
+  loader.load("src/store/index")
+);
 
 // ---------------------------------------------------------------------------
 // 夹具
 // ---------------------------------------------------------------------------
 function mkExamples() {
   return [
-    { id: "t1", name: "alpha.py", category: "topics", code: "import numpy as np\n", tags: ["基础"], quality_score: 90, run_status: "runnable" },
+    { id: "t1", name: "alpha.py", category: "topics", code: "import numpy as np\n", tags: ["基础"], quality_score: 90, run_status: "runnable", import_tags: ["numpy"] },
     { id: "t2", name: "beta.py", category: "topics", code: "import pygame\n", tags: ["游戏"], quality_score: 60, run_status: "missing_deps" },
     { id: "t3", name: "gamma.py", category: "topics", code: "import turtle\n", tags: [], quality_score: 30, run_status: "empty" },
     { id: "tool1", name: "tool_a.py", category: "tools", code: "import requests\n", tags: ["工具"], quality_score: 70, run_status: "runnable" },
@@ -256,8 +274,9 @@ check("恢复密度偏好", S.viewMode.value === "list");
 check("恢复高危确认开关", S.skipHighRiskConfirm.value === true);
 check("恢复运行超时", S.runTimeout.value === 120);
 const t1 = S.examples.value.find((e) => e.id === "t1");
-check("构建 _codeLower 预处理缓存", t1._codeLower === "import numpy as np\n");
-check("构建 _tagsAll（元数据 + import 标签）", t1._tagsAll.includes("基础") && t1._tagsAll.includes("numpy"));
+// v2：列表不含 code（契约 §5），代码侧缓存置空；import 标签用服务端下发的派生事实
+check("_codeLower 置空（v2 不再从 code 反推）", t1._codeLower === "");
+check("构建 _tagsAll（元数据标签 + 服务端 import_tags）", t1._tagsAll.includes("基础") && t1._tagsAll.includes("numpy"));
 
 console.log("loadAll：脏偏好被拒（不写入非法状态）");
 await resetState();
@@ -276,12 +295,15 @@ check("错误信息落到 loadError", S.loadError.value === "sidecar 连接失�
 check("失败时示例清空", S.examples.value.length === 0);
 check("失败后 loading 归位", S.loading.value === false);
 
-console.log("搜索防抖（输入即时、筛选延迟 120ms）");
+console.log("搜索防抖（元数据 120ms；代码命中走服务端检索，260ms 防抖）");
 await boot();
 S.searchQuery.value = "pygame";
 check("输入后筛选尚未生效", S.filtered.value.length === 5);
 await sleep(150);
-check("防抖后筛选生效（只剩 beta.py）", ids(S.filtered.value) === "t2");
+check("元数据维度无命中（pygame 只在代码里，先落空再等服务端）", S.filtered.value.length === 0);
+await sleep(220);
+check("服务端代码命中生效（只剩 beta.py）", ids(S.filtered.value) === "t2");
+check("代码命中集只收 reason=code 的条目", S.catalogTestHooks().codeHitIds().includes("t2"));
 S.toolSearchQuery.value = "tool_a";
 await sleep(150);
 check("工具箱搜索独立生效", ids(S.toolboxItems.value) === "tool1");

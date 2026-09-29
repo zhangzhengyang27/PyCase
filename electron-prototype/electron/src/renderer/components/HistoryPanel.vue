@@ -1,7 +1,8 @@
 <script setup lang="ts">
 // HistoryPanel：当前示例的运行历史（最近 20 条，可重跑）
 // 徽章配色改走状态令牌（原为硬编码 GitHub 色值）。
-import { rerunEntry, detailHistory } from '../store'
+import { detailHistory } from '../src/store/detail'
+import { rerunEntry } from '../src/store/runner'
 
 // v2 状态语言：圆点 + 中性文字（成功中性、失败红字），底色徽章退役
 const RERUN_CLS =

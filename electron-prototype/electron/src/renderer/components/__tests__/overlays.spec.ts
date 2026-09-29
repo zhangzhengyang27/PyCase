@@ -8,7 +8,8 @@ import { mount } from '@vue/test-utils'
 
 import HelpSheet from '../HelpSheet.vue'
 import OnboardingView from '../OnboardingView.vue'
-import { appInfo, envStatus, examples, type EnvStatus } from '../../store'
+import { examples } from '../../src/store/catalog'
+import { appInfo, envStatus, type EnvStatus } from '../../src/store/env'
 import { modKeyLabel } from '../../src/platform'
 
 const baseEnv: EnvStatus = {

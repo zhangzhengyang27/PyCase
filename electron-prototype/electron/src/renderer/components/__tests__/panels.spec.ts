@@ -16,30 +16,13 @@ import ImportWizardModal from '../ImportWizardModal.vue'
 import HighRiskConfirmModal from '../HighRiskConfirmModal.vue'
 import AssetsPanel from '../AssetsPanel.vue'
 
-import {
-  getTestApi,
-  examples,
-  selectedId,
-  assets,
-  assetsLoading,
-  aiSettings,
-  aiSettingsOpen,
-  aiPanelOpen,
-  aiRunId,
-  aiStatus,
-  aiStatusError,
-  aiOutputText,
-  aiShowStop,
-  importWizardOpen,
-  pendingHighRiskRun,
-  skipHighRiskConfirm,
-  runTimeout,
-  isRunning,
-  currentRunId,
-  currentRunMeta,
-  type VExample,
-  type AssetInfo
-} from '../../store'
+import { aiSettings, aiSettingsOpen, aiPanelOpen, aiRunId, aiStatus, aiStatusError, aiOutputText, aiShowStop } from '../../src/store/ai'
+import { assets, assetsLoading, type AssetInfo } from '../../src/store/assets'
+import { examples, type VExample } from '../../src/store/catalog'
+import { selectedId, pendingHighRiskRun, isRunning, currentRunId, currentRunMeta } from '../../src/store/detail'
+import { importWizardOpen } from '../../src/store/import'
+import { getTestApi } from '../../src/store/index'
+import { runTimeout, skipHighRiskConfirm } from '../../src/store/prefs'
 import { toasts } from '../../toast'
 
 // ---------------------------------------------------------------------------

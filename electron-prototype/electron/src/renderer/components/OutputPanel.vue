@@ -3,7 +3,8 @@
 // surface 决定读取哪个输出汇（detail / runner）；运行中顶部显示不确定进度条。
 import { computed, nextTick, ref, watch } from 'vue'
 import { Download } from 'lucide-vue-next'
-import { downloadImage, isRunning, surfaceState, type OutputSurface } from '../store'
+import { downloadImage } from '../src/store/assets'
+import { isRunning, surfaceState, type OutputSurface } from '../src/store/detail'
 
 const props = defineProps<{ surface: OutputSurface }>()
 

@@ -2,7 +2,7 @@
 // AIExplainPanel：AI 代码解释侧栏（流式输出 / 停止 / 复制）
 // 视觉对齐设计规范 v1：rounded-panel + shadow-elev-3，尺寸/字号走令牌。
 import { X } from 'lucide-vue-next'
-import { copyAIOutput, closeAIPanel, stopAI, aiOutputText, aiStatus, aiStatusError, aiShowStop } from '../store'
+import { copyAIOutput, closeAIPanel, stopAI, aiOutputText, aiStatus, aiStatusError, aiShowStop } from '../src/store/ai'
 
 const PANEL_CLS =
   'fixed top-[52px] right-4 w-[420px] max-w-[40vw] h-[calc(100vh-92px)] bg-panel border border-line-subtle rounded-card shadow-elev-3 flex flex-col z-[900] animate-modal-in'

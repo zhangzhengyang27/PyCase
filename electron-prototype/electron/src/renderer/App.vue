@@ -27,34 +27,12 @@ import { api } from './src/sidecar-client'
 import { createWindowControls, modKeyLabel } from './src/platform'
 import { statusDotCls } from './src/utils'
 import { applyMonacoTheme } from './monaco'
-import {
-  activeView,
-  aiPanelOpen,
-  aiSettingsOpen,
-  examples,
-  filtered,
-  galleryExamples,
-  initAIEvents,
-  initRunEvents,
-  closeHelp,
-  dismissOnboarding,
-  helpOpen,
-  initEnvEvents,
-  loadAISettings,
-  loadAll,
-  loadAppInfo,
-  loadOnboarding,
-  onboardingOpen,
-  openHelp,
-  loading,
-  openAISettings,
-  openImportWizard,
-  runStatusText,
-  selectedId,
-  toolboxItems,
-  toolsTotal,
-  type ViewKey
-} from './store'
+import { aiPanelOpen, aiSettingsOpen, initAIEvents, loadAISettings, openAISettings } from './src/store/ai'
+import { activeView, examples, filtered, galleryExamples, loading, toolboxItems, toolsTotal, type ViewKey } from './src/store/catalog'
+import { initRunEvents, runStatusText, selectedId } from './src/store/detail'
+import { closeHelp, dismissOnboarding, helpOpen, initEnvEvents, loadAppInfo, loadOnboarding, onboardingOpen, openHelp } from './src/store/env'
+import { openImportWizard } from './src/store/import'
+import { loadAll } from './src/store/index'
 import GalleryView from './components/GalleryView.vue'
 import HelpSheet from './components/HelpSheet.vue'
 import OnboardingView from './components/OnboardingView.vue'

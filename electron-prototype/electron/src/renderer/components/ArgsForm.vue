@@ -4,16 +4,7 @@
 // - 收集：布尔开关按 checked 推 flag；其余非空值按位置/选项展开
 // - 回填：-开头 token 匹配 spec.flags（布尔开关勾选，其余取下一个 token），非 - 按位置顺序
 import { nextTick, onBeforeUnmount, reactive, ref, watch } from 'vue'
-import {
-  argsLoading,
-  currentArgs,
-  pendingBackfillTokens,
-  registerArgsCollector,
-  registerArgsSetter,
-  registerArgsValidator,
-  requiredArgsMissing,
-  type ArgSpec
-} from '../store'
+import { argsLoading, currentArgs, pendingBackfillTokens, registerArgsCollector, registerArgsSetter, registerArgsValidator, requiredArgsMissing, type ArgSpec } from '../src/store/detail'
 
 const ARG_FIELD_CLS = 'flex flex-col gap-1 min-w-[160px] flex-1'
 const ARG_FIELD_CHECKBOX_CLS = 'flex flex-row items-center gap-2 flex-1'

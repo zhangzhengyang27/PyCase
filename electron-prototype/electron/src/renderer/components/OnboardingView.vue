@@ -4,15 +4,7 @@
 // 只有「运行」需要。步骤状态全部来自 sidecar 的 env_status / env_progress，前端不猜、不编造。
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { Code2, FolderOpen, LayoutGrid, LibraryBig, Play } from 'lucide-vue-next'
-import {
-  appInfo,
-  dismissOnboarding,
-  envStatus,
-  openLog,
-  retryEnvPrepare,
-  useSystemPython,
-  type EnvStatus
-} from '../store'
+import { appInfo, dismissOnboarding, envStatus, openLog, retryEnvPrepare, useSystemPython, type EnvStatus } from '../src/store/env'
 import { modKeyLabel } from '../src/platform'
 import BaseButton from './base/BaseButton.vue'
 

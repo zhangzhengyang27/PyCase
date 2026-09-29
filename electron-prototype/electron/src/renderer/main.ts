@@ -1,7 +1,7 @@
 import { createApp } from 'vue'
 import './main.css'
 import App from './App.vue'
-import { getTestApi } from './store'
+import { getTestApi } from './src/store/index'
 
 // 三层绑定初始化：与 preload 同一套口径（preload 已在首帧前设好，这里是幂等兜底 +
 // theme-color meta 同步）。平台由 preload 按 process.platform 写入，渲染层不猜平台。

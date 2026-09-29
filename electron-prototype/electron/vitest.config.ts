@@ -8,8 +8,8 @@
 //     与真实构建走同一条 SFC 编译链（不是另起一套转译），测试才有保真度。
 //
 // 与仓库根 tests/*.mjs 的分工：
-//   - tests/*.mjs（node --test + tests/renderer-loader.mjs）：纯逻辑模块（filter-engine /
-//     utils / overview / store），零 bundler，直接跑 TS 源码；
+//   - tests/*.mjs（node --test + tests/renderer-loader.mjs）：纯逻辑与状态域模块
+//     （filter-engine / utils / overview / store/*），零 bundler，直接跑 TS 源码；
 //   - 本配置：需要 SFC 编译 + DOM 的组件测试（src/renderer/components/__tests__/*.spec.ts）。
 //   两者互补，不重复。
 import { defineConfig } from 'vitest/config'

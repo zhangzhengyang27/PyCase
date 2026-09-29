@@ -3,13 +3,13 @@
 // 渲染层已是 vite + TypeScript + ESM，且模块间按 bundler 风格省略扩展名互相导入。
 // 本加载器用 electron 工程自带的 typescript 把目标模块转译为 CommonJS，在受控的
 // require 环境中执行：
-//   - 相对导入按「导入文件所在目录」解析（与 bundler 语义一致），因此渲染层根目录的
-//     store.ts 与 src/ 下的纯函数模块都能被加载；
+//   - 相对导入按「导入文件所在目录」解析（与 bundler 语义一致），因此 src/store/ 下的
+//     状态域与 src/ 下的纯函数模块都能被加载；
 //   - 纯模块（filter-engine / utils / store 等）加载真实源码；
 //   - 带 DOM/IPC 副作用的模块（'./toast'、'./src/sidecar-client' 等）由测试通过
 //     mocks 注入替身，避免拉起 document/monaco/electron 依赖图；
 //   - 裸模块默认一律报错（守卫语义），确需真实包时用 options.packages 显式放行
-//     （如 store.ts 需要真实的 'vue' 提供 ref/computed 响应式）。
+//     （如 store 各域需要真实的 'vue' 提供 ref/computed 响应式）。
 // 需要 electron-prototype/electron 下已安装依赖（CI 对应 job 会先 npm ci）。
 import { existsSync, readFileSync } from "node:fs";
 import { createRequire } from "node:module";

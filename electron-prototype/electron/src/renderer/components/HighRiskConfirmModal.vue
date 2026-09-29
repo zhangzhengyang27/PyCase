@@ -5,7 +5,9 @@
 // 文案明确安全边界：子进程隔离不是沙箱，第三方库内部行为不受静态扫描覆盖。
 import { computed, ref } from 'vue'
 import { ShieldAlert } from 'lucide-vue-next'
-import { examples, pendingHighRiskRun, resolveHighRiskRun } from '../store'
+import { examples } from '../src/store/catalog'
+import { pendingHighRiskRun } from '../src/store/detail'
+import { resolveHighRiskRun } from '../src/store/detail'
 import BaseButton from './base/BaseButton.vue'
 import AppModal from './base/AppModal.vue'
 

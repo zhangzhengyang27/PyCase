@@ -61,7 +61,8 @@ check("无散件则无兜底组", buildToolboxGroups([tool("a", "tools/python-bl
 // 5. 未知项目 key 回退原名展示
 {
   const groups = buildToolboxGroups([tool("x", "tools/future-project")]);
-  check("未知项目回退原 key", groups[0].label === "future-project" && groups[0].icon === "🔧");
+  // A3 起图标是 Lucide 单一来源（src/section-icons.ts）：分组本身不再自带 icon 字段
+  check("未知项目回退原 key", groups[0].label === "future-project" && groups[0].icon === undefined);
 }
 
 if (failed) {

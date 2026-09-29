@@ -57,7 +57,7 @@ function makeHarness() {
 
 
 // ---------------------------------------------------------------------------
-// utils.ts 测试（splitArgs / qualityBadgeCls）
+// utils.ts 测试（splitArgs / 质量与状态徽章的 v2 口径）
 // ---------------------------------------------------------------------------
 const { loader: utilsLoader } = makeHarness();
 const utils = utilsLoader.load("utils");
@@ -83,21 +83,24 @@ console.assert(
   "splitArgs 制表符与多空格"
 );
 
-// qualityBadgeCls：三档配色
-console.assert(utils.qualityBadgeCls(92).includes("text-ok"), "qualityBadgeCls 高分绿色");
-console.assert(utils.qualityBadgeCls(70).includes("text-warn"), "qualityBadgeCls 中分琥珀");
-console.assert(utils.qualityBadgeCls(30).includes("text-ink-mute"), "qualityBadgeCls 低分灰");
-console.assert(utils.qualityBadgeCls(undefined).includes("text-ink-mute"), "qualityBadgeCls 缺省按 0");
+// qualityTextCls：低于 60 分才用琥珀，其余用中性色（v2 收敛为两档）
+console.assert(utils.qualityTextCls(92) === "text-ink-mute", "qualityTextCls 高分中性");
+console.assert(utils.qualityTextCls(70) === "text-ink-mute", "qualityTextCls 中分中性");
+console.assert(utils.qualityTextCls(30) === "text-warn", "qualityTextCls 低分琥珀");
+console.assert(utils.qualityTextCls(undefined) === "text-warn", "qualityTextCls 缺省按 0（低分）");
 
 // runStatusLabel/runStatusBadgeCls/runStatusHint：可运行性状态徽章
 console.assert(utils.runStatusLabel("missing_deps") === "缺依赖", "runStatusLabel 缺依赖");
 console.assert(utils.runStatusLabel("broken") === "语法损坏", "runStatusLabel 语法损坏");
 console.assert(utils.runStatusLabel("unknown_x") === "", "runStatusLabel 未知状态返回空");
 console.assert(utils.runStatusLabel(undefined) === "", "runStatusLabel undefined 返回空");
-console.assert(utils.runStatusBadgeCls("missing_deps").includes("text-warn"), "runStatusBadgeCls 缺依赖琥珀");
-console.assert(utils.runStatusBadgeCls("empty") === utils.runStatusBadgeCls("broken"), "runStatusBadgeCls 空壳与损坏同灰档");
-console.assert(utils.runStatusBadgeCls("risky").includes("text-danger"), "runStatusBadgeCls 高危红");
-console.assert(utils.runStatusBadgeCls("runnable") === "", "runStatusBadgeCls runnable 无配色");
+// v2 状态语言 = 彩色圆点（runStatusDotCls）+ 中性文字（仅 risky 保留红字）
+console.assert(utils.runStatusDotCls("missing_deps") === "bg-warn", "圆点 缺依赖琥珀");
+console.assert(utils.runStatusDotCls("empty") === utils.runStatusDotCls("broken"), "圆点 空壳与损坏同灰档");
+console.assert(utils.runStatusDotCls("risky") === "bg-danger", "圆点 高危红");
+console.assert(utils.runStatusDotCls("runnable") === "bg-ok", "圆点 可运行绿");
+console.assert(utils.runStatusTextCls("risky") === "text-danger", "文字 仅高危红");
+console.assert(utils.runStatusTextCls("missing_deps") === "text-ink-mute", "文字 其余中性");
 console.assert(utils.runStatusHint("missing_deps").includes("ImportError"), "runStatusHint 缺依赖提示");
 console.assert(utils.runStatusHint("risky").includes("沙箱"), "runStatusHint 高危提示非沙箱边界");
 console.assert(utils.runStatusHint(undefined) === "", "runStatusHint undefined 返回空");

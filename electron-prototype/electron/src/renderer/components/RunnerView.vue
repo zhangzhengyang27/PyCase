@@ -6,19 +6,9 @@
 import { computed, ref, watch } from 'vue'
 import { FileCode2, Play, Square } from 'lucide-vue-next'
 import { splitArgs } from '../src/utils'
-import {
-  clearRunnerOutput,
-  isRunning,
-  runStatusText,
-  runnerArgsLine,
-  runnerExample,
-  runnerHits,
-  runnerQuery,
-  runnerRun,
-  runnerSelectedId,
-  selectRunnerExample,
-  stopRun
-} from '../store'
+import { isRunning, runStatusText } from '../src/store/detail'
+import { clearRunnerOutput, runnerArgsLine, runnerExample, runnerHits, runnerQuery, runnerRun, runnerSelectedId, selectRunnerExample } from '../src/store/runner'
+import { stopRun } from '../src/store/detail'
 import OutputPanel from './OutputPanel.vue'
 import BaseButton from './base/BaseButton.vue'
 import BaseInput from './base/BaseInput.vue'

@@ -1,5 +1,5 @@
 // 详情链路组件测试：DetailPage / RunnerView / CommandPalette / MonacoEditor。
-// 与 base.spec.ts 的分工：这一层全部直接读写 store.ts 的模块级单例，因此每个用例
+// 与 base.spec.ts 的分工：这一层全部直接读写 store 域的模块级单例，因此每个用例
 // 前后都要归零被触碰的响应式状态；否则上一个用例的 selectedId / 输出汇会串味。
 import { describe, expect, it, afterEach, beforeEach, vi } from 'vitest'
 import { flushPromises, mount, type VueWrapper } from '@vue/test-utils'
@@ -9,28 +9,12 @@ import DetailPage from '../DetailPage.vue'
 import RunnerView from '../RunnerView.vue'
 import CommandPalette from '../CommandPalette.vue'
 import MonacoEditor from '../MonacoEditor.vue'
-import {
-  assets,
-  currentArgs,
-  currentRunId,
-  examples,
-  favorites,
-  getTestApi,
-  isDirty,
-  isRunning,
-  originalCode,
-  runHistory,
-  runStatusText,
-  runTimeout,
-  runnerArgsLine,
-  runnerQuery,
-  runnerSelectedId,
-  saveExample,
-  saving,
-  selectedId,
-  surfaceState,
-  type VExample
-} from '../../store'
+import { assets } from '../../src/store/assets'
+import { examples, type VExample } from '../../src/store/catalog'
+import { currentArgs, currentRunId, isDirty, isRunning, originalCode, runStatusText, saveExample, saving, selectedId, surfaceState } from '../../src/store/detail'
+import { getTestApi } from '../../src/store/index'
+import { runTimeout, favorites, runHistory } from '../../src/store/prefs'
+import { runnerArgsLine, runnerQuery, runnerSelectedId } from '../../src/store/runner'
 import type { RunHistoryEntry } from '../../src/types'
 import { toasts } from '../../toast'
 import { applyMonacoTheme } from '../../monaco'

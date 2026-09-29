@@ -21,22 +21,8 @@ import {
 } from 'lucide-vue-next'
 import { THEMES } from '../src/themes'
 import BaseInput from './base/BaseInput.vue'
-import {
-  activeRunnable,
-  activeRunStatus,
-  activeTags,
-  activeTheme,
-  clearFilters,
-  examples,
-  facetCounts,
-  favOnly,
-  favorites,
-  minQuality,
-  persistViewPrefs,
-  searchQuery,
-  tagFacetsFor,
-  toolSearchQuery
-} from '../store'
+import { activeRunnable, activeRunStatus, activeTags, activeTheme, clearFilters, examples, facetCounts, favOnly, minQuality, persistViewPrefs, searchQuery, tagFacetsFor, toolSearchQuery } from '../src/store/catalog'
+import { favorites } from '../src/store/prefs'
 
 const props = defineProps<{ scope: 'gallery' | 'toolbox' }>()
 

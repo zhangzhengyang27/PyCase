@@ -11,30 +11,10 @@ import ToolboxView from '../ToolboxView.vue'
 import FilterSidebar from '../FilterSidebar.vue'
 import ExampleCard from '../ExampleCard.vue'
 import ExampleListItem from '../ExampleListItem.vue'
-import {
-  activeCategory,
-  activeRunnable,
-  activeRunStatus,
-  activeSectionTags,
-  activeTags,
-  activeTheme,
-  examples,
-  favOnly,
-  favorites,
-  galleryLimit,
-  galleryMode,
-  getTestApi,
-  loadError,
-  loading,
-  minQuality,
-  runHistory,
-  searchQuery,
-  selectedId,
-  sortBy,
-  toolSearchQuery,
-  viewMode,
-  type VExample
-} from '../../store'
+import { activeCategory, activeRunnable, activeRunStatus, activeSectionTags, activeTags, activeTheme, examples, favOnly, galleryLimit, galleryMode, loadError, loading, minQuality, searchQuery, sortBy, toolSearchQuery, viewMode, type VExample } from '../../src/store/catalog'
+import { selectedId } from '../../src/store/detail'
+import { getTestApi } from '../../src/store/index'
+import { favorites, runHistory } from '../../src/store/prefs'
 
 // GalleryView 在 onMounted 里实例化 IntersectionObserver 做触底加载；
 // jsdom 未实现它，桩已由 vitest.setup.ts 统一提供。

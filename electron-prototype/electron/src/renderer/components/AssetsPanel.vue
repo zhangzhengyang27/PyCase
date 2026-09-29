@@ -3,7 +3,8 @@
 // 删除确认由原生 window.confirm 改为 AppModal；上传钮改用 BaseButton。
 import { ref } from 'vue'
 import { FileText, Image as ImageIcon, Upload } from 'lucide-vue-next'
-import { assets, assetsLoading, deleteAsset, selectedId, uploadAssets } from '../store'
+import { assets, assetsLoading, deleteAsset, uploadAssets } from '../src/store/assets'
+import { selectedId } from '../src/store/detail'
 import { formatFileSize } from '../src/utils'
 import AppModal from './base/AppModal.vue'
 import BaseButton from './base/BaseButton.vue'
