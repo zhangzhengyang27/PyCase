@@ -58,19 +58,33 @@ def test_materialize_keeps_sibling_files(items):
     assert (ex.path.parent / "dictionary.txt").is_file()
 
 
-def test_save_item_writes_back_json_and_cache(items):
-    ex = items["hello_world"]
-    original = ex.code
-    new_code = original + "\n# touched by test\n"
-    store = ExampleStore(base_dir=APP_DIR)
-    try:
-        assert ex.json_file is not None
-        assert store.save_item(ex, new_code) is True
-        assert "# touched by test" in ex.path.read_text(encoding="utf-8")
-        assert "# touched by test" in ex.json_file.read_text(encoding="utf-8")
-    finally:
-        store.save_item(ex, original)
-    assert ex.code == original
+def test_save_item_writes_back_json_and_cache(tmp_path):
+    """回写同时落到 JSON 真相源与物化缓存。
+
+    测试在 tmp 沙箱内运行：json_examples/*.json 是唯一真相源，测试不得写入。
+    """
+    coll = tmp_path / "json_examples"
+    coll.mkdir()
+    json_file = coll / "demo.json"
+    json_file.write_text(
+        json.dumps(
+            {
+                "name": "demo",
+                "examples": [
+                    {"id": "demo_a", "name": "a.py", "code": "print('a')\n"},
+                    {"id": "demo_b", "name": "b.py", "code": "print('b')\n"},
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    store = ExampleStore(base_dir=tmp_path)
+    item = _flat(store.load())["demo_a"]
+
+    assert store.save_item(item, "print('a2')\n") is True
+    codes = {s["id"]: s["code"] for s in json.loads(json_file.read_text(encoding="utf-8"))["examples"]}
+    assert codes == {"demo_a": "print('a2')\n", "demo_b": "print('b')\n"}
+    assert item.path.read_text(encoding="utf-8") == "print('a2')\n"
 
 
 def test_save_item_survives_midwrite_failure(tmp_path, monkeypatch):
