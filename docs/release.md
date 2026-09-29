@@ -1,4 +1,42 @@
-# v0.5.0 发布说明（macOS arm64，ad-hoc 签名）
+# 打包与发布说明（macOS / Windows）
+
+> 历史版本说明（v0.5.0，macOS arm64）保留在本文件末尾的存档段；本条以下为 B3-4 起的
+> **可复现打包流程**（审计 C1：此前 dist 依赖手工产物、CI 无打包 job）。
+
+## 可复现打包（一条命令）
+
+```bash
+cd electron-prototype/electron
+npm run dist:mac     # 冻结 sidecar（含冒烟）→ 前端构建 → electron-builder --mac
+npm run dist:win     # 同上，出 Windows 产物（需在 Windows 上执行）
+npm run sidecar      # 只冻结并冒烟 Python sidecar
+```
+
+产物落在 `electron-prototype/electron/dist/`（已 gitignore）；sidecar 冻结产物在
+`electron-prototype/electron/sidecar-dist/`（同样 gitignore）。
+
+## 打包链的三道验证（CI `packaging` job 双平台矩阵）
+
+1. **冻结冒烟**：`scripts/build_sidecar.py --smoke` 真启动冻结产物，断言
+   `sidecar_ready` → `ping` → `list_examples == 1496`（能加载 app 包、能读随包数据）；
+2. **产物断言**：`resources/` 下必须有 `sidecar/sidecar(.exe)`、`requirements.txt`、
+   `json_examples/facts.json`、`topics`、`tools`、`projects`、`examples_assets`；
+3. **打包产物自测**（macOS）：直接启动 `.app/Contents/MacOS/...` 跑 `SMOKE_TEST=1` 全套走查探针。
+
+静态不变量（不跑打包也能挡缺料）见 `tests/test_packaging_invariants.py`。
+
+## 随包内容与版本
+
+- 真相源随包分发：`json_examples`（清单 + 真实源码 + 烘焙事实）、`topics/tools/projects`（原位示例）、
+  `examples_assets`（31 条目录型示例的源码与数据兄弟）；
+- 版本号单一来源 = 仓库根 `VERSION`，由 `scripts/sync_version.py` 同步到
+  `package.json` / `pyproject.toml` / `app/_version.py`（CI 有 `--check` 门禁）；
+- 图标：当前使用 Electron 默认图标（品牌图标待 M6）；
+- 签名：macOS `identity: null`（ad-hoc，未公证）；Windows 未签名。
+
+---
+
+## 存档：v0.5.0 发布说明（macOS arm64，ad-hoc 签名）
 
 ## 产物
 

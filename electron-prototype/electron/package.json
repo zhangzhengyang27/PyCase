@@ -12,7 +12,10 @@
     "start": "electron-vite dev",
     "smoke": "electron-vite build && SMOKE_TEST=1 electron .",
     "dist": "electron-vite build && electron-builder",
-    "dist:dir": "electron-vite build && electron-builder --dir"
+    "dist:dir": "electron-vite build && electron-builder --dir",
+    "sidecar": "python3 ../../scripts/build_sidecar.py --smoke",
+    "dist:mac": "npm run sidecar && electron-vite build && electron-builder --mac",
+    "dist:win": "npm run sidecar && electron-vite build && electron-builder --win"
   },
   "build": {
     "appId": "com.example.python-example-manager",
@@ -21,10 +24,6 @@
       "out/**/*"
     ],
     "extraResources": [
-      {
-        "from": "sidecar-dist/sidecar",
-        "to": "sidecar/sidecar"
-      },
       {
         "from": "../../requirements.txt",
         "to": "requirements.txt"
@@ -44,6 +43,14 @@
       {
         "from": "../../projects",
         "to": "projects"
+      },
+      {
+        "from": "../../examples_assets",
+        "to": "examples_assets"
+      },
+      {
+        "from": "sidecar-dist/sidecar",
+        "to": "sidecar/sidecar"
       }
     ],
     "mac": {
@@ -53,10 +60,77 @@
         "zip",
         "dmg"
       ],
-      "identity": null
+      "identity": null,
+      "extraResources": [
+        {
+          "from": "../../requirements.txt",
+          "to": "requirements.txt"
+        },
+        {
+          "from": "../../json_examples",
+          "to": "json_examples"
+        },
+        {
+          "from": "../../topics",
+          "to": "topics"
+        },
+        {
+          "from": "../../tools",
+          "to": "tools"
+        },
+        {
+          "from": "../../projects",
+          "to": "projects"
+        },
+        {
+          "from": "../../examples_assets",
+          "to": "examples_assets"
+        },
+        {
+          "from": "sidecar-dist/sidecar",
+          "to": "sidecar/sidecar"
+        }
+      ]
     },
     "directories": {
       "output": "dist"
+    },
+    "win": {
+      "target": [
+        "dir",
+        "nsis",
+        "zip"
+      ],
+      "extraResources": [
+        {
+          "from": "../../requirements.txt",
+          "to": "requirements.txt"
+        },
+        {
+          "from": "../../json_examples",
+          "to": "json_examples"
+        },
+        {
+          "from": "../../topics",
+          "to": "topics"
+        },
+        {
+          "from": "../../tools",
+          "to": "tools"
+        },
+        {
+          "from": "../../projects",
+          "to": "projects"
+        },
+        {
+          "from": "../../examples_assets",
+          "to": "examples_assets"
+        },
+        {
+          "from": "sidecar-dist/sidecar.exe",
+          "to": "sidecar/sidecar.exe"
+        }
+      ]
     }
   },
   "devDependencies": {

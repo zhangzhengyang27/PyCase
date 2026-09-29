@@ -116,3 +116,77 @@ jobs:
       - name: 冒烟自测
         working-directory: electron-prototype/electron
         run: npm run smoke
+
+  # ---------------------------------------------------------------------------
+  # 打包矩阵（B3-4）：macOS + Windows 各自冻结 sidecar → 真启动冒烟 → electron-builder 出包
+  # 冒烟断言：冻结产物能启动、能加载 app 包、能读资源里的 1496 条示例（打包链最易断的三处）
+  # 产物断言：安装包/dir 产物真实存在（含 sidecar 二进制与数据目录）
+  # mac 额外跑「打包产物自测」：直接启动 .app 内的可执行文件跑同一套走查探针
+  # ---------------------------------------------------------------------------
+  packaging:
+    name: Packaging (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    needs: frontend
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            artifact: mac
+          - os: windows-latest
+            artifact: win
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: 安装前端依赖
+        working-directory: electron-prototype/electron
+        run: npm ci
+
+      - name: 冻结 sidecar + 冒烟（真启动 / list_examples == 1496）
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install pyinstaller
+          python scripts/build_sidecar.py --clean --smoke
+
+      - name: 前端构建
+        working-directory: electron-prototype/electron
+        run: npm run build
+
+      - name: 出包（dir 目标，跳签名）
+        working-directory: electron-prototype/electron
+        run: npx electron-builder --dir
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+
+      - name: 产物断言（sidecar 二进制 + 数据目录 + 应用目录）
+        shell: bash
+        working-directory: electron-prototype/electron
+        run: |
+          set -euo pipefail
+          RES="dist/mac-arm64/Python示例管理器.app/Contents/Resources"
+          if [ ! -d "$RES" ]; then RES="dist/mac/Python示例管理器.app/Contents/Resources"; fi
+          if [ ! -d "$RES" ]; then RES="dist/win-unpacked/resources"; fi
+          test -d "$RES" || { echo "找不到打包资源目录"; ls -R dist | head -40; exit 1; }
+          test -f "$RES/requirements.txt"
+          test -d "$RES/json_examples" && test -f "$RES/json_examples/facts.json"
+          test -d "$RES/topics" && test -d "$RES/tools" && test -d "$RES/projects" && test -d "$RES/examples_assets"
+          if [ -f "$RES/sidecar/sidecar.exe" ]; then test -s "$RES/sidecar/sidecar.exe"; else test -s "$RES/sidecar/sidecar"; fi
+          echo "打包产物齐全: $RES"
+
+      - name: 打包产物自测（macOS：启动 .app 内的可执行文件跑走查探针）
+        if: matrix.os == 'macos-latest'
+        working-directory: electron-prototype/electron
+        run: |
+          set -euo pipefail
+          APP_BIN="dist/mac-arm64/Python示例管理器.app/Contents/MacOS/Python示例管理器"
+          if [ ! -x "$APP_BIN" ]; then APP_BIN="dist/mac/Python示例管理器.app/Contents/MacOS/Python示例管理器"; fi
+          test -x "$APP_BIN" || { echo "找不到打包后的可执行文件"; exit 1; }
+          SMOKE_TEST=1 "$APP_BIN"
