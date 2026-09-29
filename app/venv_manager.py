@@ -63,12 +63,16 @@ class VenvManager:
         # venv 可写根可注入：打包模式下 repo_root（Resources）只读，
         # sidecar 会把 userData 传进来；默认与 repo_root 同级（旧行为）
         self.venv_path = (venv_root or self.repo_root) / self.VENV_DIR_NAME
-        self.legacy_cache_dir = (venv_root or self.repo_root) / self.LEGACY_CACHE_DIR_NAME
+        self.legacy_cache_dir = (
+            venv_root or self.repo_root
+        ) / self.LEGACY_CACHE_DIR_NAME
         # PyInstaller 冻结环境中 sys.executable 是 sidecar 自身，须由调用方传入真实 Python
         self.python_exe = python_exe or sys.executable
         # 供测试注入空列表跳过引导安装
         self.bootstrap_packages = (
-            tuple(bootstrap_packages) if bootstrap_packages is not None else self.BOOTSTRAP_PACKAGES
+            tuple(bootstrap_packages)
+            if bootstrap_packages is not None
+            else self.BOOTSTRAP_PACKAGES
         )
         self._lock = threading.Lock()
         self._marker: dict = {}
@@ -98,7 +102,10 @@ class VenvManager:
 
     def needs_prepare(self) -> bool:
         """共享 venv 是否尚未就绪（不存在或引导安装未完成）。"""
-        return not (self.get_python_executable().exists() and self._load_marker().get("bootstrap"))
+        return not (
+            self.get_python_executable().exists()
+            and self._load_marker().get("bootstrap")
+        )
 
     def ensure_python(self, file_path: Path) -> tuple[bool, str]:
         """确保共享 venv 可用，并安装示例声明的依赖；返回 (是否可用, 解释器路径)。
@@ -162,7 +169,8 @@ class VenvManager:
                 if result.returncode == 0:
                     return True
                 get_logger(__name__).warning(
-                    "uv venv 创建失败，回退到 python -m venv: %s", (result.stderr or result.stdout or "").strip()[-500:]
+                    "uv venv 创建失败，回退到 python -m venv: %s",
+                    (result.stderr or result.stdout or "").strip()[-500:],
                 )
             result = subprocess.run(
                 [self.python_exe, "-m", "venv", str(self.venv_path)],
@@ -195,7 +203,9 @@ class VenvManager:
             if not ok:
                 failed.append(pkg)
         if failed:
-            get_logger(__name__).warning("引导依赖安装失败（可手动补装）: %s", ", ".join(failed))
+            get_logger(__name__).warning(
+                "引导依赖安装失败（可手动补装）: %s", ", ".join(failed)
+            )
         # 全部失败（如离线/网络故障）时不标记完成：下次运行会重试引导，
         # 避免把一个缺所有依赖的空环境永久放行；部分失败仍只做一次（失败包手动补装）
         if len(failed) < len(lines):
@@ -206,10 +216,16 @@ class VenvManager:
     def _manifest_packages(self) -> list[str]:
         """读取仓库根的共享依赖清单（requirements.txt），过滤注释与空行。"""
         try:
-            lines = (self.repo_root / self.MANIFEST_FILE_NAME).read_text(encoding="utf-8", errors="ignore").splitlines()
+            lines = (
+                (self.repo_root / self.MANIFEST_FILE_NAME)
+                .read_text(encoding="utf-8", errors="ignore")
+                .splitlines()
+            )
         except OSError:
             return []
-        return [line.strip() for line in lines if line.strip() and not line.startswith("#")]
+        return [
+            line.strip() for line in lines if line.strip() and not line.startswith("#")
+        ]
 
     def _install_example_requirements(self, file_path: Path) -> None:
         """把示例目录的 requirements.txt 安装进共享 venv（按内容 hash 去重）。"""
@@ -272,7 +288,8 @@ class VenvManager:
             return False
         if result.returncode != 0:
             get_logger(__name__).error(
-                "安装依赖失败: %s", (result.stderr or result.stdout or "未知错误").strip()[-2000:]
+                "安装依赖失败: %s",
+                (result.stderr or result.stdout or "未知错误").strip()[-2000:],
             )
         return result.returncode == 0
 
@@ -283,7 +300,9 @@ class VenvManager:
         """读取安装记录（venv 内），缺失或损坏时返回空 dict。"""
         if not self._marker_loaded:
             try:
-                self._marker = json.loads(self._marker_file().read_text(encoding="utf-8"))
+                self._marker = json.loads(
+                    self._marker_file().read_text(encoding="utf-8")
+                )
             except (OSError, json.JSONDecodeError):
                 self._marker = {}
             self._marker_loaded = True
@@ -294,7 +313,9 @@ class VenvManager:
         try:
             target = self._marker_file()
             tmp = target.with_name(target.name + ".tmp")
-            tmp.write_text(json.dumps(marker, ensure_ascii=False, indent=2), encoding="utf-8")
+            tmp.write_text(
+                json.dumps(marker, ensure_ascii=False, indent=2), encoding="utf-8"
+            )
             os.replace(tmp, target)
         except OSError:
             pass

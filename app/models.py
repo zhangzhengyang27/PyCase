@@ -87,4 +87,6 @@ class ExampleItem:
         return "\n".join(summary_lines)
 
     def __repr__(self) -> str:
-        return f"ExampleItem(name={self.name!r}, path={self.path!r}, is_dir={self.is_dir})"
+        return (
+            f"ExampleItem(name={self.name!r}, path={self.path!r}, is_dir={self.is_dir})"
+        )

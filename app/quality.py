@@ -70,7 +70,9 @@ class QualityScorer:
         report.dependency_clarity = self._check_dependencies(item.path, content, tree)
 
         # 4. 安全风险（15%）
-        report.security_risk = self._check_security(item.path, content=content, tree=tree)
+        report.security_risk = self._check_security(
+            item.path, content=content, tree=tree
+        )
 
         # 5. 代码规范（10%）
         report.code_style = self._check_code_style(content)
@@ -99,7 +101,12 @@ class QualityScorer:
         self._generate_feedback(report)
         return report
 
-    def _check_runnability(self, content: str | None, tree: ast.Module | None, syntax_err: SyntaxError | None) -> int:
+    def _check_runnability(
+        self,
+        content: str | None,
+        tree: ast.Module | None,
+        syntax_err: SyntaxError | None,
+    ) -> int:
         """检查代码是否能通过语法编译。"""
         if content is None:
             return 0
@@ -128,7 +135,9 @@ class QualityScorer:
             score += 20
 
         # 检查是否有说明文字（标题以外的内容）
-        non_title_lines = [line for line in stripped.splitlines() if not line.strip().startswith("#")]
+        non_title_lines = [
+            line for line in stripped.splitlines() if not line.strip().startswith("#")
+        ]
         if any(line.strip() for line in non_title_lines):
             score += 30
 
@@ -152,7 +161,9 @@ class QualityScorer:
             current = parent
         return None
 
-    def _check_dependencies(self, file_path: Path, content: str | None, tree: ast.Module | None) -> int:
+    def _check_dependencies(
+        self, file_path: Path, content: str | None, tree: ast.Module | None
+    ) -> int:
         """检查依赖是否明确。"""
         dep_file = self._find_dependency_file(file_path)
         if dep_file is not None:
@@ -171,7 +182,13 @@ class QualityScorer:
                         return 20  # 有第三方依赖但没有依赖文件
         return 80  # 没有第三方依赖，不需要依赖文件
 
-    def _check_security(self, file_path: Path, *, content: str | None = None, tree: ast.Module | None = None) -> int:
+    def _check_security(
+        self,
+        file_path: Path,
+        *,
+        content: str | None = None,
+        tree: ast.Module | None = None,
+    ) -> int:
         """根据安全扫描结果评分。"""
         report = self.security_checker.check(file_path, content=content, tree=tree)
         risk_count = len(report.risks)

@@ -186,7 +186,9 @@ class TestSafeEnv:
 
     def test_extra_vars_are_injected(self):
         with patch.dict(os.environ, {"PATH": "/usr/bin"}, clear=True):
-            env = server._build_safe_env({"CUSTOM_VAR": "value", "PYTHONUNBUFFERED": "1"})
+            env = server._build_safe_env(
+                {"CUSTOM_VAR": "value", "PYTHONUNBUFFERED": "1"}
+            )
             assert env["CUSTOM_VAR"] == "value"
             assert env["PYTHONUNBUFFERED"] == "1"
             assert env["PATH"] == "/usr/bin"
@@ -203,15 +205,23 @@ class TestSafeEnv:
 class TestJsonRpcProtocol:
     def test_invalid_json_returns_parse_error(self):
         captured = []
-        with patch.object(server, "_send", side_effect=lambda obj: captured.append(obj)):
+        with patch.object(
+            server, "_send", side_effect=lambda obj: captured.append(obj)
+        ):
             asyncio.run(server._handle_request("not valid json {{{"))
         assert len(captured) == 1
         assert captured[0]["error"]["code"] == -32700
 
     def test_invalid_jsonrpc_version_returns_invalid_request(self):
         captured = []
-        with patch.object(server, "_send", side_effect=lambda obj: captured.append(obj)):
-            asyncio.run(server._handle_request(json.dumps({"jsonrpc": "1.0", "id": 1, "method": "ping"})))
+        with patch.object(
+            server, "_send", side_effect=lambda obj: captured.append(obj)
+        ):
+            asyncio.run(
+                server._handle_request(
+                    json.dumps({"jsonrpc": "1.0", "id": 1, "method": "ping"})
+                )
+            )
         assert len(captured) == 1
         assert captured[0]["error"]["code"] == -32600
 
@@ -219,16 +229,24 @@ class TestJsonRpcProtocol:
         """合法 JSON 但非对象（数组/字符串/数字/null）应返回 -32600 而非让进程崩溃。"""
         for payload in ("[1,2,3]", '"abc"', "123", "null"):
             captured = []
-            with patch.object(server, "_send", side_effect=lambda obj, sink=captured: sink.append(obj)):
+            with patch.object(
+                server, "_send", side_effect=lambda obj, sink=captured: sink.append(obj)
+            ):
                 asyncio.run(server._handle_request(payload))
             assert len(captured) == 1, payload
             assert captured[0]["error"]["code"] == -32600, payload
 
     def test_unknown_method_returns_method_not_found(self):
         captured = []
-        with patch.object(server, "_send", side_effect=lambda obj: captured.append(obj)):
+        with patch.object(
+            server, "_send", side_effect=lambda obj: captured.append(obj)
+        ):
             asyncio.run(
-                server._handle_request(json.dumps({"jsonrpc": "2.0", "id": 42, "method": "nonexistent_method"}))
+                server._handle_request(
+                    json.dumps(
+                        {"jsonrpc": "2.0", "id": 42, "method": "nonexistent_method"}
+                    )
+                )
             )
         assert len(captured) == 1
         assert captured[0]["error"]["code"] == -32601
@@ -236,8 +254,14 @@ class TestJsonRpcProtocol:
 
     def test_ping_returns_ok(self):
         captured = []
-        with patch.object(server, "_send", side_effect=lambda obj: captured.append(obj)):
-            asyncio.run(server._handle_request(json.dumps({"jsonrpc": "2.0", "id": 1, "method": "ping"})))
+        with patch.object(
+            server, "_send", side_effect=lambda obj: captured.append(obj)
+        ):
+            asyncio.run(
+                server._handle_request(
+                    json.dumps({"jsonrpc": "2.0", "id": 1, "method": "ping"})
+                )
+            )
         assert len(captured) == 1
         assert captured[0]["id"] == 1
         assert captured[0]["result"]["status"] == "ok"
@@ -245,14 +269,18 @@ class TestJsonRpcProtocol:
 
     def test_empty_line_is_ignored(self):
         captured = []
-        with patch.object(server, "_send", side_effect=lambda obj: captured.append(obj)):
+        with patch.object(
+            server, "_send", side_effect=lambda obj: captured.append(obj)
+        ):
             asyncio.run(server._handle_request("   \n  "))
         assert len(captured) == 0
 
     def test_notification_format(self):
         """验证 _notify 生成的消息没有 id 字段（JSON-RPC 通知规范）。"""
         captured = []
-        with patch.object(server, "_send", side_effect=lambda obj: captured.append(obj)):
+        with patch.object(
+            server, "_send", side_effect=lambda obj: captured.append(obj)
+        ):
             server._notify("run_output", {"run_id": "abc", "text": "hello"})
         assert len(captured) == 1
         assert "id" not in captured[0]
@@ -328,11 +356,32 @@ class TestEnvStatus:
 
     def test_snapshot_reports_facts(self):
         snap = server._env_snapshot()
-        assert set(["phase", "started_at", "error", "log_path", "mode", "venv_path", "venv_ready", "python_version"]).issubset(snap)
+        assert set(
+            [
+                "phase",
+                "started_at",
+                "error",
+                "log_path",
+                "mode",
+                "venv_path",
+                "venv_ready",
+                "python_version",
+            ]
+        ).issubset(snap)
         assert snap["mode"] == "shared"
-        assert snap["phase"] in ("starting", "preparing", "indexing", "warming", "ready", "failed")
+        assert snap["phase"] in (
+            "starting",
+            "preparing",
+            "indexing",
+            "warming",
+            "ready",
+            "failed",
+        )
         # 版本串取自当前解释器，不是写死的
-        assert snap["python_version"] == f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
+        assert (
+            snap["python_version"]
+            == f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
+        )
 
     def test_set_run_env_validates_mode(self):
         sent = []
@@ -342,7 +391,9 @@ class TestEnvStatus:
         assert sent and sent[-1]["mode"] == "system"
 
         errs = []
-        with patch.object(server, "_error", lambda rid, code, msg: errs.append((code, msg))):
+        with patch.object(
+            server, "_error", lambda rid, code, msg: errs.append((code, msg))
+        ):
             server.method_set_run_env("2", {"mode": "wat"})
         assert errs and errs[-1][0] == -32602
         assert server._run_env_mode == "system"  # 非法值不改状态
@@ -365,7 +416,9 @@ class TestCollectAssets:
     它们删不掉，列出来只会给出"能删但删不掉"的死入口（A4 走查发现）。"""
 
     def _item(self, path: Path):
-        return server.ExampleItem(name=path.name, path=path, is_dir=False, category="topics")
+        return server.ExampleItem(
+            name=path.name, path=path, is_dir=False, category="topics"
+        )
 
     def test_protected_files_not_listed(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -396,7 +449,14 @@ class TestUploadAssetGuard:
         coll = tmp_path / "json_examples"
         coll.mkdir()
         (coll / "demo.json").write_text(
-            json.dumps({"name": "demo", "examples": [{"id": "demo1", "name": "demo1.py", "code": "print('x')"}]}),
+            json.dumps(
+                {
+                    "name": "demo",
+                    "examples": [
+                        {"id": "demo1", "name": "demo1.py", "code": "print('x')"}
+                    ],
+                }
+            ),
             encoding="utf-8",
         )
         store_orig = server._store
@@ -423,8 +483,12 @@ class TestUploadAssetGuard:
             script = item.path
             original = script.read_text(encoding="utf-8")
             captured = []
-            with patch.object(server, "_send", side_effect=lambda obj: captured.append(obj)):
-                server.method_upload_asset(1, {"id": item.json_id, "filename": "demo1.py", "data": "aGk="})
+            with patch.object(
+                server, "_send", side_effect=lambda obj: captured.append(obj)
+            ):
+                server.method_upload_asset(
+                    1, {"id": item.json_id, "filename": "demo1.py", "data": "aGk="}
+                )
             assert "error" in captured[0], "上传同名 .py 必须被拒绝（所见非所跑）"
             assert script.read_text(encoding="utf-8") == original
         finally:
@@ -434,9 +498,20 @@ class TestUploadAssetGuard:
         item, s0, r0, i0 = self._make_item(tmp_path)
         try:
             captured = []
-            with patch.object(server, "_send", side_effect=lambda obj: captured.append(obj)):
-                server.method_upload_asset(1, {"id": item.json_id, "filename": "requirements.txt", "data": "aGk="})
-            assert "error" in captured[0], "上传 requirements.txt 必须被拒绝（任意装包）"
+            with patch.object(
+                server, "_send", side_effect=lambda obj: captured.append(obj)
+            ):
+                server.method_upload_asset(
+                    1,
+                    {
+                        "id": item.json_id,
+                        "filename": "requirements.txt",
+                        "data": "aGk=",
+                    },
+                )
+            assert (
+                "error" in captured[0]
+            ), "上传 requirements.txt 必须被拒绝（任意装包）"
         finally:
             self._restore(s0, r0, i0)
 
@@ -444,8 +519,12 @@ class TestUploadAssetGuard:
         item, s0, r0, i0 = self._make_item(tmp_path)
         try:
             captured = []
-            with patch.object(server, "_send", side_effect=lambda obj: captured.append(obj)):
-                server.method_upload_asset(1, {"id": item.json_id, "filename": "photo.png", "data": "aGk="})
+            with patch.object(
+                server, "_send", side_effect=lambda obj: captured.append(obj)
+            ):
+                server.method_upload_asset(
+                    1, {"id": item.json_id, "filename": "photo.png", "data": "aGk="}
+                )
             assert "result" in captured[0]
             assert (item.path.parent / "photo.png").is_file()
         finally:
@@ -456,8 +535,12 @@ class TestUploadAssetGuard:
         try:
             script = item.path
             captured = []
-            with patch.object(server, "_send", side_effect=lambda obj: captured.append(obj)):
-                server.method_delete_asset(1, {"id": item.json_id, "filename": "demo1.py"})
+            with patch.object(
+                server, "_send", side_effect=lambda obj: captured.append(obj)
+            ):
+                server.method_delete_asset(
+                    1, {"id": item.json_id, "filename": "demo1.py"}
+                )
             assert "error" in captured[0], "删除示例脚本必须被拒绝"
             assert script.is_file()
         finally:
@@ -474,7 +557,9 @@ class TestStopRunRace:
         server._running[run_id] = None  # 模拟启动中状态
         captured = []
         try:
-            with patch.object(server, "_send", side_effect=lambda obj: captured.append(obj)):
+            with patch.object(
+                server, "_send", side_effect=lambda obj: captured.append(obj)
+            ):
                 asyncio.run(server.method_stop_run(1, {"run_id": run_id}))
             assert len(captured) == 1
             assert captured[0]["result"]["status"] == "pending_terminate"
@@ -485,11 +570,14 @@ class TestStopRunRace:
 
     def test_stop_unknown_run_returns_error(self):
         captured = []
-        with patch.object(server, "_send", side_effect=lambda obj: captured.append(obj)):
+        with patch.object(
+            server, "_send", side_effect=lambda obj: captured.append(obj)
+        ):
             asyncio.run(server.method_stop_run(1, {"run_id": "nonexistent_run"}))
         assert len(captured) == 1
         assert "error" in captured[0]
         assert captured[0]["error"]["code"] == -32602
+
 
 class TestRiskHigh:
     """ensure_risk_high：安全高危判定、缓存命中与保存后失效。"""
@@ -548,6 +636,7 @@ class TestRiskHigh:
         # 质量分缓存同样失效，等待惰性重算
         assert item.quality_score is None
 
+
 class TestUserCollectionRpc:
     """scan_import_source / import_examples / delete_example（用户集合解耦链路）。
 
@@ -555,11 +644,23 @@ class TestUserCollectionRpc:
     """
 
     def _swap(self, tmp_path):
-        orig = (server._store, server._root, dict(server._index), server.APP_DIR, server.DATA_DIR, server._USER_DIR)
+        orig = (
+            server._store,
+            server._root,
+            dict(server._index),
+            server.APP_DIR,
+            server.DATA_DIR,
+            server._USER_DIR,
+        )
         coll = tmp_path / "json_examples"
         coll.mkdir()
         (coll / "builtin.json").write_text(
-            json.dumps({"name": "builtin", "examples": [{"id": "b1", "name": "b1.py", "code": "print(1)\n"}]}),
+            json.dumps(
+                {
+                    "name": "builtin",
+                    "examples": [{"id": "b1", "name": "b1.py", "code": "print(1)\n"}],
+                }
+            ),
             encoding="utf-8",
         )
         user_dir = tmp_path / "user_examples"
@@ -573,13 +674,22 @@ class TestUserCollectionRpc:
         return orig
 
     def _restore(self, orig):
-        server._store, server._root, idx, server.APP_DIR, server.DATA_DIR, server._USER_DIR = orig
+        (
+            server._store,
+            server._root,
+            idx,
+            server.APP_DIR,
+            server.DATA_DIR,
+            server._USER_DIR,
+        ) = orig
         server._index.clear()
         server._index.update(idx)
 
     def _capture(self):
         captured = []
-        return patch.object(server, "_send", side_effect=lambda obj: captured.append(obj)), captured
+        return patch.object(
+            server, "_send", side_effect=lambda obj: captured.append(obj)
+        ), captured
 
     def _first(self, captured):
         return captured[0]
@@ -597,7 +707,11 @@ class TestUserCollectionRpc:
             resp = self._first(captured)
             assert "result" in resp
             result = resp["result"]
-            assert result["total"] == 2 and len(result["files"]) == 1 and len(result["skipped"]) == 1
+            assert (
+                result["total"] == 2
+                and len(result["files"]) == 1
+                and len(result["skipped"]) == 1
+            )
             assert result["files"][0]["id"] == "hello.py"
             # 预览不写盘
             assert list((server._USER_DIR).glob("*.json")) == []
@@ -612,7 +726,9 @@ class TestUserCollectionRpc:
             (src / "hello.py").write_text('import cv2\nprint("hi")\n', encoding="utf-8")
             ctx, captured = self._capture()
             with ctx:
-                server.method_import_examples(1, {"source_path": str(src), "name": "我的集合"})
+                server.method_import_examples(
+                    1, {"source_path": str(src), "name": "我的集合"}
+                )
             result = self._first(captured)["result"]
             assert result["imported"] == 1 and result["collection"] == "user_collection"
             # 集合 JSON 落盘（中文 slug 回退 user_collection）
@@ -625,7 +741,9 @@ class TestUserCollectionRpc:
             # 集合名冲突：再导入同名单独成文件，不覆盖
             ctx, captured = self._capture()
             with ctx:
-                server.method_import_examples(2, {"source_path": str(src), "name": "我的集合"})
+                server.method_import_examples(
+                    2, {"source_path": str(src), "name": "我的集合"}
+                )
             assert self._first(captured)["result"]["collection"] == "user_collection_2"
             assert len(list(server._USER_DIR.glob("*.json"))) == 2
         finally:
@@ -640,7 +758,9 @@ class TestUserCollectionRpc:
             (src / "mine.py").write_text("print(9)\n", encoding="utf-8")
             ctx, captured = self._capture()
             with ctx:
-                server.method_import_examples(1, {"source_path": str(src), "name": "mine"})
+                server.method_import_examples(
+                    1, {"source_path": str(src), "name": "mine"}
+                )
             assert "mine.py" in server._index
             # 内置示例拒绝删除
             ctx, captured = self._capture()

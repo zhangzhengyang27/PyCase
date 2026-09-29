@@ -38,7 +38,14 @@ from .run_status import (
 )
 from .security import RiskLevel
 
-SKIP_DIRS = {"__pycache__", ".git", ".venv", "node_modules", ".mypy_cache", ".pytest_cache"}
+SKIP_DIRS = {
+    "__pycache__",
+    ".git",
+    ".venv",
+    "node_modules",
+    ".mypy_cache",
+    ".pytest_cache",
+}
 
 # 合法 PyPI 包名（不含版本约束部分）：用于丢弃迁移数据中的乱码/非法包名
 _VALID_PKG_RE = re.compile(r"^[A-Za-z0-9]([A-Za-z0-9._-]*[A-Za-z0-9])?$")
@@ -160,7 +167,9 @@ class ExampleStore:
         code = spec["code"]
         file_name = spec.get("name", f"{example_id}.py")
         dir_rel = spec.get("dir")
-        cache_dir, py_path = self._materialize(example_id, file_name, code, spec.get("requirements", []), dir_rel)
+        cache_dir, py_path = self._materialize(
+            example_id, file_name, code, spec.get("requirements", []), dir_rel
+        )
         if py_path is None:
             return None
 
@@ -211,10 +220,14 @@ class ExampleStore:
                 # dir 字段越界防护：绝对路径会被 Path 拼接整体替换、'..' 可跳出
                 # 仓库根，二者都会把仓库外目录整个拷入缓存（数据外泄通道）
                 if not orig_dir.is_relative_to(self._source_root.resolve()):
-                    get_logger(__name__).error("示例 dir 字段越界，拒绝物化: %s", dir_rel)
+                    get_logger(__name__).error(
+                        "示例 dir 字段越界，拒绝物化: %s", dir_rel
+                    )
                     return None, None
                 if orig_dir.is_dir():
-                    safe = "".join(c if c.isalnum() or c in "-_" else "_" for c in dir_rel)
+                    safe = "".join(
+                        c if c.isalnum() or c in "-_" else "_" for c in dir_rel
+                    )
                     cache_dir = self.cache_dir / safe
                     # 源目录内容指纹比对：源有增删改即整体重拷。不能用缓存目录
                     # mtime 判断——每次加载都会写入 .py，把缓存 mtime 顶得比源新，
@@ -239,7 +252,9 @@ class ExampleStore:
                     return cache_dir, py_path
 
             # 退化路径：单文件物化
-            safe_id = "".join(c if c.isalnum() or c in "-_" else "_" for c in example_id)
+            safe_id = "".join(
+                c if c.isalnum() or c in "-_" else "_" for c in example_id
+            )
             cache_dir = self.cache_dir / safe_id
             cache_dir.mkdir(parents=True, exist_ok=True)
             py_path = cache_dir / py_name
@@ -274,7 +289,9 @@ class ExampleStore:
             if not p.is_file():
                 continue
             st = p.stat()
-            h.update(f"{p.relative_to(directory).as_posix()}|{st.st_size}|{int(st.st_mtime)}\n".encode())
+            h.update(
+                f"{p.relative_to(directory).as_posix()}|{st.st_size}|{int(st.st_mtime)}\n".encode()
+            )
         return h.hexdigest()
 
     def _copy_dir_contents(self, src: Path, dst: Path) -> None:
@@ -300,17 +317,23 @@ class ExampleStore:
         req_file = cache_dir / "requirements.txt"
         if req_file.exists():
             try:
-                for line in req_file.read_text(encoding="utf-8", errors="ignore").splitlines():
+                for line in req_file.read_text(
+                    encoding="utf-8", errors="ignore"
+                ).splitlines():
                     line = line.strip()
                     if line and not line.startswith("#"):
-                        existing.append(re.split(r"[<>=!~ ]", line, maxsplit=1)[0].strip())
+                        existing.append(
+                            re.split(r"[<>=!~ ]", line, maxsplit=1)[0].strip()
+                        )
             except OSError:
                 pass
         merged = list(dict.fromkeys(existing + [str(r) for r in requirements]))
         merged = [r for r in merged if _VALID_PKG_RE.match(r)]
         # 总是重写（本方法仅在示例声明了 requirements 时被调用）：
         # 已有内容中的非法包名随本次合并一并清除，实现旧缓存自我修复
-        req_file.write_text("\n".join(merged) + ("\n" if merged else ""), encoding="utf-8")
+        req_file.write_text(
+            "\n".join(merged) + ("\n" if merged else ""), encoding="utf-8"
+        )
 
     def _run_pythonpath(self, dir_rel: str | None, cache_dir: Path) -> list[str]:
         """返回运行该示例时应加入 sys.path 的目录列表。
@@ -367,13 +390,17 @@ class ExampleStore:
             item.quality_score = 0
         return item.quality_score
 
-    def _high_risk_findings(self, item: ExampleItem, key: str, code: str, tree: ast.AST) -> list[dict]:
+    def _high_risk_findings(
+        self, item: ExampleItem, key: str, code: str, tree: ast.AST
+    ) -> list[dict]:
         """执行安全扫描并返回 HIGH 风险明细（不读缓存，供内部共享一次解析结果）。"""
         try:
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
                 # content+tree 同时传入：check 不再自行读盘，避免与内存代码分叉
-                report = self._scorer.security_checker.check(Path(str(item.path)), key, content=code, tree=tree)
+                report = self._scorer.security_checker.check(
+                    Path(str(item.path)), key, content=code, tree=tree
+                )
             return [
                 {"description": r.description, "category": r.category}
                 for r in report.risk_details
@@ -435,7 +462,9 @@ class ExampleStore:
                 findings = self._high_risk_findings(item, key, code, tree)
                 self._risk_findings[key] = findings
             if self._module_index is not None and self._module_index.available:
-                mods = third_party_imports(code, tree, [Path(p) for p in item.run_pythonpath])
+                mods = third_party_imports(
+                    code, tree, [Path(p) for p in item.run_pythonpath]
+                )
                 if self._module_index.missing_modules(mods):
                     status = MISSING_DEPS
                 else:
@@ -457,17 +486,24 @@ class ExampleStore:
         self._search_recursive(root, query_lower, results)
         return results
 
-    def _search_recursive(self, item: ExampleItem, query_lower: str, results: list[ExampleItem]) -> None:
+    def _search_recursive(
+        self, item: ExampleItem, query_lower: str, results: list[ExampleItem]
+    ) -> None:
         if not item.is_dir:
             matched = False
             # 1. 名称 / 文件名匹配
-            if query_lower in item.name.lower() or query_lower in item.path.name.lower():
+            if (
+                query_lower in item.name.lower()
+                or query_lower in item.path.name.lower()
+            ):
                 results.append(item)
                 matched = True
             # 2. README / 说明内容匹配
             if not matched and item.readme_path and item.readme_path.exists():
                 try:
-                    content = item.readme_path.read_text(encoding="utf-8", errors="ignore").lower()
+                    content = item.readme_path.read_text(
+                        encoding="utf-8", errors="ignore"
+                    ).lower()
                     if query_lower in content:
                         results.append(item)
                         matched = True
@@ -505,7 +541,9 @@ class ExampleStore:
             # 会截断整个集合文件（内含几十上百个示例），且 git 之外无副本
             tmp = item.json_file.with_name(item.json_file.name + ".tmp")
             try:
-                tmp.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+                tmp.write_text(
+                    json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8"
+                )
                 os.replace(tmp, item.json_file)
             finally:
                 tmp.unlink(missing_ok=True)
@@ -540,7 +578,11 @@ class ExampleStore:
             return False
 
         examples = data.get("examples", [])
-        remaining = [s for s in examples if not (isinstance(s, dict) and s.get("id") == item.json_id)]
+        remaining = [
+            s
+            for s in examples
+            if not (isinstance(s, dict) and s.get("id") == item.json_id)
+        ]
         if len(remaining) == len(examples):
             return False  # 集合里已无此条目
         data["examples"] = remaining
@@ -553,7 +595,9 @@ class ExampleStore:
                 # 临时文件 + 原子替换（与 save_item 同一防护：中途崩溃不截断集合文件）
                 tmp = item.json_file.with_name(item.json_file.name + ".tmp")
                 try:
-                    tmp.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+                    tmp.write_text(
+                        json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8"
+                    )
                     os.replace(tmp, item.json_file)
                 finally:
                     tmp.unlink(missing_ok=True)

@@ -48,11 +48,16 @@ def _make_root(tmp_path: Path) -> None:
         (tmp_path / d).mkdir()
 
 
-def _write_collection(tmp_path: Path, name: str, examples: list[dict], *, user: bool = False) -> Path:
+def _write_collection(
+    tmp_path: Path, name: str, examples: list[dict], *, user: bool = False
+) -> Path:
     coll = tmp_path / ("user_examples" if user else "json_examples")
     coll.mkdir(exist_ok=True)
     path = coll / f"{name}.json"
-    path.write_text(json.dumps({"name": name, "examples": examples}, ensure_ascii=False), encoding="utf-8")
+    path.write_text(
+        json.dumps({"name": name, "examples": examples}, ensure_ascii=False),
+        encoding="utf-8",
+    )
     return path
 
 
@@ -71,7 +76,11 @@ def test_g1_dataset_index_golden():
     # 全量物化成功：每条示例都有真实 .py，且与 JSON 中的代码逐字一致
     missing = [i.json_id for i in items.values() if not i.path.is_file()]
     assert missing == []
-    mismatched = [i.json_id for i in items.values() if i.path.read_text(encoding="utf-8") != i.code]
+    mismatched = [
+        i.json_id
+        for i in items.values()
+        if i.path.read_text(encoding="utf-8") != i.code
+    ]
     assert mismatched == []
 
 
@@ -83,14 +92,20 @@ def test_g1_dir_example_materializes_siblings_and_run_path(tmp_path):
     (src / "data.txt").write_text("payload-v1", encoding="utf-8")
     (src / "helper.py").write_text("VALUE = 42\n", encoding="utf-8")
     code = "import helper\n\nprint(helper.VALUE, open('data.txt').read())\n"
-    _write_collection(tmp_path, "demo", [{"id": "demo_1", "name": "main.py", "code": code, "dir": "topics/demo"}])
+    _write_collection(
+        tmp_path,
+        "demo",
+        [{"id": "demo_1", "name": "main.py", "code": code, "dir": "topics/demo"}],
+    )
 
     store = ExampleStore(base_dir=tmp_path)
     item = _flat(store.load())["demo_1"]
 
     assert item.path.read_text(encoding="utf-8") == code  # JSON 代码覆盖目标文件
     assert (item.path.parent / "data.txt").read_text(encoding="utf-8") == "payload-v1"
-    assert (item.path.parent / "helper.py").read_text(encoding="utf-8") == "VALUE = 42\n"
+    assert (item.path.parent / "helper.py").read_text(
+        encoding="utf-8"
+    ) == "VALUE = 42\n"
     assert str(src) in item.run_pythonpath  # 原始目录（包/兄弟导入）
     assert str(item.path.parent) in item.run_pythonpath  # 物化缓存目录
 
@@ -101,7 +116,11 @@ def test_g1_cache_self_heal_after_delete(tmp_path):
     src = tmp_path / "tools" / "crawler"
     src.mkdir(parents=True)
     (src / "seed.txt").write_text("seeds", encoding="utf-8")
-    _write_collection(tmp_path, "tools", [{"id": "t1", "name": "main.py", "code": "print(1)\n", "dir": "tools/crawler"}])
+    _write_collection(
+        tmp_path,
+        "tools",
+        [{"id": "t1", "name": "main.py", "code": "print(1)\n", "dir": "tools/crawler"}],
+    )
 
     store = ExampleStore(base_dir=tmp_path)
     assert _flat(store.load())["t1"].path.is_file()  # 首次物化已发生
@@ -122,7 +141,11 @@ def test_g1_new_source_file_syncs_even_if_cache_newer(tmp_path):
     src = tmp_path / "topics" / "late"
     src.mkdir(parents=True)
     (src / "base.txt").write_text("base", encoding="utf-8")
-    _write_collection(tmp_path, "late", [{"id": "l1", "name": "main.py", "code": "print(1)\n", "dir": "topics/late"}])
+    _write_collection(
+        tmp_path,
+        "late",
+        [{"id": "l1", "name": "main.py", "code": "print(1)\n", "dir": "topics/late"}],
+    )
 
     store = ExampleStore(base_dir=tmp_path)
     _flat(store.load())  # 首次物化：缓存 mtime 被顶到源之后
@@ -145,7 +168,11 @@ def test_g1_source_file_change_triggers_recopy(tmp_path):
     src = tmp_path / "topics" / "edit"
     src.mkdir(parents=True)
     (src / "data.txt").write_text("v1", encoding="utf-8")
-    _write_collection(tmp_path, "edit", [{"id": "e1", "name": "main.py", "code": "print(1)\n", "dir": "topics/edit"}])
+    _write_collection(
+        tmp_path,
+        "edit",
+        [{"id": "e1", "name": "main.py", "code": "print(1)\n", "dir": "topics/edit"}],
+    )
 
     store = ExampleStore(base_dir=tmp_path)
     _flat(store.load())
@@ -177,7 +204,10 @@ def _flaky_write_text_once(target_dir: Path):
 def test_g2_collection_survives_midwrite_failure(tmp_path, monkeypatch):
     """30 条示例的集合在回写中途失败时必须逐字节完好——不能截断、不能留 .tmp。"""
     _make_root(tmp_path)
-    examples = [{"id": f"ex{i}", "name": f"ex{i}.py", "code": f"print({i})\n"} for i in range(30)]
+    examples = [
+        {"id": f"ex{i}", "name": f"ex{i}.py", "code": f"print({i})\n"}
+        for i in range(30)
+    ]
     json_file = _write_collection(tmp_path, "bulk", examples)
     before = json_file.read_text(encoding="utf-8")
 
