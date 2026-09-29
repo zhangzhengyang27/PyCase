@@ -23,6 +23,7 @@ import { selectedId, pendingHighRiskRun, isRunning, currentRunId, currentRunMeta
 import { importWizardOpen } from '../../src/store/import'
 import { getTestApi } from '../../src/store/index'
 import { runTimeout, skipHighRiskConfirm } from '../../src/store/prefs'
+import { storageReport } from '../../src/store/storage'
 import { toasts } from '../../toast'
 
 // ---------------------------------------------------------------------------
@@ -392,6 +393,102 @@ describe('AISettingsModal', () => {
 // ---------------------------------------------------------------------------
 // ImportWizardModal：三步向导（pick → preview → done）
 // ---------------------------------------------------------------------------
+describe('设置中心·存储分区（A6 缓存入口）', () => {
+  const report = {
+    workspace: {
+      root: '/tmp/ws',
+      bytes: 1024 * 1024 * 300,
+      max_bytes: 1024 * 1024 * 1024,
+      entries: [
+        { key: 'a-1', bytes: 100, last_used: 1, has_assets: false },
+        { key: 'b-2', bytes: 200, last_used: 2, has_assets: true }
+      ],
+      asset_entries: 1
+    },
+    legacy: { root: '/tmp/cache', bytes: 1024 * 1024 * 120, entries: 3151 },
+    history: { bytes: 2048 }
+  }
+
+  it('打开设置时拉取占用：显示工作区/旧根/编辑历史与含资产条目数', async () => {
+    vi.mocked(window.sidecar.storageReport).mockResolvedValue(report)
+    aiSettingsOpen.value = true
+    track(mount(AISettingsModal))
+    await flushPromises()
+
+    expect(window.sidecar.storageReport).toHaveBeenCalled()
+    const ws = document.body.querySelector('[data-testid="storage-workspace"]')!
+    expect(ws.textContent).toContain('300.0MB')
+    expect(ws.textContent).toContain('1024.0MB')
+    expect(document.body.querySelector('[data-testid="storage-assets"]')!.textContent).toContain('1 个')
+    expect(document.body.querySelector('[data-testid="storage-legacy"]')!.textContent).toContain('3151 项')
+    expect(document.body.querySelector('[data-testid="storage-history"]')!.textContent).toContain('0.0MB')
+  })
+
+  it('清理干净工作区：先弹确认（只数干净条目）再调 clean', async () => {
+    vi.mocked(window.sidecar.storageReport).mockResolvedValue(report)
+    vi.mocked(window.sidecar.cleanWorkspace).mockResolvedValue({ removed: 1, kept: 1, freed_bytes: 100 })
+    aiSettingsOpen.value = true
+    track(mount(AISettingsModal))
+    await flushPromises()
+
+    findButton('清理干净工作区', document.body).click()
+    await nextTick()
+    const dialog = document.body.querySelector('[role="dialog"][aria-label="清理工作区"]')!
+    expect(dialog.textContent).toContain('1 个干净工作区副本')
+    expect(window.sidecar.cleanWorkspace).not.toHaveBeenCalled()
+
+    findButton('清理', dialog).click()
+    await flushPromises()
+    expect(window.sidecar.cleanWorkspace).toHaveBeenCalledWith('clean')
+    expect(toasts.value.some((t) => t.text.includes('已清理 1 个工作区'))).toBe(true)
+  })
+
+  it('全部清理：确认文案点明含上传资源且不可撤销，按 danger 档调用 all', async () => {
+    vi.mocked(window.sidecar.storageReport).mockResolvedValue(report)
+    vi.mocked(window.sidecar.cleanWorkspace).mockResolvedValue({ removed: 2, kept: 0, freed_bytes: 300 })
+    aiSettingsOpen.value = true
+    track(mount(AISettingsModal))
+    await flushPromises()
+
+    ;(document.body.querySelector('[data-testid="storage-clean-all"]') as HTMLButtonElement).click()
+    await nextTick()
+    const dialog = document.body.querySelector('[role="dialog"][aria-label="清理工作区"]')!
+    expect(dialog.textContent).toContain('包含你上传的资源与运行产物')
+    expect(dialog.textContent).toContain('不可撤销')
+
+    findButton('全部清理', dialog).click()
+    await flushPromises()
+    expect(window.sidecar.cleanWorkspace).toHaveBeenCalledWith('all')
+  })
+
+  it('回收旧版缓存：仅在存在 v1 遗留时出现，确认后调用回收', async () => {
+    vi.mocked(window.sidecar.storageReport).mockResolvedValue(report)
+    vi.mocked(window.sidecar.reclaimLegacyCache).mockResolvedValue({ removed: 3151, freed_bytes: 1024 * 1024 * 120 })
+    aiSettingsOpen.value = true
+    track(mount(AISettingsModal))
+    await flushPromises()
+
+    findButton('回收旧版缓存', document.body).click()
+    await nextTick()
+    const dialog = document.body.querySelector('[role="dialog"][aria-label="回收旧版缓存"]')!
+    findButton('回收', dialog).click()
+    await flushPromises()
+    expect(window.sidecar.reclaimLegacyCache).toHaveBeenCalled()
+    expect(toasts.value.some((t) => t.text.includes('已回收旧缓存 3151 项'))).toBe(true)
+  })
+
+  it('无 v1 遗留时不显示回收按钮', async () => {
+    vi.mocked(window.sidecar.storageReport).mockResolvedValue({ ...report, legacy: { root: '/tmp', bytes: 0, entries: 0 } })
+    aiSettingsOpen.value = true
+    track(mount(AISettingsModal))
+    await flushPromises()
+    const reclaimBtn = Array.from(document.body.querySelectorAll('button')).find((b) =>
+      (b.textContent || '').includes('回收旧版缓存')
+    )
+    expect(reclaimBtn ?? null).toBeNull()
+  })
+})
+
 describe('ImportWizardModal', () => {
   const FILES = [
     { id: 'a.py', name: 'a', tags: [], requirements: ['requests', 'numpy', 'pandas'], bytes: 2048 },

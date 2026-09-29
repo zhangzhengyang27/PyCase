@@ -1,11 +1,20 @@
 <script setup lang="ts">
 // SettingsModal：设置弹窗（App.vue 侧栏「设置」入口，原 AI 设置弹窗扩展而来）。
 // 分区：AI 代码解释（key 存 userData，前端不接触明文）+ 运行（超时时长）+
-// 安全（高危确认开关，即 HighRiskConfirmModal「不再提示」的恢复入口）。
+// 安全（高危确认开关，即 HighRiskConfirmModal「不再提示」的恢复入口）+
+// 存储（工作区占用与两档清理 + v1 旧根回收；数据来自 sidecar storage_report）。
 // 字段输入即时校验，保存时全量拦截，校验失败聚焦第一个错误字段。
 import { computed, nextTick, reactive, ref, watch } from 'vue'
 import { aiSettings, aiSettingsOpen, closeAISettings } from '../src/store/ai'
 import { runTimeout, setRunTimeout, setSkipHighRiskConfirm, skipHighRiskConfirm } from '../src/store/prefs'
+import {
+  cleanWorkspace,
+  loadStorageReport,
+  reclaimLegacyCache,
+  storageBusy,
+  storageLoading,
+  storageReport
+} from '../src/store/storage'
 import { pushToast } from '../toast'
 import { api } from '../src/sidecar-client'
 import AppModal from './base/AppModal.vue'
@@ -31,8 +40,35 @@ watch(aiSettingsOpen, (open) => {
     baseUrl.value = aiSettings.baseUrl
     touched.model = touched.baseUrl = touched.apiKey = false
     attempted.value = false
+    // 存储分区：打开设置时拉一次占用（数据在 sidecar 侧，前端不缓存）
+    void loadStorageReport()
   }
+}, { immediate: true })
+
+const MB = 1024 * 1024
+const mbText = (bytes: number): string => `${(bytes / MB).toFixed(1)}MB`
+const storagePercent = computed(() => {
+  const ws = storageReport.value?.workspace
+  if (!ws || !ws.max_bytes) return 0
+  return Math.min(100, Math.round((ws.bytes / ws.max_bytes) * 100))
 })
+/** 清理确认：两档语义不同，必须让用户看到差别（clean 保留上传资源与运行产物） */
+const cleanMode = ref<'' | 'clean' | 'all'>('')
+const legacyConfirmOpen = ref(false)
+const cleanableCount = computed(
+  () => storageReport.value?.workspace.entries.filter((e) => !e.has_assets).length ?? 0
+)
+
+async function confirmClean(): Promise<void> {
+  const mode = cleanMode.value || 'clean'
+  cleanMode.value = ''
+  await cleanWorkspace(mode)
+}
+
+async function confirmLegacy(): Promise<void> {
+  legacyConfirmOpen.value = false
+  await reclaimLegacyCache()
+}
 
 const errors = computed(() => ({
   model: model.value.trim() ? '' : '请输入模型名（默认 deepseek-chat）',
@@ -165,6 +201,54 @@ async function save(): Promise<void> {
         </p>
       </section>
 
+      <section class="border-t border-line-hairline pt-3.5" data-testid="settings-storage">
+        <h3 class="m-0 mb-2 text-control font-semibold text-ink">存储</h3>
+        <p class="m-0 mb-2 text-caption text-ink-mute leading-[1.5]">
+          运行示例会在本地生成工作区副本。清理只动副本，不改示例源码。
+        </p>
+        <div v-if="storageReport" class="flex flex-col gap-1.5">
+          <div class="flex items-baseline justify-between text-control">
+            <span class="text-ink-dim">示例工作区</span>
+            <span class="text-ink tabular-nums" data-testid="storage-workspace">
+              {{ mbText(storageReport.workspace.bytes) }} / {{ mbText(storageReport.workspace.max_bytes) }}
+            </span>
+          </div>
+          <div class="h-1 rounded-full bg-fill-subtle overflow-hidden" role="progressbar"
+               :aria-valuenow="storagePercent" aria-valuemin="0" aria-valuemax="100">
+            <div class="h-full bg-accent" :style="{ width: storagePercent + '%' }"></div>
+          </div>
+          <div class="flex items-baseline justify-between text-caption text-ink-mute">
+            <span>{{ storageReport.workspace.entries.length }} 个工作区</span>
+            <span v-if="storageReport.workspace.asset_entries > 0" data-testid="storage-assets">
+              {{ storageReport.workspace.asset_entries }} 个含上传资源/运行产物
+            </span>
+          </div>
+          <div v-if="storageReport.legacy.entries > 0" class="flex items-baseline justify-between text-caption text-ink-mute">
+            <span>旧版缓存（v1 遗留）</span>
+            <span data-testid="storage-legacy">{{ mbText(storageReport.legacy.bytes) }} · {{ storageReport.legacy.entries }} 项</span>
+          </div>
+          <div v-if="storageReport.history.bytes > 0" class="flex items-baseline justify-between text-caption text-ink-mute">
+            <span>编辑历史（可恢复编辑的快照）</span>
+            <span data-testid="storage-history">{{ mbText(storageReport.history.bytes) }}</span>
+          </div>
+        </div>
+        <p v-else-if="storageLoading" class="m-0 text-caption text-ink-mute">正在读取占用…</p>
+        <p v-else class="m-0 text-caption text-ink-mute">暂时读不到占用信息（sidecar 未就绪）</p>
+        <div class="flex flex-wrap gap-2 mt-2.5">
+          <BaseButton :loading="storageBusy === 'clean'" @click="cleanMode = 'clean'">
+            清理干净工作区
+          </BaseButton>
+          <BaseButton v-if="storageReport && storageReport.legacy.entries > 0"
+                      :loading="storageBusy === 'legacy'" @click="legacyConfirmOpen = true">
+            回收旧版缓存
+          </BaseButton>
+          <BaseButton variant="danger" :loading="storageBusy === 'all'"
+                      @click="cleanMode = 'all'" data-testid="storage-clean-all">
+            全部清理
+          </BaseButton>
+        </div>
+      </section>
+
       <section class="border-t border-line-hairline pt-3.5">
         <h3 class="m-0 mb-2 text-control font-semibold text-ink">安全</h3>
         <label class="flex items-center gap-2 text-control text-ink-dim cursor-pointer select-none">
@@ -179,6 +263,39 @@ async function save(): Promise<void> {
     <template #footer>
       <BaseButton @click="closeAISettings()">取消</BaseButton>
       <BaseButton variant="primary" :loading="saving" @click="save()">保存</BaseButton>
+    </template>
+  </AppModal>
+
+  <!-- 清理确认：两档语义差别要讲清（clean 保留上传资源与运行产物；all 连资产一起删） -->
+  <AppModal v-if="cleanMode" title="清理工作区" :max-width="420" @close="cleanMode = ''">
+    <p class="m-0 text-control text-ink-dim leading-[1.6]">
+      <template v-if="cleanMode === 'clean'">
+        将删除<strong class="text-ink">{{ cleanableCount }} 个干净工作区副本</strong>，
+        保留含上传资源/运行产物的条目；示例源码不受影响，下次运行会重新生成副本。
+      </template>
+      <template v-else>
+        将删除<strong class="text-ink text-danger">全部 {{ storageReport?.workspace.entries.length ?? 0 }} 个工作区副本</strong>，
+        <strong class="text-ink">包含你上传的资源与运行产物</strong>——此操作不可撤销。
+      </template>
+    </p>
+    <template #footer>
+      <BaseButton @click="cleanMode = ''">取消</BaseButton>
+      <BaseButton :variant="cleanMode === 'all' ? 'danger' : 'primary'" @click="confirmClean()">
+        {{ cleanMode === 'all' ? '全部清理' : '清理' }}
+      </BaseButton>
+    </template>
+  </AppModal>
+
+  <AppModal v-if="legacyConfirmOpen" title="回收旧版缓存" :max-width="420" @close="legacyConfirmOpen = false">
+    <p class="m-0 text-control text-ink-dim leading-[1.6]">
+      将回收旧版（v1）遗留的
+      <strong class="text-ink">{{ storageReport?.legacy.entries ?? 0 }} 项</strong>
+      缓存（约 {{ mbText(storageReport?.legacy.bytes ?? 0) }}）。这些目录是旧版本的按示例缓存，
+      当前版本不再使用；回收不影响示例源码与当前工作区。
+    </p>
+    <template #footer>
+      <BaseButton @click="legacyConfirmOpen = false">取消</BaseButton>
+      <BaseButton variant="primary" @click="confirmLegacy()">回收</BaseButton>
     </template>
   </AppModal>
 </template>

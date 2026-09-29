@@ -22,6 +22,7 @@ import {
 import { detailTestHooks } from './detail'
 import { assetsTestHooks } from './assets'
 import { envTestHooks } from './env'
+import { storageTestHooks } from './storage'
 import { applyFavorites, applyHistory, applyRunPrefs, applySafety } from './prefs'
 
 /**
@@ -64,6 +65,7 @@ export function getTestApi(): Record<string, unknown> {
     ...catalogTestHooks(),
     ...detailTestHooks(),
     ...assetsTestHooks(),
-    ...envTestHooks()
+    ...envTestHooks(),
+    ...storageTestHooks()
   }
 }

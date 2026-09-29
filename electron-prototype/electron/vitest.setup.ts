@@ -45,6 +45,15 @@ function createSidecarStub() {
       set: vi.fn(async () => ({ ok: true }))
     },
 
+    // A6：存储治理 / 编辑历史 / 缺依赖修复
+    storageReport: vi.fn(async () => null),
+    cleanWorkspace: vi.fn(async () => ({ removed: 0, kept: 0, freed_bytes: 0 })),
+    reclaimLegacyCache: vi.fn(async () => ({ removed: 0, freed_bytes: 0 })),
+    listVersions: vi.fn(async () => ({ id: '', versions: [] })),
+    readVersion: vi.fn(async () => ({ id: '', ts: '', code: '' })),
+    restoreVersion: vi.fn(async () => ({ id: '', restored: '' })),
+    installExampleDeps: vi.fn(async () => ({ installed: [], failed: [], packages: [] })),
+
     ai: {
       getSettings: vi.fn(async () => ({})),
       setSettings: vi.fn(async () => ({ ok: true })),
