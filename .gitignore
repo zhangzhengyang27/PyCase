@@ -32,6 +32,8 @@ __pycache__/
 # 打包产物（electron-builder + PyInstaller sidecar）
 electron-prototype/electron/dist/
 electron-prototype/electron/sidecar-dist/
+# PyInstaller 中间产物（Analysis/work；sidecar 冻结的增量缓存）
+electron-prototype/electron/build-pyinstaller/work/
 
 # TypeScript 增量构建缓存
 *.tsbuildinfo
