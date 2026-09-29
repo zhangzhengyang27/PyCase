@@ -58,6 +58,9 @@ export interface SidecarAPI {
     set: (name: string, value: unknown) => Promise<unknown>
   }
 
+  // 服务端检索（代码搜索：列表不含 code，按需读文件）
+  searchExamples: (query: string, limit?: number) => Promise<unknown>
+
   // 应用与环境（A5.5 帮助面板 / 首启引导页）
   app: {
     info: () => Promise<unknown>
@@ -134,6 +137,9 @@ const sidecarAPI: SidecarAPI = {
     get: (name: string) => ipcRenderer.invoke('store:get', name),
     set: (name: string, value: unknown) => ipcRenderer.invoke('store:set', name, value)
   },
+
+  // 服务端检索
+  searchExamples: (query: string, limit?: number) => ipcRenderer.invoke('sidecar:searchExamples', query, limit),
 
   // 应用与环境
   app: {

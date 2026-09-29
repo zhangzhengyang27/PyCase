@@ -149,6 +149,10 @@ export const api = {
     request('ai:explain', (c: string, f: string) => bridge.ai.explain(c, f), [code, fileName]),
   aiStop: (runId: string) => request('ai:stop', (id: string) => bridge.ai.stop(id), [runId]),
 
+  // 服务端检索（契约 §5：元数据内存匹配 + code 按需读文件）
+  searchExamples: (query: string, limit = 50) =>
+    request('search_examples', () => bridge.searchExamples(query, limit), [query, limit]),
+
   // 环境准备状态（A5.5 首启引导页 / 帮助面板）
   envStatus: () => request('env_status', () => bridge.env.status(), []),
   setRunEnv: (mode: 'shared' | 'system') => request('set_run_env', () => bridge.env.setRunEnv(mode), [mode]),

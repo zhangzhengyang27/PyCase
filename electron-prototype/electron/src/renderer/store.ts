@@ -70,9 +70,19 @@ let _galleryTimer: ReturnType<typeof setTimeout> | undefined
 let _toolboxTimer: ReturnType<typeof setTimeout> | undefined
 const appliedSearch = ref('')
 const appliedToolSearch = ref('')
+// 服务端代码检索命中集（契约 §5：列表不含 code，代码搜索由 sidecar 按需读文件）
+const codeHitIds = ref<Set<string>>(new Set())
+let _hitTimer: ReturnType<typeof setTimeout> | undefined
 watch(searchQuery, (v) => {
   clearTimeout(_galleryTimer)
   _galleryTimer = setTimeout(() => (appliedSearch.value = v), 120)
+  // 代码命中另拉一次服务端检索（更长防抖，避免逐字符打请求）；短查询不值当
+  clearTimeout(_hitTimer)
+  if (v.trim().length < 2) {
+    codeHitIds.value = new Set()
+    return
+  }
+  _hitTimer = setTimeout(() => void refreshCodeHits(v.trim()), 260)
 })
 watch(toolSearchQuery, (v) => {
   clearTimeout(_toolboxTimer)
@@ -96,7 +106,8 @@ const filterContext = computed<FilterEngine.FilterContext>(() => ({
   favorites: favorites.value,
   runStatus: runStatusIndex.value,
   themeMatchers: THEME_MATCHERS,
-  lastRunAt: lastRunIndex.value
+  lastRunAt: lastRunIndex.value,
+  codeHitIds: codeHitIds.value
 }))
 
 const galleryQuery = computed<FilterEngine.FilterQuery>(() => ({
@@ -137,6 +148,17 @@ const countBaseQuery = computed<FilterEngine.FilterQuery>(() => ({
 /** 画廊池：工具只待在工具箱——画廊（总览分区/浏览筛选/侧栏 facet）一律不含 tools，
  *  与工具箱查询的 category:'tools' 互为补集 */
 export const galleryExamples = computed<VExample[]>(() => examples.value.filter((e) => e.category !== 'tools'))
+
+/** 服务端代码检索：命中 id 并入筛选（失败时静默降级为仅元数据匹配） */
+async function refreshCodeHits(query: string): Promise<void> {
+  try {
+    const res = (await api.searchExamples(query)) as { hits?: Array<{ id: string; reason: string }> }
+    codeHitIds.value = new Set((res?.hits || []).filter((h) => h.reason === 'code').map((h) => h.id))
+  } catch (err) {
+    console.error('[search] 服务端检索失败，代码搜索降级:', err)
+    codeHitIds.value = new Set()
+  }
+}
 
 export const filtered = computed(() => FilterEngine.filterExamples(galleryExamples.value, galleryQuery.value, filterContext.value) as VExample[])
 
@@ -995,6 +1017,7 @@ export function getTestApi(): Record<string, unknown> {
       toolSearchQuery.value = ''
       appliedSearch.value = ''
       appliedToolSearch.value = ''
+      codeHitIds.value = new Set()
     },
     setFavOnly: (v: boolean) => {
       favOnly.value = v
@@ -1015,6 +1038,11 @@ export function getTestApi(): Record<string, unknown> {
       return runHistory.value.length
     },
     sortBy: () => sortBy.value,
+    setSearch: (q: string) => {
+      searchQuery.value = q
+    },
+    appliedSearch: () => appliedSearch.value,
+    codeHitIds: () => Array.from(codeHitIds.value),
     setSortBy: (s: 'quality_desc' | 'name' | 'last_run') => {
       sortBy.value = s
       persistViewPrefs()

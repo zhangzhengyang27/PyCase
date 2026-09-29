@@ -392,6 +392,7 @@ ipcMain.handle('app:openLog', async () => {
 ipcMain.handle('sidecar:ping', () => callSidecar('ping'))
 ipcMain.handle('sidecar:envStatus', () => callSidecar('env_status'))
 ipcMain.handle('sidecar:setRunEnv', (_e, mode: string) => callSidecar('set_run_env', { mode }))
+ipcMain.handle('sidecar:searchExamples', (_e, query: string, limit?: number) => callSidecar('search_examples', { query, limit }))
 ipcMain.handle('sidecar:listExamples', () => callSidecar('list_examples'))
 ipcMain.handle('sidecar:getExample', (_e, id: string) => callSidecar('get_example', { id }))
 ipcMain.handle('sidecar:parseArgs', (_e, id: string) => callSidecar('parse_args', { id }))
@@ -883,6 +884,22 @@ function runSmokeTest(): void {
           const head = sec.firstElementChild;
           return head ? emojiRe.test(chromeText(head)) : false;
         });
+        // 1b) 服务端代码搜索：列表已不含 code，按代码标识符必须仍能命中
+        const app = window.__app;
+        const codeHit = await window.sidecar.searchExamples('randint', 20);
+        out.codeHitReasons = (codeHit.hits || []).map((h) => h.reason);
+        out.codeHitCount = (codeHit.hits || []).length;
+        // 元数据检索仍走内存
+        const metaHit = await window.sidecar.searchExamples('fizzbuzz', 20);
+        out.metaHitCount = (metaHit.hits || []).length;
+        // UI 路径：搜索框输入代码词 → 防抖 + 服务端检索 → 命中集合与结果集
+        window.__app.resetViewFilters();
+        window.__app.setSearch('randint');
+        await sleep(900);
+        out.uiCodeHits = window.__app.codeHitIds().length;
+        out.uiFiltered = window.__app.filteredCount();
+        window.__app.setSearch('');
+        await sleep(300);
         // 2) 进浏览态：点「浏览全部」（真实用户路径）
         const browseAll = Array.from(document.querySelectorAll('button')).find((b) => (b.textContent || '').includes('浏览全部'));
         if (!browseAll) return { fatal: '总览页找不到「浏览全部」按钮' };
@@ -929,6 +946,12 @@ function runSmokeTest(): void {
         if (p.cardChip !== true || p.cardChipSvg !== true) problems.push('卡片缺语义图标 chip')
         if (p.cardChipText !== '') problems.push(`图标 chip 内含文本（emoji 残留？）: ${p.cardChipText}`)
         if (p.cardEmoji || p.cardsEmoji || p.sectionEmoji) problems.push('页面仍有 emoji 文本')
+        // 代码搜索（契约 §5）：列表不带 code，命中必须来自服务端按需读文件
+        if ((p.codeHitCount as number) < 1) problems.push('代码检索无命中（服务端检索未接线？）')
+        if (!(p.codeHitReasons as string[]).includes('code')) problems.push(`代码检索命中原因异常: ${JSON.stringify(p.codeHitReasons)}`)
+        if ((p.metaHitCount as number) < 1) problems.push('元数据检索无命中')
+        if ((p.uiCodeHits as number) < 1) problems.push('渲染层未合并服务端代码命中（切面未接线？）')
+        if ((p.uiFiltered as number) < 1) problems.push('按代码词搜索后结果为空')
         // 分区构成：主题分类是服务端下发的派生事实（契约 §3.2/§5），漂移必须暴露。
         // 冻结基线口径 = **画廊池（不含 tools）**，数值等于迁移前 v1 的 TS 谓词分类结果
         // （已用 themes.ts 原谓词对 1496 条逐条独立复核：零不一致）。

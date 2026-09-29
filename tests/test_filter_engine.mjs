@@ -272,3 +272,15 @@ test("matchExample: 全文搜索命中 _codeLower 预处理缓存；无缓存时
   const ex2 = { id: "b", name: "b.py", category: "json", code: "PRINT(1)" };
   assert.equal(FE.matchExample(ex2, { q: "print" }), true);
 });
+
+test("matchExample: 服务端代码命中集参与全文匹配（v2 列表不含 code）", () => {
+  // 列表不再下发 code：客户端匹配不到，命中由 sidecar 检索给出（契约 §5）
+  const ex = { id: "c", name: "c.py", category: "json" };
+  assert.equal(FE.matchExample(ex, { q: "randint" }), false);
+  assert.equal(FE.matchExample(ex, { q: "randint" }, { codeHitIds: new Set(["c"]) }), true);
+  // 命中集只放行命中项，不误伤其它条目
+  const other = { id: "d", name: "d.py", category: "json" };
+  assert.equal(FE.matchExample(other, { q: "randint" }, { codeHitIds: new Set(["c"]) }), false);
+  // 空白查询不因命中集放行（查询为空即不过滤）
+  assert.equal(FE.matchExample(other, { q: "" }, { codeHitIds: new Set(["c"]) }), true);
+});

@@ -59,6 +59,8 @@ export interface FilterContext {
   themeMatchers?: Record<string, (ex: any) => boolean>
   /** 示例 id → 最近一次运行时间戳 ms（排序用） */
   lastRunAt?: Map<string, number>
+  /** 服务端代码检索命中 id（v2 列表不含 code，代码搜索由 sidecar 承接） */
+  codeHitIds?: Set<string>
 }
 
 export interface TagFacet {
@@ -184,7 +186,9 @@ export function matchExample(ex: ExampleLike, rawQuery: FilterQuery, ctx?: Filte
     // 优先命中 _codeLower 预处理缓存，避免每次按键对 1300+ 示例重新 toLowerCase
     const codeLower = ex._codeLower !== undefined ? ex._codeLower : (ex.code || '').toLowerCase()
     const hitCode = !!codeLower && codeLower.includes(query.q)
-    if (!hitName && !hitTags && !hitCode) return false
+    // v2：列表不带 code，代码命中由服务端检索给出（ctx.codeHitIds）
+    const hitServer = !!(ctx && ctx.codeHitIds && ctx.codeHitIds.has(ex.id))
+    if (!hitName && !hitTags && !hitCode && !hitServer) return false
   }
   return true
 }
