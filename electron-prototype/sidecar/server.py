@@ -783,15 +783,18 @@ def _is_protected_asset(item: ExampleItem, filename: str) -> bool:
 
 
 def _collect_assets(item: ExampleItem) -> list[dict[str, Any]]:
-    """列出示例目录中的资源文件（排除示例脚本与 __init__.py）。"""
+    """列出示例目录中的用户资源文件。
+
+    排除受保护文件（示例脚本、__init__.py、requirements.txt）：它们不可删除，
+    列进资源面板只会给出"能删但删不掉"的死入口。
+    """
     d = _asset_dir(item)
     assets = []
     try:
         for p in sorted(d.iterdir()):
             if not p.is_file():
                 continue
-            # 排除 Python 脚本（示例源码 / __init__.py）
-            if p.suffix.lower() == ".py":
+            if _is_protected_asset(item, p.name):
                 continue
             try:
                 st = p.stat()

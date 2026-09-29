@@ -305,10 +305,23 @@ Lucide 单一来源（stroke 1.5，round cap/join），尺寸三档 14 / 16 / 20
 - **#6 组件层字面量（该批）**：卡片/列表/工具条/筛选栏/总览的颜色字面量与 `bg-accent/15`、`rounded-full`、`text-white`（强调底文字改 `text-on-accent`）全部改为 token 表达式。
 - 新增可复用表面类：`.chip-ic`（语义图标 chip）、`.card-sel`、`.stat-dot`（状态圆点）、`.seg`（分段控件，mac 抬起段 / win 强调下划线）。
 
+**A4 落地进度**（运行器 / 详情批）：
+
+已退役：
+- **#3 字重（详情/运行器及其面板）**：`BaseButton` 的 510 与详情页标签页的 510 清零，面板/历史/参数表单的 590 改 500/600；全仓非标字重 26 → 11（余者全在 A5 的弹窗批：AISettingsModal / HighRiskConfirmModal / ImportWizardModal / AppModal / AppEmpty）。
+- **#6 组件层字面量（该批）**：详情头/标签页/面板/参数表单/输出与历史面板改走 token，`bg-danger-bg` 状态徽章统一为「圆点 + 中性文字」，`text-white` 在强调底改为 `text-on-accent`。
+- 新增可复用表面类：`.panel` / `.p-head`、`.tab-row` / `.tab`（mac 抬起段 / win 强调下划线）、`.console`（跟随主题的终端面）、`.btn-danger-deep`（危险 = 红色文字按钮，A1 §1.5）。
+- 停止按钮从 `variant="danger"` 改为中性按钮（页稿板 2 的 `.btn-sm`），危险语义留给真正破坏性操作。
+
+顺带修掉两个既有缺陷（均由本批走查发现）：
+- **Monaco 主题色解析**：构建产物把 `#ffffff` 压成 `#fff`、把 `rgba(...)` 压成 8 位十六进制，而 `monaco.ts` 的取色助手只认 6 位 → 抛 `Illegal value for token color`，且 5% 的行高亮被当成不透明黑（实机截图为黑条）。现统一规范化 3/4/6/8 位并预乘 alpha，语法色与行高亮均实测正常。
+- **资源面板列出 `requirements.txt`**：它是受保护文件（删不掉），却出现在资源列表里形成「能删但删不掉」的死入口。`_collect_assets` 改为复用保护名单过滤，并补 `tests/test_sidecar.py` 的 `TestCollectAssets` 两条守卫（退回旧谓词时该用例 FAIL）。
+
 未退役（各有归属批次）：
-- #3 余下 26 处非标字重（CommandPalette / DetailPage / OutputPanel / HistoryPanel / AIExplainPanel 等，A4/A5 重写时清除）。
-- #6 的组件层字面量残量（同批 A4/A5，B3 校验归零）。
+- #3 余下 11 处非标字重（全在 A5 的弹窗组件里）。
+- #6 的组件层字面量残量（A5，B3 校验归零）。
 - #10 原生 confirm 三处（A5 自绘对话框批）。
+- 详情页 E2E 走查目标示例此前指向 `cli_greeting.py`（数据里不存在，harness 一直不可用），已改用真实示例并跑通全链路。
 
 ### 7.2 Token 映射（v1 → v2）
 

@@ -435,9 +435,10 @@ describe('DetailPage', () => {
     expect(w.get('#detail-tab-output').attributes('aria-selected')).toBe('false')
     expect(w.get('#detail-panel-output').attributes('style') ?? '').toContain('display: none')
     expect(w.get('#detail-panel-history').attributes('style') ?? '').not.toContain('display: none')
-    // 激活段用完整字面量（surface-raised），避免被 border 工具类覆盖
-    expect(w.get('#detail-tab-history').classes()).toContain('surface-raised')
-    expect(w.get('#detail-tab-output').classes()).not.toContain('surface-raised')
+    // v2：标签页走 .tab 组件类，选中态由 CSS 按平台（mac 抬起段 / win 下划线）表达，
+    // 断言只认语义属性 aria-selected（上面已断言），不再耦合具体样式类
+    expect(w.get('#detail-tab-history').classes()).toContain('tab')
+    expect(w.find('.tab-row').exists()).toBe(true)
   })
 
   it('清空按钮清空 detail 输出汇；状态点跟随 surfaceState', async () => {

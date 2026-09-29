@@ -84,16 +84,16 @@ function onArgsEnter(): void {
           </button>
         </div>
       </div>
-      <div class="flex-1 min-h-0 flex flex-col bg-inset">
+      <div class="flex-1 min-h-0 flex flex-col console">
         <div
           v-if="selected"
-          class="flex items-center gap-1.5 px-3 h-7 border-b border-line-subtle/60 text-caption text-ink-mute font-mono shrink-0"
+          class="flex items-center gap-1.5 px-3 h-7 border-b border-line-hairline text-caption text-ink-mute font-mono shrink-0"
         >
           <FileCode2 :size="12" />
           <span class="truncate lowercase tracking-[0.02em]">{{ selected.name }}</span>
         </div>
         <pre
-          class="flex-1 min-h-0 overflow-auto m-0 px-4 py-3 font-mono text-control leading-[1.55] text-ink-dim whitespace-pre"
+          class="flex-1 min-h-0 overflow-auto m-0 px-4 py-3 font-mono text-control leading-[1.55] text-console whitespace-pre"
         >{{ selected ? selected.code : '在上方搜索并选择示例，代码将在此只读预览。\n修改代码请进示例详情页。' }}</pre>
       </div>
     </div>
@@ -107,11 +107,11 @@ function onArgsEnter(): void {
           type="text"
           aria-label="命令行参数"
           :spellcheck="false"
-          class="flex-1 min-w-0 h-7 px-2 bg-page border border-line rounded-control text-ink text-control font-mono outline-none transition-[border-color,box-shadow] duration-[120ms] placeholder:text-ink-faint hover:border-line-strong focus:border-accent focus:shadow-elev-focus"
+          class="flex-1 min-w-0 h-7 px-2 bg-page border border-line rounded-control text-ink text-control font-mono outline-none transition-[border-color,box-shadow] dur-fast placeholder:text-ink-faint hover:border-line-strong focus:border-accent focus:shadow-elev-focus"
           placeholder="命令行参数，空格分隔（如 --width 100 --name demo）"
           @keydown.enter.prevent="onArgsEnter"
         />
-        <BaseButton v-if="isRunning" variant="danger" title="停止 (Cmd+.)" @click="stopRun()">
+        <BaseButton v-if="isRunning" title="停止 (Cmd+.)" @click="stopRun()">
           <Square :size="13" /> 停止
         </BaseButton>
         <BaseButton v-else variant="primary" :disabled="!selected" title="运行 (Cmd+Enter)" @click="runnerRun()">
@@ -129,7 +129,7 @@ function onArgsEnter(): void {
               'bg-danger': !isRunning && (runStatusText === '运行失败' || runStatusText === '启动失败')
             }"
           ></span>
-          <span class="text-caption font-[590] text-ink-mute font-mono lowercase tracking-[0.02em]">终端输出</span>
+          <span class="text-caption font-medium text-ink-mute font-mono lowercase tracking-[0.02em]">终端输出</span>
         </div>
         <BaseButton size="sm" title="清空输出" @click="clearRunnerOutput()">清空</BaseButton>
       </div>

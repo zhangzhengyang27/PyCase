@@ -35,17 +35,18 @@ describe('BaseButton', () => {
     // ghost 变体特征类
     expect(btn.classes()).toContain('bg-transparent')
     // md 高度
-    expect(btn.classes()).toContain('h-7')
+    expect(btn.classes()).toContain('h-[var(--ctrl-md)]')
   })
 
   it('variant 与 size 映射到对应类名', () => {
     const primary = mount(BaseButton, { props: { variant: 'primary', size: 'lg' } })
     expect(primary.get('button').classes()).toContain('btn-primary-deep')
-    expect(primary.get('button').classes()).toContain('h-8')
+    expect(primary.get('button').classes()).toContain('h-[var(--ctrl-lg)]')
 
     const danger = mount(BaseButton, { props: { variant: 'danger', size: 'sm' } })
-    expect(danger.get('button').classes()).toContain('bg-danger')
-    expect(danger.get('button').classes()).toContain('h-6')
+    // v2：危险 = 红色文字按钮（不填充），尺寸走 --ctrl-sm
+    expect(danger.get('button').classes()).toContain('btn-danger-deep')
+    expect(danger.get('button').classes()).toContain('h-[var(--ctrl-sm)]')
   })
 
   it('square 时按 size 给出等宽方形（sm=w-6 / md=w-7 / lg=w-8）且去掉横向内边距', () => {

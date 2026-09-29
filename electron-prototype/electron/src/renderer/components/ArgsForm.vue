@@ -17,9 +17,9 @@ import {
 
 const ARG_FIELD_CLS = 'flex flex-col gap-1 min-w-[160px] flex-1'
 const ARG_FIELD_CHECKBOX_CLS = 'flex flex-row items-center gap-2 flex-1'
-const ARG_LABEL_CLS = 'text-caption font-[590] text-ink-mute font-mono flex items-center gap-2 lowercase tracking-[0.01em]'
+const ARG_LABEL_CLS = 'text-caption font-medium text-ink-mute font-mono flex items-center gap-2 lowercase tracking-[0.01em]'
 const ARG_INPUT_CLS =
-  'px-2 h-7 bg-page border border-line rounded-control text-ink text-control font-mono outline-none transition-[border-color,box-shadow] duration-[120ms] hover:border-line-strong focus:border-accent focus:shadow-elev-focus placeholder:text-ink-faint'
+  'px-2 h-7 bg-page border border-line rounded-control text-ink text-control font-mono outline-none transition-[border-color,box-shadow] dur-fast hover:border-line-strong focus:border-accent focus:shadow-elev-focus placeholder:text-ink-faint'
 const ARG_CHECKBOX_CLS = 'w-4 h-4 accent-accent cursor-pointer rounded'
 const ARG_REQUIRED_CLS = 'text-danger'
 const ARG_HELP_CLS = 'text-[10px] text-ink-faint font-sans normal-case tracking-normal'
@@ -148,7 +148,7 @@ onBeforeUnmount(() => registerArgsValidator(null))
 </script>
 
 <template>
-  <div v-if="argsLoading" class="px-3 py-2 text-[11px] text-ink-faint">解析参数中…</div>
+  <div v-if="argsLoading" class="px-3 py-2 text-caption text-ink-mute">解析参数中…</div>
   <template v-else-if="currentArgs.length > 0">
     <div class="px-3 pt-2 pb-3 flex flex-wrap gap-x-5 gap-y-3 border-t border-line-subtle">
       <div v-for="(spec, idx) in currentArgs" :key="spec.dest + idx" :class="isBool(spec) ? ARG_FIELD_CHECKBOX_CLS : ARG_FIELD_CLS">

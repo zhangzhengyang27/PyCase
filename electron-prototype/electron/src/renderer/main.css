@@ -219,6 +219,83 @@
     box-shadow: var(--focus-shadow);
   }
 
+  /* 面板（详情右栏 / 输出 / 历史）：卡片表面 + 说明性面板头 */
+  .panel {
+    border: 1px solid var(--line-hairline);
+    border-radius: var(--r-card);
+    background: var(--bg-card);
+  }
+  .p-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--line-hairline);
+    font-size: var(--fs-caption);
+    color: var(--text-tertiary);
+  }
+
+  /* 标签页（面板内切换）：与 .seg 同平台语义，无外框 */
+  .tab-row {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    height: var(--pane-head-h);
+    padding: 0 8px;
+    border-bottom: 1px solid var(--line-hairline);
+  }
+  .tab {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    height: var(--ctrl-md);
+    padding: 0 10px;
+    border: 0;
+    border-radius: var(--r-control);
+    background: transparent;
+    color: var(--text-secondary);
+    font-family: var(--font-ui);
+    font-size: var(--fs-caption);
+    cursor: pointer;
+    transition: background-color var(--dur-fast) var(--ease-std);
+  }
+  .tab:hover {
+    color: var(--text-primary);
+  }
+  html[data-platform='mac'] .tab[aria-selected='true'] {
+    background: var(--bg-pressed);
+    color: var(--text-primary);
+  }
+  html[data-platform='win'] .tab[aria-selected='true'] {
+    color: var(--accent-text);
+  }
+  html[data-platform='win'] .tab[aria-selected='true']::after {
+    content: '';
+    position: absolute;
+    left: 8px;
+    right: 8px;
+    bottom: -1px;
+    height: 2px;
+    border-radius: 1px;
+    background: var(--accent);
+  }
+  .tab:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-shadow);
+  }
+
+  /* 终端/代码输出面：跟随主题（深 #1A1A1A / 浅 #FFFFFF），等宽、行高松弛 */
+  .console {
+    background: var(--bg-console);
+    color: var(--text-console);
+    font-family: var(--font-code);
+    line-height: 1.75;
+  }
+  .console .pr {
+    color: var(--accent-text);
+  }
+
   /* 状态行：彩色圆点 + 中性文字（v2 状态语言） */
   .stat-dot {
     width: 6px;
@@ -243,6 +320,19 @@
   .btn-primary-deep:disabled {
     background: var(--accent);
     opacity: 0.4;
+  }
+
+  /* 危险操作：红色**文字**按钮（不做红色填充，A1 §1.5） */
+  .btn-danger-deep {
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--status-red);
+  }
+  .btn-danger-deep:hover {
+    background: var(--bg-hover);
+  }
+  .btn-danger-deep:active {
+    background: var(--bg-pressed);
   }
 }
 

@@ -5,7 +5,7 @@
 // <980px 窄屏由 flex 布局自然挤压（右栏 min-width 约束）。快捷键不变：
 // Cmd+S 保存 / Cmd+Enter 运行 / Cmd+. 停止。
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
-import { ArrowLeft, Play, Save, ShieldAlert, Sparkles, Square, Star, Trash2 } from 'lucide-vue-next'
+import { ArrowLeft, ChevronRight, Play, Save, Sparkles, Square, Star, Trash2 } from 'lucide-vue-next'
 import { qualityTextCls, runStatusDotCls, runStatusHint, runStatusLabel, runStatusTextCls } from '../src/utils'
 import { categoryIcon } from '../src/icons'
 import { CATEGORY_META } from '../src/category-meta'
@@ -39,12 +39,7 @@ import AssetsPanel from './AssetsPanel.vue'
 import AppModal from './base/AppModal.vue'
 import BaseButton from './base/BaseButton.vue'
 
-const TAB_IDLE =
-  'px-2.5 h-6 inline-flex items-center rounded-[5px] text-control font-[510] font-sans cursor-pointer border border-transparent bg-transparent text-ink-mute hover:text-ink transition-colors duration-[120ms]'
-// 激活段不允许出现任何 border 工具类：utilities 层的 border/border-0 会盖过
-// components 层 .surface-raised 的 border 简写（Task 4 review 教训），故独立成完整字面量。
-const TAB_ACTIVE =
-  'px-2.5 h-6 inline-flex items-center rounded-[5px] text-control font-[510] font-sans cursor-pointer surface-raised text-ink transition-colors duration-[120ms]'
+// 标签页走 .tab 组件类（v2：mac 抬起段 / win 强调下划线，与 .seg 同平台语义）
 const DOT_CLS: Record<string, string> = {
   idle: 'bg-ink-faint',
   running: 'bg-warn animate-pulse',
@@ -135,10 +130,10 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
           >
           <span
             v-if="ex.risk_high"
-            class="inline-flex items-center gap-0.5 px-1.5 py-px rounded-badge text-badge font-[590] shrink-0 bg-danger-bg text-danger"
+            class="inline-flex items-center gap-1 shrink-0 text-caption text-danger"
             title="含高危操作（系统命令/文件删除等），运行前请先审阅代码"
           >
-            <ShieldAlert :size="10" /> 高危
+            <span class="stat-dot bg-danger"></span>高危
           </span>
           <span
             v-if="statusBadge"
@@ -189,7 +184,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
         <BaseButton :disabled="!isDirty || saving" title="保存 (Cmd+S)" @click="saveExample()">
           <Save :size="13" /> {{ saving ? '保存中…' : '保存' }}
         </BaseButton>
-        <BaseButton v-if="isRunning" variant="danger" title="停止 (Cmd+.)" @click="stopRun()">
+        <BaseButton v-if="isRunning" title="停止 (Cmd+.)" @click="stopRun()">
           <Square :size="13" /> 停止
         </BaseButton>
         <BaseButton v-else variant="primary" size="lg" :disabled="!selectedId" title="运行 (Cmd+Enter)" @click="runFromDetail()">
@@ -210,22 +205,22 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
         <!-- 参数面板（argparse 静态解析；无参数整区隐藏） -->
         <div v-if="currentArgs.length > 0" class="border-b border-line-subtle shrink-0">
           <button
-            class="w-full flex items-center gap-1.5 px-3 h-8 border-0 bg-transparent cursor-pointer select-none text-control font-[590] text-ink-dim hover:text-ink"
+            class="w-full flex items-center gap-1.5 px-3 h-8 border-0 bg-transparent cursor-pointer select-none text-control font-medium text-ink-dim hover:text-ink"
             :aria-expanded="!argsCollapsed"
             @click="argsCollapsed = !argsCollapsed"
           >
-            <span class="transition-transform duration-[120ms]" :class="argsCollapsed ? '' : 'rotate-90'">▶</span>
+            <ChevronRight :size="13" class="shrink-0 transition-transform dur-fast" :class="argsCollapsed ? '' : 'rotate-90'" />
             <span>命令行参数</span>
-            <span class="text-caption text-ink-faint font-mono">({{ currentArgs.length }})</span>
+            <span class="text-caption text-ink-mute font-mono">({{ currentArgs.length }})</span>
           </button>
           <ArgsForm v-show="!argsCollapsed" />
         </div>
 
         <!-- 三标签行 -->
-        <div class="flex items-center gap-0.5 px-2 h-8 border-b border-line-subtle shrink-0" role="tablist" aria-label="输出面板">
+        <div class="tab-row shrink-0" role="tablist" aria-label="输出面板">
           <button
             id="detail-tab-output"
-            :class="activeTab === 'output' ? TAB_ACTIVE : TAB_IDLE"
+            class="tab"
             role="tab"
             :aria-selected="activeTab === 'output'"
             aria-controls="detail-panel-output"
@@ -235,17 +230,17 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
           </button>
           <button
             id="detail-tab-assets"
-            :class="activeTab === 'assets' ? TAB_ACTIVE : TAB_IDLE"
+            class="tab"
             role="tab"
             :aria-selected="activeTab === 'assets'"
             aria-controls="detail-panel-assets"
             @click="switchTab('assets')"
           >
-            资源 <span v-if="assets.length" class="text-ink-faint font-mono">({{ assets.length }})</span>
+            资源 <span v-if="assets.length" class="text-ink-mute font-mono">({{ assets.length }})</span>
           </button>
           <button
             id="detail-tab-history"
-            :class="activeTab === 'history' ? TAB_ACTIVE : TAB_IDLE"
+            class="tab"
             role="tab"
             :aria-selected="activeTab === 'history'"
             aria-controls="detail-panel-history"
@@ -254,7 +249,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
             历史
           </button>
           <div class="flex-1"></div>
-          <span class="inline-block w-2 h-2 rounded-full shrink-0" :class="DOT_CLS[surfaceState('detail').dot]" :title="runStatusText"></span>
+          <span class="stat-dot" :class="DOT_CLS[surfaceState('detail').dot]" :title="runStatusText"></span>
           <BaseButton size="sm" title="清空输出" @click="clearSurface('detail')">清空</BaseButton>
         </div>
         <OutputPanel

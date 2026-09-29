@@ -5,14 +5,14 @@ import { X } from 'lucide-vue-next'
 import { copyAIOutput, closeAIPanel, stopAI, aiOutputText, aiStatus, aiStatusError, aiShowStop } from '../store'
 
 const PANEL_CLS =
-  'fixed top-[52px] right-4 w-[420px] max-w-[40vw] h-[calc(100vh-92px)] bg-panel border border-line-subtle rounded-panel shadow-elev-3 flex flex-col z-[900] animate-modal-in'
+  'fixed top-[52px] right-4 w-[420px] max-w-[40vw] h-[calc(100vh-92px)] bg-panel border border-line-subtle rounded-card shadow-elev-3 flex flex-col z-[900] animate-modal-in'
 const BTN_CLS =
   'border border-line-subtle bg-transparent text-ink-dim rounded-control px-2 h-6 inline-flex items-center text-caption cursor-pointer hover:text-ink hover:bg-hover'
 </script>
 
 <template>
   <div :class="PANEL_CLS">
-    <div class="flex items-center justify-between px-3.5 py-2.5 border-b border-line-subtle font-[590] text-body shrink-0">
+    <div class="flex items-center justify-between px-3.5 py-2.5 border-b border-line-subtle font-semibold text-body shrink-0">
       <span>AI 代码解释（DeepSeek）</span>
       <div class="flex gap-1.5">
         <button v-show="aiShowStop" :class="BTN_CLS" title="停止解释" @click="stopAI()">停止</button>

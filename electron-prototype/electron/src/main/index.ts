@@ -995,6 +995,87 @@ function runSmokeTest(): void {
         if (v !== 'OK') throw new Error(`${key} 链路异常: ${v}`)
         console.log(`[smoke] ${key} 链路正常`)
       }
+      // 详情 / 运行器走查（A4）：打开的详情页里量头部语言、标签页、终端面与字重白名单
+      step = '详情页走查'
+      const detail = await mainWindow!.webContents.executeJavaScript(`(async () => {
+        const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+        const root = document.documentElement;
+        const cs = getComputedStyle(root);
+        const px = (v) => parseFloat(v);
+        const emojiRe = /[\\u{1F300}-\\u{1FAFF}\\u{2600}-\\u{27BF}]/u;
+        const out = {};
+        const app = window.__app;
+        if (!app) return { fatal: '__app 未注入' };
+        const picks = app.examples().filter((e) => e.category !== 'tools');
+        if (!picks.length) return { fatal: '没有可打开的示例' };
+        await app.openDetail(picks[0].id);
+        await sleep(2500); // Monaco 懒加载 + 首次布局
+        const host = document.querySelector('[role="tablist"][aria-label="输出面板"]');
+        if (!host) return { fatal: '详情页未打开（无标签页）' };
+        // 1) 标签页：三个 .tab + 选中语义（aria-selected 为真值来源）
+        const tabs = Array.from(host.querySelectorAll('.tab'));
+        out.tabs = tabs.length;
+        out.tabSelected = tabs.filter((t) => t.getAttribute('aria-selected') === 'true').length;
+        out.tabRowH = Math.round(host.getBoundingClientRect().height);
+        out.expectPaneHeadH = px(cs.getPropertyValue('--pane-head-h'));
+        // 2) 终端/代码面：底色与文字必须等于跟随主题的令牌
+        const probeConsole = document.createElement('div');
+        probeConsole.style.cssText = 'position:absolute;visibility:hidden;background:var(--bg-console);color:var(--text-console)';
+        document.body.appendChild(probeConsole);
+        out.expectConsoleBg = getComputedStyle(probeConsole).backgroundColor;
+        out.expectConsoleFg = getComputedStyle(probeConsole).color;
+        probeConsole.remove();
+        const consoleEl = document.querySelector('.console');
+        out.hasConsole = !!consoleEl;
+        if (consoleEl) {
+          const ccs = getComputedStyle(consoleEl);
+          out.consoleBg = ccs.backgroundColor;
+          out.consoleFg = ccs.color;
+          out.consoleMono = ccs.fontFamily.toLowerCase().includes('mono') || ccs.fontFamily.toLowerCase().includes('menlo') || ccs.fontFamily.toLowerCase().includes('cascadia');
+        }
+        // 3) 头部：图标 chip + 无 emoji（只看 chrome）
+        const header = document.querySelector('main section .chip-ic');
+        out.headChip = !!header;
+        out.headerEmoji = emojiRe.test(document.querySelector('main section')?.textContent?.slice(0, 400) || '');
+        // 4) 字重白名单（详情页 chrome 抽样）
+        const weights = new Set();
+        for (const el of document.querySelectorAll('main section *')) {
+          const w = getComputedStyle(el).fontWeight;
+          if (w) weights.add(w);
+        }
+        out.weights = Array.from(weights).sort();
+        return out;
+      })()`) as Record<string, unknown>
+      {
+        const d = detail as Record<string, unknown>
+        if (d.fatal) throw new Error(`详情页走查: ${d.fatal}`)
+        const problems: string[] = []
+        if (d.tabs !== 3) problems.push(`标签页数 ${d.tabs} != 3`)
+        if (d.tabSelected !== 1) problems.push(`选中标签数 ${d.tabSelected} != 1`)
+        if (Math.abs((d.tabRowH as number) - (d.expectPaneHeadH as number)) > 1) {
+          problems.push(`标签行高 ${d.tabRowH} != --pane-head-h ${d.expectPaneHeadH}`)
+        }
+        if (!d.hasConsole) problems.push('详情页缺终端输出面（.console）')
+        if (d.consoleBg !== d.expectConsoleBg) problems.push(`终端底色 ${d.consoleBg} != --bg-console ${d.expectConsoleBg}`)
+        if (d.consoleFg !== d.expectConsoleFg) problems.push(`终端文字 ${d.consoleFg} != --text-console ${d.expectConsoleFg}`)
+        if (!d.consoleMono) problems.push('终端面未使用等宽栈')
+        if (!d.headChip) problems.push('详情头部缺图标 chip')
+        if (d.headerEmoji) problems.push('详情头部仍有 emoji')
+        const badW = (d.weights as string[]).filter((w) => !['400', '500', '600'].includes(w))
+        if (badW.length) problems.push(`详情页非标字重: ${badW.join(',')}`)
+        if (problems.length) throw new Error('详情页走查失败: ' + problems.join('; '))
+        // 走查取证：详情页（左代码 / 右输出面板）截图
+        if (process.env.SMOKE_SHOTS) {
+          try {
+            await new Promise((r) => setTimeout(r, 400))
+            const shot = await mainWindow!.webContents.capturePage()
+            fs.writeFileSync(path.join(process.env.SMOKE_SHOTS, 'detail.png'), shot.toPNG())
+          } catch (e) {
+            console.error('[smoke] 截图失败:', (e as Error).message)
+          }
+        }
+        console.log(`[smoke] 详情走查通过：标签 ${d.tabs} 选中 ${d.tabSelected} 标签行高 ${d.tabRowH} 终端底 ${d.consoleBg} 字重 ${(d.weights as string[]).join('/')}`)
+      }
       // 5) 用户集合导入/删除链路：tmp 目录 → import → 数量与标记 → delete → 复原
       step = '用户集合导入/删除'
       const tmpImportDir = fs.mkdtempSync(path.join(os.tmpdir(), 'smoke-import-'))
@@ -1083,15 +1164,17 @@ function runE2ETest(): void {
         const app = window.__app;
         if (!app) return { fatal: '__app 未注入（入口缺 ?smoke=1）' };
         const out = {};
-        const ex = app.findByName('cli_greeting.py');
-        if (!ex) return { fatal: 'cli_greeting.py 不在示例列表中' };
+        // 运行链路需要「有 argparse 参数 + 打印回显 + 无第三方依赖」的示例：
+        // crawler_eng-cli-argparse.py（--pages/--keyword/--output）正合此用途
+        const ex = app.findByName('crawler_eng-cli-argparse.py');
+        if (!ex) return { fatal: 'crawler_eng-cli-argparse.py 不在示例列表中' };
 
         // 1) 打开详情页 → 参数解析（cli_greeting 有 --name/-r 两个可选参数）
         const args = await app.openDetail(ex.id);
         out.argsParsed = Array.isArray(args) ? args.length : -1;
 
-        // 2) 填参 → 收集 → 运行
-        app.setArgValue(0, 'E2E测试');
+        // 2) 填参 → 收集 → 运行（idx 1 = --keyword，字符串型便于回显断言）
+        app.setArgValue(1, 'E2E测试');
         out.collectedArgs = JSON.stringify(app.collectArgs());
         app.runFromDetail();
 

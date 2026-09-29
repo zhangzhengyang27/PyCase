@@ -773,7 +773,10 @@ describe('HistoryPanel', () => {
     expect(rows[0].text()).toContain('成功')
     expect(rows[0].text()).toContain('500ms')
     expect(rows[0].text()).toContain('参数 --x 1')
-    expect(rows[0].get('span').classes()).toContain('text-ok')
+    // v2 状态语言：成功 = 中性文字 + 绿点
+    const okRow = rows[0].get('span')
+    expect(okRow.classes()).toContain('text-ink-mute')
+    expect(okRow.find('.stat-dot').classes()).toContain('bg-ok')
 
     expect(rows[1].text()).toContain('失败 2')
     // 秒级耗时保留一位小数
@@ -841,7 +844,7 @@ describe('OutputPanel', () => {
     const lines = runner.findAll('.whitespace-pre-wrap')
     expect(lines).toHaveLength(3)
     expect(lines[0].text()).toBe('[系统] 系统行')
-    expect(lines[0].classes()).toContain('text-ink-faint')
+    expect(lines[0].classes()).toContain('text-gutter')
     expect(lines[0].classes()).toContain('italic')
     expect(lines[1].classes()).toContain('text-danger')
     expect(lines[2].classes()).toContain('text-ok')

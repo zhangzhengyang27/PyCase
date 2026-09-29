@@ -323,6 +323,36 @@ class TestCollectImages:
 # ---------------------------------------------------------------------------
 # 资源上传保护测试
 # ---------------------------------------------------------------------------
+class TestCollectAssets:
+    """资源面板列出的是用户资源：受保护文件（脚本 / requirements.txt）不得混入——
+    它们删不掉，列出来只会给出"能删但删不掉"的死入口（A4 走查发现）。"""
+
+    def _item(self, path: Path):
+        return server.ExampleItem(name=path.name, path=path, is_dir=False, category="topics")
+
+    def test_protected_files_not_listed(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmp = Path(tmpdir)
+            script = tmp / "demo.py"
+            script.write_text("print('hi')")
+            (tmp / "requirements.txt").write_text("requests\n")
+            (tmp / "data.csv").write_text("a,b\n")
+            assets = server._collect_assets(self._item(script))
+            names = [a["filename"] for a in assets]
+            assert names == ["data.csv"]
+
+    def test_image_flag_and_size(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmp = Path(tmpdir)
+            script = tmp / "demo.py"
+            script.write_text("print('hi')")
+            (tmp / "shot.png").write_bytes(b"\x89PNG\r\n\x1a\n")
+            assets = server._collect_assets(self._item(script))
+            assert len(assets) == 1
+            assert assets[0]["is_image"] is True
+            assert assets[0]["size"] == 8
+
+
 class TestUploadAssetGuard:
     def _make_item(self, tmp_path: Path):
         """构造一个已物化的 json 示例及其索引项。"""
