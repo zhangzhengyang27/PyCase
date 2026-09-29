@@ -2,6 +2,21 @@
 
 import { contextBridge, ipcRenderer, type IpcRendererEvent } from 'electron'
 
+import type {
+  AiSettingsView,
+  AppInfo,
+  ArgSpec,
+  AssetInfo,
+  EnvPhase,
+  ExampleDetail,
+  ImportPreviewFile,
+  ListExamplesResult,
+  OpenLogResult,
+  PickDirectoryResult,
+  SaveTextResult,
+  SearchHit
+} from '../../../shared/protocol'
+
 // 三层绑定恢复（首帧前）：渲染层 main.ts 要等模块加载完才执行，light 用户会闪暗色、
 // Windows 用户会先看到 macOS 几何。DOM 在 preload 阶段已可用，此处提前设
 // data-theme / data-platform / data-accent；失败则回落到 index.html 的兜底。
@@ -31,26 +46,45 @@ try {
 
 // 类型定义：渲染层通过 window.sidecar.* 调用
 export interface SidecarAPI {
-  // 方法调用（返回 Promise）
-  ping: () => Promise<unknown>
-  listExamples: () => Promise<unknown>
-  getExample: (id: string) => Promise<unknown>
-  parseArgs: (id: string) => Promise<unknown>
-  saveExample: (id: string, code: string) => Promise<unknown>
-  runExample: (params: Record<string, unknown>) => Promise<unknown>
-  stopRun: (runId: string) => Promise<unknown>
-  uploadAsset: (params: Record<string, unknown>) => Promise<unknown>
-  listAssets: (id: string) => Promise<unknown>
-  deleteAsset: (params: Record<string, unknown>) => Promise<unknown>
-  downloadResultImage: (url: string, defaultName?: string) => Promise<unknown>
-  saveTextFile: (params: { content?: string; defaultName?: string; filters?: unknown[] }) => Promise<unknown>
-  restart: () => Promise<unknown>
+  // 方法调用（返回 Promise）：出入参与 shared/protocol.ts 的 RpcContract 对齐
+  ping: () => Promise<{ status: 'ok'; python: string }>
+  listExamples: () => Promise<ListExamplesResult>
+  getExample: (id: string) => Promise<ExampleDetail>
+  parseArgs: (id: string) => Promise<{ args: ArgSpec[]; count: number }>
+  saveExample: (id: string, code: string) => Promise<{ status: 'saved'; id: string; json_file: string | null; path: string }>
+  runExample: (params: { id: string; args?: string[]; timeout?: number }) => Promise<{ run_id: string }>
+  stopRun: (runId: string) => Promise<{ status: 'terminating' | 'pending_terminate'; run_id: string }>
+  uploadAsset: (params: { id: string; filename: string; data: string }) => Promise<{
+    status: 'uploaded'
+    filename: string
+    size: number
+    path: string
+    assets: AssetInfo[]
+  }>
+  listAssets: (id: string) => Promise<{ assets: AssetInfo[] }>
+  deleteAsset: (params: { id: string; filename: string }) => Promise<{ deleted: string; assets: AssetInfo[] }>
+  downloadResultImage: (url: string, defaultName?: string) => Promise<{ canceled?: boolean; savedTo?: string; error?: string }>
+  saveTextFile: (params: {
+    content?: string
+    defaultName?: string
+    filters?: { name: string; extensions: string[] }[]
+  }) => Promise<SaveTextResult>
+  restart: () => Promise<{ status: string }>
 
   // 用户示例集合（导入向导 / 删除管理）
-  pickDirectory: () => Promise<unknown>
-  scanImportSource: (sourcePath: string) => Promise<unknown>
-  importExamples: (params: { source_path: string; name?: string }) => Promise<unknown>
-  deleteExample: (id: string) => Promise<unknown>
+  pickDirectory: () => Promise<PickDirectoryResult>
+  scanImportSource: (sourcePath: string) => Promise<{
+    total: number
+    files: ImportPreviewFile[]
+    skipped: { file: string; reason: string }[]
+  }>
+  importExamples: (params: { source_path: string; name?: string }) => Promise<{
+    imported: number
+    skipped: { file: string; reason: string }[]
+    collection: string | null
+    total?: number
+  }>
+  deleteExample: (id: string) => Promise<{ deleted: string; total: number }>
 
   // 用户数据（userData 下的小 JSON：history / favorites / aiSettings）
   store: {
@@ -59,41 +93,41 @@ export interface SidecarAPI {
   }
 
   // 服务端检索（代码搜索：列表不含 code，按需读文件）
-  searchExamples: (query: string, limit?: number) => Promise<unknown>
+  searchExamples: (query: string, limit?: number) => Promise<{ query: string; hits: SearchHit[] }>
 
   // 应用与环境（A5.5 帮助面板 / 首启引导页）
   app: {
-    info: () => Promise<unknown>
-    openLog: () => Promise<unknown>
+    info: () => Promise<AppInfo>
+    openLog: () => Promise<OpenLogResult>
   }
   env: {
-    status: () => Promise<unknown>
-    setRunEnv: (mode: 'shared' | 'system') => Promise<unknown>
-    onProgress: (callback: (data: unknown) => void) => Unsubscribe
+    status: () => Promise<EnvPhase>
+    setRunEnv: (mode: 'shared' | 'system') => Promise<EnvPhase>
+    onProgress: (callback: (data: EnvPhase) => void) => Unsubscribe
   }
 
   // 窗口控制（Windows frameless 自绘标题栏三键；macOS 侧按钮不展示但仍可用）
   win: {
-    minimize: () => Promise<unknown>
-    toggleMaximize: () => Promise<unknown>
-    close: () => Promise<unknown>
-    isMaximized: () => Promise<unknown>
-    onMaximizedChange: (callback: (data: unknown) => void) => Unsubscribe
+    minimize: () => Promise<void>
+    toggleMaximize: () => Promise<boolean>
+    close: () => Promise<void>
+    isMaximized: () => Promise<boolean>
+    onMaximizedChange: (callback: (data: { maximized: boolean }) => void) => Unsubscribe
   }
 
   // AI 代码解释（DeepSeek）：key 只在主进程侧注入，前端不接触明文
   ai: {
-    getSettings: () => Promise<unknown>
-    setSettings: (patch: Record<string, unknown>) => Promise<unknown>
-    explain: (code: string, fileName?: string) => Promise<unknown>
-    stop: (runId: string) => Promise<unknown>
+    getSettings: () => Promise<AiSettingsView>
+    setSettings: (patch: Record<string, unknown>) => Promise<{ ok: boolean; hasKey: boolean }>
+    explain: (code: string, fileName?: string) => Promise<{ run_id: string; status?: string; error?: string }>
+    stop: (runId: string) => Promise<{ status: string; run_id: string }>
   }
 
   // 事件订阅（sidecar -> 渲染进程的通知）
-  onStatus: (callback: (data: unknown) => void) => () => void
-  onRunOutput: (callback: (data: unknown) => void) => () => void
-  onRunFinished: (callback: (data: unknown) => void) => () => void
-  onRunImages: (callback: (data: unknown) => void) => () => void
+  onStatus: (callback: (data: { ready: boolean; code?: number | null; crashed?: boolean }) => void) => () => void
+  onRunOutput: (callback: (data: { run_id: string; text: string }) => void) => () => void
+  onRunFinished: (callback: (data: { run_id: string; exit_code: number }) => void) => () => void
+  onRunImages: (callback: (data: { run_id: string; images: string[] }) => void) => () => void
 
   // 通用 sidecar 通知订阅（method 即 sidecar 发出的 notification 方法名，如 ai_explain_chunk）
   onNotification: (method: string, callback: (data: unknown) => void) => () => void
@@ -101,8 +135,8 @@ export interface SidecarAPI {
 
 type Unsubscribe = () => void
 
-function subscribe(channel: string, callback: (data: unknown) => void): Unsubscribe {
-  const handler = (_e: IpcRendererEvent, data: unknown) => callback(data)
+function subscribe<T>(channel: string, callback: (data: T) => void): Unsubscribe {
+  const handler = (_e: IpcRendererEvent, data: unknown) => callback(data as T)
   ipcRenderer.on(channel, handler)
   return () => ipcRenderer.removeListener(channel, handler)
 }
@@ -149,7 +183,7 @@ const sidecarAPI: SidecarAPI = {
   env: {
     status: () => ipcRenderer.invoke('sidecar:envStatus'),
     setRunEnv: (mode: 'shared' | 'system') => ipcRenderer.invoke('sidecar:setRunEnv', mode),
-    onProgress: (callback: (data: unknown) => void) => subscribe('sidecar:env_progress', callback)
+    onProgress: (callback) => subscribe('sidecar:env_progress', callback)
   },
 
   // 窗口控制
@@ -158,7 +192,7 @@ const sidecarAPI: SidecarAPI = {
     toggleMaximize: () => ipcRenderer.invoke('window:toggleMaximize'),
     close: () => ipcRenderer.invoke('window:close'),
     isMaximized: () => ipcRenderer.invoke('window:isMaximized'),
-    onMaximizedChange: (callback: (data: unknown) => void) => subscribe('window:maximized', callback)
+    onMaximizedChange: (callback) => subscribe('window:maximized', callback)
   },
 
   // AI 代码解释（DeepSeek）：key 只在主进程侧注入，前端不接触明文
@@ -170,13 +204,13 @@ const sidecarAPI: SidecarAPI = {
   },
 
   // 事件订阅（sidecar -> 渲染进程的通知）
-  onStatus: (callback: (data: unknown) => void) => subscribe('sidecar:status', callback),
-  onRunOutput: (callback: (data: unknown) => void) => subscribe('sidecar:run_output', callback),
-  onRunFinished: (callback: (data: unknown) => void) => subscribe('sidecar:run_finished', callback),
-  onRunImages: (callback: (data: unknown) => void) => subscribe('sidecar:run_images', callback),
+  onStatus: (callback) => subscribe('sidecar:status', callback),
+  onRunOutput: (callback) => subscribe('sidecar:run_output', callback),
+  onRunFinished: (callback) => subscribe('sidecar:run_finished', callback),
+  onRunImages: (callback) => subscribe('sidecar:run_images', callback),
 
   // 通用 sidecar 通知订阅（method 即 sidecar 发出的 notification 方法名，如 ai_explain_chunk）
-  onNotification: (method: string, callback: (data: unknown) => void) => subscribe(`sidecar:${method}`, callback)
+  onNotification: (method: string, callback) => subscribe(`sidecar:${method}`, callback)
 }
 
 contextBridge.exposeInMainWorld('sidecar', sidecarAPI)

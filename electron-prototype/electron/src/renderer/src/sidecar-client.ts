@@ -1,9 +1,35 @@
-// sidecar-client.ts：渲染层访问 sidecar 的唯一入口
-// 封装 preload 注入的 window.sidecar 桥：
-//   1. 统一 Promise 调用与错误归一化（错误带方法名，便于定位）；
-//   2. 事件订阅中心：同一通知支持多个订阅者，订阅返回退订函数；
-//   3. 重请求单飞：listExamples 并发调用时复用同一个 Promise。
-// 依赖：preload（window.sidecar）。本模块无其他全局依赖。
+// sidecar-client.ts：渲染层访问主进程/sidecar 的唯一入口（类型化）。
+//
+// 分层：
+//   window.sidecar（preload 暴露，出入参类型见 shared/protocol.ts）
+//     ↓ 本模块：错误归一化 / 单飞 / 事件订阅中心
+//   api.*（渲染层其余代码只认这一层；不直接摸 window.sidecar）
+//
+// 契约来源：shared/protocol.ts（与 Python METHODS 表由契约测试双端钉住）；
+// 事件通道名与 protocol.json 的 notifications / local_events 对齐。
+
+import type {
+  AiExplainChunkEvent,
+  AiExplainDoneEvent,
+  AiExplainErrorEvent,
+  AiSettingsView,
+  AppInfo,
+  ArgSpec,
+  AssetInfo,
+  DownloadResult,
+  EnvPhase,
+  ExampleDetail,
+  ImportPreviewFile,
+  ListExamplesResult,
+  OpenLogResult,
+  PickDirectoryResult,
+  RunFinishedEvent,
+  RunImagesEvent,
+  RunOutputEvent,
+  SaveTextResult,
+  SearchHit,
+  SidecarStatusEvent
+} from '../../../../shared/protocol'
 
 const bridge = window.sidecar
 if (!bridge) {
@@ -11,51 +37,84 @@ if (!bridge) {
 }
 
 // -------------------------------------------------------------------------
-// 事件订阅中心（status / runOutput / runFinished / runImages / aiExplain*）
+// 事件订阅中心（status / run* / aiExplain* / envProgress / maximized）
 // -------------------------------------------------------------------------
-type SidecarChannel = 'status' | 'runOutput' | 'runFinished' | 'runImages' | 'aiExplainChunk' | 'aiExplainDone' | 'aiExplainError'
+export interface EventPayloads {
+  /** sidecar 进程状态（主进程本地事件） */
+  status: SidecarStatusEvent
+  runOutput: RunOutputEvent
+  runFinished: RunFinishedEvent
+  runImages: RunImagesEvent
+  aiExplainChunk: AiExplainChunkEvent
+  aiExplainDone: AiExplainDoneEvent
+  aiExplainError: AiExplainErrorEvent
+  /** 环境准备进度（首启页阶段推进；env_status 的增量推送） */
+  envProgress: EnvPhase
+  /** 窗口最大化状态变化（Windows 自绘标题栏按钮态） */
+  maximized: { maximized: boolean }
+}
 
-const channels: SidecarChannel[] = ['status', 'runOutput', 'runFinished', 'runImages', 'aiExplainChunk', 'aiExplainDone', 'aiExplainError']
-const listeners: Record<SidecarChannel, Array<(data: any) => void>> = Object.fromEntries(channels.map((c) => [c, []])) as unknown as Record<SidecarChannel, Array<(data: any) => void>>
+export type EventChannel = keyof EventPayloads
+type Listener<K extends EventChannel> = (data: EventPayloads[K]) => void
 
-function safeDispatch(channel: SidecarChannel, data: any): void {
-  listeners[channel].slice().forEach((fn) => {
+const EVENT_CHANNELS: EventChannel[] = [
+  'status',
+  'runOutput',
+  'runFinished',
+  'runImages',
+  'aiExplainChunk',
+  'aiExplainDone',
+  'aiExplainError',
+  'envProgress',
+  'maximized'
+]
+
+const listeners = Object.fromEntries(EVENT_CHANNELS.map((c) => [c, [] as Listener<EventChannel>[]])) as {
+  [K in EventChannel]: Listener<K>[]
+}
+
+function safeDispatch<K extends EventChannel>(channel: K, data: EventPayloads[K]): void {
+  for (const fn of [...listeners[channel]]) {
     try {
-      fn(data)
+      ;(fn as Listener<K>)(data)
     } catch (err) {
       console.error(`[sidecar-client] ${channel} 订阅者异常:`, err)
     }
-  })
+  }
 }
 
-// preload 的 onXxx 只允许注册一次，这里统一桥接到订阅中心
-bridge.onStatus((data: any) => safeDispatch('status', data))
-bridge.onRunOutput((data: any) => safeDispatch('runOutput', data))
-bridge.onRunFinished((data: any) => safeDispatch('runFinished', data))
-bridge.onRunImages((data: any) => safeDispatch('runImages', data))
-// AI 流式解释通知（sidecar -> 主进程转发 -> 这里）
-bridge.onNotification('ai_explain_chunk', (data: any) => safeDispatch('aiExplainChunk', data))
-bridge.onNotification('ai_explain_done', (data: any) => safeDispatch('aiExplainDone', data))
-bridge.onNotification('ai_explain_error', (data: any) => safeDispatch('aiExplainError', data))
-
-export function on(channel: SidecarChannel, fn: (data: any) => void): () => void {
-  if (!listeners[channel]) throw new Error(`未知 sidecar 事件: ${channel}`)
-  listeners[channel].push(fn)
+/** 订阅一个事件通道；返回退订函数。 */
+export function on<K extends EventChannel>(channel: K, fn: Listener<K>): () => void {
+  const arr = listeners[channel]
+  if (!arr) throw new Error(`未知 sidecar 事件: ${channel}`)
+  ;(arr as Listener<K>[]).push(fn)
   return () => off(channel, fn)
 }
 
-export function off(channel: SidecarChannel, fn: (data: unknown) => void): void {
-  const arr = listeners[channel]
+/** 退订（与 on 的返回函数等价，保留旧签名）。 */
+export function off<K extends EventChannel>(channel: K, fn: Listener<K>): void {
+  const arr = listeners[channel] as Listener<K>[]
   const idx = arr.indexOf(fn)
   if (idx >= 0) arr.splice(idx, 1)
 }
 
+// preload 的 onXxx 只允许注册一次，这里统一桥接到订阅中心（模块加载即挂好）
+bridge.onStatus((data) => safeDispatch('status', data))
+bridge.onRunOutput((data) => safeDispatch('runOutput', data))
+bridge.onRunFinished((data) => safeDispatch('runFinished', data))
+bridge.onRunImages((data) => safeDispatch('runImages', data))
+bridge.env.onProgress((data) => safeDispatch('envProgress', data))
+bridge.win.onMaximizedChange((data) => safeDispatch('maximized', data))
+bridge.onNotification('ai_explain_chunk', (data) => safeDispatch('aiExplainChunk', data as AiExplainChunkEvent))
+bridge.onNotification('ai_explain_done', (data) => safeDispatch('aiExplainDone', data as AiExplainDoneEvent))
+bridge.onNotification('ai_explain_error', (data) => safeDispatch('aiExplainError', data as AiExplainErrorEvent))
+
 // -------------------------------------------------------------------------
 // 请求封装：错误归一化（保留原始 message，附加方法名前缀）
 // -------------------------------------------------------------------------
-async function request(method: string, fn: (...args: any[]) => Promise<any>, args: any[]): Promise<any> {
+async function request<T>(method: string, fn: () => Promise<T>): Promise<T> {
   try {
-    return await fn.apply(bridge, args)
+    return await fn()
   } catch (err) {
     const message = err && err instanceof Error ? err.message : String(err)
     const wrapped = new Error(`[${method}] ${message}`)
@@ -64,20 +123,20 @@ async function request(method: string, fn: (...args: any[]) => Promise<any>, arg
   }
 }
 
-// listExamples 物化上千示例较慢，短时间内的并发调用复用同一 Promise（单飞）
-let listExamplesInflight: Promise<unknown> | null = null
+// listExamples 建索引较慢，短时间内的并发调用复用同一 Promise（单飞）
+let listExamplesInflight: Promise<ListExamplesResult> | null = null
 
 export interface RunExampleParams {
   id: string
-  code?: string
   args?: string[]
-  cwd?: string
+  timeout?: number
 }
 
 export interface UploadAssetParams {
   exampleId: string
   fileName: string
-  data: ArrayBuffer | string
+  /** base64（不带 data: 前缀）；调用方负责编码（主进程按 20MB 校验） */
+  data: string
 }
 
 export interface DeleteAssetParams {
@@ -95,72 +154,131 @@ export interface ImportExamplesParams {
   name?: string
 }
 
+/**
+ * RPC 方法 → 客户端调用路径（协议名 → api 上的路径）。
+ * 契约测试据此断言「protocol.json 里的每个方法都已接线」，漏一个即红。
+ */
+export const RPC_BINDINGS: Record<string, string> = {
+  ping: 'ping',
+  env_status: 'envStatus',
+  set_run_env: 'setRunEnv',
+  list_examples: 'listExamples',
+  get_example: 'getExample',
+  search_examples: 'searchExamples',
+  parse_args: 'parseArgs',
+  save_example: 'saveExample',
+  run_example: 'runExample',
+  stop_run: 'stopRun',
+  upload_asset: 'uploadAsset',
+  list_assets: 'listAssets',
+  delete_asset: 'deleteAsset',
+  scan_import_source: 'scanImportSource',
+  import_examples: 'importExamples',
+  delete_example: 'deleteExample',
+  explain_code: 'aiExplain',
+  stop_ai: 'aiStop'
+}
+
+/** 渲染层唯一的数据/命令入口（类型与 shared/protocol.ts 对齐）。 */
 export const api = {
   // 事件
   on,
   off,
 
   // 健康检查 / 数据
-  ping: () => bridge.ping(),
-  listExamples() {
+  ping: (): Promise<{ status: 'ok'; python: string }> => request('ping', () => bridge.ping()),
+  listExamples(): Promise<ListExamplesResult> {
     if (!listExamplesInflight) {
-      listExamplesInflight = request('listExamples', bridge.listExamples as (...args: unknown[]) => Promise<unknown>, []).finally(() => {
+      listExamplesInflight = request('listExamples', () => bridge.listExamples()).finally(() => {
         listExamplesInflight = null
       })
     }
     return listExamplesInflight
   },
-  getExample: (id: string) => request('getExample', bridge.getExample as (...args: unknown[]) => Promise<unknown>, [id]),
-  parseArgs: (id: string) => request('parseArgs', bridge.parseArgs as (...args: unknown[]) => Promise<unknown>, [id]),
-  saveExample: (id: string, code: string) => request('saveExample', bridge.saveExample as (...args: unknown[]) => Promise<unknown>, [id, code]),
+  getExample: (id: string): Promise<ExampleDetail> => request('getExample', () => bridge.getExample(id)),
+  parseArgs: (id: string): Promise<{ args: ArgSpec[]; count: number }> =>
+    request('parseArgs', () => bridge.parseArgs(id)),
+  saveExample: (
+    id: string,
+    code: string
+  ): Promise<{ status: 'saved'; id: string; json_file: string | null; path: string }> =>
+    request('saveExample', () => bridge.saveExample(id, code)),
 
   // 运行控制
-  runExample: (params: RunExampleParams) => request('runExample', bridge.runExample as (...args: unknown[]) => Promise<unknown>, [params]),
-  stopRun: (runId: string) => request('stopRun', bridge.stopRun as (...args: unknown[]) => Promise<unknown>, [runId]),
+  runExample: (params: RunExampleParams): Promise<{ run_id: string }> =>
+    request('runExample', () => bridge.runExample(params)),
+  stopRun: (runId: string): Promise<{ status: 'terminating' | 'pending_terminate'; run_id: string }> =>
+    request('stopRun', () => bridge.stopRun(runId)),
 
   // 资源管理
-  uploadAsset: (params: UploadAssetParams) => request('uploadAsset', bridge.uploadAsset as (...args: unknown[]) => Promise<unknown>, [params]),
-  listAssets: (id: string) => request('listAssets', bridge.listAssets as (...args: unknown[]) => Promise<unknown>, [id]),
-  deleteAsset: (params: DeleteAssetParams) => request('deleteAsset', bridge.deleteAsset as (...args: unknown[]) => Promise<unknown>, [params]),
-  downloadResultImage: (url: string, defaultName: string) =>
-    request('downloadResultImage', bridge.downloadResultImage as (...args: unknown[]) => Promise<unknown>, [url, defaultName]),
-  saveTextFile: (params: SaveTextFileParams) => request('saveTextFile', bridge.saveTextFile as (...args: unknown[]) => Promise<unknown>, [params]),
+  uploadAsset: (
+    params: UploadAssetParams
+  ): Promise<{ status: 'uploaded'; filename: string; size: number; path: string; assets: AssetInfo[] }> =>
+    request('uploadAsset', () =>
+      bridge.uploadAsset({ id: params.exampleId, filename: params.fileName, data: params.data })
+    ),
+  listAssets: (id: string): Promise<{ assets: AssetInfo[] }> => request('listAssets', () => bridge.listAssets(id)),
+  deleteAsset: (params: DeleteAssetParams): Promise<{ deleted: string; assets: AssetInfo[] }> =>
+    request('deleteAsset', () => bridge.deleteAsset({ id: params.exampleId, filename: params.fileName })),
+  downloadResultImage: (url: string, defaultName = ''): Promise<DownloadResult> =>
+    request('downloadResultImage', () => bridge.downloadResultImage(url, defaultName)),
+  saveTextFile: (params: SaveTextFileParams): Promise<SaveTextResult> =>
+    request('saveTextFile', () =>
+      bridge.saveTextFile({ content: params.content, defaultName: params.defaultName })
+    ),
 
   // 用户示例集合（导入向导 / 删除管理）
-  pickDirectory: () => request('file:pickDirectory', () => bridge.pickDirectory(), []),
-  scanImportSource: (sourcePath: string) =>
-    request('scanImportSource', (p: string) => bridge.scanImportSource(p), [sourcePath]),
-  importExamples: (params: ImportExamplesParams) =>
-    request(
-      'importExamples',
-      (p: ImportExamplesParams) => bridge.importExamples({ source_path: p.sourcePath, name: p.name }),
-      [params]
-    ),
-  deleteExample: (id: string) => request('deleteExample', (i: string) => bridge.deleteExample(i), [id]),
+  pickDirectory: (): Promise<PickDirectoryResult> => request('file:pickDirectory', () => bridge.pickDirectory()),
+  scanImportSource: (
+    sourcePath: string
+  ): Promise<{ total: number; files: ImportPreviewFile[]; skipped: { file: string; reason: string }[] }> =>
+    request('scanImportSource', () => bridge.scanImportSource(sourcePath)),
+  importExamples: (
+    params: ImportExamplesParams
+  ): Promise<{
+    imported: number
+    skipped: { file: string; reason: string }[]
+    collection: string | null
+    total?: number
+  }> => request('importExamples', () => bridge.importExamples({ source_path: params.sourcePath, name: params.name })),
+  deleteExample: (id: string): Promise<{ deleted: string; total: number }> =>
+    request('deleteExample', () => bridge.deleteExample(id)),
 
   // 用户数据存储（主进程落盘到 userData）
-  storeGet: (name: string) => request('store:get', (n: string) => bridge.store.get(n), [name]),
-  storeSet: (name: string, value: unknown) => request('store:set', (n: string, v: unknown) => bridge.store.set(n, v), [name, value]),
+  storeGet: (name: string): Promise<unknown> => request('store:get', () => bridge.store.get(name)),
+  storeSet: (name: string, value: unknown): Promise<unknown> =>
+    request('store:set', () => bridge.store.set(name, value)),
 
   // AI 代码解释（DeepSeek）：key 只在主进程侧，前端不接触明文
-  aiGetSettings: () => request('ai:getSettings', () => bridge.ai.getSettings(), []),
-  aiSetSettings: (patch: Record<string, unknown>) => request('ai:setSettings', (p: Record<string, unknown>) => bridge.ai.setSettings(p), [patch]),
-  aiExplain: (code: string, fileName: string) =>
-    request('ai:explain', (c: string, f: string) => bridge.ai.explain(c, f), [code, fileName]),
-  aiStop: (runId: string) => request('ai:stop', (id: string) => bridge.ai.stop(id), [runId]),
+  aiGetSettings: (): Promise<AiSettingsView> => request('ai:getSettings', () => bridge.ai.getSettings()),
+  aiSetSettings: (patch: Record<string, unknown>): Promise<{ ok: boolean; hasKey: boolean }> =>
+    request('ai:setSettings', () => bridge.ai.setSettings(patch)),
+  aiExplain: (code: string, fileName = ''): Promise<{ run_id: string; status?: string; error?: string }> =>
+    request('ai:explain', () => bridge.ai.explain(code, fileName)),
+  aiStop: (runId: string): Promise<{ status: string; run_id: string }> =>
+    request('ai:stop', () => bridge.ai.stop(runId)),
 
   // 服务端检索（契约 §5：元数据内存匹配 + code 按需读文件）
-  searchExamples: (query: string, limit = 50) =>
-    request('search_examples', () => bridge.searchExamples(query, limit), [query, limit]),
+  searchExamples: (query: string, limit = 50): Promise<{ query: string; hits: SearchHit[] }> =>
+    request('search_examples', () => bridge.searchExamples(query, limit)),
 
   // 环境准备状态（A5.5 首启引导页 / 帮助面板）
-  envStatus: () => request('env_status', () => bridge.env.status(), []),
-  setRunEnv: (mode: 'shared' | 'system') => request('set_run_env', () => bridge.env.setRunEnv(mode), [mode]),
+  envStatus: (): Promise<EnvPhase> => request('env_status', () => bridge.env.status()),
+  setRunEnv: (mode: 'shared' | 'system'): Promise<EnvPhase> =>
+    request('set_run_env', () => bridge.env.setRunEnv(mode)),
 
   // 应用信息与日志（帮助面板「环境信息」段、首启页「查看准备日志」）
-  appInfo: () => request('app:info', () => bridge.app.info(), []),
-  openLog: () => request('app:openLog', () => bridge.app.openLog(), []),
+  appInfo: (): Promise<AppInfo> => request('app:info', () => bridge.app.info()),
+  openLog: (): Promise<OpenLogResult> => request('app:openLog', () => bridge.app.openLog()),
+
+  // 窗口控制（Windows 自绘标题栏三键；macOS 不展示但可用）
+  win: {
+    minimize: (): Promise<void> => request('window:minimize', () => bridge.win.minimize()),
+    toggleMaximize: (): Promise<boolean> => request('window:toggleMaximize', () => bridge.win.toggleMaximize()),
+    close: (): Promise<void> => request('window:close', () => bridge.win.close()),
+    isMaximized: (): Promise<boolean> => request('window:isMaximized', () => bridge.win.isMaximized())
+  },
 
   // 其他
-  restart: () => bridge.restart()
+  restart: (): Promise<{ status: string }> => bridge.restart()
 }

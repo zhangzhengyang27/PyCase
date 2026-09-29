@@ -105,7 +105,7 @@ beforeEach(() => {
 
   // restoreMocks 会在每个用例前把 vitest.setup.ts 里的 vi.fn 桩重置掉，
   // 这里显式重建本文件依赖的返回值，保证断言不受「桩被重置成 undefined」影响。
-  vi.mocked(window.sidecar.parseArgs).mockResolvedValue({ args: [] })
+  vi.mocked(window.sidecar.parseArgs).mockResolvedValue({ args: [], count: 0 })
   vi.mocked(window.sidecar.runExample).mockResolvedValue({ run_id: 'test-run' })
   vi.mocked(window.sidecar.listAssets).mockResolvedValue({ assets: [] })
   vi.mocked(window.sidecar.store.set).mockResolvedValue({ ok: true })

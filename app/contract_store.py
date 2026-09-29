@@ -749,6 +749,15 @@ class ContractStore:
                 manifest_path.unlink()  # 空集合：清单一并移除
             if item.path.is_file() and item.path.resolve().is_relative_to(self.user_dir):
                 item.path.unlink()
+            if not entries:
+                # 源码删空后集合目录也一并收掉：否则下次导入同名目录会被迫改名 _2。
+                # 目录里还有用户上传的资源时保留（那是有内容要留存，改名才安全）。
+                collection_dir = item.path if item.path.is_dir() else item.path.parent
+                try:
+                    if collection_dir.is_dir() and not any(collection_dir.iterdir()):
+                        collection_dir.rmdir()
+                except OSError:
+                    pass
             shutil.rmtree(self.workspace_of(item), ignore_errors=True)
         except OSError as e:
             get_logger(__name__).error("删除用户示例失败 %s: %s", item.json_id, e)

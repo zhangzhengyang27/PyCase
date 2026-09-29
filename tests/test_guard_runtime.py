@@ -481,3 +481,22 @@ def test_g6_user_collection_auto_migration(tmp_path):
 
     # 已是 v2：再跑一次不产生计划（幂等）
     assert migrate_user_collections(user_dir, tmp_path) is None
+
+
+def test_g6_delete_last_example_removes_empty_collection_dir(tmp_path):
+    """删空集合：清单与集合目录一并清掉，同名再导入不被改名为 _2。"""
+    with _RpcEnv(tmp_path):
+        src = tmp_path / "src"
+        src.mkdir()
+        (src / "one.py").write_text("print(1)\n", encoding="utf-8")
+
+        server.method_import_examples(1, {"source_path": str(src), "name": "same"})
+        assert (server._USER_DIR / "same").is_dir()
+        server.method_delete_example(2, {"id": "one.py"})
+        assert not (server._USER_DIR / "same.json").exists()
+        assert not (server._USER_DIR / "same").exists(), "空集合目录未清理"
+
+        # 再导入同名目录：仍应叫 same（而不是被残留目录挤成 same_2）
+        server.method_import_examples(3, {"source_path": str(src), "name": "same"})
+        assert (server._USER_DIR / "same.json").exists()
+        server.method_delete_example(4, {"id": "one.py"})

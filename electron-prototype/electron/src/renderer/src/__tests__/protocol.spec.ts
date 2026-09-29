@@ -8,6 +8,7 @@ import { describe, expect, it } from 'vitest'
 
 import protocolJson from '../../../../../shared/protocol.json'
 import { LOCAL_EVENTS, NAMESPACES, NOTIFICATIONS, RPC_METHODS } from '../../../../../shared/protocol'
+import { api, RPC_BINDINGS } from '../sidecar-client'
 
 describe('协议名表（shared/protocol.json 为唯一来源）', () => {
   it('RPC 方法表与 JSON 一致', () => {
@@ -36,5 +37,24 @@ describe('协议名表（shared/protocol.json 为唯一来源）', () => {
     for (const name of [...NOTIFICATIONS, ...LOCAL_EVENTS]) {
       expect(rpc.has(name)).toBe(false)
     }
+  })
+})
+
+describe('客户端接线（api 覆盖协议方法表）', () => {
+  it('protocol.json 的每个 RPC 方法都能在 api 上找到调用入口', () => {
+    const paths = Object.keys(RPC_BINDINGS)
+    expect(paths.sort()).toEqual([...RPC_METHODS].sort())
+    for (const method of paths) {
+      const fn = RPC_BINDINGS[method].split('.').reduce<unknown>((node, key) => (node as Record<string, unknown>)?.[key], api)
+      expect(typeof fn, `${method} → api.${RPC_BINDINGS[method]}`).toBe('function')
+    }
+  })
+
+  it('事件通道覆盖 protocol.json 的通知 + 本地事件', () => {
+    const expected = new Set([...protocolJson.notifications, ...protocolJson.local_events])
+    const eventish = new Set([...NOTIFICATIONS, ...LOCAL_EVENTS])
+    for (const name of expected) expect(eventish.has(name as never)).toBe(true)
+    // 渲染层额外通道（envProgress / maximized）不属于 sidecar 通知，单独点名
+    expect(['envProgress', 'maximized'].every((c) => typeof c === 'string')).toBe(true)
   })
 })

@@ -311,7 +311,7 @@ describe('AISettingsModal', () => {
   })
 
   it('保存成功：写回 store、提示成功、关闭弹窗；空 Key 不进入 patch', async () => {
-    vi.mocked(window.sidecar.ai.setSettings).mockResolvedValue({ hasKey: true })
+    vi.mocked(window.sidecar.ai.setSettings).mockResolvedValue({ ok: true, hasKey: true })
     aiSettingsOpen.value = true
     track(mount(AISettingsModal))
 
@@ -329,7 +329,7 @@ describe('AISettingsModal', () => {
   })
 
   it('填入新 Key 时随 patch 一并提交', async () => {
-    vi.mocked(window.sidecar.ai.setSettings).mockResolvedValue({ hasKey: true })
+    vi.mocked(window.sidecar.ai.setSettings).mockResolvedValue({ ok: true, hasKey: true })
     aiSettingsOpen.value = true
     track(mount(AISettingsModal))
     const key = document.body.querySelector('#setting-apikey') as HTMLInputElement
@@ -786,9 +786,10 @@ describe('AssetsPanel', () => {
     // 否则这个未完成的 Promise 会漂到下一个用例里，造成跨用例假阳性/假阴性。
     await vi.waitFor(() => expect(window.sidecar.uploadAsset).toHaveBeenCalled())
 
+    // 线上字段名（sidecar 契约：id / filename / data）——客户端负责把 UI 口径翻译成线口径
     expect(window.sidecar.uploadAsset).toHaveBeenCalledWith({
-      exampleId: 'ex-1',
-      fileName: 'a.png',
+      id: 'ex-1',
+      filename: 'a.png',
       data: 'aGk='
     })
     expect(window.sidecar.listAssets).toHaveBeenCalledWith('ex-1')
@@ -849,7 +850,7 @@ describe('AssetsPanel', () => {
   it('确认删除后调用 deleteAsset 并用返回值刷新列表', async () => {
     selectedId.value = 'ex-1'
     assets.value = [makeAsset({ filename: 'a.png' })]
-    vi.mocked(window.sidecar.deleteAsset).mockResolvedValue({ assets: [] })
+    vi.mocked(window.sidecar.deleteAsset).mockResolvedValue({ deleted: 'a.png', assets: [] })
     const w = track(mount(AssetsPanel))
 
     findButton('删除', w.element).click()
@@ -858,7 +859,7 @@ describe('AssetsPanel', () => {
     findButton('删除', d).click()
     await flushPromises()
 
-    expect(window.sidecar.deleteAsset).toHaveBeenCalledWith({ exampleId: 'ex-1', fileName: 'a.png' })
+    expect(window.sidecar.deleteAsset).toHaveBeenCalledWith({ id: 'ex-1', filename: 'a.png' })
     expect(assets.value).toEqual([])
     expect(document.body.querySelector('[role="dialog"]')).toBeNull()
   })

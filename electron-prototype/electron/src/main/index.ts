@@ -1147,6 +1147,38 @@ function runSmokeTest(): void {
         }
         console.log(`[smoke] 详情走查通过：标签 ${d.tabs} 选中 ${d.tabSelected} 标签行高 ${d.tabRowH} 终端底 ${d.consoleBg} 字重 ${(d.weights as string[]).join('/')}`)
       }
+      // 资源链路走查：走渲染层真实路径（__app.uploadAssets → 客户端 → 主进程 → sidecar → 工作区）。
+      // 为什么必须真跑：资源上传/删除的字段名（id/filename）是客户端翻译出来的，
+      // 单测 mock 掉桥就看不见线口径错误——2026-09-29 就抓到过 pass-through 字段名不匹配。
+      step = '资源链路走查'
+      const asset = await mainWindow!.webContents.executeJavaScript(`(async () => {
+        const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+        const app = window.__app;
+        if (!app || !app.uploadAssets) return { fatal: '__app 缺少资源钩子' };
+        const target = app.examples().find((e) => e.category !== 'tools') || app.examples()[0];
+        if (!target) return { fatal: '没有可用的示例' };
+        await app.openDetail(target.id);
+        await sleep(300);
+        const bytes = new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10]);
+        await app.uploadAssets(target.id, [new File([bytes], 'smoke_asset.png', { type: 'image/png' })]);
+        await sleep(1200);
+        const after = app.assets().map((a) => a.filename);
+        await app.deleteAsset('smoke_asset.png');
+        await sleep(800);
+        const final = app.assets().map((a) => a.filename);
+        return { id: target.id, uploaded: after, removed: final };
+      })()`) as Record<string, unknown>
+      {
+        const a = asset as { fatal?: string; id?: string; uploaded?: string[]; removed?: string[] }
+        if (a.fatal) throw new Error(`资源链路异常: ${a.fatal}`)
+        if (!a.uploaded?.includes('smoke_asset.png')) {
+          throw new Error(`资源上传后列表未见文件: ${JSON.stringify(a)}`)
+        }
+        if (a.removed?.includes('smoke_asset.png')) {
+          throw new Error(`资源删除后列表仍见文件: ${JSON.stringify(a)}`)
+        }
+        console.log(`[smoke] 资源链路正常：上传→列表→删除（${a.uploaded.length} 项）`)
+      }
       // 全局层走查（A5）：命令面板选中语义（板 3）+ 高危确认弹层按钮序与危险语义（板 4）
       step = '全局层走查'
       const overlay = await mainWindow!.webContents.executeJavaScript(`(async () => {

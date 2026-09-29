@@ -24,7 +24,7 @@ import {
   type LucideIcon
 } from 'lucide-vue-next'
 import { api } from './src/sidecar-client'
-import { modKeyLabel } from './src/platform'
+import { createWindowControls, modKeyLabel } from './src/platform'
 import { statusDotCls } from './src/utils'
 import { applyMonacoTheme } from './monaco'
 import {
@@ -101,12 +101,18 @@ const modKey = ref(modKeyLabel())
 // Windows 自绘标题栏：最大化状态由主进程回推
 const maximized = ref(false)
 let offMaximized: (() => void) | null = null
+// 平台适配层：窗口三键（Windows 自绘标题栏）——组件不直接摸 window.sidecar
+const windowControls = createWindowControls({
+  minimize: () => api.win.minimize(),
+  toggleMaximize: () => api.win.toggleMaximize(),
+  close: () => api.win.close(),
+  isMaximized: () => api.win.isMaximized(),
+  onMaximized: (fn) => api.on('maximized', (data) => fn(!!data?.maximized))
+})
 function windowAction(action: 'minimize' | 'toggleMaximize' | 'close'): void {
-  const w = window.sidecar?.win
-  if (!w) return
-  if (action === 'minimize') void w.minimize()
-  else if (action === 'toggleMaximize') void w.toggleMaximize().then((v) => (maximized.value = !!v))
-  else void w.close()
+  if (action === 'minimize') windowControls.minimize()
+  else if (action === 'toggleMaximize') void windowControls.toggleMaximize().then((v) => (maximized.value = !!v))
+  else windowControls.close()
 }
 
 const THEME_META: Record<ThemePref, { label: string; icon: LucideIcon }> = {
@@ -168,11 +174,8 @@ onMounted(async () => {
   window.addEventListener('keydown', onGlobalKey)
   systemDark.addEventListener('change', onSystemThemeChange)
   // 自绘标题栏最大化状态：主进程事件 + 首帧对齐（win 专用按钮，mac 下按钮不渲染）
-  offMaximized = window.sidecar?.win?.onMaximizedChange((data) => {
-    const d = data as { maximized?: boolean }
-    maximized.value = !!d?.maximized
-  }) ?? null
-  void window.sidecar?.win?.isMaximized?.().then((v) => (maximized.value = !!v))
+  offMaximized = windowControls.onMaximizedChange((v) => (maximized.value = v))
+  void windowControls.isMaximized().then((v) => (maximized.value = v))
   // 运行输出/结束/图片通知订阅 + AI 流式事件订阅（全局一次）
   initRunEvents()
   initAIEvents()

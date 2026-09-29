@@ -919,7 +919,7 @@ function applyEnvStatus(next: unknown): void {
 
 /** 订阅环境阶段推进 + 拉一次当前状态（首启页打开时补全量）。 */
 export function initEnvEvents(): void {
-  window.sidecar?.env?.onProgress((data) => applyEnvStatus(data))
+  api.on('envProgress', (data) => applyEnvStatus(data))
   void refreshEnvStatus()
 }
 
@@ -1066,6 +1066,9 @@ export function getTestApi(): Record<string, unknown> {
     outputText: () => surfaces.detail.lines.map((l) => l.text).join(''),
     detailHistory: () => detailHistory.value,
     assets: () => assets.value,
+    // 资源链路走查：走真实上传/删除（渲染层 → 客户端 → 主进程 → sidecar → 工作区）
+    uploadAssets: (id: string, files: File[]) => uploadAssets(id, files),
+    deleteAsset: (filename: string) => deleteAsset(filename),
     // A5.5：环境状态与全局层开关
     envStatus: () => envStatus.value,
     openHelp: () => openHelp(),
