@@ -19,14 +19,7 @@ from .logger import get_logger
 # 合法 PyPI 包名（不含版本约束部分）；非法名（乱码/无效导入）在依赖合并前被丢弃
 VALID_PKG_RE = re.compile(r"^[A-Za-z0-9]([A-Za-z0-9._-]*[A-Za-z0-9])?$")
 
-SKIP_DIRS = {
-    "__pycache__",
-    ".git",
-    ".venv",
-    "node_modules",
-    ".mypy_cache",
-    ".pytest_cache",
-}
+SKIP_DIRS = {"__pycache__", ".git", ".venv", "node_modules", ".mypy_cache", ".pytest_cache"}
 
 TAG_BY_MODULE = {
     "requests": "网络",
@@ -178,20 +171,11 @@ def derive_tags(rel_parts: list[str], imports: set[str]) -> list[str]:
 
 def read_requirements(pkg_dir: Path, source_root: Path | None = None) -> list[str]:
     """读示例目录（沿父目录向上查到源根）的 requirements.txt，返回包名列表（兼容 UTF-16/UTF-8，剥离版本约束）。"""
-    req = next(
-        (
-            d / "requirements.txt"
-            for d in [pkg_dir, *pkg_dir.parents]
-            if (d / "requirements.txt").exists()
-            and (
-                source_root is None
-                or d == source_root
-                or d in source_root.parents
-                or d.is_relative_to(source_root)
-            )
-        ),
-        None,
-    )
+    req = next((d / "requirements.txt"
+                for d in [pkg_dir, *pkg_dir.parents]
+                if (d / "requirements.txt").exists()
+                and (source_root is None or d == source_root or d in source_root.parents or d.is_relative_to(source_root))),
+               None)
     if req is None:
         return []
     try:
@@ -383,9 +367,5 @@ def import_directory(
         "description": f"导入自 {source.name} 的用户示例集合。",
         "examples": examples,
         "skipped": skipped,
-        "stats": {
-            "scanned": len(py_files),
-            "imported": len(examples),
-            "skipped": len(skipped),
-        },
+        "stats": {"scanned": len(py_files), "imported": len(examples), "skipped": len(skipped)},
     }

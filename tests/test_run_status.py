@@ -49,10 +49,7 @@ def test_runnable_for_normal_code():
 
 
 def test_broken_for_syntax_error():
-    assert (
-        status_of("def broken(:\n    pass\n# padding to exceed thirty chars\n")
-        == BROKEN
-    )
+    assert status_of("def broken(:\n    pass\n# padding to exceed thirty chars\n") == BROKEN
 
 
 def test_empty_for_docstring_only_and_short_code():
@@ -154,9 +151,7 @@ def test_store_risk_findings_feed_risk_high_and_run_status(tmp_path):
 
 
 def test_store_missing_deps_requires_module_index(tmp_path):
-    store, item = make_store(
-        tmp_path, GOOD_CODE + "import pandas as pd\nprint(pd.__version__)\n"
-    )
+    store, item = make_store(tmp_path, GOOD_CODE + "import pandas as pd\nprint(pd.__version__)\n")
     # 未注入索引：宁可漏报不误报
     assert store.ensure_run_status(item) == RUNNABLE
     # 注入不含 pandas 的索引后重算为缺依赖

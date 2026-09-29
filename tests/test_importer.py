@@ -40,9 +40,7 @@ def test_extract_imports_ast_semantics():
     )
     # 最后一行语法错误 → 整个文件 parse 失败返回空集（保守：不猜依赖）
     assert extract_imports(code) == set()
-    assert extract_imports(
-        "import os\nimport numpy as np\nfrom PIL import Image\n"
-    ) == {
+    assert extract_imports("import os\nimport numpy as np\nfrom PIL import Image\n") == {
         "os",
         "numpy",
         "PIL",
@@ -71,10 +69,7 @@ def test_guess_requirements_excludes_available_local_and_maps_pkg():
 def test_guess_requirements_deterministic_and_dedup():
     is_avail = lambda m: False  # noqa: E731
     code = "import zlib\nimport cv2\nimport cv2\n"
-    assert guess_requirements(code, set(), is_available=is_avail) == [
-        "opencv-python",
-        "zlib",
-    ]
+    assert guess_requirements(code, set(), is_available=is_avail) == ["opencv-python", "zlib"]
 
 
 def test_read_requirements_handles_utf16_and_versions(tmp_path):
@@ -119,9 +114,7 @@ def make_source(tmp_path: Path) -> Path:
 def test_import_directory_full_flow(tmp_path):
     src = make_source(tmp_path)
     is_avail = lambda m: m == "cv2"  # noqa: E731  cv2 已装 → 不猜；hello.py 无其他第三方
-    payload = import_directory(
-        src, "我的示例", existing_ids={"hello"}, is_available=is_avail
-    )
+    payload = import_directory(src, "我的示例", existing_ids={"hello"}, is_available=is_avail)
     assert payload["name"] == "我的示例"
     assert payload["stats"] == {"scanned": 3, "imported": 1, "skipped": 2}
     ids = [ex["id"] for ex in payload["examples"]]

@@ -26,9 +26,7 @@ class RiskItem:
 
     description: str
     level: RiskLevel
-    category: str = (
-        ""  # 风险类别：network / database / system / file / env / gui / syntax
-    )
+    category: str = ""  # 风险类别：network / database / system / file / env / gui / syntax
 
 
 @dataclass
@@ -72,9 +70,7 @@ class SecurityReport:
         """添加一条风险（自动去重）。"""
         if description not in self.risks:
             self.risks.append(description)
-            self.risk_details.append(
-                RiskItem(description=description, level=level, category=category)
-            )
+            self.risk_details.append(RiskItem(description=description, level=level, category=category))
         self.is_safe = False
 
 
@@ -127,22 +123,12 @@ def _is_system_call(node: ast.AST) -> tuple[bool, RiskLevel, str]:
         if attr in ("run", "call", "Popen", "check_call", "check_output"):
             # 检查是否有 shell=True
             has_shell_true = any(
-                kw.arg == "shell"
-                and isinstance(kw.value, ast.Constant)
-                and kw.value.value is True
+                kw.arg == "shell" and isinstance(kw.value, ast.Constant) and kw.value.value is True
                 for kw in node.keywords
             )
             if has_shell_true:
-                return (
-                    True,
-                    RiskLevel.HIGH,
-                    f"subprocess.{attr}(shell=True)：存在命令注入风险",
-                )
-            return (
-                True,
-                RiskLevel.MEDIUM,
-                f"subprocess.{attr}()：子进程调用（无 shell=True）",
-            )
+                return True, RiskLevel.HIGH, f"subprocess.{attr}(shell=True)：存在命令注入风险"
+            return True, RiskLevel.MEDIUM, f"subprocess.{attr}()：子进程调用（无 shell=True）"
 
     return False, RiskLevel.LOW, ""
 
@@ -204,9 +190,7 @@ class SecurityChecker:
             return False
         if example_id in self.whitelist_ids:
             return True
-        return any(
-            fnmatch.fnmatch(example_id, pattern) for pattern in self.whitelist_patterns
-        )
+        return any(fnmatch.fnmatch(example_id, pattern) for pattern in self.whitelist_patterns)
 
     def check(
         self,
@@ -246,27 +230,19 @@ class SecurityChecker:
                 return report
 
         # 网络请求检测（中风险：需要网络权限和配置）
-        if _has_import(
-            tree, {"requests", "urllib", "selenium", "scrapy", "requests_html"}
-        ):
+        if _has_import(tree, {"requests", "urllib", "selenium", "scrapy", "requests_html"}):
             report.add_risk(self.RISK_NETWORK, RiskLevel.MEDIUM, "network")
-            report.needs_config.append(
-                "网络请求可能需要代理、Cookie、User-Agent 或 API Key"
-            )
+            report.needs_config.append("网络请求可能需要代理、Cookie、User-Agent 或 API Key")
 
         # 数据库检测（中风险：需要连接配置）
-        if _has_import(
-            tree, {"pymysql", "mysql", "sqlalchemy", "pymongo", "redis", "sqlite3"}
-        ):
+        if _has_import(tree, {"pymysql", "mysql", "sqlalchemy", "pymongo", "redis", "sqlite3"}):
             report.add_risk(self.RISK_DATABASE, RiskLevel.MEDIUM, "database")
             report.needs_config.append("数据库连接需要主机、端口、用户名、密码等配置")
 
         # GUI / 游戏循环检测（低风险：仅环境提示）
         if _has_import(tree, {"tkinter", "pygame", "PyQt5", "PyQt6", "PySide6"}):
             report.add_risk(self.RISK_GUI_LOOP, RiskLevel.LOW, "gui")
-            report.needs_config.append(
-                "GUI 程序建议在独立终端运行，桌面应用中可能无法正常显示"
-            )
+            report.needs_config.append("GUI 程序建议在独立终端运行，桌面应用中可能无法正常显示")
 
         # 敏感环境变量检测（中风险：可能读取密钥）
         for node in ast.walk(tree):
@@ -299,8 +275,6 @@ class SecurityChecker:
         ]
         for pattern in sensitive_patterns:
             if pattern in content:
-                report.needs_config.append(
-                    f"代码中包含占位符 {pattern}，运行前需要替换"
-                )
+                report.needs_config.append(f"代码中包含占位符 {pattern}，运行前需要替换")
 
         return report

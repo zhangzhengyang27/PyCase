@@ -73,11 +73,7 @@ def parse_code(code: str) -> ast.Module | None:
 
 def is_empty_body(tree: ast.Module, code: str) -> bool:
     """空壳判定：去除 docstring/纯常量表达式后无实际语句，或有效字符数过短。"""
-    body = [
-        n
-        for n in tree.body
-        if not (isinstance(n, ast.Expr) and isinstance(n.value, ast.Constant))
-    ]
+    body = [n for n in tree.body if not (isinstance(n, ast.Expr) and isinstance(n.value, ast.Constant))]
     return not body or len(code.strip()) < MIN_MEANINGFUL_CHARS
 
 
@@ -89,9 +85,7 @@ def _is_local_module(mod: str, directory: Path) -> bool:
         return False
 
 
-def third_party_imports(
-    code: str, tree: ast.Module, local_dirs: list[Path]
-) -> set[str]:
+def third_party_imports(code: str, tree: ast.Module, local_dirs: list[Path]) -> set[str]:
     """顶层第三方 import 模块名（排除标准库与本地目录内可解析的模块）。"""
     mods: set[str] = set()
     for node in ast.walk(tree):

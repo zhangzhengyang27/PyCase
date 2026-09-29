@@ -17,9 +17,7 @@ from app.models import ExampleItem  # noqa: E402
 import regression_smoke as rs  # noqa: E402
 
 
-def _make_item(
-    name: str, category: str = "topics", code: str = "print('x')\n", idx: int = 0
-) -> ExampleItem:
+def _make_item(name: str, category: str = "topics", code: str = "print('x')\n", idx: int = 0) -> ExampleItem:
     return ExampleItem(
         name=name,
         path=ROOT / category / name,
@@ -38,9 +36,7 @@ class TestClassifyOutput:
         assert rs.classify_output(0, "ok\n") == ("pass", "")
 
     def test_missing_dependency(self):
-        status, _ = rs.classify_output(
-            1, "Traceback\nModuleNotFoundError: No module named 'foo'"
-        )
+        status, _ = rs.classify_output(1, "Traceback\nModuleNotFoundError: No module named 'foo'")
         assert status == "missing_dependency"
 
     def test_import_error_also_missing(self):
@@ -73,7 +69,9 @@ class TestNeedsArguments:
         assert rs.needs_arguments(code) is True
 
     def test_optional_with_default_not_needed(self):
-        code = "import argparse\np=argparse.ArgumentParser()\np.add_argument('--n', type=int, default=1)\np.parse_args()\n"
+        code = (
+            "import argparse\np=argparse.ArgumentParser()\np.add_argument('--n', type=int, default=1)\np.parse_args()\n"
+        )
         assert rs.needs_arguments(code) is False
 
 
@@ -105,9 +103,7 @@ class TestStratifiedSample:
     def test_family_booster_guarantees_coverage(self):
         # 99 个普通示例 + 1 个 pygame 示例；比例抽样很容易漏掉唯一的家族样本，补足逻辑必须捞回
         leaves = [_make_item(f"a{i}.py", idx=i) for i in range(99)]
-        leaves.append(
-            _make_item("game.py", code="import pygame\npygame.init()\n", idx=99)
-        )
+        leaves.append(_make_item("game.py", code="import pygame\npygame.init()\n", idx=99))
         picked = rs.stratified_sample(leaves, 0.05, 1)
         assert any("pygame" in (x.code or "") for x in picked)
 

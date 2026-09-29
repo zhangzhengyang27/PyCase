@@ -50,22 +50,14 @@ class _Capture:
         self.events.append((time.monotonic(), obj))
 
     def texts(self) -> list[str]:
-        return [
-            e["params"].get("text", "")
-            for _, e in self.events
-            if e.get("method") == "run_output"
-        ]
+        return [e["params"].get("text", "") for _, e in self.events if e.get("method") == "run_output"]
 
     def finished(self) -> list[dict]:
-        return [
-            e["params"] for _, e in self.events if e.get("method") == "run_finished"
-        ]
+        return [e["params"] for _, e in self.events if e.get("method") == "run_finished"]
 
     def time_of(self, needle: str) -> float:
         for ts, e in self.events:
-            if e.get("method") == "run_output" and needle in e["params"].get(
-                "text", ""
-            ):
+            if e.get("method") == "run_output" and needle in e["params"].get("text", ""):
                 return ts
         raise AssertionError(f"未捕获含 {needle!r} 的输出")
 
@@ -90,15 +82,7 @@ def _capture(monkeypatch) -> _Capture:
 def _fake_item(tmp_path: Path, code: str, name: str = "demo.py") -> ExampleItem:
     path = tmp_path / name
     path.write_text(code, encoding="utf-8")
-    return ExampleItem(
-        name=name,
-        path=path,
-        is_dir=False,
-        category="user",
-        source="json",
-        code=code,
-        json_id=name,
-    )
+    return ExampleItem(name=name, path=path, is_dir=False, category="user", source="json", code=code, json_id=name)
 
 
 def _pid_script(pid_file: Path, seconds: int = 120) -> str:
@@ -150,10 +134,7 @@ def _kill_pid(pid: int) -> None:
 def test_g4_streams_output_and_reports_success(tmp_path, monkeypatch):
     """输出必须流式送达：首行在进程结束前到达，而不是攒到结束一次性吐。"""
     cap = _capture(monkeypatch)
-    item = _fake_item(
-        tmp_path,
-        "import time\nprint('one', flush=True)\ntime.sleep(1.5)\nprint('two', flush=True)\n",
-    )
+    item = _fake_item(tmp_path, "import time\nprint('one', flush=True)\ntime.sleep(1.5)\nprint('two', flush=True)\n")
 
     asyncio.run(server._run_subprocess("g4-ok", item, [], 30))
 
@@ -162,9 +143,7 @@ def test_g4_streams_output_and_reports_success(tmp_path, monkeypatch):
     finished = cap.finished()
     assert len(finished) == 1 and finished[0]["exit_code"] == 0
     finished_at = cap.events[-1][0]
-    assert (
-        cap.time_of("one") < finished_at - 0.5
-    ), "首行输出晚于进程结束，说明输出被缓冲而非流式"
+    assert cap.time_of("one") < finished_at - 0.5, "首行输出晚于进程结束，说明输出被缓冲而非流式"
 
 
 def test_g4_timeout_kills_process_hard(tmp_path, monkeypatch):
@@ -190,9 +169,7 @@ def test_g4_stop_terminates_running_process(tmp_path, monkeypatch):
     pid_file = tmp_path / "pid.txt"
     item = _fake_item(tmp_path, _pid_script(pid_file))
     captured_resp: list[dict] = []
-    monkeypatch.setattr(
-        server, "_result", lambda req_id, result: captured_resp.append(result)
-    )
+    monkeypatch.setattr(server, "_result", lambda req_id, result: captured_resp.append(result))
 
     async def scenario() -> int:
         task = asyncio.create_task(server._run_subprocess("g4-stop", item, [], 30))
@@ -262,13 +239,7 @@ def _drill_data_dir(tmp_path: Path, pid_file: Path) -> Path:
         json.dumps(
             {
                 "name": "drill",
-                "examples": [
-                    {
-                        "id": DRILL_CACHE_NAME,
-                        "name": "drill_sleep.py",
-                        "code": _pid_script(pid_file),
-                    }
-                ],
+                "examples": [{"id": DRILL_CACHE_NAME, "name": "drill_sleep.py", "code": _pid_script(pid_file)}],
             }
         ),
         encoding="utf-8",
@@ -279,9 +250,7 @@ def _drill_data_dir(tmp_path: Path, pid_file: Path) -> Path:
     venv_dir = data / ".venv"
     (venv_dir / "bin").mkdir(parents=True)
     (venv_dir / "bin" / "python").symlink_to(sys.executable)
-    (venv_dir / server.VenvManager.MARKER_FILE_NAME).write_text(
-        '{"bootstrap": true}', encoding="utf-8"
-    )
+    (venv_dir / server.VenvManager.MARKER_FILE_NAME).write_text('{"bootstrap": true}', encoding="utf-8")
     return data
 
 
@@ -329,17 +298,10 @@ def test_g5_sidecar_sigterm_leaves_no_orphan(tmp_path):
     example_pid: int | None = None
     try:
         assert proc.stdout is not None and proc.stdin is not None
-        assert '"sidecar_ready"' in _read_line_with_timeout(
-            proc.stdout, timeout=60
-        ), "sidecar 未就绪"
+        assert '"sidecar_ready"' in _read_line_with_timeout(proc.stdout, timeout=60), "sidecar 未就绪"
         proc.stdin.write(
             json.dumps(
-                {
-                    "jsonrpc": "2.0",
-                    "id": 1,
-                    "method": "run_example",
-                    "params": {"id": DRILL_CACHE_NAME, "timeout": 300},
-                }
+                {"jsonrpc": "2.0", "id": 1, "method": "run_example", "params": {"id": DRILL_CACHE_NAME, "timeout": 300}}
             )
             + "\n"
         )
@@ -353,9 +315,7 @@ def test_g5_sidecar_sigterm_leaves_no_orphan(tmp_path):
         proc.terminate()  # 应用退出：SIGTERM 给 sidecar
         proc.wait(timeout=15)
 
-        assert _pid_gone(
-            example_pid, timeout=5
-        ), f"sidecar 退出后示例进程 {example_pid} 仍存活（孤儿）"
+        assert _pid_gone(example_pid, timeout=5), f"sidecar 退出后示例进程 {example_pid} 仍存活（孤儿）"
     finally:
         if example_pid is not None:
             _kill_pid(example_pid)
@@ -387,12 +347,7 @@ class _RpcEnv:
         coll = self.tmp_path / "json_examples"
         coll.mkdir(exist_ok=True)
         (coll / "builtin.json").write_text(
-            json.dumps(
-                {
-                    "name": "builtin",
-                    "examples": [{"id": "b1", "name": "b1.py", "code": "print(1)\n"}],
-                }
-            ),
+            json.dumps({"name": "builtin", "examples": [{"id": "b1", "name": "b1.py", "code": "print(1)\n"}]}),
             encoding="utf-8",
         )
         user_dir = self.tmp_path / "user_examples"
@@ -403,9 +358,7 @@ class _RpcEnv:
         server._store = None
         server._root = None
         server._index.clear()
-        self._patch = patch.object(
-            server, "_send", side_effect=lambda obj: self.captured.append(obj)
-        )
+        self._patch = patch.object(server, "_send", side_effect=lambda obj: self.captured.append(obj))
         self._patch.start()
         return self
 
@@ -440,10 +393,7 @@ def test_g6_reimport_dedupes_ids_across_collections(tmp_path):
         for f in collections:
             data = json.loads(f.read_text(encoding="utf-8"))
             ids_by_collection.append([s["id"] for s in data["examples"]])
-        assert sorted(ids_by_collection[0] + ids_by_collection[1]) == [
-            "hello.py",
-            "hello.py_2",
-        ]
+        assert sorted(ids_by_collection[0] + ids_by_collection[1]) == ["hello.py", "hello.py_2"]
 
 
 def test_g6_import_midwrite_failure_leaves_no_partial_collection(tmp_path, monkeypatch):

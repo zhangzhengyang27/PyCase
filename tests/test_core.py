@@ -82,10 +82,7 @@ def test_save_item_writes_back_json_and_cache(tmp_path):
     item = _flat(store.load())["demo_a"]
 
     assert store.save_item(item, "print('a2')\n") is True
-    codes = {
-        s["id"]: s["code"]
-        for s in json.loads(json_file.read_text(encoding="utf-8"))["examples"]
-    }
+    codes = {s["id"]: s["code"] for s in json.loads(json_file.read_text(encoding="utf-8"))["examples"]}
     assert codes == {"demo_a": "print('a2')\n", "demo_b": "print('b')\n"}
     assert item.path.read_text(encoding="utf-8") == "print('a2')\n"
 
@@ -100,9 +97,7 @@ def test_save_item_survives_midwrite_failure(tmp_path, monkeypatch):
     coll.mkdir()
     spec = {"id": "demo", "name": "demo.py", "title": "Demo", "code": "print('v1')\n"}
     json_file = coll / "demo.json"
-    json_file.write_text(
-        json.dumps({"name": "demo", "examples": [spec]}), encoding="utf-8"
-    )
+    json_file.write_text(json.dumps({"name": "demo", "examples": [spec]}), encoding="utf-8")
 
     store = ExampleStore(base_dir=tmp_path)
     root = store.load()
@@ -144,17 +139,9 @@ def test_materialize_rejects_path_traversal(tmp_path):
     (outside / "secret.txt").write_text("sensitive", encoding="utf-8")
     coll = tmp_path / "json_examples"
     coll.mkdir()
-    evil_dir = {
-        "id": "evil_abs",
-        "name": "e1.py",
-        "code": "print('x')",
-        "dir": str(outside),
-    }
+    evil_dir = {"id": "evil_abs", "name": "e1.py", "code": "print('x')", "dir": str(outside)}
     evil_name = {"id": "evil_name", "name": "../outside.py", "code": "print('x')"}
-    (coll / "evil.json").write_text(
-        json.dumps({"name": "evil", "examples": [evil_dir, evil_name]}),
-        encoding="utf-8",
-    )
+    (coll / "evil.json").write_text(json.dumps({"name": "evil", "examples": [evil_dir, evil_name]}), encoding="utf-8")
     try:
         store = ExampleStore(base_dir=tmp_path)
         root = store.load()
@@ -182,12 +169,7 @@ def test_materialize_allows_normal_relative_dir(tmp_path):
             {
                 "name": "ok",
                 "examples": [
-                    {
-                        "id": "ok_1",
-                        "name": "ok1.py",
-                        "code": "print('ok')",
-                        "dir": "topics/demo",
-                    },
+                    {"id": "ok_1", "name": "ok1.py", "code": "print('ok')", "dir": "topics/demo"},
                     {"id": "ok_2", "name": "ok2.py", "code": "print('ok2')"},
                 ],
             }
@@ -232,9 +214,7 @@ def test_security_risk_level_subprocess_no_shell_is_medium(tmp_path):
     from app.security import RiskLevel
 
     code = tmp_path / "sub.py"
-    code.write_text(
-        "import subprocess\nsubprocess.run(['ls', '-la'])\n", encoding="utf-8"
-    )
+    code.write_text("import subprocess\nsubprocess.run(['ls', '-la'])\n", encoding="utf-8")
     report = SecurityChecker().check(code)
     assert report.max_risk_level == RiskLevel.MEDIUM
     assert not report.high_risks
@@ -245,9 +225,7 @@ def test_security_risk_level_subprocess_shell_true_is_high(tmp_path):
     from app.security import RiskLevel
 
     code = tmp_path / "shell.py"
-    code.write_text(
-        "import subprocess\nsubprocess.run('ls', shell=True)\n", encoding="utf-8"
-    )
+    code.write_text("import subprocess\nsubprocess.run('ls', shell=True)\n", encoding="utf-8")
     report = SecurityChecker().check(code)
     assert report.max_risk_level == RiskLevel.HIGH
     assert any("shell=True" in r for r in report.high_risks)
@@ -329,9 +307,7 @@ def test_bootstrap_prefers_project_manifest(tmp_path, monkeypatch):
 
     # 有清单 → 按清单安装（忽略注释），不再用兜底
     installed.clear()
-    (tmp_path / "requirements.txt").write_text(
-        "# 项目清单\nrequests\ndjango\n\n", encoding="utf-8"
-    )
+    (tmp_path / "requirements.txt").write_text("# 项目清单\nrequests\ndjango\n\n", encoding="utf-8")
     marker = mgr.venv_path / mgr.MARKER_FILE_NAME
     marker.unlink(missing_ok=True)
     mgr._marker_loaded = False
@@ -402,9 +378,7 @@ def test_merge_requirements_drops_invalid_names(tmp_path):
     store = ExampleStore(base_dir=APP_DIR)
     cache_dir = tmp_path / "ex"
     cache_dir.mkdir()
-    store._merge_requirements(
-        cache_dir, ["\x00F\x00l\x00a\x00s\x00k\x00", "requests", "ok-pkg_2"]
-    )
+    store._merge_requirements(cache_dir, ["\x00F\x00l\x00a\x00s\x00k\x00", "requests", "ok-pkg_2"])
     lines = (cache_dir / "requirements.txt").read_text(encoding="utf-8").splitlines()
     assert lines == ["requests", "ok-pkg_2"]
 
@@ -417,12 +391,7 @@ def _make_two_source_store(tmp_path):
     coll = tmp_path / "json_examples"
     coll.mkdir()
     (coll / "builtin.json").write_text(
-        json.dumps(
-            {
-                "name": "builtin",
-                "examples": [{"id": "b1", "name": "b1.py", "code": "print(1)\n"}],
-            }
-        ),
+        json.dumps({"name": "builtin", "examples": [{"id": "b1", "name": "b1.py", "code": "print(1)\n"}]}),
         encoding="utf-8",
     )
     user = tmp_path / "user_examples"
@@ -470,12 +439,7 @@ def test_source_dir_survives_load(tmp_path):
             {
                 "name": "tools",
                 "examples": [
-                    {
-                        "id": "t1",
-                        "name": "t1.py",
-                        "code": "print(1)\n",
-                        "dir": "tools/utility-crawlers",
-                    },
+                    {"id": "t1", "name": "t1.py", "code": "print(1)\n", "dir": "tools/utility-crawlers"},
                     {"id": "t2", "name": "t2.py", "code": "print(2)\n"},
                 ],
             }
@@ -515,9 +479,7 @@ def test_delete_refuses_builtin_and_missing(tmp_path):
     flat = _flat(store.load())
     # 内置集合受保护
     assert store.delete_user_example(flat["b1"]) is False
-    assert "b1" in (tmp_path / "json_examples" / "builtin.json").read_text(
-        encoding="utf-8"
-    )
+    assert "b1" in (tmp_path / "json_examples" / "builtin.json").read_text(encoding="utf-8")
     # 集合里已无此条目时返回 False
     ghost = ExampleItem(
         name="ghost.py",
