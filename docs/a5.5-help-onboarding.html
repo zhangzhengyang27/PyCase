@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-platform="mac" data-theme="dark" data-accent="system">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>A5.5 代表页稿 · 帮助与首启</title>
+<style>
+/* ============================================================
+   A5.5 代表页稿：帮助与快捷键面板 + 首启引导页
+   ------------------------------------------------------------
+   - 令牌层与产品同源：下方 5 个令牌块由 scripts 从
+     electron-prototype/electron/src/renderer/src/theme.css 摘取后原样嵌入，
+     评审稿不另立颜色值（避免"稿子漂亮、产品漂移"）。
+   - 本文件只写评审用的容器/组件样式，全部消费令牌。
+   - 切换器：平台（macOS / Windows）× 外观（深/浅）× 强调色（系统/品牌）；
+     URL 参数 ?platform=&theme=&accent=&show=<板号> 便于截图与走查。
+   ============================================================ */
+
+/* ---------- 令牌层（自 theme.css 摘取，与产品同源） ---------- */
+html {
+  /* 平台：字体 */
+  --font-ui: -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", "Hiragino Sans GB", sans-serif;
+  /* 等宽栈命名为 code 而非 mono：@theme 的 --font-mono 是 Tailwind 命名空间变量，
+     同名会构成自引用（--font-mono: var(--font-mono)）而失效 */
+  --font-code: ui-monospace, "SF Mono", Menlo, monospace;
+  /* 平台：字阶与密度 */
+  --fs-caption: 11px;
+  --fs-body: 13px;
+  --fs-title: 15px;
+  --fs-page: 17px;
+  --ctrl-sm: 20px;
+  --ctrl-md: 24px;
+  --ctrl-lg: 28px;
+  --row-h: 28px;
+  --r-control: 6px;
+  --r-card: 10px;
+  --r-overlay: 12px;
+  --sidebar-w: 224px;
+  --titlebar-h: 44px;
+  --toolbar-h: 44px;
+  --statusbar-h: 22px;
+  --pane-head-h: 44px;
+  --titlebar-lead: 72px;
+  --titlebar-trail: 0px;
+  /* 平台：动效 */
+  --dur-fast: 100ms;
+  --dur-base: 160ms;
+  --dur-panel: 220ms;
+  --ease-std: cubic-bezier(0.25, 0.1, 0.25, 1);
+  --ease-emph: cubic-bezier(0.32, 0.72, 0, 1);
+
+  color-scheme: dark;
+
+  /* 主题：macOS 深色 */
+  --bg-window: #1e1e1e;
+  --bg-chrome: #2a2a2a;
+  --bg-card: #2c2c2e;
+  --bg-card-hover: #323236;
+  --bg-sidebar: rgba(44, 44, 46, 0.6);
+  --bg-sidebar-fallback: #2b2b2d;
+  --bg-console: #1a1a1a;
+  --bg-inset: rgba(0, 0, 0, 0.22);
+  --bg-hover: rgba(255, 255, 255, 0.06);
+  --bg-pressed: rgba(255, 255, 255, 0.1);
+  --bg-subtle: rgba(255, 255, 255, 0.1);
+  --text-primary: #f5f5f7;
+  --text-secondary: #b6b6bd;
+  --text-tertiary: #a0a0a6;
+  --text-quaternary: #71717a;
+  --text-console: #d6d6d6;
+  --text-gutter: #6e6e76;
+  --code-kw: #569cd6;
+  --code-str: #ce9178;
+  --code-num: #b5cea8;
+  --code-cmt: #6a9955;
+  --code-fn: #dcdcaa;
+  --line-hairline: rgba(255, 255, 255, 0.1);
+  --line-strong: rgba(255, 255, 255, 0.2);
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-overlay: 0 12px 40px rgba(0, 0, 0, 0.55);
+  --focus-inner: #0a0a0a;
+  --focus-outer: #ffffff;
+
+  /* 状态：macOS 深色 */
+  --status-green: #30d158;
+  --status-red: #ff6961;
+  --status-amber: #ffb340;
+  --status-info-bg: transparent;
+
+  /* 中性 chip（v2 状态语言：圆点 + 中性文字；色底只在 win 弹窗 InfoBar） */
+  --chip-bg: rgba(255, 255, 255, 0.07);
+  --chip-bd: rgba(255, 255, 255, 0.1);
+
+  /* 强调色：macOS 深色 */
+  --accent-system: #0a84ff;
+  --on-accent-system: #ffffff;
+  --accent-system-hover: #2e96ff;
+  --accent-system-pressed: #0071e3;
+  --accent-system-text: #4da2ff;
+  --accent-system-halo: rgba(10, 132, 255, 0.35);
+  --accent-brand: #5e6ad2;
+  --on-accent-brand: #ffffff;
+  --accent-brand-hover: #6e79db;
+  --accent-brand-pressed: #4f5abf;
+  --accent-brand-text: #a0a4ff;
+  --accent-brand-halo: rgba(94, 106, 210, 0.4);
+  --accent: var(--accent-system);
+  --on-accent: var(--on-accent-system);
+  --accent-hover: var(--accent-system-hover);
+  --accent-pressed: var(--accent-system-pressed);
+  --accent-text: var(--accent-system-text);
+  --accent-halo: var(--accent-system-halo);
+
+  /* 平台：焦点环与侧栏选中语义（mac = 强调填充；win = 中性填充 + 指示条） */
+  --focus-shadow: 0 0 0 1px var(--accent), 0 0 0 4px var(--accent-halo);
+  --side-sel-bg: var(--accent);
+  --side-sel-fg: var(--on-accent);
+  --nav-indicator: none;
+}
+
+html[data-theme="light"] {
+  color-scheme: light;
+
+  --bg-window: #ffffff;
+  --bg-chrome: #f2f2f2;
+  --bg-card: #ffffff;
+  --bg-card-hover: #fafafc;
+  --bg-sidebar: rgba(246, 246, 248, 0.62);
+  --bg-sidebar-fallback: #f2f2f4;
+  --bg-console: #ffffff;
+  --bg-inset: rgba(0, 0, 0, 0.05);
+  --bg-hover: rgba(0, 0, 0, 0.05);
+  --bg-pressed: rgba(0, 0, 0, 0.09);
+  --bg-subtle: rgba(0, 0, 0, 0.08);
+  --text-primary: #1d1d1f;
+  --text-secondary: #58585e;
+  --text-tertiary: #696970;
+  --text-quaternary: #99999f;
+  --text-console: #1d1d1f;
+  --text-gutter: #8e8e94;
+  --code-kw: #0550ae;
+  --code-str: #a31515;
+  --code-num: #0b6a3f;
+  --code-cmt: #1f7a3a;
+  --code-fn: #795e26;
+  --line-hairline: rgba(0, 0, 0, 0.1);
+  --line-strong: rgba(0, 0, 0, 0.18);
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.1);
+  --shadow-overlay: 0 12px 40px rgba(0, 0, 0, 0.18);
+  --focus-inner: #0a0a0a;
+  --focus-outer: #ffffff;
+
+  --status-green: #1f7835;
+  --status-red: #c80014;
+  --status-amber: #a94c00;
+  --status-info-bg: transparent;
+
+  --chip-bg: rgba(0, 0, 0, 0.05);
+  --chip-bd: rgba(0, 0, 0, 0.1);
+
+  --accent-system: #007aff;
+  --on-accent-system: #ffffff;
+  --accent-system-hover: #0071e3;
+  --accent-system-pressed: #0063cc;
+  --accent-system-text: #0063cc;
+  --accent-system-halo: rgba(0, 122, 255, 0.3);
+  --accent-brand: #4f51c0;
+  --on-accent-brand: #ffffff;
+  --accent-brand-hover: #5a5ccb;
+  --accent-brand-pressed: #4345ad;
+  --accent-brand-text: #4143ae;
+  --accent-brand-halo: rgba(79, 81, 192, 0.3);
+
+  --focus-shadow: 0 0 0 1px var(--accent), 0 0 0 4px var(--accent-halo);
+}
+
+html[data-platform="win"] {
+  --font-ui: "Segoe UI Variable Text", "Segoe UI", "Microsoft YaHei UI", "Microsoft YaHei", sans-serif;
+  --font-code: "Cascadia Mono", Consolas, ui-monospace, monospace;
+  --fs-caption: 12px;
+  --fs-body: 14px;
+  --fs-title: 20px;
+  --fs-page: 28px;
+  --ctrl-sm: 24px;
+  --ctrl-md: 32px;
+  --ctrl-lg: 40px;
+  --row-h: 40px;
+  --r-control: 4px;
+  --r-card: 8px;
+  --r-overlay: 8px;
+  --sidebar-w: 240px;
+  --titlebar-h: 32px;
+  --toolbar-h: 48px;
+  --statusbar-h: 28px;
+  --pane-head-h: 48px;
+  --titlebar-lead: 12px;
+  --titlebar-trail: 138px;
+  --dur-fast: 150ms;
+  --dur-base: 200ms;
+  --dur-panel: 250ms;
+  --ease-std: cubic-bezier(0.8, 0, 0.2, 1);
+  --ease-emph: cubic-bezier(0.1, 0.9, 0.2, 1);
+
+  color-scheme: dark;
+
+  --bg-window: #202020;
+  --bg-chrome: #202020;
+  --bg-card: rgba(255, 255, 255, 0.051);
+  --bg-card-hover: rgba(255, 255, 255, 0.07);
+  --bg-sidebar: #242424;
+  --bg-sidebar-fallback: #242424;
+  --bg-inset: rgba(255, 255, 255, 0.06);
+  --bg-hover: rgba(255, 255, 255, 0.06);
+  --bg-pressed: rgba(255, 255, 255, 0.03);
+  --bg-subtle: rgba(255, 255, 255, 0.09);
+  --text-primary: #ffffff;
+  --text-secondary: #c9c9c9;
+  --text-tertiary: #a2a2a2;
+  --text-quaternary: #7a7a7a;
+  --text-gutter: #6e6e76;
+  --line-hairline: rgba(255, 255, 255, 0.07);
+  --line-strong: rgba(255, 255, 255, 0.14);
+  --shadow-card: 0 2px 4px rgba(0, 0, 0, 0.28);
+  --shadow-overlay: 0 8px 16px rgba(0, 0, 0, 0.28);
+  --focus-inner: #0a0a0a;
+  --focus-outer: #ffffff;
+
+  --status-green: #6ccb5f;
+  --status-red: #ff99a4;
+  --status-amber: #fce100;
+  --status-info-bg: #433519;
+
+  --chip-bg: rgba(255, 255, 255, 0.06);
+  --chip-bd: rgba(255, 255, 255, 0.07);
+
+  --accent-system: #60cdff;
+  --on-accent-system: #0a0a0a;
+  --accent-system-hover: #7bd4ff;
+  --accent-system-pressed: #4bc3f5;
+  --accent-system-text: #6ccbff;
+  --accent-system-halo: rgba(96, 205, 255, 0.35);
+  --accent-brand: #8b8dff;
+  --on-accent-brand: #0a0a0a;
+  --accent-brand-hover: #9b9dff;
+  --accent-brand-pressed: #7a7cff;
+  --accent-brand-text: #a7a9ff;
+  --accent-brand-halo: rgba(139, 141, 255, 0.35);
+  --accent: var(--accent-system);
+  --on-accent: var(--on-accent-system);
+  --accent-hover: var(--accent-system-hover);
+  --accent-pressed: var(--accent-system-pressed);
+  --accent-text: var(--accent-system-text);
+  --accent-halo: var(--accent-system-halo);
+
+  --focus-shadow: 0 0 0 1px var(--focus-inner), 0 0 0 3px var(--focus-outer);
+  --side-sel-bg: var(--bg-subtle);
+  --side-sel-fg: var(--text-primary);
+  --nav-indicator: block;
+}
+
+html[data-platform="win"][data-theme="light"] {
+  color-scheme: light;
+
+  --bg-window: #f3f3f3;
+  --bg-chrome: #f3f3f3;
+  --bg-card: #ffffff;
+  --bg-card-hover: #fbfbfb;
+  --bg-sidebar: #eeeeee;
+  --bg-sidebar-fallback: #eeeeee;
+  --bg-console: #ffffff;
+  --bg-inset: rgba(0, 0, 0, 0.04);
+  --bg-hover: rgba(0, 0, 0, 0.037);
+  --bg-pressed: rgba(0, 0, 0, 0.024);
+  --bg-subtle: rgba(0, 0, 0, 0.06);
+  --text-primary: #1b1b1b;
+  --text-secondary: #575757;
+  --text-tertiary: #696969;
+  --text-quaternary: #939393;
+  --text-console: #1d1d1f;
+  --text-gutter: #8e8e94;
+  --code-kw: #0550ae;
+  --code-str: #a31515;
+  --code-num: #0b6a3f;
+  --code-cmt: #1f7a3a;
+  --code-fn: #795e26;
+  --line-hairline: rgba(0, 0, 0, 0.06);
+  --line-strong: rgba(0, 0, 0, 0.14);
+  --shadow-card: 0 2px 4px rgba(0, 0, 0, 0.12);
+  --shadow-overlay: 0 8px 16px rgba(0, 0, 0, 0.14);
+  --focus-inner: #ffffff;
+  --focus-outer: #0a0a0a;
+
+  --status-green: #0e700e;
+  --status-red: #b4281a;
+  --status-amber: #8d5400;
+  --status-info-bg: #fff4ce;
+
+  --chip-bg: rgba(0, 0, 0, 0.04);
+  --chip-bd: rgba(0, 0, 0, 0.06);
+
+  --accent-system: #005fb8;
+  --on-accent-system: #ffffff;
+  --accent-system-hover: #196fc0;
+  --accent-system-pressed: #0067c0;
+  --accent-system-text: #005fb8;
+  --accent-system-halo: rgba(0, 95, 184, 0.3);
+  --accent-brand: #4f51c0;
+  --on-accent-brand: #ffffff;
+  --accent-brand-hover: #5a5ccb;
+  --accent-brand-pressed: #4345ad;
+  --accent-brand-text: #4143ae;
+  --accent-brand-halo: rgba(79, 81, 192, 0.3);
+
+  --focus-shadow: 0 0 0 1px var(--focus-inner), 0 0 0 3px var(--focus-outer);
+}
+
+html[data-accent="brand"] {
+  --accent: var(--accent-brand);
+  --on-accent: var(--on-accent-brand);
+  --accent-hover: var(--accent-brand-hover);
+  --accent-pressed: var(--accent-brand-pressed);
+  --accent-text: var(--accent-brand-text);
+  --accent-halo: var(--accent-brand-halo);
+}
+
+/* ---------- 评审稿外壳（非产品样式） ---------- */
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: #101012; color: var(--text-primary);
+  font-family: var(--font-ui); font-size: var(--fs-body);
+  -webkit-font-smoothing: antialiased;
+}
+.switcher {
+  position: sticky; top: 0; z-index: 10; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  padding: 10px 16px; background: #17171a; border-bottom: 1px solid rgba(255,255,255,.08);
+}
+.switcher h1 { font-size: 13px; font-weight: 600; margin: 0 6px 0 0; }
+.switcher .grp { display: flex; gap: 4px; align-items: center; }
+.switcher .grp > span { font-size: 11px; color: #8b8b93; margin-right: 2px; }
+.switcher button {
+  height: 26px; padding: 0 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,.12);
+  background: transparent; color: #d8d8de; font-size: 12px; font-family: inherit; cursor: pointer;
+}
+.switcher button.on { background: #3b5bdb; border-color: #3b5bdb; color: #fff; }
+.switcher .note { margin-left: auto; font-size: 11px; color: #8b8b93; max-width: 46ch; line-height: 1.5; }
+.board { padding: 22px 16px 34px; }
+.board-head { display: flex; align-items: center; gap: 10px; margin: 0 0 12px; }
+.board-head .no {
+  width: 20px; height: 20px; border-radius: 50%; background: rgba(255,255,255,.12);
+  color: #fff; font-size: 11px; display: inline-flex; align-items: center; justify-content: center;
+}
+.board-head h2 { font-size: 14px; font-weight: 600; margin: 0; }
+.board-head p { margin: 0; font-size: 11.5px; color: #9a9aa2; }
+.win {
+  position: relative; overflow: hidden; border-radius: var(--r-card);
+  border: 1px solid rgba(255,255,255,.10); background: var(--bg-window);
+  min-height: 460px; display: flex; flex-direction: column;
+}
+.mono { font-family: var(--font-code); }
+.mac-only { display: inline; }
+.win-only { display: none; }
+html[data-platform="win"] .mac-only { display: none; }
+html[data-platform="win"] .win-only { display: inline; }
+
+/* ---------- 帮助面板（板 1） ---------- */
+.scrim { position: absolute; inset: 0; background: rgba(0,0,0,.38); }
+html[data-platform="win"] .scrim { background: rgba(0,0,0,.30); }
+.dialog {
+  position: absolute; z-index: 6; top: 40px; left: 50%; transform: translateX(-50%);
+  width: 560px; max-width: calc(100% - 32px);
+  background: var(--bg-card); border: 1px solid var(--line-hairline);
+  border-radius: var(--r-overlay); box-shadow: var(--shadow-overlay);
+  display: flex; flex-direction: column; overflow: hidden;
+}
+.dialog > header {
+  display: flex; align-items: center; gap: 8px; height: 44px; padding: 0 14px;
+  border-bottom: 1px solid var(--line-hairline); flex: none;
+}
+.dialog > header .t { font-size: var(--fs-title); font-weight: 600; }
+.dialog > header .kbd { margin-left: auto; }
+.dialog .body { padding: 14px; display: flex; flex-direction: column; gap: 14px; }
+.dialog .sec > h4 {
+  margin: 0 0 8px; font-size: var(--fs-body); font-weight: 600;
+}
+.dialog .sec > h4 small { color: var(--text-tertiary); font-weight: 400; font-size: var(--fs-caption); margin-left: 8px; }
+.keys { display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; align-items: center; }
+.keys .k { display: flex; gap: 4px; align-items: center; }
+.keys .d { color: var(--text-secondary); font-size: var(--fs-caption); line-height: 1.5; }
+.kbd {
+  font-family: var(--font-code); font-size: 10.5px; color: var(--text-secondary);
+  border: 1px solid var(--line-hairline); border-radius: 4px; padding: 1px 5px; white-space: nowrap;
+}
+.ops { display: flex; flex-direction: column; gap: 10px; }
+.op { display: flex; gap: 10px; align-items: flex-start; }
+.op .chip-ic { width: 24px; height: 24px; border-radius: var(--r-control); flex: none;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--bg-inset); border: 1px solid var(--line-hairline); color: var(--text-secondary); }
+html[data-platform="win"] .op .chip-ic { background: var(--bg-card); }
+.op .h { font-size: var(--fs-caption); color: var(--text-primary); font-weight: 500; }
+.op .b { font-size: var(--fs-caption); color: var(--text-secondary); line-height: 1.6; }
+.alertline { display: flex; gap: 10px; align-items: flex-start; margin: 0; color: var(--text-secondary); line-height: 1.6; font-size: var(--fs-caption); }
+.alertline svg { color: var(--status-amber); flex: none; margin-top: 2px; }
+html[data-platform="win"] .alertline {
+  background: var(--status-info-bg); border: 1px solid var(--line-hairline);
+  border-radius: var(--r-card); padding: 10px 12px; color: var(--text-primary);
+}
+.kv { display: grid; grid-template-columns: 96px 1fr; gap: 5px 12px; font-size: var(--fs-caption); }
+.kv .k { color: var(--text-tertiary); }
+.kv .v { color: var(--text-secondary); }
+.dialog > footer {
+  display: flex; align-items: center; gap: 10px; padding: 9px 14px;
+  border-top: 1px solid var(--line-hairline); font-size: var(--fs-caption); color: var(--text-tertiary);
+}
+
+/* ---------- 首启引导页（板 2 / 板 3） ---------- */
+.onboard { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 20px; }
+.ob-card {
+  width: 620px; max-width: 100%; background: var(--bg-card); border: 1px solid var(--line-hairline);
+  border-radius: var(--r-overlay); box-shadow: var(--shadow-overlay); overflow: hidden;
+}
+.ob-head { display: flex; align-items: center; gap: 10px; padding: 16px 18px 12px; }
+.ob-brand {
+  width: 30px; height: 30px; border-radius: var(--r-control); background: var(--accent); color: var(--on-accent);
+  display: inline-flex; align-items: center; justify-content: center; flex: none;
+}
+.ob-brand-t { font-size: var(--fs-title); font-weight: 600; }
+.ob-brand-s { font-size: var(--fs-caption); color: var(--text-tertiary); }
+.ob-ver { margin-left: auto; font-size: var(--fs-caption); color: var(--text-tertiary); font-family: var(--font-code); }
+.ob-lead { padding: 0 18px 14px; color: var(--text-secondary); font-size: var(--fs-body); line-height: 1.65; }
+.ob-steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 0 18px 14px; }
+.ob-step { border: 1px solid var(--line-hairline); border-radius: var(--r-card); background: var(--bg-inset); padding: 10px; }
+html[data-platform="win"] .ob-step { background: var(--bg-card); }
+.ob-step .ic { color: var(--text-secondary); }
+.ob-step .h { font-size: var(--fs-caption); font-weight: 600; margin-top: 6px; }
+.ob-step .b { font-size: var(--fs-caption); color: var(--text-secondary); line-height: 1.55; margin-top: 3px; }
+.ob-env { margin: 0 18px 14px; border: 1px solid var(--line-hairline); border-radius: var(--r-card); background: var(--bg-inset); }
+html[data-platform="win"] .ob-env { background: var(--bg-card); }
+.ob-env .head { display: flex; align-items: center; gap: 8px; padding: 9px 12px; border-bottom: 1px solid var(--line-hairline); }
+.ob-env .head .t { font-size: var(--fs-caption); color: var(--text-secondary); }
+.ob-env .head .elapsed { margin-left: auto; font-size: var(--fs-caption); color: var(--text-tertiary); font-family: var(--font-code); }
+.bar { height: 3px; margin: 0 12px; background: var(--line-hairline); border-radius: 2px; overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 34%; background: var(--accent); animation: slide 1.2s ease-in-out infinite; }
+@keyframes slide { 0% { transform: translateX(-100%); } 100% { transform: translateX(320%); } }
+.steps { padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 7px; }
+.step { display: flex; align-items: center; gap: 9px; font-size: var(--fs-caption); color: var(--text-secondary); }
+.step .mark { width: 14px; height: 14px; flex: none; display: inline-flex; align-items: center; justify-content: center; }
+.step .mark .ring { width: 12px; height: 12px; border-radius: 50%; border: 1.5px solid var(--line-strong); }
+.step .mark .spin {
+  width: 12px; height: 12px; border-radius: 50%; border: 1.5px solid var(--line-strong);
+  border-top-color: var(--accent); animation: spin 900ms linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.step .mark .dot-ok { width: 7px; height: 7px; border-radius: 50%; background: var(--status-green); }
+.step .mark .dot-bad { width: 7px; height: 7px; border-radius: 50%; background: var(--status-red); }
+.step .nm { color: var(--text-primary); }
+.step .note { margin-left: auto; color: var(--text-tertiary); }
+.step.bad .nm { color: var(--status-red); }
+.step.bad .note { color: var(--status-red); }
+.ob-actions { display: flex; align-items: center; gap: 8px; padding: 0 18px 16px; }
+html[data-platform="mac"] .ob-actions { justify-content: flex-end; }
+html[data-platform="win"] .ob-actions { justify-content: flex-start; }
+/* win：主操作最左（Fluent ContentDialog 惯例），与 .d-actions 同规则 */
+html[data-platform="win"] .ob-actions .btn-fill { order: -1; }
+.btn {
+  height: var(--ctrl-md); padding: 0 12px; border-radius: var(--r-control);
+  border: 1px solid var(--line-hairline); background: transparent; color: var(--text-secondary);
+  font-family: var(--font-ui); font-size: var(--fs-caption); font-weight: 500; cursor: pointer;
+}
+.btn:hover { background: var(--bg-hover); color: var(--text-primary); }
+.btn-fill { background: var(--accent); border-color: transparent; color: var(--on-accent); }
+.btn-fill:hover { background: var(--accent-hover); color: var(--on-accent); }
+.btn-text { border-color: transparent; }
+.ob-foot {
+  display: flex; align-items: center; gap: 8px; padding: 9px 18px; border-top: 1px solid var(--line-hairline);
+  font-size: var(--fs-caption); color: var(--text-tertiary);
+}
+.ob-foot .r { margin-left: auto; }
+.hide { display: none !important; }
+</style>
+</head>
+<body>
+<header class="switcher">
+  <h1>A5.5 代表页稿 · 帮助与首启</h1>
+  <div class="grp" role="group" aria-label="平台">
+    <span>平台</span>
+    <button data-set="platform" data-val="mac" class="on">macOS</button>
+    <button data-set="platform" data-val="win">Windows</button>
+  </div>
+  <div class="grp" role="group" aria-label="外观">
+    <span>外观</span>
+    <button data-set="theme" data-val="dark" class="on">深色</button>
+    <button data-set="theme" data-val="light">浅色</button>
+  </div>
+  <div class="grp" role="group" aria-label="强调色">
+    <span>强调色</span>
+    <button data-set="accent" data-val="system" class="on">系统默认</button>
+    <button data-set="accent" data-val="brand">品牌靛</button>
+  </div>
+  <div class="note">令牌与产品同源（取自 theme.css）；本稿只新增「帮助面板 / 首启页」两处版式，不引入新颜色。</div>
+</header>
+
+<!-- ================= 板 1：帮助与快捷键 ================= -->
+<section class="board" id="b1">
+  <div class="board-head"><span class="no">1</span><h2>帮助与快捷键</h2>
+    <p>入口：侧栏「帮助」或 <span class="mono"><span class="mac-only">⌘/</span><span class="win-only">Ctrl /</span></span>；内容 = 键位 + 常用操作 + 安全边界 + 环境信息</p></div>
+  <div class="win" style="height:700px">
+    <div class="scrim"></div>
+    <div class="dialog">
+      <header>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M7 15h10"/><path d="M7 11h.01M11 11h.01M15 11h.01"/></svg>
+        <span class="t">帮助与快捷键</span>
+        <span class="kbd">Esc</span>
+      </header>
+      <div class="body">
+        <div class="sec">
+          <h4>快捷键<small>修饰键随平台：<span class="mac-only">⌘</span><span class="win-only">Ctrl</span></small></h4>
+          <div class="keys">
+            <span class="k"><span class="kbd"><span class="mac-only">⌘</span><span class="win-only">Ctrl</span> K</span></span>
+            <span class="d">全局搜索：打开命令面板，可搜名称 / 标签 / 代码片段</span>
+            <span class="k"><span class="kbd">↑</span><span class="kbd">↓</span></span>
+            <span class="d">在列表或面板中上下选择</span>
+            <span class="k"><span class="kbd">↵</span></span>
+            <span class="d">打开选中示例的详情</span>
+            <span class="k"><span class="kbd"><span class="mac-only">⌘</span><span class="win-only">Ctrl</span> ↵</span></span>
+            <span class="d">运行示例（详情页与运行器内同键）</span>
+            <span class="k"><span class="kbd"><span class="mac-only">⌘</span><span class="win-only">Ctrl</span> S</span></span>
+            <span class="d">保存改动（未改动时不可用）</span>
+            <span class="k"><span class="kbd"><span class="mac-only">⌘</span><span class="win-only">Ctrl</span> .</span></span>
+            <span class="d">停止正在运行的示例</span>
+            <span class="k"><span class="kbd"><span class="mac-only">⌘</span><span class="win-only">Ctrl</span> /</span></span>
+            <span class="d">打开 / 关闭本页</span>
+          </div>
+        </div>
+        <div class="sec">
+          <h4>常用操作</h4>
+          <div class="ops">
+            <div class="op">
+              <span class="chip-ic"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg></span>
+              <span><span class="h">找示例</span><div class="b">画廊按主题分区；工具箱按工具体量分组；急用时 <span class="mono"><span class="mac-only">⌘</span><span class="win-only">Ctrl</span> K</span> 直接搜。</div></span>
+            </div>
+            <div class="op">
+              <span class="chip-ic"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg></span>
+              <span><span class="h">运行与看结果</span><div class="b">详情页右侧「终端输出」实时显示；示例生成的图片自动收进「资源」标签，可预览与下载。</div></span>
+            </div>
+            <div class="op">
+              <span class="chip-ic"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="m10 17 5-5-5-5"/><path d="M15 12H3"/></svg></span>
+              <span><span class="h">编辑与保存</span><div class="b">左侧 Monaco 编辑器；改动后 <span class="mono"><span class="mac-only">⌘</span><span class="win-only">Ctrl</span> S</span> 保存，内置示例可随时恢复原始版本。</div></span>
+            </div>
+          </div>
+        </div>
+        <div class="sec">
+          <div class="alertline">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+            <span><b>安全边界：</b>示例在独立子进程中运行（30 秒超时、环境变量白名单），但子进程隔离<b>不是安全沙箱</b>——反射调用、运行时拼接的命令与第三方库内部行为不受静态扫描覆盖。高危示例运行前会二次确认。</span>
+          </div>
+        </div>
+        <div class="sec">
+          <h4>环境信息</h4>
+          <div class="kv">
+            <span class="k">应用版本</span><span class="v mono">0.10.0（Electron 33）</span>
+            <span class="k">共享环境</span><span class="v mono">.venv · 已就绪 · Python 3.13</span>
+            <span class="k">示例库</span><span class="v mono">1496 条 · 14 个集合</span>
+            <span class="k">最近导入</span><span class="v">尚无用户集合</span>
+          </div>
+        </div>
+      </div>
+      <footer>
+        <span><span class="mac-only">⌘/</span><span class="win-only">Ctrl /</span> 随时打开本页</span>
+        <span class="r">关闭：Esc</span>
+      </footer>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 板 2：首启引导（环境准备中） ================= -->
+<section class="board" id="b2">
+  <div class="board-head"><span class="no">2</span><h2>首启引导（环境准备中）</h2>
+    <p>看：不拦路（可先进主界面）、准备步骤可见、耗时与不确定性说明、明确的「开始浏览」出口；win 下本页位于自绘标题栏之下（mac 红绿灯浮于窗口左上）</p></div>
+  <div class="win" style="height:520px">
+    <div class="onboard">
+      <div class="ob-card">
+        <div class="ob-head">
+          <span class="ob-brand"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></span>
+          <span><div class="ob-brand-t">示例库</div><div class="ob-brand-s">Python 示例管理器</div></span>
+          <span class="ob-ver">v0.10.0</span>
+        </div>
+        <p class="ob-lead">内置 <b>1496 条 Python 示例</b>：浏览、运行、改代码都在一个窗口里完成。首次启动需要几分钟准备运行环境，这一步不会挡住浏览。</p>
+        <div class="ob-steps">
+          <div class="ob-step">
+            <svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
+            <div class="h">浏览</div><div class="b">按主题分区逛；<span class="mono"><span class="mac-only">⌘</span><span class="win-only">Ctrl</span> K</span> 搜名称、标签或代码。</div>
+          </div>
+          <div class="ob-step">
+            <svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            <div class="h">运行</div><div class="b">独立子进程、实时输出；生成的图片自动收集。</div>
+          </div>
+          <div class="ob-step">
+            <svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m18 16 4-4-4-4"/><path d="m6 8-4 4 4 4"/><path d="m14.5 4-5 16"/></svg>
+            <div class="h">编辑</div><div class="b">Monaco 编辑器；保存后可随时恢复原始版本。</div>
+          </div>
+        </div>
+        <div class="ob-env">
+          <div class="head">
+            <span class="mark"><span class="spin"></span></span>
+            <span class="t">正在准备运行环境</span>
+            <span class="elapsed">已用时 1:20</span>
+          </div>
+          <div class="bar"><i></i></div>
+          <div class="steps">
+            <div class="step"><span class="mark"><span class="dot-ok"></span></span><span class="nm">启动 Python 服务</span><span class="note">已完成</span></div>
+            <div class="step"><span class="mark"><span class="spin"></span></span><span class="nm">安装共享依赖（.venv）</span><span class="note">通常 2–5 分钟</span></div>
+            <div class="step"><span class="mark"><span class="ring"></span></span><span class="nm">建立示例索引</span><span class="note">1496 条</span></div>
+            <div class="step"><span class="mark"><span class="ring"></span></span><span class="nm">预检可运行性</span><span class="note">等待中</span></div>
+          </div>
+        </div>
+        <div class="ob-actions">
+          <button class="btn btn-text">跳过引导</button>
+          <button class="btn btn-fill">开始浏览</button>
+        </div>
+        <div class="ob-foot">
+          <span>环境在后台继续准备；就绪后运行按钮可用，状态栏会显示「环境已就绪」。</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 板 3：首启引导（准备失败 → 重试） ================= -->
+<section class="board" id="b3">
+  <div class="board-head"><span class="no">3</span><h2>首启引导（准备失败）</h2>
+    <p>看：失败可见可操作（重试 / 日志 / 降级用系统 Python）、明确哪些功能不受影响；win 下主操作「重试」在最左</p></div>
+  <div class="win" style="height:520px">
+    <div class="onboard">
+      <div class="ob-card">
+        <div class="ob-head">
+          <span class="ob-brand"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></span>
+          <span><div class="ob-brand-t">示例库</div><div class="ob-brand-s">Python 示例管理器</div></span>
+          <span class="ob-ver">v0.10.0</span>
+        </div>
+        <p class="ob-lead">内置 <b>1496 条 Python 示例</b>：浏览、运行、改代码都在一个窗口里完成。共享依赖没装上，先看看哪里出了问题。</p>
+        <div class="ob-steps">
+          <div class="ob-step">
+            <svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
+            <div class="h">浏览</div><div class="b">按主题分区逛；<span class="mono"><span class="mac-only">⌘</span><span class="win-only">Ctrl</span> K</span> 搜名称、标签或代码。</div>
+          </div>
+          <div class="ob-step">
+            <svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            <div class="h">运行</div><div class="b">独立子进程、实时输出；生成的图片自动收集。</div>
+          </div>
+          <div class="ob-step">
+            <svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m18 16 4-4-4-4"/><path d="m6 8-4 4 4 4"/><path d="m14.5 4-5 16"/></svg>
+            <div class="h">编辑</div><div class="b">Monaco 编辑器；保存后可随时恢复原始版本。</div>
+          </div>
+        </div>
+        <div class="ob-env">
+          <div class="head">
+            <span class="mark"><span class="dot-bad"></span></span>
+            <span class="t">环境准备失败</span>
+            <span class="elapsed">已用时 2:41</span>
+          </div>
+          <div class="steps">
+            <div class="step"><span class="mark"><span class="dot-ok"></span></span><span class="nm">启动 Python 服务</span><span class="note">已完成</span></div>
+            <div class="step bad"><span class="mark"><span class="dot-bad"></span></span><span class="nm">安装共享依赖（.venv）</span><span class="note">pip 安装超时（镜像不可达）</span></div>
+            <div class="step"><span class="mark"><span class="ring"></span></span><span class="nm">建立示例索引</span><span class="note">等待中</span></div>
+            <div class="step"><span class="mark"><span class="ring"></span></span><span class="nm">预检可运行性</span><span class="note">等待中</span></div>
+          </div>
+        </div>
+        <div class="ob-actions">
+          <button class="btn btn-text">用系统 Python 继续</button>
+          <button class="btn">查看准备日志</button>
+          <button class="btn btn-fill">重试</button>
+        </div>
+        <div class="ob-foot">
+          <span>浏览示例不受影响；未装依赖的示例会在运行时提示「缺依赖」。</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  const root = document.documentElement
+  const params = new URLSearchParams(location.search)
+  function setAttr(name, val) {
+    root.setAttribute(name, val)
+    document.querySelectorAll(`button[data-set="${name}"]`).forEach((b) => {
+      b.classList.toggle('on', b.dataset.val === val)
+    })
+  }
+  document.querySelectorAll('button[data-set]').forEach((btn) => {
+    btn.addEventListener('click', () => setAttr(btn.dataset.set, btn.dataset.val))
+  })
+  for (const [key, attr] of [
+    ['platform', 'data-platform'],
+    ['theme', 'data-theme'],
+    ['accent', 'data-accent']
+  ]) {
+    const v = params.get(key)
+    if (v) setAttr(attr, v)
+  }
+  const show = params.get('show')
+  if (show) {
+    document.querySelectorAll('.board').forEach((b) => {
+      if (b.id !== 'b' + show) b.classList.add('hide')
+    })
+    document.querySelector('.switcher').classList.add('hide')
+  }
+</script>
+</body>
+</html>
