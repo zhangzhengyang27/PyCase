@@ -249,6 +249,9 @@ def _item_to_dict(item: ExampleItem, include_code: bool = False) -> dict[str, An
         "source_dir": item.source_dir,
         "run_pythonpath": _ensure_store().run_pythonpath(item),
         "description": item.description or "",
+        # 派生事实随列表下发（v2 不再传 code）：第三方 import 清单 + 命中主题
+        "import_tags": store.import_tags(item),
+        "theme_key": store.theme_key(item),
     }
     # 所属集合与来源标记（树节点与示例数组共用此序列化，两处一致）
     if item.parent is not None:

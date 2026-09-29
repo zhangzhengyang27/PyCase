@@ -18,6 +18,9 @@ export interface ExampleItem {
   title?: string
   quality_score?: number
   risk_high?: boolean
+  /** 派生事实（服务端下发，契约 §3.2）：第三方 import 清单与命中主题 */
+  import_tags?: string[]
+  theme_key?: string | null
   /** 可运行性派生状态：runnable / missing_deps / empty / broken / risky */
   run_status?: string
   /** HIGH 风险明细（仅高危条目携带） */

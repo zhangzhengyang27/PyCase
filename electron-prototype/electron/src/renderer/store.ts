@@ -233,8 +233,9 @@ export async function loadAll(): Promise<void> {
     // 一次性建立筛选预处理缓存（与旧 app.ts loadExamples 相同口径）
     const list = result.examples || []
     for (const ex of list) {
-      ex._importTags = FilterEngine.extractImportTags(ex.code || '')
-      ex._codeLower = (ex.code || '').toLowerCase()
+      // v2：import 标签用服务端下发的派生事实；列表不含 code，故不再从 code 反推
+      ex._importTags = Array.isArray(ex.import_tags) ? ex.import_tags : []
+      ex._codeLower = ''
       ex._tagsAll = FilterEngine.allTagsOf(ex)
     }
     examples.value = list

@@ -62,6 +62,9 @@ function makeExample(overrides: Partial<VExample> = {}): VExample {
     tags: [],
     quality_score: 85,
     run_status: 'runnable',
+    // 派生事实（v2）：主题判定读 theme_key 而非 code；默认无主题，用例按需覆盖
+    theme_key: null,
+    import_tags: [],
     ...overrides
   }
 }
@@ -487,7 +490,7 @@ describe('GalleryOverview', () => {
 
   it('分区最多预览 6 张卡，超出部分以「还有 N 个」入口承接', () => {
     examples.value = Array.from({ length: 7 }, (_, i) =>
-      makeExample({ id: `t${i}`, name: `turtle-demo-${i}.py`, quality_score: 90 - i })
+      makeExample({ id: `t${i}`, name: `turtle-demo-${i}.py`, quality_score: 90 - i, theme_key: 'turtle' })
     )
     const w = mount(GalleryOverview)
 
@@ -502,7 +505,7 @@ describe('GalleryOverview', () => {
 
   it('分区下钻预置范围：主题分区设 activeTheme，标签组分区设 activeSectionTags', async () => {
     examples.value = [
-      ...Array.from({ length: 7 }, (_, i) => makeExample({ id: `t${i}`, name: `turtle-${i}.py` })),
+      ...Array.from({ length: 7 }, (_, i) => makeExample({ id: `t${i}`, name: `turtle-${i}.py`, theme_key: 'turtle' })),
       makeExample({ id: 'basic', name: 'basic-demo', tags: ['python-basics'] })
     ]
     const w = mount(GalleryOverview)

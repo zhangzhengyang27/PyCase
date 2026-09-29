@@ -843,8 +843,17 @@ function runSmokeTest(): void {
         const isWin = root.getAttribute('data-platform') === 'win';
         const out = {};
         const emojiRe = /[\\u{1F300}-\\u{1FAFF}\\u{2600}-\\u{27BF}]/u;
-        // 1) 总览态：分区 + 卡片语言
-        out.sections = document.querySelectorAll('main section').length;
+        // 1) 总览态：分区构成（分类是派生事实，漂移必须会红）+ 卡片语言
+        const secEls = Array.from(document.querySelectorAll('main section'));
+        out.sections = secEls.length;
+        out.sectionCounts = {};
+        for (const sec of secEls) {
+          const h2 = sec.querySelector('h2');
+          const label = h2 ? (h2.textContent || '').trim() : '?';
+          const nums = Array.from(sec.querySelectorAll('span')).map((n) => (n.textContent || '').trim());
+          const count = nums.find((t) => /^[0-9,]+ 个$/.test(t));
+          out.sectionCounts[label] = count ? Number(count.replace(/[, 个]/g, '')) : -1;
+        }
         const cards = Array.from(document.querySelectorAll('[role="button"][aria-label$="（详情）"]'));
         out.cards = cards.length;
         if (!cards.length) return { fatal: '画廊总览没有卡片' };
@@ -920,6 +929,23 @@ function runSmokeTest(): void {
         if (p.cardChip !== true || p.cardChipSvg !== true) problems.push('卡片缺语义图标 chip')
         if (p.cardChipText !== '') problems.push(`图标 chip 内含文本（emoji 残留？）: ${p.cardChipText}`)
         if (p.cardEmoji || p.cardsEmoji || p.sectionEmoji) problems.push('页面仍有 emoji 文本')
+        // 分区构成：主题分类是服务端下发的派生事实（契约 §3.2/§5），漂移必须暴露。
+        // 冻结基线口径 = **画廊池（不含 tools）**，数值等于迁移前 v1 的 TS 谓词分类结果
+        // （已用 themes.ts 原谓词对 1496 条逐条独立复核：零不一致）。
+        // 数据增删示例时必须同步更新这几个数字——它们是"分类没漂移"的锚点。
+        const FROZEN_THEMES: Record<string, number> = {
+          'Turtle 绘图': 355,
+          'Pygame 游戏': 18,
+          'OpenCV 视觉': 166,
+          'PIL 图像处理': 170,
+          '数据可视化': 427
+        }
+        const counts = (p.sectionCounts || {}) as Record<string, number>
+        for (const [label, expect] of Object.entries(FROZEN_THEMES)) {
+          if (counts[label] !== expect) problems.push(`分区「${label}」成员 ${counts[label]} != 冻结基线 ${expect}`)
+        }
+        const memberSum = Object.values(counts).reduce((a, b) => a + (b > 0 ? b : 0), 0)
+        if (memberSum !== 1496) problems.push(`分区成员合计 ${memberSum} != 1496（分区不完整或重复计数）`)
         if (p.cardTitleWeight !== '600') problems.push(`卡片标题字重 ${p.cardTitleWeight} != 600`)
         const allowed = ['400', '500', '600']
         const badWeights = (p.cardWeights as string[]).filter((w) => !allowed.includes(w))

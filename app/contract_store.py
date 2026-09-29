@@ -15,12 +15,15 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
 import shutil
+import tempfile
 import dataclasses
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Iterable
+from typing import Callable, Iterable
 
+from .importer import extract_imports
 from .logger import get_logger
 from .manifest_v2 import Manifest, ManifestEntry, entry_code, load_manifest, resolve_entry_file
 from .models import ExampleItem
@@ -51,7 +54,20 @@ def safe_name(raw: str) -> str:
     return f"{cleaned or 'item'}-{digest}"
 
 
-_VALID_REQ = __import__("re").compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
+_VALID_REQ = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
+
+# 与渲染层 filter-engine.ts 的 STDLIB 逐字一致：两边口径不同会让 import 标签漂移
+_STDLIB = {
+    "abc", "argparse", "ast", "asyncio", "base64", "bisect", "calendar", "collections",
+    "concurrent", "configparser", "contextlib", "copy", "csv", "ctypes", "dataclasses",
+    "datetime", "decimal", "difflib", "email", "enum", "fnmatch", "functools", "glob",
+    "gzip", "hashlib", "heapq", "hmac", "html", "http", "importlib", "inspect", "io",
+    "itertools", "json", "logging", "math", "multiprocessing", "operator", "os", "pathlib",
+    "pickle", "pprint", "queue", "random", "re", "shutil", "signal", "socket", "sqlite3",
+    "statistics", "string", "struct", "subprocess", "sys", "tempfile", "textwrap",
+    "threading", "time", "traceback", "types", "typing", "unittest", "urllib", "uuid",
+    "warnings", "weakref", "xml", "zipfile",
+}
 
 
 def _bare_pkg(spec: str) -> str:
@@ -92,6 +108,8 @@ class ContractStore:
         self._scorer = QualityScorer()
         self._checker = SecurityChecker()
         self._risk_findings: dict[str, list[dict]] = {}
+        self._import_tags: dict[str, list[str]] = {}
+        self._theme_key: dict[str, str | None] = {}
         self._run_status: dict[str, str] = {}
         self._module_index: ModuleIndex | None = None
         self._categories: tuple[str, ...] = ("topics", "tools", "projects")
@@ -263,6 +281,50 @@ class ContractStore:
                     break
         return hits
 
+    # ------------------------------------------------------------------ 派生分类（列表下发的派生事实）
+    def import_tags(self, item: ExampleItem) -> list[str]:
+        """第三方 import 清单（去 stdlib、顶层模块名、小写排序）。
+
+        与渲染层 ``FilterEngine.extractImportTags`` 同口径；v2 不再下发 code，
+        改由服务端算好随列表下发（契约 §3.2 / §5）。
+        """
+        key = item.json_id or str(item.path)
+        if key not in self._import_tags:
+            mods = extract_imports(self.get_code(item))
+            self._import_tags[key] = sorted(
+                {m.split(".")[0].lower() for m in mods if m and m.split(".")[0].lower() not in _STDLIB}
+            )
+        return self._import_tags[key]
+
+    def theme_key(self, item: ExampleItem) -> str | None:
+        """命中的主题 key（首个匹配，与渲染层 themes.ts 的谓词顺序/语义逐条对齐）。
+
+        主题谓词里既有 import 判定也有正文子串判定（如 turtle），因此判据必须留在
+        能读到源码的一侧——服务端算好下发，渲染层只认结果（否则分类会随"是否下发 code"漂移）。
+        """
+        key = item.json_id or str(item.path)
+        if key in self._theme_key:
+            return self._theme_key[key]
+        code = self.get_code(item)
+        code_lower = code.lower()
+        name = item.name.lower()
+        desc = (item.description or "").lower()
+        tags = " ".join(item.tags).lower()
+        not_project = item.name != "__init__.py" and item.category != "projects"
+        found: str | None = None
+        if "turtle" in name or "turtle" in desc or "turtle" in code_lower or "turtle" in tags:
+            found = "turtle"
+        elif not_project and re.search(r"^\s*(?:import|from)\s+pygame\b", code, re.MULTILINE):
+            found = "games"
+        elif not_project and re.search(r"^\s*(?:import|from)\s+cv2\b", code, re.MULTILINE):
+            found = "opencv"
+        elif not_project and re.search(r"^\s*(?:import|from)\s+(?:PIL|Pillow)\b", code, re.MULTILINE):
+            found = "images"
+        elif not_project and re.search(r"\b(matplotlib|pyplot|pandas)\b", code):
+            found = "viz"
+        self._theme_key[key] = found
+        return found
+
     # ------------------------------------------------------------------ 质量/风险/状态
     def _analysis_item(self, item: ExampleItem) -> ExampleItem:
         """派生事实的分析对象：v2 用真实文件；v1 兼容期先确保工作区（code→文件）。"""
@@ -318,6 +380,8 @@ class ContractStore:
         key = item.json_id or str(item.path)
         self._run_status.pop(key, None)
         self._risk_findings.pop(key, None)
+        self._import_tags.pop(key, None)
+        self._theme_key.pop(key, None)
         item.quality_score = None
 
     # ------------------------------------------------------------------ 工作区
@@ -419,20 +483,22 @@ class ContractStore:
                     self._copy_atomic(source, dest)
                 elif name == item.name:
                     # v1 兼容期：真实文件还没外移，用清单内联 code 落进工作区
-                    dest.parent.mkdir(parents=True, exist_ok=True)
-                    tmp = dest.with_name(dest.name + ".tmp")
-                    tmp.write_text(self.get_code(item), encoding="utf-8")
-                    os.replace(tmp, dest)
+                    self._write_atomic(dest, lambda tmp: tmp.write_text(self.get_code(item), encoding="utf-8"))
 
             reqs = [r for r in (self._entry_of(item).requirements if self._entry_of(item) else []) if _VALID_REQ.match(_bare_pkg(r))]
             if reqs:
                 req_file = workspace / "requirements.txt"
-                # 合并：工作区里可能已有用户/前次写入的清单，按行去重保序
-                merged = list(dict.fromkeys([*req_file.read_text(encoding="utf-8").splitlines(), *reqs])) if req_file.is_file() else reqs
-                req_file.write_text("\n".join(x for x in merged if x.strip()) + "\n", encoding="utf-8")
+                # 合并：工作区里可能已有用户/前次写入的清单，按行去重保序；同样走原子唯一 tmp
+                merged = (
+                    list(dict.fromkeys([*req_file.read_text(encoding="utf-8").splitlines(), *reqs]))
+                    if req_file.is_file()
+                    else reqs
+                )
+                self._write_atomic(req_file, lambda tmp: tmp.write_text("\n".join(x for x in merged if x.strip()) + "\n", encoding="utf-8"))
 
-            manifest_file.write_text(
-                json.dumps(
+            self._write_atomic(
+                manifest_file,
+                lambda tmp: tmp.write_text(json.dumps(
                     {
                         "contract": 2,
                         "base_key": key,
@@ -441,8 +507,7 @@ class ContractStore:
                     },
                     ensure_ascii=False,
                     indent=1,
-                ),
-                encoding="utf-8",
+                ) + "\n", encoding="utf-8"),
             )
             return workspace
         except OSError as e:
@@ -462,11 +527,21 @@ class ContractStore:
         return paths
 
     @staticmethod
-    def _copy_atomic(src: Path, dest: Path) -> None:
+    def _write_atomic(dest: Path, write: "Callable[[Path], None]") -> None:
+        """原子写：临时文件名唯一（并发调用不得互相踩踏），写完 os.replace。"""
         dest.parent.mkdir(parents=True, exist_ok=True)
-        tmp = dest.with_name(dest.name + ".tmp")
-        shutil.copy2(src, tmp)
-        os.replace(tmp, dest)
+        fd, tmp_name = tempfile.mkstemp(dir=str(dest.parent), prefix=dest.name + ".", suffix=".tmp")
+        os.close(fd)
+        tmp = Path(tmp_name)
+        try:
+            write(tmp)
+            os.replace(tmp, dest)
+        finally:
+            tmp.unlink(missing_ok=True)
+
+    @classmethod
+    def _copy_atomic(cls, src: Path, dest: Path) -> None:
+        cls._write_atomic(dest, lambda tmp: shutil.copy2(src, tmp))
 
     # ------------------------------------------------------------------ 写入
     def save_item(self, item: ExampleItem, new_code: str) -> bool:

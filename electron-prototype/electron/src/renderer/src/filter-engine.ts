@@ -23,6 +23,8 @@ export interface ExampleLike {
   code?: string
   tags?: string[]
   _importTags?: string[]
+  /** 派生事实：命中主题（服务端下发；列表不含 code，判定不在前端） */
+  theme_key?: string | null
   quality_score?: number
   /** 可运行性派生状态（sidecar run_status 字段） */
   run_status?: string
