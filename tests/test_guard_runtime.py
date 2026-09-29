@@ -2,7 +2,7 @@
 
 - G4 运行链路：成功且输出流式实时送达、超时强杀、停止（SIGTERM）、启动前停止竞态
 - G5 生命周期：示例进程留在 sidecar 进程组内（按组清理的前提）；sidecar 收到 SIGTERM
-  后示例必须随之退出（当前无信号处理，示例成孤儿 → xfail 待 B2）
+  后由信号处理先终止运行中的示例再退出（B2 落地，无 xfail）
 - G6 用户集合：重复导入 id 全局去重、导入写盘中途失败不留半成品、无可导入文件不落盘
 
 运行链路用真解释器跑真进程；解释器注入替换为当前解释器（不触碰共享 venv）。
@@ -21,8 +21,6 @@ import time
 from pathlib import Path
 from unittest.mock import patch
 
-import pytest
-
 ROOT = Path(__file__).resolve().parent.parent
 SIDECAR_DIR = ROOT / "electron-prototype" / "sidecar"
 for _p in (str(SIDECAR_DIR), str(ROOT)):
@@ -33,7 +31,6 @@ import server  # noqa: E402
 from app.models import ExampleItem  # noqa: E402
 
 REPO_CACHE = ROOT / ".json_examples_cache"
-B2_TARGET = "B2 目标行为：旧实现尚未满足；一旦 XPASS 即表示已落地，应摘除 xfail 标记"
 DRILL_CACHE_NAME = "drill_sleep"  # 演练示例 id 对应的物化目录名（与 slugify 口径一致）
 
 
@@ -274,11 +271,10 @@ def _read_line_with_timeout(stream, timeout: float) -> str:
     return box[0] if box else ""
 
 
-@pytest.mark.xfail(strict=True, reason=B2_TARGET)
 def test_g5_sidecar_sigterm_leaves_no_orphan(tmp_path):
     """应用退出（sidecar 收到 SIGTERM）后，运行中的示例进程必须随之消失。
 
-    今天 sidecar 没有任何信号/atexit 处理，SIGTERM 直接终止它，示例成为孤儿。
+    sidecar 的信号处理负责先终止运行中的示例再退出；B2 前无此处理，示例成孤儿。
     （"按组清理"的应用侧路径由 test_g5_example_stays_in_sidecar_process_group 守住。）
     """
     pid_file = tmp_path / "example.pid"

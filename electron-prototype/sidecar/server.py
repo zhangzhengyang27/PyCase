@@ -20,6 +20,7 @@ import json
 import logging
 import os
 import shutil
+import signal
 import sys
 import threading
 import time
@@ -633,6 +634,44 @@ def _kill(proc: asyncio.subprocess.Process) -> None:
         proc.kill()
     except ProcessLookupError:
         pass
+
+
+def _reap_sync(proc: asyncio.subprocess.Process, timeout: float) -> None:
+    """同步等待并回收子进程（信号处理/退出路径不能 await）。
+
+    与 asyncio 的子进程监视线程存在竞争：对方先 reap 时 os.waitpid 抛
+    ChildProcessError，说明进程已消失，直接返回即可。
+    """
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        try:
+            pid, _ = os.waitpid(proc.pid, os.WNOHANG)
+        except (ChildProcessError, OSError):
+            return
+        if pid == proc.pid:
+            return
+        time.sleep(0.05)
+
+
+def _terminate_all_running() -> None:
+    """退出兜底：终止所有仍在运行的示例子进程，避免应用退出后留下孤儿。
+
+    SIGTERM 处理与 stdin EOF 正常退出都走这里；幂等，可重复调用。
+    先礼后兵：SIGTERM 给 3 秒体面退出，超时升级 SIGKILL。
+    """
+    procs = [p for p in list(_running.values()) if p is not None]
+    for proc in procs:
+        _terminate(proc)
+    for proc in procs:
+        _reap_sync(proc, timeout=3)
+    for proc in procs:
+        try:
+            alive = proc.returncode is None and os.waitpid(proc.pid, os.WNOHANG) == (0, 0)
+        except (ChildProcessError, OSError):
+            alive = False
+        if alive:
+            _kill(proc)
+            _reap_sync(proc, timeout=2)
 
 
 async def method_stop_run(req_id: Any, params: dict[str, Any]) -> None:
@@ -1315,6 +1354,17 @@ def _warmup_venv() -> None:
         _set_env_phase("failed", str(e), failed_at=str(_env_state.get("phase") or "preparing"))
 
 
+def _on_terminate_signal(signum, _frame) -> None:
+    """SIGTERM/SIGINT：先杀正在运行的示例，再让进程退出（不留孤儿）。
+
+    处理函数在主线程同步执行；asyncio 事件循环收到 EINTR 后重新调度本函数，
+    SystemExit 从信号点向上传播，main 的 finally 再兜一次清理（幂等）。
+    """
+    get_logger(__name__).info("收到信号 %s，正在清理运行中的示例进程", signum)
+    _terminate_all_running()
+    raise SystemExit(128 + signum)
+
+
 def main() -> None:
     """sidecar 入口。"""
     # 强制 stdout/stderr 为 UTF-8：Windows 下管道默认 ANSI 代码页（如 cp936），
@@ -1326,6 +1376,13 @@ def main() -> None:
     # INFO 级日志走 stderr（不污染 JSON-RPC stdout），否则 venv 创建等关键过程不可见
     _ENV_LOG.parent.mkdir(parents=True, exist_ok=True)
     configure_logging(level=logging.INFO, log_file=str(_ENV_LOG))
+    # 应用退出信号：必须在事件循环启动前注册，否则窗口关闭到信号送达之间
+    # 运行的示例会因 sidecar 直接终止而成为孤儿（G5）
+    for _sig in (signal.SIGTERM, signal.SIGINT):
+        try:
+            signal.signal(_sig, _on_terminate_signal)
+        except (ValueError, OSError):  # 非主线程/平台不支持时保持默认行为
+            pass
     # 启动时发一条 ready 通知，让 Electron 知道 sidecar 已就绪
     _notify("sidecar_ready", {"version": "0.10.0", "app_dir": str(APP_DIR)})
     # 后台预热共享 venv（线程内阻塞安装依赖，不阻碍 JSON-RPC 事件循环）
@@ -1334,6 +1391,9 @@ def main() -> None:
         asyncio.run(_stdin_reader())
     except KeyboardInterrupt:
         pass
+    finally:
+        # stdin EOF（父进程关闭管道）与信号路径都兜底：不能留下孤儿示例
+        _terminate_all_running()
 
 
 if __name__ == "__main__":

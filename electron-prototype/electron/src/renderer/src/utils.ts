@@ -69,7 +69,9 @@ const RUN_STATUS_LABELS: Record<string, string> = {
   missing_deps: '缺依赖',
   empty: '空壳',
   broken: '语法损坏',
-  risky: '高危'
+  risky: '高危',
+  // 扫描器自身异常：不假定可运行（C3 不 fail-open），但也不误报为高危
+  unknown: '状态未知'
 }
 
 export function runStatusLabel(status: string | undefined): string {
@@ -82,7 +84,8 @@ const RUN_STATUS_DOT: Record<string, string> = {
   missing_deps: 'bg-warn',
   empty: 'bg-ink-faint',
   broken: 'bg-ink-faint',
-  risky: 'bg-danger'
+  risky: 'bg-danger',
+  unknown: 'bg-ink-faint'
 }
 
 export function runStatusDotCls(status: string | undefined): string {

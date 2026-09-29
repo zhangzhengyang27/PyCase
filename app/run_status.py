@@ -21,8 +21,11 @@ import sys
 import warnings
 from pathlib import Path
 
+from .logger import get_logger
+
 from .security import RiskLevel, SecurityChecker
 
+UNKNOWN = "unknown"  # 扫描器自身异常：不得假定可运行（C3 不 fail-open）
 RUNNABLE = "runnable"
 MISSING_DEPS = "missing_deps"
 EMPTY = "empty"
@@ -171,7 +174,11 @@ def compute_run_status(
         mods = third_party_imports(code, tree, local_dirs or [])
         if module_index.missing_modules(mods):
             return MISSING_DEPS
-    report = checker.check(Path("x.py"), example_id, content=code, tree=tree)
+    try:
+        report = checker.check(Path("x.py"), example_id, content=code, tree=tree)
+    except Exception as e:  # noqa: BLE001 - 扫描器内部异常不得被吞成"可运行"（fail-visible）
+        get_logger(__name__).warning("安全扫描异常，标记为未知态: %s: %s", example_id, e)
+        return UNKNOWN
     if any(r.level == RiskLevel.HIGH for r in report.risk_details):
         return RISKY
     return RUNNABLE

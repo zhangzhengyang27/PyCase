@@ -1,9 +1,8 @@
 """重设计护栏测试 G1–G3：数据真相源 / 原子写 / 安全判定三态。
 
 护栏的用法：B2–B3 全量重构期间冻结这些行为契约。
-- 在旧实现上先绿（含 xfail 标注的目标行为）；
-- 重构若破坏契约，护栏必须变红；
-- 目标行为落地后 xfail 会转为 XPASS，strict 模式直接判失败，提醒摘除标记。
+- 全部为正断言（B2 落地时 xfail 标记已全部摘除，strict 模式下不再有"待落地"项）；
+- 重构若破坏契约，护栏必须变红。
 
 契约 v2 再表达（docs/redesign-data-contract.md §7）：断言事实不变（内容等价、自愈、
 同步、原子、三态），只迁移观测点/时序——
@@ -19,16 +18,12 @@ import os
 import shutil
 from pathlib import Path
 
-import pytest
-
 from app.contract_store import ContractStore
 from app.models import ExampleItem
 from app.run_status import BROKEN, EMPTY, RISKY, RUNNABLE
 from app.security import SecurityChecker
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-
-B2_TARGET = "B2 目标行为：旧实现尚未满足；一旦 XPASS 即表示已落地，应摘除 xfail 标记"
 
 
 # --------------------------------------------------------------------- 公共工具
@@ -364,7 +359,6 @@ def test_g3_high_risk_findings_for_confirm_dialog(tmp_path):
     assert store.ensure_risk_high(items["clean"]) is False
 
 
-@pytest.mark.xfail(strict=True, reason=B2_TARGET)
 def test_g3_scanner_exception_must_not_fail_open(tmp_path, monkeypatch):
     """扫描器自身异常不得被吞成"可运行/无风险"（当前实现对内部异常 fail-open）。"""
 
@@ -379,7 +373,6 @@ def test_g3_scanner_exception_must_not_fail_open(tmp_path, monkeypatch):
     assert store.ensure_run_status(items["clean"]) != RUNNABLE
 
 
-@pytest.mark.xfail(strict=True, reason=B2_TARGET)
 def test_g3_asyncio_run_is_not_subprocess(tmp_path):
     """asyncio.run() 不是子进程调用：不得按属性名 run 误报为 subprocess。"""
     code = "import asyncio\n\n\nasync def main():\n    return 1\n\n\nprint(asyncio.run(main()))\n"

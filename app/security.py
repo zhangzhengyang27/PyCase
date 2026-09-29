@@ -89,7 +89,7 @@ def _is_delete_call(node: ast.AST) -> tuple[bool, RiskLevel]:
     return False, RiskLevel.LOW
 
 
-def _is_system_call(node: ast.AST) -> tuple[bool, RiskLevel, str]:
+def _is_system_call(node: ast.AST, sp_names: set[str] | None = None) -> tuple[bool, RiskLevel, str]:
     """判断是否为系统命令调用，返回 (是否系统调用, 风险等级, 描述)。
 
     风险分级：
@@ -119,8 +119,8 @@ def _is_system_call(node: ast.AST) -> tuple[bool, RiskLevel, str]:
         if attr in ("eval", "exec"):
             return True, RiskLevel.HIGH, f"任意代码执行：{attr}()"
 
-        # subprocess 系列
-        if attr in ("run", "call", "Popen", "check_call", "check_output"):
+        # subprocess 系列：只在接收者确实是 subprocess（或其别名/from-import 名）时才判
+        if attr in ("run", "call", "Popen", "check_call", "check_output") and _attr_root_name(func.value) in (sp_names or {"subprocess"}):
             # 检查是否有 shell=True
             has_shell_true = any(
                 kw.arg == "shell" and isinstance(kw.value, ast.Constant) and kw.value.value is True
@@ -131,6 +131,28 @@ def _is_system_call(node: ast.AST) -> tuple[bool, RiskLevel, str]:
             return True, RiskLevel.MEDIUM, f"subprocess.{attr}()：子进程调用（无 shell=True）"
 
     return False, RiskLevel.LOW, ""
+
+
+def subprocess_names(tree: ast.AST) -> set[str]:
+    """该文件里绑定到 subprocess 模块的名字集合（含 ``import subprocess as sp``）。
+
+    属性名（run/call/Popen…）本身不足以判定：``asyncio.run()``、用户对象上的
+    ``loop.run()`` 都不是子进程调用，按属性名一律当 subprocess 会误报（G3）。
+    """
+    names: set[str] = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            for alias in node.names:
+                if alias.name.split(".")[0] == "subprocess":
+                    names.add(alias.asname or "subprocess")
+    return names
+
+
+def _attr_root_name(node: ast.AST) -> str | None:
+    """取 ``a.b.c`` 的最左侧名字（a）。非 Name 根返回 None。"""
+    while isinstance(node, ast.Attribute):
+        node = node.value
+    return node.id if isinstance(node, ast.Name) else None
 
 
 def _has_import(tree: ast.AST, names: set[str]) -> bool:
@@ -257,11 +279,12 @@ class SecurityChecker:
                     break
 
         # 文件删除和系统调用检测（按操作类型分级）
+        _sp_names = subprocess_names(tree)
         for node in ast.walk(tree):
             is_delete, delete_level = _is_delete_call(node)
             if is_delete:
                 report.add_risk(self.RISK_FILE_DELETE, delete_level, "file")
-            is_sys, sys_level, sys_desc = _is_system_call(node)
+            is_sys, sys_level, sys_desc = _is_system_call(node, _sp_names)
             if is_sys:
                 report.add_risk(sys_desc, sys_level, "system")
 

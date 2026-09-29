@@ -29,7 +29,7 @@ from .manifest_v2 import Manifest, ManifestEntry, entry_code, load_manifest, res
 from .models import ExampleItem
 from .quality import QualityScorer
 from .run_status import ModuleIndex, compute_run_status
-from .security import RiskLevel, SecurityChecker
+from .security import RiskLevel
 
 WORKSPACE_DIRNAME = ".json_examples_cache"
 WORKSPACE_VERSION = "v2"
@@ -106,7 +106,6 @@ class ContractStore:
         self._root: ExampleItem | None = None
         self._manifests: dict[str, Manifest] = {}
         self._scorer = QualityScorer()
-        self._checker = SecurityChecker()
         self._risk_findings: dict[str, list[dict]] = {}
         self._import_tags: dict[str, list[str]] = {}
         self._theme_key: dict[str, str | None] = {}
@@ -280,6 +279,11 @@ class ContractStore:
                 if len(hits) >= limit:
                     break
         return hits
+
+    @property
+    def _checker(self):  # type: ignore[no-untyped-def]
+        """扫描器按需读取（不缓存实例）：与质量评分共用同一个，护栏据此验证"扫描异常不 fail-open"。"""
+        return self._scorer.security_checker
 
     # ------------------------------------------------------------------ 派生分类（列表下发的派生事实）
     def import_tags(self, item: ExampleItem) -> list[str]:
