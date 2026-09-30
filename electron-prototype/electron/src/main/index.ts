@@ -68,9 +68,7 @@ function resolveSidecarCommand(): SidecarCommand {
     '.venv',
     process.platform === 'win32' ? path.join('Scripts', 'python.exe') : path.join('bin', 'python')
   )
-  const pythonExe =
-    process.env.PYTHON_EXECUTABLE ||
-    (fs.existsSync(venvPython) ? venvPython : 'python3')
+  const pythonExe = process.env.PYTHON_EXECUTABLE || (fs.existsSync(venvPython) ? venvPython : 'python3')
   return { command: pythonExe, args: [SIDECAR_SCRIPT as string] }
 }
 
@@ -197,7 +195,9 @@ function spawnSidecar(): void {
       return
     }
     // 退避后自动重启
-    console.log(`[sidecar] ${SIDECAR_RESTART_DELAY_MS}ms 后自动重启（本次窗口内崩溃 ${sidecarCrashTimestamps.length} 次）`)
+    console.log(
+      `[sidecar] ${SIDECAR_RESTART_DELAY_MS}ms 后自动重启（本次窗口内崩溃 ${sidecarCrashTimestamps.length} 次）`
+    )
     setTimeout(() => {
       if (!sidecarProcess && !(app as any).isQuitting) spawnSidecar()
     }, SIDECAR_RESTART_DELAY_MS)
@@ -236,8 +236,14 @@ function handleSidecarMessage(line: string): void {
         const m = readyQueue.shift() as string
         sidecarProcess?.stdin?.write(m + '\n')
       }
-    } else if (msg.method === 'run_output' || msg.method === 'run_finished' || msg.method === 'run_images' ||
-               msg.method === 'ai_explain_chunk' || msg.method === 'ai_explain_done' || msg.method === 'ai_explain_error') {
+    } else if (
+      msg.method === 'run_output' ||
+      msg.method === 'run_finished' ||
+      msg.method === 'run_images' ||
+      msg.method === 'ai_explain_chunk' ||
+      msg.method === 'ai_explain_done' ||
+      msg.method === 'ai_explain_error'
+    ) {
       // 转发到渲染进程
       broadcast(`sidecar:${msg.method}`, msg.params)
     }
@@ -345,7 +351,10 @@ function createWindow(): void {
   if (process.env.ELECTRON_RENDERER_URL) {
     mainWindow.loadURL(process.env.ELECTRON_RENDERER_URL + (testMode ? '?smoke=1' : ''))
   } else {
-    mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'), testMode ? { query: { smoke: '1' } } : undefined)
+    mainWindow.loadFile(
+      path.join(__dirname, '../renderer/index.html'),
+      testMode ? { query: { smoke: '1' } } : undefined
+    )
   }
 
   // 仅开发模式自动打开 DevTools（打包给用户的正式版不应弹出）；
@@ -354,7 +363,6 @@ function createWindow(): void {
     mainWindow.webContents.openDevTools({ mode: 'detach' })
   }
 }
-
 
 // ---------------------------------------------------------------------------
 // IPC 处理：窗口控制（Windows frameless 自绘标题栏三键；macOS 走系统红绿灯）
@@ -401,7 +409,9 @@ ipcMain.handle('app:openLog', async () => {
 ipcMain.handle('sidecar:ping', () => callSidecar('ping'))
 ipcMain.handle('sidecar:envStatus', () => callSidecar('env_status'))
 ipcMain.handle('sidecar:setRunEnv', (_e, mode: string) => callSidecar('set_run_env', { mode }))
-ipcMain.handle('sidecar:searchExamples', (_e, query: string, limit?: number) => callSidecar('search_examples', { query, limit }))
+ipcMain.handle('sidecar:searchExamples', (_e, query: string, limit?: number) =>
+  callSidecar('search_examples', { query, limit })
+)
 ipcMain.handle('sidecar:listExamples', () => callSidecar('list_examples'))
 ipcMain.handle('sidecar:getExample', (_e, id: string) => callSidecar('get_example', { id }))
 ipcMain.handle('sidecar:parseArgs', (_e, id: string) => callSidecar('parse_args', { id }))
@@ -543,38 +553,39 @@ function isInsideExamplesCache(srcPath: string): boolean {
   })
 }
 
-ipcMain.handle('file:downloadResultImage', async (event, { url, defaultName }: { url: string; defaultName?: string }) => {
-  try {
-    const srcPath = fileURLToPath(url)
-    if (!fs.existsSync(srcPath)) {
-      return { error: `文件不存在：${srcPath}` }
+ipcMain.handle(
+  'file:downloadResultImage',
+  async (event, { url, defaultName }: { url: string; defaultName?: string }) => {
+    try {
+      const srcPath = fileURLToPath(url)
+      if (!fs.existsSync(srcPath)) {
+        return { error: `文件不存在：${srcPath}` }
+      }
+      if (!isInsideExamplesCache(srcPath)) {
+        return { error: '只允许保存示例运行目录内的文件' }
+      }
+      const win = BrowserWindow.fromWebContents(event.sender)
+      const { canceled, filePath } = await dialog.showSaveDialog(win!, {
+        title: '保存处理结果',
+        defaultPath: defaultName || path.basename(srcPath)
+      })
+      if (canceled || !filePath) {
+        return { canceled: true }
+      }
+      await fs.promises.copyFile(srcPath, filePath)
+      return { canceled: false, savedTo: filePath }
+    } catch (err) {
+      return { error: (err as Error).message }
     }
-    if (!isInsideExamplesCache(srcPath)) {
-      return { error: '只允许保存示例运行目录内的文件' }
-    }
-    const win = BrowserWindow.fromWebContents(event.sender)
-    const { canceled, filePath } = await dialog.showSaveDialog(win!, {
-      title: '保存处理结果',
-      defaultPath: defaultName || path.basename(srcPath)
-    })
-    if (canceled || !filePath) {
-      return { canceled: true }
-    }
-    await fs.promises.copyFile(srcPath, filePath)
-    return { canceled: false, savedTo: filePath }
-  } catch (err) {
-    return { error: (err as Error).message }
   }
-})
+)
 
 // A6：存储治理 / 编辑历史 / 缺依赖修复（薄转发；校验与业务在 sidecar 侧）
 ipcMain.handle('sidecar:storageReport', () => callSidecar('storage_report'))
 ipcMain.handle('sidecar:cleanWorkspace', (_e, mode: string) => callSidecar('clean_workspace', { mode }))
 ipcMain.handle('sidecar:reclaimLegacyCache', () => callSidecar('reclaim_legacy_cache'))
 ipcMain.handle('sidecar:listVersions', (_e, id: string) => callSidecar('list_versions', { id }))
-ipcMain.handle('sidecar:readVersion', (_e, params: { id: string; ts: string }) =>
-  callSidecar('read_version', params)
-)
+ipcMain.handle('sidecar:readVersion', (_e, params: { id: string; ts: string }) => callSidecar('read_version', params))
 ipcMain.handle('sidecar:restoreVersion', (_e, params: { id: string; ts: string }) =>
   callSidecar('restore_version', params)
 )
@@ -607,7 +618,15 @@ ipcMain.handle('sidecar:restart', async () => {
 // 白名单约束文件名，防止路径穿越；原子写（tmp + rename）
 // ---------------------------------------------------------------------------
 // onboarding：首启引导是否已看过（A5.5）；名字即文件名，白名单是唯一写盘入口
-const STORE_WHITELIST = new Set(['history', 'favorites', 'aiSettings', 'viewPrefs', 'safetyPrefs', 'runPrefs', 'onboarding'])
+const STORE_WHITELIST = new Set([
+  'history',
+  'favorites',
+  'aiSettings',
+  'viewPrefs',
+  'safetyPrefs',
+  'runPrefs',
+  'onboarding'
+])
 
 function storeFile(name: string): string {
   if (!STORE_WHITELIST.has(name)) throw new Error(`非法的存储名: ${name}`)
@@ -660,17 +679,27 @@ ipcMain.handle('store:set', (_event, name: string, data: unknown) => {
 })
 
 // 通用文本另存为（运行历史导出 .log 等）
-ipcMain.handle('file:saveText', async (event, { content, defaultName, filters }: { content?: string; defaultName?: string; filters?: { name: string; extensions: string[] }[] }) => {
-  const win = BrowserWindow.fromWebContents(event.sender)
-  const { canceled, filePath } = await dialog.showSaveDialog(win!, {
-    title: '导出',
-    defaultPath: defaultName || 'export.txt',
-    filters: filters || [{ name: '文本文件', extensions: ['txt', 'log', 'md', 'json'] }]
-  })
-  if (canceled || !filePath) return { canceled: true }
-  await fs.promises.writeFile(filePath, content ?? '', 'utf-8')
-  return { canceled: false, savedTo: filePath }
-})
+ipcMain.handle(
+  'file:saveText',
+  async (
+    event,
+    {
+      content,
+      defaultName,
+      filters
+    }: { content?: string; defaultName?: string; filters?: { name: string; extensions: string[] }[] }
+  ) => {
+    const win = BrowserWindow.fromWebContents(event.sender)
+    const { canceled, filePath } = await dialog.showSaveDialog(win!, {
+      title: '导出',
+      defaultPath: defaultName || 'export.txt',
+      filters: filters || [{ name: '文本文件', extensions: ['txt', 'log', 'md', 'json'] }]
+    })
+    if (canceled || !filePath) return { canceled: true }
+    await fs.promises.writeFile(filePath, content ?? '', 'utf-8')
+    return { canceled: false, savedTo: filePath }
+  }
+)
 
 // ---------------------------------------------------------------------------
 // 冒烟自测：SMOKE_TEST=1 时启动后自动验证关键链路并退出（退出码 0/1）
@@ -714,24 +743,28 @@ function runSmokeTest(): void {
     try {
       step = 'sidecar ready'
       await waitFor(() => sidecarReady, 'sidecar ready')
-      const ping = await callSidecar('ping') as { status?: string }
+      const ping = (await callSidecar('ping')) as { status?: string }
       if (!ping || ping.status !== 'ok') throw new Error('ping 返回异常')
       step = 'list_examples'
-      const list = await callSidecar('list_examples') as { total?: number; tree?: { children?: unknown[] } }
+      const list = (await callSidecar('list_examples')) as { total?: number; tree?: { children?: unknown[] } }
       if (!list || !list.total || list.total < 100) throw new Error(`示例数量异常: ${list && list.total}`)
       if (!list.tree || !list.tree.children || list.tree.children.length === 0) throw new Error('目录树为空')
       console.log(`[smoke] sidecar 正常，示例 ${list.total} 个，集合 ${list.tree.children.length} 个`)
       // 等渲染进程（Vue）完成 loadExamples
       step = 'Vue 应用加载示例'
       await waitFor(async () => {
-        const n = await mainWindow!.webContents.executeJavaScript('window.__app ? window.__app.examples().length : 0') as number
+        const n = (await mainWindow!.webContents.executeJavaScript(
+          'window.__app ? window.__app.examples().length : 0'
+        )) as number
         return n > 100
       }, 'Vue 应用加载示例')
       // 首启页在首次运行时是全屏遮罩，会盖住后续截图与点击：先收起（其自身的走查放到最后）
-      await mainWindow!.webContents.executeJavaScript('window.__app && window.__app.dismissOnboarding && window.__app.dismissOnboarding()')
+      await mainWindow!.webContents.executeJavaScript(
+        'window.__app && window.__app.dismissOnboarding && window.__app.dismissOnboarding()'
+      )
       // 壳与导航走查（A2）：在真实窗口里量三层绑定与平台几何，而不是看截图
       step = '壳与导航走查'
-      const shell = await mainWindow!.webContents.executeJavaScript(`(async () => {
+      const shell = (await mainWindow!.webContents.executeJavaScript(`(async () => {
         const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
         const out = {};
         const root = document.documentElement;
@@ -818,7 +851,7 @@ function runSmokeTest(): void {
           out.captionCtl = { error: String(e) };
         }
         return out;
-      })()`) as Record<string, unknown>
+      })()`)) as Record<string, unknown>
       {
         const s = shell as Record<string, unknown>
         if (s.fatal) throw new Error(`壳走查: ${s.fatal}`)
@@ -856,11 +889,13 @@ function runSmokeTest(): void {
           problems.push(`按钮点击链路异常: ${JSON.stringify({ m: s.maximizedByClick, r: s.restoredByClick })}`)
         }
         if (problems.length) throw new Error('壳走查失败: ' + problems.join('; '))
-        console.log(`[smoke] 壳走查通过：${s.platform}/${s.theme}/${s.accent} 侧栏 ${s.sidebarW} 行高 ${s.rowH} 标题栏 ${s.headH} 状态栏 ${s.statusH} 选中底 ${s.selBg}`)
+        console.log(
+          `[smoke] 壳走查通过：${s.platform}/${s.theme}/${s.accent} 侧栏 ${s.sidebarW} 行高 ${s.rowH} 标题栏 ${s.headH} 状态栏 ${s.statusH} 选中底 ${s.selBg}`
+        )
       }
       // 画廊/工具箱走查（A3）：在真实窗口里走一遍页面语言——图标来源、字重、状态圆点、分段控件
       step = '画廊页面走查'
-      const page = await mainWindow!.webContents.executeJavaScript(`(async () => {
+      const page = (await mainWindow!.webContents.executeJavaScript(`(async () => {
         const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
         const root = document.documentElement;
         const isWin = root.getAttribute('data-platform') === 'win';
@@ -964,7 +999,7 @@ function runSmokeTest(): void {
         out.expectToolbarH = parseFloat(getComputedStyle(root).getPropertyValue('--toolbar-h'));
         // 保持在浏览态：主进程随后截图取证；复位交给后续 store 探针的 resetViewFilters
         return out;
-      })()`) as Record<string, unknown>
+      })()`)) as Record<string, unknown>
       {
         const p = page as Record<string, unknown>
         if (p.fatal) throw new Error(`页面走查: ${p.fatal}`)
@@ -975,7 +1010,8 @@ function runSmokeTest(): void {
         if (p.cardEmoji || p.cardsEmoji || p.sectionEmoji) problems.push('页面仍有 emoji 文本')
         // 代码搜索（契约 §5）：列表不带 code，命中必须来自服务端按需读文件
         if ((p.codeHitCount as number) < 1) problems.push('代码检索无命中（服务端检索未接线？）')
-        if (!(p.codeHitReasons as string[]).includes('code')) problems.push(`代码检索命中原因异常: ${JSON.stringify(p.codeHitReasons)}`)
+        if (!(p.codeHitReasons as string[]).includes('code'))
+          problems.push(`代码检索命中原因异常: ${JSON.stringify(p.codeHitReasons)}`)
         if ((p.metaHitCount as number) < 1) problems.push('元数据检索无命中')
         if ((p.uiCodeHits as number) < 1) problems.push('渲染层未合并服务端代码命中（切面未接线？）')
         if ((p.uiFiltered as number) < 1) problems.push('按代码词搜索后结果为空')
@@ -988,7 +1024,7 @@ function runSmokeTest(): void {
           'Pygame 游戏': 18,
           'OpenCV 视觉': 166,
           'PIL 图像处理': 170,
-          '数据可视化': 427
+          数据可视化: 427
         }
         const counts = (p.sectionCounts || {}) as Record<string, number>
         for (const [label, expect] of Object.entries(FROZEN_THEMES)) {
@@ -1018,12 +1054,19 @@ function runSmokeTest(): void {
             console.error('[smoke] 截图失败:', (e as Error).message)
           }
         }
-        const mode = p.segActiveBg === p.expectPressedBg ? '抬起段(mac)' : p.segActiveColor === p.expectAccentText ? '强调下划线(win)' : '未知'
-        console.log(`[smoke] 画廊走查通过：分区 ${p.sections} 卡片 ${p.cards} 图标 chip ✓ 字重 ${(p.cardWeights as string[]).join('/')} 分段 ${mode}`)
+        const mode =
+          p.segActiveBg === p.expectPressedBg
+            ? '抬起段(mac)'
+            : p.segActiveColor === p.expectAccentText
+              ? '强调下划线(win)'
+              : '未知'
+        console.log(
+          `[smoke] 画廊走查通过：分区 ${p.sections} 卡片 ${p.cards} 图标 chip ✓ 字重 ${(p.cardWeights as string[]).join('/')} 分段 ${mode}`
+        )
       }
       // 渲染层链路探针：经 window.__app 驱动 Vue 应用（store 状态 + 持久化 + 筛选）
       step = '渲染层链路探针'
-      const probe = await mainWindow!.webContents.executeJavaScript(`(async () => {
+      const probe = (await mainWindow!.webContents.executeJavaScript(`(async () => {
         const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
         const app = window.__app;
         if (!app) return { fatal: '__app 未注入（入口缺 ?smoke=1）' };
@@ -1087,7 +1130,7 @@ function runSmokeTest(): void {
         await window.sidecar.ai.setSettings({ acknowledged: false });
         out.ai = r && r.error === "no_api_key" ? 'OK' : 'BAD:' + JSON.stringify(r);
         return out;
-      })()`) as Record<string, string>
+      })()`)) as Record<string, string>
       for (const key of ['history', 'favorites', 'facets', 'gallery', 'ai']) {
         const v = probe[key]
         if (v !== 'OK') throw new Error(`${key} 链路异常: ${v}`)
@@ -1095,7 +1138,7 @@ function runSmokeTest(): void {
       }
       // 详情 / 运行器走查（A4）：打开的详情页里量头部语言、标签页、终端面与字重白名单
       step = '详情页走查'
-      const detail = await mainWindow!.webContents.executeJavaScript(`(async () => {
+      const detail = (await mainWindow!.webContents.executeJavaScript(`(async () => {
         const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
         const root = document.documentElement;
         const cs = getComputedStyle(root);
@@ -1143,7 +1186,7 @@ function runSmokeTest(): void {
         }
         out.weights = Array.from(weights).sort();
         return out;
-      })()`) as Record<string, unknown>
+      })()`)) as Record<string, unknown>
       {
         const d = detail as Record<string, unknown>
         if (d.fatal) throw new Error(`详情页走查: ${d.fatal}`)
@@ -1154,8 +1197,10 @@ function runSmokeTest(): void {
           problems.push(`标签行高 ${d.tabRowH} != --pane-head-h ${d.expectPaneHeadH}`)
         }
         if (!d.hasConsole) problems.push('详情页缺终端输出面（.console）')
-        if (d.consoleBg !== d.expectConsoleBg) problems.push(`终端底色 ${d.consoleBg} != --bg-console ${d.expectConsoleBg}`)
-        if (d.consoleFg !== d.expectConsoleFg) problems.push(`终端文字 ${d.consoleFg} != --text-console ${d.expectConsoleFg}`)
+        if (d.consoleBg !== d.expectConsoleBg)
+          problems.push(`终端底色 ${d.consoleBg} != --bg-console ${d.expectConsoleBg}`)
+        if (d.consoleFg !== d.expectConsoleFg)
+          problems.push(`终端文字 ${d.consoleFg} != --text-console ${d.expectConsoleFg}`)
         if (!d.consoleMono) problems.push('终端面未使用等宽栈')
         if (!d.headChip) problems.push('详情头部缺图标 chip')
         if (d.headerEmoji) problems.push('详情头部仍有 emoji')
@@ -1172,13 +1217,15 @@ function runSmokeTest(): void {
             console.error('[smoke] 截图失败:', (e as Error).message)
           }
         }
-        console.log(`[smoke] 详情走查通过：标签 ${d.tabs} 选中 ${d.tabSelected} 标签行高 ${d.tabRowH} 终端底 ${d.consoleBg} 字重 ${(d.weights as string[]).join('/')}`)
+        console.log(
+          `[smoke] 详情走查通过：标签 ${d.tabs} 选中 ${d.tabSelected} 标签行高 ${d.tabRowH} 终端底 ${d.consoleBg} 字重 ${(d.weights as string[]).join('/')}`
+        )
       }
       // 资源链路走查：走渲染层真实路径（__app.uploadAssets → 客户端 → 主进程 → sidecar → 工作区）。
       // 为什么必须真跑：资源上传/删除的字段名（id/filename）是客户端翻译出来的，
       // 单测 mock 掉桥就看不见线口径错误——2026-09-29 就抓到过 pass-through 字段名不匹配。
       step = '资源链路走查'
-      const asset = await mainWindow!.webContents.executeJavaScript(`(async () => {
+      const asset = (await mainWindow!.webContents.executeJavaScript(`(async () => {
         const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
         const app = window.__app;
         if (!app || !app.uploadAssets) return { fatal: '__app 缺少资源钩子' };
@@ -1194,7 +1241,7 @@ function runSmokeTest(): void {
         await sleep(800);
         const final = app.assets().map((a) => a.filename);
         return { id: target.id, uploaded: after, removed: final };
-      })()`) as Record<string, unknown>
+      })()`)) as Record<string, unknown>
       {
         const a = asset as { fatal?: string; id?: string; uploaded?: string[]; removed?: string[] }
         if (a.fatal) throw new Error(`资源链路异常: ${a.fatal}`)
@@ -1208,7 +1255,7 @@ function runSmokeTest(): void {
       }
       // 全局层走查（A5）：命令面板选中语义（板 3）+ 高危确认弹层按钮序与危险语义（板 4）
       step = '全局层走查'
-      const overlay = await mainWindow!.webContents.executeJavaScript(`(async () => {
+      const overlay = (await mainWindow!.webContents.executeJavaScript(`(async () => {
         const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
         const root = document.documentElement;
         const isWin = root.getAttribute('data-platform') === 'win';
@@ -1291,7 +1338,7 @@ function runSmokeTest(): void {
           }
         }
         return out;
-      })()`) as Record<string, unknown>
+      })()`)) as Record<string, unknown>
       {
         const o = overlay as Record<string, unknown>
         if (o.fatal) throw new Error(`全局层走查: ${o.fatal}`)
@@ -1347,7 +1394,9 @@ function runSmokeTest(): void {
         await mainWindow!.webContents.executeJavaScript('window.__app.openHelp()')
         await new Promise((r) => setTimeout(r, 500))
         await shot('help.png')
-        await mainWindow!.webContents.executeJavaScript('window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }))')
+        await mainWindow!.webContents.executeJavaScript(
+          'window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }))'
+        )
         await new Promise((r) => setTimeout(r, 400))
         // 详情页仍开着：重新触发一次确认弹层再截图（弹层在面板之下，需先关面板）
         await mainWindow!.webContents.executeJavaScript('window.__app.runFromDetail()')
@@ -1363,7 +1412,7 @@ function runSmokeTest(): void {
       })()`)
       // 首启引导页走查（A5.5 板 2/3）：展示 → 状态来自 sidecar → 开始浏览写标记并关闭
       step = '首启引导走查'
-      const ob = await mainWindow!.webContents.executeJavaScript(`(async () => {
+      const ob = (await mainWindow!.webContents.executeJavaScript(`(async () => {
         const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
         try {
         const app = window.__app;
@@ -1394,7 +1443,7 @@ function runSmokeTest(): void {
         out.storeOpen = app.onboardingOpen();
         return out;
         } catch (e) { return { fatal: 'probe exception: ' + ((e && e.message) || String(e)) }; }
-      })()`) as Record<string, unknown>
+      })()`)) as Record<string, unknown>
       {
         const o = ob as Record<string, unknown>
         if (o.fatal) throw new Error(`首启引导走查: ${o.fatal}`)
@@ -1409,7 +1458,9 @@ function runSmokeTest(): void {
         if (o.flagSeen !== true) problems.push('未写入首启标记（会每次启动都弹）')
         if (o.storeOpen !== false) problems.push('store 的 onboardingOpen 未复位')
         if (problems.length) throw new Error('首启引导走查失败: ' + problems.join('; '))
-        console.log(`[smoke] 首启走查通过：phase=${o.envPhase} python=${o.envPython} 步骤标记 ${o.steps} 个，标记已写入`)
+        console.log(
+          `[smoke] 首启走查通过：phase=${o.envPhase} python=${o.envPython} 步骤标记 ${o.steps} 个，标记已写入`
+        )
         if (process.env.SMOKE_SHOTS) {
           try {
             await mainWindow!.webContents.executeJavaScript('window.__app.showOnboarding()')
@@ -1538,7 +1589,7 @@ function runSmokeTest(): void {
           await sleep(500);
           const panel = document.querySelector('[data-testid="versions-panel"]');
           return { hasTab: true, hasPanel: !!panel, text: panel ? panel.textContent.slice(0, 80) : '' };
-        })()`) ) as { hasTab: boolean; hasPanel?: boolean; text?: string }
+        })()`)) as { hasTab: boolean; hasPanel?: boolean; text?: string }
         if (!versions.hasTab || !versions.hasPanel) {
           throw new Error(`编辑历史入口异常: ${JSON.stringify(versions)}`)
         }
@@ -1585,7 +1636,7 @@ function runSmokeTest(): void {
               app.closeDetail(); // 示例马上会被删除：先收起详情，避免对已删示例发请求
               await sleep(200);
               return { count: versions.length, first: versions[0].ts, preview: preview?.code ?? '', ok };
-            })()`) ) as { count: number; first: string; preview: string; ok: boolean }
+            })()`)) as { count: number; first: string; preview: string; ok: boolean }
             const editErr = (edit as { fatal?: string }).fatal
             if (editErr) throw new Error(`编辑历史前置失败: ${editErr}`)
             if (edit.count < 1 || edit.preview !== 'print("v1")\n' || !edit.ok) {
@@ -1656,11 +1707,13 @@ function runE2ETest(): void {
     try {
       // 等待示例加载完成
       for (let i = 0; i < 60; i++) {
-        const n = await mainWindow!.webContents.executeJavaScript('window.__app ? window.__app.examples().length : 0') as number
+        const n = (await mainWindow!.webContents.executeJavaScript(
+          'window.__app ? window.__app.examples().length : 0'
+        )) as number
         if (n > 100) break
         await new Promise((r) => setTimeout(r, 300))
       }
-      const report = await mainWindow!.webContents.executeJavaScript(`(async () => {
+      const report = (await mainWindow!.webContents.executeJavaScript(`(async () => {
         const sleep = (ms) => new Promise((r) => setTimeout(r, 300));
         const app = window.__app;
         if (!app) return { fatal: '__app 未注入（入口缺 ?smoke=1）' };
@@ -1702,7 +1755,7 @@ function runE2ETest(): void {
         await window.sidecar.store.set('history', []);
         app.resetRunHistory();
         return out;
-      })()`) as Record<string, unknown>
+      })()`)) as Record<string, unknown>
 
       console.log('[e2e] 探针结果:', JSON.stringify(report, null, 1))
       const r = report as Record<string, unknown>

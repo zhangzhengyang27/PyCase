@@ -11,14 +11,7 @@
 // 本文件只做两件事：启动装载（loadAll）与测试钩子组合（getTestApi）。
 // 组件按需从具体域导入，不从这里转口（避免又长出一个单体）。
 import { api } from '../sidecar-client'
-import {
-  applyViewPrefs,
-  catalogTestHooks,
-  examples,
-  loadExamples,
-  loading,
-  loadError
-} from './catalog'
+import { applyViewPrefs, catalogTestHooks, examples, loadExamples, loading, loadError } from './catalog'
 import { detailTestHooks } from './detail'
 import { assetsTestHooks } from './assets'
 import { envTestHooks } from './env'

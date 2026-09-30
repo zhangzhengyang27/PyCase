@@ -18,8 +18,28 @@ import OutputPanel from '../OutputPanel.vue'
 
 import { runStatusHint } from '../../src/utils'
 import type { RunHistoryEntry } from '../../src/types'
-import { activeCategory, activeSectionTags, activeTheme, examples, favOnly, galleryMode, sortBy, viewMode, type VExample } from '../../src/store/catalog'
-import { argsError, argsLoading, clearSurface, currentArgs, isDirty, isRunning, pendingBackfillTokens, selectedId, surfaceState } from '../../src/store/detail'
+import {
+  activeCategory,
+  activeSectionTags,
+  activeTheme,
+  examples,
+  favOnly,
+  galleryMode,
+  sortBy,
+  viewMode,
+  type VExample
+} from '../../src/store/catalog'
+import {
+  argsError,
+  argsLoading,
+  clearSurface,
+  currentArgs,
+  isDirty,
+  isRunning,
+  pendingBackfillTokens,
+  selectedId,
+  surfaceState
+} from '../../src/store/detail'
 import { getTestApi } from '../../src/store/index'
 import { favorites, runHistory } from '../../src/store/prefs'
 
@@ -120,16 +140,22 @@ describe('ExampleCard', () => {
 
   it('selected 才加选中描边类', () => {
     expect(
-      mount(ExampleCard, { props: { ex: makeExample(), selected: true } }).get('[role="button"]').classes()
+      mount(ExampleCard, { props: { ex: makeExample(), selected: true } })
+        .get('[role="button"]')
+        .classes()
     ).toContain('card-sel')
-    expect(mount(ExampleCard, { props: { ex: makeExample() } }).get('[role="button"]').classes()).not.toContain(
-      'card-sel'
-    )
+    expect(
+      mount(ExampleCard, { props: { ex: makeExample() } })
+        .get('[role="button"]')
+        .classes()
+    ).not.toContain('card-sel')
   })
 
   it('入场 stagger：前 8 项按序号 ×20ms 延迟，第 8 项起与未传时都不延迟', () => {
     const styleOf = (enterIndex?: number): string =>
-      mount(ExampleCard, { props: { ex: makeExample(), enterIndex } }).get('[role="button"]').attributes('style') || ''
+      mount(ExampleCard, { props: { ex: makeExample(), enterIndex } })
+        .get('[role="button"]')
+        .attributes('style') || ''
 
     expect(styleOf(0)).toContain('animation-delay: 0ms')
     expect(styleOf(3)).toContain('animation-delay: 60ms')
@@ -209,7 +235,9 @@ describe('ExampleCard', () => {
     expect(badge.find('.stat-dot').classes()).toContain('bg-danger')
 
     expect(
-      mount(ExampleCard, { props: { ex: makeExample() } }).find('[title^="含高危操作"]').exists()
+      mount(ExampleCard, { props: { ex: makeExample() } })
+        .find('[title^="含高危操作"]')
+        .exists()
     ).toBe(false)
   })
 
@@ -221,9 +249,9 @@ describe('ExampleCard', () => {
     expect(badge.attributes('title')).toBe(runStatusHint('missing_deps'))
 
     // runnable 是正向状态、risky 由高危徽章承担：两者都不该再出一个徽章
-    expect(
-      mount(ExampleCard, { props: { ex: makeExample({ run_status: 'runnable' }) } }).text()
-    ).not.toContain('可运行')
+    expect(mount(ExampleCard, { props: { ex: makeExample({ run_status: 'runnable' }) } }).text()).not.toContain(
+      '可运行'
+    )
     expect(mount(ExampleCard, { props: { ex: makeExample({ run_status: 'risky' }) } }).text()).not.toContain('高危')
   })
 
@@ -249,9 +277,7 @@ describe('ExampleListItem', () => {
     expect(w.get('span[title="my tool"]').text()).toBe('my tool')
     expect(w.text()).toContain('暂无描述')
 
-    expect(
-      mount(ExampleListItem, { props: { ex: makeExample({ description: '有描述' }) } }).text()
-    ).toContain('有描述')
+    expect(mount(ExampleListItem, { props: { ex: makeExample({ description: '有描述' }) } }).text()).toContain('有描述')
   })
 
   it('质量分只在低分（<80）出现，undefined 按 0 处理', () => {
@@ -261,15 +287,15 @@ describe('ExampleListItem', () => {
 
     // 80 分是边界：不打扰扫读，不渲染徽章
     expect(
-      mount(ExampleListItem, { props: { ex: makeExample({ quality_score: 80 }) } }).find(
-        '[title="六维质量评分（0-100）"]'
-      ).exists()
+      mount(ExampleListItem, { props: { ex: makeExample({ quality_score: 80 }) } })
+        .find('[title="六维质量评分（0-100）"]')
+        .exists()
     ).toBe(false)
 
     expect(
-      mount(ExampleListItem, { props: { ex: makeExample({ quality_score: undefined }) } }).get(
-        '[title="六维质量评分（0-100）"]'
-      ).text()
+      mount(ExampleListItem, { props: { ex: makeExample({ quality_score: undefined }) } })
+        .get('[title="六维质量评分（0-100）"]')
+        .text()
     ).toBe('0')
   })
 
@@ -314,8 +340,9 @@ describe('ExampleListItem', () => {
 
   it('入场 stagger 与卡片同口径（前 8 项 ×20ms）', () => {
     const styleOf = (enterIndex?: number): string =>
-      mount(ExampleListItem, { props: { ex: makeExample(), enterIndex } }).get('[role="button"]').attributes('style') ||
-      ''
+      mount(ExampleListItem, { props: { ex: makeExample(), enterIndex } })
+        .get('[role="button"]')
+        .attributes('style') || ''
     expect(styleOf(2)).toContain('animation-delay: 40ms')
     expect(styleOf(8)).toContain('animation-delay: 0ms')
   })
@@ -332,9 +359,9 @@ describe('ExampleListItem', () => {
     const badge = broken.findAll('span').find((s) => s.text() === '语法损坏')!
     expect(badge.attributes('title')).toBe(runStatusHint('broken'))
 
-    expect(
-      mount(ExampleListItem, { props: { ex: makeExample({ run_status: 'runnable' }) } }).text()
-    ).not.toContain('可运行')
+    expect(mount(ExampleListItem, { props: { ex: makeExample({ run_status: 'runnable' }) } }).text()).not.toContain(
+      '可运行'
+    )
   })
 })
 
@@ -493,12 +520,18 @@ describe('GalleryOverview', () => {
     const w = mount(GalleryOverview)
 
     const turtleSec = w.findAll('section').find((s) => s.get('h2').text() === 'Turtle 绘图')!
-    await turtleSec.findAll('button').find((b) => b.text().startsWith('查看全部'))!.trigger('click')
+    await turtleSec
+      .findAll('button')
+      .find((b) => b.text().startsWith('查看全部'))!
+      .trigger('click')
     expect(activeTheme.value).toBe('turtle')
     expect(galleryMode.value).toBe('browse')
 
     const basicSec = w.findAll('section').find((s) => s.get('h2').text() === '语言基础')!
-    await basicSec.findAll('button').find((b) => b.text().startsWith('查看全部'))!.trigger('click')
+    await basicSec
+      .findAll('button')
+      .find((b) => b.text().startsWith('查看全部'))!
+      .trigger('click')
     // 标签组下钻用 tagsAny（OR 语义），并且必须清掉上一次的主题范围
     expect(activeSectionTags.value).toEqual(expect.arrayContaining(['python-basics']))
     expect(activeTheme.value).toBe('all')
@@ -512,11 +545,17 @@ describe('GalleryOverview', () => {
     const w = mount(GalleryOverview)
 
     const projSec = w.findAll('section').find((s) => s.get('h2').text() === '综合项目')!
-    await projSec.findAll('button').find((b) => b.text().startsWith('查看全部'))!.trigger('click')
+    await projSec
+      .findAll('button')
+      .find((b) => b.text().startsWith('查看全部'))!
+      .trigger('click')
     expect(activeCategory.value).toBe('projects')
 
     const othersSec = w.findAll('section').find((s) => s.get('h2').text() === '其他示例')!
-    await othersSec.findAll('button').find((b) => b.text().startsWith('查看全部'))!.trigger('click')
+    await othersSec
+      .findAll('button')
+      .find((b) => b.text().startsWith('查看全部'))!
+      .trigger('click')
     // others 无范围可预置：仅进入浏览态，且清掉上一次的项目范围
     expect(galleryMode.value).toBe('browse')
     expect(activeCategory.value).toBe('all')
@@ -554,12 +593,18 @@ describe('GalleryOverview', () => {
   it('页头入口：浏览全部设全部范围，我的收藏额外打开 favOnly', async () => {
     const w = mount(GalleryOverview)
 
-    await w.findAll('button').find((b) => b.text() === '浏览全部')!.trigger('click')
+    await w
+      .findAll('button')
+      .find((b) => b.text() === '浏览全部')!
+      .trigger('click')
     expect(galleryMode.value).toBe('browse')
     expect(activeTheme.value).toBe('all')
 
     galleryMode.value = 'overview'
-    await w.findAll('button').find((b) => b.text() === '我的收藏')!.trigger('click')
+    await w
+      .findAll('button')
+      .find((b) => b.text() === '我的收藏')!
+      .trigger('click')
     expect(favOnly.value).toBe(true)
     expect(galleryMode.value).toBe('browse')
   })
@@ -582,7 +627,7 @@ describe('ArgsForm', () => {
     const ex = { id: 't1', name: 'alpha.py', category: 'topics', path: '/tmp/alpha.py' }
     examples.value = [ex as never]
     selectedId.value = 't1'
-    argsError.value = "[parseArgs] 解析器崩了（错误码 -32602）"
+    argsError.value = '[parseArgs] 解析器崩了（错误码 -32602）'
     const w = mount(ArgsForm)
 
     const box = w.get('[data-testid="args-error"]')
@@ -623,13 +668,13 @@ describe('ArgsForm', () => {
     expect(inputs[0].attributes('spellcheck')).toBe('false')
 
     return (async () => {
-    await inputs[0].setValue('alice')
-    await inputs[1].setValue('3')
-    await inputs[2].setValue('1.5')
-    await inputs[3].setValue('data.txt')
-    // 非位置参数展开成 flag + value；位置参数只推值本身
-    expect(testApi.collectArgs()).toEqual(['--name', 'alice', '--count', '3', '--ratio', '1.5', 'data.txt'])
-  })()
+      await inputs[0].setValue('alice')
+      await inputs[1].setValue('3')
+      await inputs[2].setValue('1.5')
+      await inputs[3].setValue('data.txt')
+      // 非位置参数展开成 flag + value；位置参数只推值本身
+      expect(testApi.collectArgs()).toEqual(['--name', 'alice', '--count', '3', '--ratio', '1.5', 'data.txt'])
+    })()
   })
 
   it('choices 渲染成下拉，默认值回填，收集时按选中项展开', async () => {

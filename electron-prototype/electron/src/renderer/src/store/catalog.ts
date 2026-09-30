@@ -10,7 +10,6 @@ import type { ExampleItem } from '../types'
 import { api } from '../sidecar-client'
 import { favorites, runHistory, toggleFavorite, recordHistory, toPlain } from './prefs'
 
-
 // 画廊/工具箱共用的示例类型（sidecar list_examples 序列化 + 筛选预处理缓存）
 export interface VExample extends ExampleItem, FilterEngine.ExampleLike {
   title?: string
@@ -23,7 +22,6 @@ export type SortBy = 'quality_desc' | 'name' | 'last_run'
 export type ViewKey = 'gallery' | 'toolbox' | 'runner'
 /** 浏览密度：网格卡墙 / 单行清单 */
 export type ViewDensity = 'grid' | 'list'
-
 
 // ---------------------------------------------------------------------------
 // 响应式状态
@@ -157,15 +155,19 @@ async function refreshCodeHits(query: string): Promise<void> {
   }
 }
 
-export const filtered = computed(() => FilterEngine.filterExamples(galleryExamples.value, galleryQuery.value, filterContext.value) as VExample[])
+export const filtered = computed(
+  () => FilterEngine.filterExamples(galleryExamples.value, galleryQuery.value, filterContext.value) as VExample[]
+)
 
-export const sortedGallery = computed(() =>
-  FilterEngine.sortExamples(filtered.value, sortBy.value, { lastRunAt: lastRunIndex.value }) as VExample[]
+export const sortedGallery = computed(
+  () => FilterEngine.sortExamples(filtered.value, sortBy.value, { lastRunAt: lastRunIndex.value }) as VExample[]
 )
 
 export const shownGallery = computed(() => sortedGallery.value.slice(0, galleryLimit.value))
 
-export const toolboxItems = computed(() => FilterEngine.filterExamples(examples.value, toolboxQuery.value, filterContext.value) as VExample[])
+export const toolboxItems = computed(
+  () => FilterEngine.filterExamples(examples.value, toolboxQuery.value, filterContext.value) as VExample[]
+)
 
 export const toolsTotal = computed(() => examples.value.filter((e) => e.category === 'tools').length)
 
@@ -263,7 +265,6 @@ export function clearFilters(): void {
   persistViewPrefs()
 }
 
-
 // ---------------------------------------------------------------------------
 export const galleryChips = computed<FilterChip[]>(() => buildFilterChips(galleryQuery.value))
 
@@ -315,7 +316,12 @@ export function clearAllFilters(): void {
 
 /** 从总览态下钻进入浏览态，可选地预置范围（主题 / 分区标签组 / 项目类目 / 收藏）。
  *  三种范围互斥：设置其一即清空另两者（分区下钻 = 重新选择范围，避免 AND 出空集） */
-export function openGalleryBrowse(preset?: { theme?: string; tags?: string[]; category?: 'projects'; favOnly?: boolean }): void {
+export function openGalleryBrowse(preset?: {
+  theme?: string
+  tags?: string[]
+  category?: 'projects'
+  favOnly?: boolean
+}): void {
   if (preset?.tags) {
     activeSectionTags.value = preset.tags
     activeTheme.value = 'all'
@@ -334,7 +340,6 @@ export function openGalleryBrowse(preset?: { theme?: string; tags?: string[]; ca
   galleryMode.value = 'browse'
 }
 
-
 /** 拉取示例列表并建立筛选预处理缓存（v2：import 标签用服务端下发的派生事实）。 */
 export async function loadExamples(): Promise<void> {
   const result = await api.listExamples()
@@ -346,7 +351,6 @@ export async function loadExamples(): Promise<void> {
   }
   examples.value = list
 }
-
 
 // ---------------------------------------------------------------------------
 // 测试钩子（画廊/工具箱浏览）：由 store/index.ts 的 getTestApi 组合成 window.__app

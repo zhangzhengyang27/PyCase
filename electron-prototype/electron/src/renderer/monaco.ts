@@ -22,7 +22,11 @@ function toRgba(value: string): [number, number, number, number] {
     let h = v.slice(1)
     // 支持 #rgb / #rgba / #rrggbb / #rrggbbaa——构建产物会把 rgba() 压成 8 位十六进制，
     // 早先只认 6 位会把 alpha 当 1，5% 的行高亮因此渲染成纯黑
-    if (h.length === 3 || h.length === 4) h = h.split('').map((c) => c + c).join('')
+    if (h.length === 3 || h.length === 4)
+      h = h
+        .split('')
+        .map((c) => c + c)
+        .join('')
     const n = parseInt(h.slice(0, 6), 16) || 0
     const a = h.length >= 8 ? (parseInt(h.slice(6, 8), 16) || 0) / 255 : 1
     return [(n >> 16) & 255, (n >> 8) & 255, n & 255, a]

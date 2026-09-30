@@ -11,7 +11,26 @@ import ToolboxView from '../ToolboxView.vue'
 import FilterSidebar from '../FilterSidebar.vue'
 import ExampleCard from '../ExampleCard.vue'
 import ExampleListItem from '../ExampleListItem.vue'
-import { activeCategory, activeRunnable, activeRunStatus, activeSectionTags, activeTags, activeTheme, examples, favOnly, galleryLimit, galleryMode, loadError, loading, minQuality, searchQuery, sortBy, toolSearchQuery, viewMode, type VExample } from '../../src/store/catalog'
+import {
+  activeCategory,
+  activeRunnable,
+  activeRunStatus,
+  activeSectionTags,
+  activeTags,
+  activeTheme,
+  examples,
+  favOnly,
+  galleryLimit,
+  galleryMode,
+  loadError,
+  loading,
+  minQuality,
+  searchQuery,
+  sortBy,
+  toolSearchQuery,
+  viewMode,
+  type VExample
+} from '../../src/store/catalog'
 import { selectedId } from '../../src/store/detail'
 import { getTestApi } from '../../src/store/index'
 import { favorites, runHistory } from '../../src/store/prefs'
@@ -376,9 +395,12 @@ describe('ToolboxView', () => {
 
     await favBtn.trigger('click')
     expect(favOnly.value).toBe(true)
-    expect(w.findAll('button').find((b) => b.attributes('title') === '显示全部工具')!.attributes('aria-pressed')).toBe(
-      'true'
-    )
+    expect(
+      w
+        .findAll('button')
+        .find((b) => b.attributes('title') === '显示全部工具')!
+        .attributes('aria-pressed')
+    ).toBe('true')
   })
 })
 
@@ -411,9 +433,7 @@ describe('FilterSidebar', () => {
 
   // 分组头按钮是唯一同时带 aria-expanded 与组名的按钮（折叠按钮文本为空，不参与匹配）。
   function groupHeader(w: VueWrapper, label: string) {
-    return w
-      .findAll('button')
-      .find((b) => b.attributes('aria-expanded') !== undefined && b.text().includes(label))!
+    return w.findAll('button').find((b) => b.attributes('aria-expanded') !== undefined && b.text().includes(label))!
   }
 
   // 组内容 div 恒为组头按钮的下一个兄弟节点（v-show 控制显隐，节点始终在 DOM 里）。

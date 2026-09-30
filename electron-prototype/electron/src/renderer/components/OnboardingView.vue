@@ -4,7 +4,15 @@
 // 只有「运行」需要。步骤状态全部来自 sidecar 的 env_status / env_progress，前端不猜、不编造。
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { Code2, FolderOpen, LayoutGrid, LibraryBig, Play } from 'lucide-vue-next'
-import { appInfo, dismissOnboarding, envStatus, openLog, retryEnvPrepare, useSystemPython, type EnvStatus } from '../src/store/env'
+import {
+  appInfo,
+  dismissOnboarding,
+  envStatus,
+  openLog,
+  retryEnvPrepare,
+  useSystemPython,
+  type EnvStatus
+} from '../src/store/env'
 import { modKeyLabel } from '../src/platform'
 import BaseButton from './base/BaseButton.vue'
 
@@ -64,10 +72,15 @@ const versionText = computed(() => (appInfo.value.version ? `v${appInfo.value.ve
 </script>
 
 <template>
-  <div data-testid="onboarding" class="fixed inset-0 z-[1300] bg-page flex items-center justify-center p-5 overflow-y-auto">
+  <div
+    data-testid="onboarding"
+    class="fixed inset-0 z-[1300] bg-page flex items-center justify-center p-5 overflow-y-auto"
+  >
     <div class="w-[620px] max-w-full bg-card border border-line-hairline rounded-overlay shadow-elev-3 overflow-hidden">
       <div class="flex items-center gap-2.5 px-4.5 pt-4 pb-3">
-        <span class="w-[30px] h-[30px] rounded-control bg-accent text-on-accent inline-flex items-center justify-center shrink-0">
+        <span
+          class="w-[30px] h-[30px] rounded-control bg-accent text-on-accent inline-flex items-center justify-center shrink-0"
+        >
           <LibraryBig :size="16" :stroke-width="1.5" />
         </span>
         <span class="min-w-0">
@@ -78,14 +91,20 @@ const versionText = computed(() => (appInfo.value.version ? `v${appInfo.value.ve
       </div>
 
       <p class="m-0 px-4.5 pb-3.5 text-body text-ink-dim leading-[1.65]">
-        内置 <b class="text-ink">{{ env?.examples || 1496 }} 条 Python 示例</b>：浏览、运行、改代码都在一个窗口里完成。<template v-if="!ready">首次启动需要几分钟准备运行环境，这一步不会挡住浏览。</template><template v-else>运行环境已就绪，可以直接运行任何示例。</template>
+        内置
+        <b class="text-ink">{{ env?.examples || 1496 }} 条 Python 示例</b
+        >：浏览、运行、改代码都在一个窗口里完成。<template v-if="!ready"
+          >首次启动需要几分钟准备运行环境，这一步不会挡住浏览。</template
+        ><template v-else>运行环境已就绪，可以直接运行任何示例。</template>
       </p>
 
       <div class="grid grid-cols-3 gap-2.5 px-4.5 pb-3.5">
         <div class="border border-line-hairline rounded-card bg-inset p-2.5">
           <LayoutGrid :size="15" :stroke-width="1.5" class="text-ink-dim" />
           <div class="text-caption font-semibold mt-1.5">浏览</div>
-          <div class="text-caption text-ink-dim leading-[1.55] mt-0.5">按主题分区逛；{{ modKey }} K 搜名称、标签或代码。</div>
+          <div class="text-caption text-ink-dim leading-[1.55] mt-0.5">
+            按主题分区逛；{{ modKey }} K 搜名称、标签或代码。
+          </div>
         </div>
         <div class="border border-line-hairline rounded-card bg-inset p-2.5">
           <Play :size="15" :stroke-width="1.5" class="text-ink-dim" />
@@ -102,7 +121,10 @@ const versionText = computed(() => (appInfo.value.version ? `v${appInfo.value.ve
       <!-- 环境准备：状态全部来自 sidecar 上报 -->
       <div class="mx-4.5 mb-3.5 border border-line-hairline rounded-card bg-inset">
         <div class="flex items-center gap-2 px-3 py-2.5 border-b border-line-hairline">
-          <span class="stat-dot shrink-0" :class="ready ? 'bg-ok' : env?.phase === 'failed' ? 'bg-danger' : 'bg-warn animate-pulse'"></span>
+          <span
+            class="stat-dot shrink-0"
+            :class="ready ? 'bg-ok' : env?.phase === 'failed' ? 'bg-danger' : 'bg-warn animate-pulse'"
+          ></span>
           <span class="text-caption text-ink-dim">
             {{ ready ? '运行环境已就绪' : env?.phase === 'failed' ? '环境准备失败' : '正在准备运行环境' }}
             <template v-if="env?.mode === 'system'">（已切换为系统 Python）</template>

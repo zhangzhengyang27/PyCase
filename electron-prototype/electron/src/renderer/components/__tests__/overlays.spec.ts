@@ -147,7 +147,10 @@ describe('OnboardingView', () => {
     const w = mount(OnboardingView)
     const start = w.findAll('button').find((b) => b.text() === '开始浏览')!
     await start.trigger('click')
-    expect(vi.mocked(window.sidecar.store.set)).toHaveBeenCalledWith('onboarding', expect.objectContaining({ seen: true }))
+    expect(vi.mocked(window.sidecar.store.set)).toHaveBeenCalledWith(
+      'onboarding',
+      expect.objectContaining({ seen: true })
+    )
   })
 
   it('win 下主操作在最左（Fluent 惯例），mac 下在最右', async () => {

@@ -37,7 +37,9 @@ const skipped = ref<SkippedFile[]>([])
 const result = ref<{ imported: number; skippedCount: number; collection: string | null } | null>(null)
 
 const canScan = computed(() => !!dirPath.value && !scanning.value)
-const title = computed(() => (step.value === 'pick' ? '导入示例目录' : step.value === 'preview' ? '确认导入' : '导入完成'))
+const title = computed(() =>
+  step.value === 'pick' ? '导入示例目录' : step.value === 'preview' ? '确认导入' : '导入完成'
+)
 
 watch(importWizardOpen, (open) => {
   if (open) reset()
@@ -115,9 +117,7 @@ async function runImport(): Promise<void> {
         选择一个包含 Python 脚本的目录，扫描后导入为「我的示例集合」。内置示例库不受影响，导入的示例可随时在详情页删除。
       </p>
       <div class="flex items-center gap-2">
-        <BaseButton :disabled="scanning" @click="pickDirectory()">
-          <FolderOpen :size="14" /> 选择目录…
-        </BaseButton>
+        <BaseButton :disabled="scanning" @click="pickDirectory()"> <FolderOpen :size="14" /> 选择目录… </BaseButton>
         <span class="text-caption text-ink-mute truncate flex-1" :title="dirPath">{{ dirPath || '尚未选择目录' }}</span>
       </div>
       <label class="flex flex-col gap-1.5 text-control text-ink-dim">
@@ -132,8 +132,8 @@ async function runImport(): Promise<void> {
     <div v-else-if="step === 'preview'" class="flex flex-col gap-3">
       <p class="m-0 text-control text-ink-dim">
         扫描到 <strong class="text-ink">{{ files.length }}</strong> 个可导入的 .py 文件
-        <span v-if="skipped.length">，跳过 {{ skipped.length }} 个（空文件 / 缓存目录）</span>。
-        与现有示例同名的 id 会自动加后缀，不会覆盖内置库。
+        <span v-if="skipped.length">，跳过 {{ skipped.length }} 个（空文件 / 缓存目录）</span>。 与现有示例同名的 id
+        会自动加后缀，不会覆盖内置库。
       </p>
       <div class="max-h-[320px] overflow-y-auto border border-line-hairline rounded-card divide-y divide-line-hairline">
         <div v-for="f in files" :key="f.id" class="flex items-center gap-2.5 h-9 px-2.5 text-control">

@@ -51,7 +51,9 @@ const ICON_BTN =
     <span class="chip-ic !w-6 !h-6">
       <component :is="icon" :size="13" :stroke-width="1.5" />
     </span>
-    <span class="text-control font-medium text-ink truncate w-[190px] shrink-0 capitalize" :title="title">{{ title }}</span>
+    <span class="text-control font-medium text-ink truncate w-[190px] shrink-0 capitalize" :title="title">{{
+      title
+    }}</span>
     <span class="flex-1 min-w-0 text-caption text-ink-mute truncate" :title="ex.description || ''">
       {{ ex.description || '暂无描述' }}
     </span>
@@ -85,7 +87,9 @@ const ICON_BTN =
       title="六维质量评分（0-100）"
       >{{ ex.quality_score ?? 0 }}</span
     >
-    <div class="flex items-center gap-0.5 shrink-0 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity dur-fast">
+    <div
+      class="flex items-center gap-0.5 shrink-0 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity dur-fast"
+    >
       <button
         :class="ICON_BTN"
         :title="faved ? '取消收藏' : '收藏'"
@@ -94,12 +98,7 @@ const ICON_BTN =
       >
         <Star :size="12" :class="faved ? 'text-warn fill-current' : ''" />
       </button>
-      <button
-        :class="[ICON_BTN, 'text-accent']"
-        title="运行"
-        :aria-label="`运行 ${title}`"
-        @click.stop="emit('run')"
-      >
+      <button :class="[ICON_BTN, 'text-accent']" title="运行" :aria-label="`运行 ${title}`" @click.stop="emit('run')">
         <Play :size="12" />
       </button>
     </div>

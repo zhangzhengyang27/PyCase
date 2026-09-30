@@ -31,9 +31,29 @@ import BaseButton from './components/base/BaseButton.vue'
 import { statusDotCls } from './src/utils'
 import { applyMonacoTheme } from './monaco'
 import { aiPanelOpen, aiSettingsOpen, initAIEvents, loadAISettings, openAISettings } from './src/store/ai'
-import { activeView, examples, filtered, galleryExamples, loading, toolboxItems, toolsTotal, type ViewKey } from './src/store/catalog'
+import {
+  activeView,
+  examples,
+  filtered,
+  galleryExamples,
+  loading,
+  toolboxItems,
+  toolsTotal,
+  type ViewKey
+} from './src/store/catalog'
 import { initRunEvents, runStatusText, selectedId } from './src/store/detail'
-import { closeHelp, dismissOnboarding, helpOpen, initEnvEvents, loadAppInfo, loadOnboarding, onboardingOpen, openHelp, openLog, retryEnvPrepare } from './src/store/env'
+import {
+  closeHelp,
+  dismissOnboarding,
+  helpOpen,
+  initEnvEvents,
+  loadAppInfo,
+  loadOnboarding,
+  onboardingOpen,
+  openHelp,
+  openLog,
+  retryEnvPrepare
+} from './src/store/env'
 import { confirmPrompt, resolveConfirm } from './src/store/detail'
 import { openImportWizard } from './src/store/import'
 import { loadAll } from './src/store/index'
@@ -224,7 +244,9 @@ onBeforeUnmount(() => {
         >
           <Search :size="16" :stroke-width="1.5" class="shrink-0" />
           <span class="truncate">搜索</span>
-          <kbd class="ml-auto shrink-0 px-1 py-px text-caption font-mono border border-line-subtle rounded-control text-ink-mute">
+          <kbd
+            class="ml-auto shrink-0 px-1 py-px text-caption font-mono border border-line-subtle rounded-control text-ink-mute"
+          >
             {{ modKey }} K
           </kbd>
         </button>
@@ -317,12 +339,17 @@ onBeforeUnmount(() => {
               : `示例引擎已断开（退出码 ${sidecarExit.code ?? '未知'}），正在自动重启…`
           "
         >
-          <button class="ml-2 text-caption text-accent hover:underline cursor-pointer bg-transparent border-0 p-0 shrink-0"
-                  data-testid="sidecar-restart" @click="retryEnvPrepare()">
+          <button
+            class="ml-2 text-caption text-accent hover:underline cursor-pointer bg-transparent border-0 p-0 shrink-0"
+            data-testid="sidecar-restart"
+            @click="retryEnvPrepare()"
+          >
             重启引擎
           </button>
-          <button class="ml-3 text-caption text-ink-dim hover:underline cursor-pointer bg-transparent border-0 p-0 shrink-0"
-                  @click="openLog()">
+          <button
+            class="ml-3 text-caption text-ink-dim hover:underline cursor-pointer bg-transparent border-0 p-0 shrink-0"
+            @click="openLog()"
+          >
             查看日志
           </button>
         </AlertBanner>

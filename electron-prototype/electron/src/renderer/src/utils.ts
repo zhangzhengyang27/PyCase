@@ -119,7 +119,6 @@ export function runStatusHint(status: string | undefined): string {
 // （JS 赋值 className 会覆盖 HTML 上的静态工具类，散落字面量容易漏基础类）
 // ---------------------------------------------------------------------------
 
-
 // 输出面板状态点（8px，默认灰）
 export const OUTPUT_DOT_CLS = {
   idle: 'inline-block w-2 h-2 rounded-full shrink-0 bg-ink-faint',

@@ -29,13 +29,10 @@ try {
   const savedTheme = localStorage.getItem('app-theme') || 'dark'
   const matchMedia = (globalThis as unknown as { matchMedia?: (query: string) => { matches: boolean } }).matchMedia
   const resolved =
-    savedTheme === 'system'
-      ? matchMedia?.('(prefers-color-scheme: dark)')?.matches
-        ? 'dark'
-        : 'light'
-      : savedTheme
-  const root = (globalThis as unknown as { document?: { documentElement: { setAttribute(key: string, value: string): void } } })
-    .document?.documentElement
+    savedTheme === 'system' ? (matchMedia?.('(prefers-color-scheme: dark)')?.matches ? 'dark' : 'light') : savedTheme
+  const root = (
+    globalThis as unknown as { document?: { documentElement: { setAttribute(key: string, value: string): void } } }
+  ).document?.documentElement
   if (root) {
     if (resolved) root.setAttribute('data-theme', resolved)
     // 平台层：darwin → mac，其余（含 Windows）→ win。Linux 暂不在交付面（D7）。
@@ -53,7 +50,10 @@ export interface SidecarAPI {
   listExamples: () => Promise<ListExamplesResult>
   getExample: (id: string) => Promise<ExampleDetail>
   parseArgs: (id: string) => Promise<{ args: ArgSpec[]; count: number }>
-  saveExample: (id: string, code: string) => Promise<{ status: 'saved'; id: string; json_file: string | null; path: string }>
+  saveExample: (
+    id: string,
+    code: string
+  ) => Promise<{ status: 'saved'; id: string; json_file: string | null; path: string }>
   runExample: (params: { id: string; args?: string[]; timeout?: number }) => Promise<{ run_id: string }>
   stopRun: (runId: string) => Promise<{ status: 'terminating' | 'pending_terminate'; run_id: string }>
   uploadAsset: (params: { id: string; filename: string; data: string }) => Promise<{
@@ -65,7 +65,10 @@ export interface SidecarAPI {
   }>
   listAssets: (id: string) => Promise<{ assets: AssetInfo[] }>
   deleteAsset: (params: { id: string; filename: string }) => Promise<{ deleted: string; assets: AssetInfo[] }>
-  downloadResultImage: (url: string, defaultName?: string) => Promise<{ canceled?: boolean; savedTo?: string; error?: string }>
+  downloadResultImage: (
+    url: string,
+    defaultName?: string
+  ) => Promise<{ canceled?: boolean; savedTo?: string; error?: string }>
   saveTextFile: (params: {
     content?: string
     defaultName?: string

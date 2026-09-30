@@ -34,8 +34,12 @@ function formatDuration(ms: number): string {
       class="flex items-center justify-between gap-3 px-3 py-1.5 border-b border-line-hairline hover:bg-hover"
     >
       <div class="flex items-center gap-2.5 min-w-0 flex-1">
-        <span class="inline-flex items-center gap-1 shrink-0 text-caption" :class="h.ok ? 'text-ink-mute' : 'text-danger'">
-          <span class="stat-dot" :class="h.ok ? 'bg-ok' : 'bg-danger'"></span>{{ h.ok ? '成功' : `失败 ${h.exit_code}` }}
+        <span
+          class="inline-flex items-center gap-1 shrink-0 text-caption"
+          :class="h.ok ? 'text-ink-mute' : 'text-danger'"
+        >
+          <span class="stat-dot" :class="h.ok ? 'bg-ok' : 'bg-danger'"></span
+          >{{ h.ok ? '成功' : `失败 ${h.exit_code}` }}
         </span>
         <span class="text-caption text-ink-dim truncate">
           {{ formatTime(h.ts) }} · {{ formatDuration(h.duration_ms) }}

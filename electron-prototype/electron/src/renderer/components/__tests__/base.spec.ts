@@ -50,9 +50,21 @@ describe('BaseButton', () => {
   })
 
   it('square 时按 size 给出等宽方形（sm=w-6 / md=w-7 / lg=w-8）且去掉横向内边距', () => {
-    expect(mount(BaseButton, { props: { square: true, size: 'sm' } }).get('button').classes()).toContain('w-6')
-    expect(mount(BaseButton, { props: { square: true, size: 'md' } }).get('button').classes()).toContain('w-7')
-    expect(mount(BaseButton, { props: { square: true, size: 'lg' } }).get('button').classes()).toContain('w-8')
+    expect(
+      mount(BaseButton, { props: { square: true, size: 'sm' } })
+        .get('button')
+        .classes()
+    ).toContain('w-6')
+    expect(
+      mount(BaseButton, { props: { square: true, size: 'md' } })
+        .get('button')
+        .classes()
+    ).toContain('w-7')
+    expect(
+      mount(BaseButton, { props: { square: true, size: 'lg' } })
+        .get('button')
+        .classes()
+    ).toContain('w-8')
 
     const sq = mount(BaseButton, { props: { square: true } }).get('button')
     expect(sq.classes()).toContain('px-0')
@@ -63,8 +75,16 @@ describe('BaseButton', () => {
   })
 
   it('disabled 或 loading 时按钮进入原生 disabled 态', () => {
-    expect(mount(BaseButton, { props: { disabled: true } }).get('button').attributes('disabled')).toBeDefined()
-    expect(mount(BaseButton, { props: { loading: true } }).get('button').attributes('disabled')).toBeDefined()
+    expect(
+      mount(BaseButton, { props: { disabled: true } })
+        .get('button')
+        .attributes('disabled')
+    ).toBeDefined()
+    expect(
+      mount(BaseButton, { props: { loading: true } })
+        .get('button')
+        .attributes('disabled')
+    ).toBeDefined()
     // 两者都未设置时不带 disabled
     expect(mount(BaseButton).get('button').attributes('disabled')).toBeUndefined()
   })
@@ -85,7 +105,11 @@ describe('BaseButton', () => {
   })
 
   it('title 透传到原生 title 属性', () => {
-    expect(mount(BaseButton, { props: { title: '运行示例' } }).get('button').attributes('title')).toBe('运行示例')
+    expect(
+      mount(BaseButton, { props: { title: '运行示例' } })
+        .get('button')
+        .attributes('title')
+    ).toBe('运行示例')
   })
 })
 
@@ -103,8 +127,16 @@ describe('BaseInput', () => {
   })
 
   it('默认 md（h-7）/ lg（h-8）尺寸类', () => {
-    expect(mount(BaseInput, { props: { modelValue: '' } }).get('input').classes()).toContain('h-7')
-    expect(mount(BaseInput, { props: { modelValue: '', size: 'lg' } }).get('input').classes()).toContain('h-8')
+    expect(
+      mount(BaseInput, { props: { modelValue: '' } })
+        .get('input')
+        .classes()
+    ).toContain('h-7')
+    expect(
+      mount(BaseInput, { props: { modelValue: '', size: 'lg' } })
+        .get('input')
+        .classes()
+    ).toContain('h-8')
   })
 
   it('error 态：红框 + aria-invalid + 下方错误文案；无 error 时不渲染文案', () => {
@@ -152,7 +184,11 @@ describe('BaseInput', () => {
     // 因此 Vue 走 setAttribute 分支——断言属性而非 property。
     expect(attrs.spellcheck).toBe('false')
     // 未传时不应写入该属性
-    expect(mount(BaseInput, { props: { modelValue: '' } }).get('input').attributes('spellcheck')).toBeUndefined()
+    expect(
+      mount(BaseInput, { props: { modelValue: '' } })
+        .get('input')
+        .attributes('spellcheck')
+    ).toBeUndefined()
   })
 })
 
@@ -174,7 +210,11 @@ describe('BaseSelect', () => {
   })
 
   it('title 透传', () => {
-    expect(mount(BaseSelect, { props: { modelValue: 'a', title: '排序' } }).get('select').attributes('title')).toBe('排序')
+    expect(
+      mount(BaseSelect, { props: { modelValue: 'a', title: '排序' } })
+        .get('select')
+        .attributes('title')
+    ).toBe('排序')
   })
 })
 
@@ -370,9 +410,7 @@ describe('AppToast', () => {
   // 这里刻意写出 stub 标签名而不是用宽松的 `[role="status"] div`：
   // 若将来取消 transition stub，测试会立即失败并提醒改选择器，而不是静默变宽松。
   function toastItems(): HTMLElement[] {
-    return Array.from(
-      document.body.querySelectorAll<HTMLElement>('[role="status"] > transition-group-stub > div')
-    )
+    return Array.from(document.body.querySelectorAll<HTMLElement>('[role="status"] > transition-group-stub > div'))
   }
 
   beforeEach(() => {

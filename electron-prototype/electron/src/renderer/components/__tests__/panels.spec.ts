@@ -16,7 +16,16 @@ import ImportWizardModal from '../ImportWizardModal.vue'
 import HighRiskConfirmModal from '../HighRiskConfirmModal.vue'
 import AssetsPanel from '../AssetsPanel.vue'
 
-import { aiSettings, aiSettingsOpen, aiPanelOpen, aiRunId, aiStatus, aiStatusError, aiOutputText, aiShowStop } from '../../src/store/ai'
+import {
+  aiSettings,
+  aiSettingsOpen,
+  aiPanelOpen,
+  aiRunId,
+  aiStatus,
+  aiStatusError,
+  aiOutputText,
+  aiShowStop
+} from '../../src/store/ai'
 import { assets, assetsLoading, type AssetInfo } from '../../src/store/assets'
 import { examples, type VExample } from '../../src/store/catalog'
 import { selectedId, pendingHighRiskRun, isRunning, currentRunId, currentRunMeta } from '../../src/store/detail'
@@ -493,14 +502,16 @@ describe('设置中心·存储分区（A6 缓存入口）', () => {
 
     // 撤回后按钮翻转为「现在同意」
     await nextTick()
-    findButton('现在同意', document.body.querySelector('[data-testid="settings-consent"]')!)
-      .click()
+    findButton('现在同意', document.body.querySelector('[data-testid="settings-consent"]')!).click()
     await flushPromises()
     expect(window.sidecar.ai.setSettings).toHaveBeenCalledWith({ acknowledged: true })
   })
 
   it('无 v1 遗留时不显示回收按钮', async () => {
-    vi.mocked(window.sidecar.storageReport).mockResolvedValue({ ...report, legacy: { root: '/tmp', bytes: 0, entries: 0 } })
+    vi.mocked(window.sidecar.storageReport).mockResolvedValue({
+      ...report,
+      legacy: { root: '/tmp', bytes: 0, entries: 0 }
+    })
     aiSettingsOpen.value = true
     track(mount(AISettingsModal))
     await flushPromises()

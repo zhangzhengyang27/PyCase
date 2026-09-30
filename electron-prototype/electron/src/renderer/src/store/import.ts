@@ -30,4 +30,3 @@ export async function deleteUserExample(id: string): Promise<boolean> {
     return false
   }
 }
-

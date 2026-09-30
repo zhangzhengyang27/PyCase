@@ -13,7 +13,23 @@ import { sectionIcon } from '../src/section-icons'
 import { sectionKeyOf } from '../src/overview'
 import { explainSelectedCode } from '../src/store/ai'
 import { assets } from '../src/store/assets'
-import { closeDetail, clearSurface, currentArgs, installDepsAndRerun, installingDeps, isDirty, isRunning, loadVersions, saving, saveExample, selectedExample, selectedId, surfaceState, runFromDetail, runStatusText } from '../src/store/detail'
+import {
+  closeDetail,
+  clearSurface,
+  currentArgs,
+  installDepsAndRerun,
+  installingDeps,
+  isDirty,
+  isRunning,
+  loadVersions,
+  saving,
+  saveExample,
+  selectedExample,
+  selectedId,
+  surfaceState,
+  runFromDetail,
+  runStatusText
+} from '../src/store/detail'
 import { deleteUserExample } from '../src/store/import'
 import { isFavorite, toggleFavorite } from '../src/store/prefs'
 import { stopRun } from '../src/store/detail'
@@ -142,7 +158,9 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
           </span>
         </div>
         <div class="flex items-center gap-1.5 min-w-0">
-          <span class="text-badge font-mono text-ink-faint truncate lowercase tracking-[0.02em]" :title="pathLabel">{{ pathLabel }}</span>
+          <span class="text-badge font-mono text-ink-faint truncate lowercase tracking-[0.02em]" :title="pathLabel">{{
+            pathLabel
+          }}</span>
           <span
             v-for="tag in (ex.tags || []).slice(0, 3)"
             :key="tag"
@@ -163,7 +181,12 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
       >
 
       <div class="app-no-drag flex items-center gap-1.5 shrink-0">
-        <BaseButton square :title="isFavorite(ex.id) ? '取消收藏' : '收藏'" :aria-label="isFavorite(ex.id) ? '取消收藏' : '收藏'" @click="toggleFavorite(ex.id)">
+        <BaseButton
+          square
+          :title="isFavorite(ex.id) ? '取消收藏' : '收藏'"
+          :aria-label="isFavorite(ex.id) ? '取消收藏' : '收藏'"
+          @click="toggleFavorite(ex.id)"
+        >
           <Star :size="15" :class="isFavorite(ex.id) ? 'text-warn fill-current' : ''" />
         </BaseButton>
         <BaseButton
@@ -181,16 +204,26 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
         <BaseButton :disabled="!isDirty || saving" title="保存 (Cmd+S)" @click="saveExample()">
           <Save :size="13" /> {{ saving ? '保存中…' : '保存' }}
         </BaseButton>
-        <BaseButton v-if="isRunning" title="停止 (Cmd+.)" @click="stopRun()">
-          <Square :size="13" /> 停止
-        </BaseButton>
-        <BaseButton v-else variant="primary" size="lg" :disabled="!selectedId" title="运行 (Cmd+Enter)" @click="runFromDetail()">
+        <BaseButton v-if="isRunning" title="停止 (Cmd+.)" @click="stopRun()"> <Square :size="13" /> 停止 </BaseButton>
+        <BaseButton
+          v-else
+          variant="primary"
+          size="lg"
+          :disabled="!selectedId"
+          title="运行 (Cmd+Enter)"
+          @click="runFromDetail()"
+        >
           <Play :size="13" /> 运行
         </BaseButton>
         <!-- 缺依赖修复路径（审计 A3）：装完自动重跑，让"体检结论"有出口 -->
-        <BaseButton v-if="needsDeps" :loading="installingDeps" :disabled="isRunning"
-                    title="把该示例的第三方依赖装进共享环境后重跑"
-                    data-testid="install-deps" @click="installDepsAndRerun()">
+        <BaseButton
+          v-if="needsDeps"
+          :loading="installingDeps"
+          :disabled="isRunning"
+          title="把该示例的第三方依赖装进共享环境后重跑"
+          data-testid="install-deps"
+          @click="installDepsAndRerun()"
+        >
           <PackagePlus :size="13" /> 安装依赖
         </BaseButton>
       </div>
@@ -212,7 +245,11 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
             :aria-expanded="!argsCollapsed"
             @click="argsCollapsed = !argsCollapsed"
           >
-            <ChevronRight :size="13" class="shrink-0 transition-transform dur-fast" :class="argsCollapsed ? '' : 'rotate-90'" />
+            <ChevronRight
+              :size="13"
+              class="shrink-0 transition-transform dur-fast"
+              :class="argsCollapsed ? '' : 'rotate-90'"
+            />
             <span>命令行参数</span>
             <span class="text-caption text-ink-mute font-mono">({{ currentArgs.length }})</span>
           </button>

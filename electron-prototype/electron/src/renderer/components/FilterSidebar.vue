@@ -21,7 +21,21 @@ import {
 } from 'lucide-vue-next'
 import { THEMES } from '../src/themes'
 import BaseInput from './base/BaseInput.vue'
-import { activeRunnable, activeRunStatus, activeTags, activeTheme, clearFilters, examples, facetCounts, favOnly, minQuality, persistViewPrefs, searchQuery, tagFacetsFor, toolSearchQuery } from '../src/store/catalog'
+import {
+  activeRunnable,
+  activeRunStatus,
+  activeTags,
+  activeTheme,
+  clearFilters,
+  examples,
+  facetCounts,
+  favOnly,
+  minQuality,
+  persistViewPrefs,
+  searchQuery,
+  tagFacetsFor,
+  toolSearchQuery
+} from '../src/store/catalog'
 import { favorites } from '../src/store/prefs'
 
 const props = defineProps<{ scope: 'gallery' | 'toolbox' }>()
@@ -183,7 +197,12 @@ const activeFilterCount = computed(
 
       <div class="flex-1 overflow-y-auto px-2 py-2.5 space-y-4">
         <!-- 收藏 -->
-        <button :class="[ROW_CLS, favOnly ? ROW_ACTIVE_CLS : '']" title="只看收藏" :aria-pressed="favOnly" @click="toggleFavOnly()">
+        <button
+          :class="[ROW_CLS, favOnly ? ROW_ACTIVE_CLS : '']"
+          title="只看收藏"
+          :aria-pressed="favOnly"
+          @click="toggleFavOnly()"
+        >
           <Star :size="13" :class="favOnly ? 'text-warn fill-current' : 'text-ink-mute'" />
           <span>收藏</span>
           <span v-if="favorites.size" class="ml-auto text-caption text-ink-mute font-mono">{{ favorites.size }}</span>
@@ -261,7 +280,9 @@ const activeFilterCount = computed(
               >
                 <component :is="THEME_ICONS[t.key]" :size="13" class="shrink-0 text-ink-mute" />
                 <span class="truncate">{{ t.label }}</span>
-                <span class="ml-auto text-caption text-ink-mute font-mono">{{ facetCounts.themeCounts.get(t.key) || 0 }}</span>
+                <span class="ml-auto text-caption text-ink-mute font-mono">{{
+                  facetCounts.themeCounts.get(t.key) || 0
+                }}</span>
               </button>
             </div>
           </div>

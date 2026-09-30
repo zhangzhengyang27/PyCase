@@ -56,7 +56,9 @@ export async function uploadAssets(id: string, files: File[]): Promise<void> {
 export async function deleteAsset(filename: string): Promise<void> {
   if (!selectedId.value) return
   try {
-    const result = (await api.deleteAsset({ exampleId: selectedId.value, fileName: filename })) as { assets?: AssetInfo[] }
+    const result = (await api.deleteAsset({ exampleId: selectedId.value, fileName: filename })) as {
+      assets?: AssetInfo[]
+    }
     assets.value = result.assets || []
   } catch (err) {
     pushToast('error', `删除失败: ${(err as Error).message}`)
@@ -71,9 +73,6 @@ export async function downloadImage(url: string, name: string): Promise<void> {
     pushToast('error', `下载失败：${(err as Error).message}`)
   }
 }
-
-
-
 
 // ---------------------------------------------------------------------------
 // 测试钩子（资源面板）：由 store/index.ts 的 getTestApi 组合成 window.__app

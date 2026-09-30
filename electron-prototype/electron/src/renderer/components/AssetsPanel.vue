@@ -77,7 +77,10 @@ async function doRemove(): Promise<void> {
 
     <!-- 删除确认 -->
     <AppModal v-if="confirmName" title="删除资源" @close="confirmName = null">
-      <p class="text-control text-ink-dim leading-[1.6]">确定删除 <span class="font-mono text-ink">{{ confirmName }}</span>？该操作不可撤销。</p>
+      <p class="text-control text-ink-dim leading-[1.6]">
+        确定删除 <span class="font-mono text-ink">{{ confirmName }}</span
+        >？该操作不可撤销。
+      </p>
       <template #footer>
         <BaseButton @click="confirmName = null">取消</BaseButton>
         <BaseButton variant="danger" @click="doRemove()">删除</BaseButton>

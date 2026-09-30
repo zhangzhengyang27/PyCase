@@ -7,7 +7,9 @@ defineProps<{ icon?: Component; title: string; description?: string }>()
 
 <template>
   <div class="flex-1 flex flex-col items-center justify-center gap-2 py-16 text-center">
-    <div class="w-11 h-11 rounded-card border border-line-hairline bg-card flex items-center justify-center text-ink-mute">
+    <div
+      class="w-11 h-11 rounded-card border border-line-hairline bg-card flex items-center justify-center text-ink-mute"
+    >
       <component :is="icon" v-if="icon" :size="20" :stroke-width="1.5" />
     </div>
     <div class="text-body font-semibold text-ink">{{ title }}</div>

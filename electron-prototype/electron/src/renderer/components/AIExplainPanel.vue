@@ -12,7 +12,9 @@ const BTN_CLS =
 
 <template>
   <div :class="PANEL_CLS">
-    <div class="flex items-center justify-between px-3.5 py-2.5 border-b border-line-subtle font-semibold text-body shrink-0">
+    <div
+      class="flex items-center justify-between px-3.5 py-2.5 border-b border-line-subtle font-semibold text-body shrink-0"
+    >
       <span>AI 代码解释（DeepSeek）</span>
       <div class="flex gap-1.5">
         <button v-show="aiShowStop" :class="BTN_CLS" title="停止解释" @click="stopAI()">停止</button>
@@ -27,12 +29,16 @@ const BTN_CLS =
         </button>
       </div>
     </div>
-    <div class="px-3.5 py-1.5 text-caption border-b border-line-subtle shrink-0" :class="aiStatusError ? 'text-danger' : 'text-ink-mute'">
+    <div
+      class="px-3.5 py-1.5 text-caption border-b border-line-subtle shrink-0"
+      :class="aiStatusError ? 'text-danger' : 'text-ink-mute'"
+    >
       {{ aiStatus }}
     </div>
     <div
       class="flex-1 overflow-auto px-3.5 py-3 text-body leading-[1.65] text-ink whitespace-pre-wrap break-words font-sans"
-      >{{ aiOutputText }}</div
     >
+      {{ aiOutputText }}
+    </div>
   </div>
 </template>

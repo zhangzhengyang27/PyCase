@@ -43,15 +43,16 @@ export function setSkipHighRiskConfirm(skip: boolean): void {
   api.storeSet('safetyPrefs', { skipHighRiskConfirm: skip }).catch(() => {})
 }
 
-
 /** 调整并持久化运行超时（秒） */
 export function setRunTimeout(seconds: number): void {
   runTimeout.value = seconds
   api.storeSet('runPrefs', { timeout: seconds }).catch(() => {})
 }
 
-
-export function recordHistory(meta: { id: string; name: string; args: string[]; startedAt: number }, exitCode: number): void {
+export function recordHistory(
+  meta: { id: string; name: string; args: string[]; startedAt: number },
+  exitCode: number
+): void {
   const entry: RunHistoryEntry = {
     ts: new Date().toISOString(),
     id: meta.id,
@@ -72,7 +73,6 @@ function persistRunHistory(): Promise<unknown> {
   })
 }
 
-
 // ---------------------------------------------------------------------------
 // 启动装载与持久化应用（loadAll 用；各域不各自解析存储格式）
 // ---------------------------------------------------------------------------
@@ -92,4 +92,3 @@ export function applyRunPrefs(prefs: unknown): void {
   const t = (prefs as Record<string, unknown> | null)?.timeout
   if (typeof t === 'number' && t >= 5 && t <= 600) runTimeout.value = t
 }
-

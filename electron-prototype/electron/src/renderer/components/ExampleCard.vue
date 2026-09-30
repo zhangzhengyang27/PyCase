@@ -74,7 +74,11 @@ const enterDelay = computed(() => ({
     </div>
     <!-- 行 3：质量分 + 主标签 + 高危 + 运行 + 状态 -->
     <div class="flex items-center gap-2 px-3 pb-2.5 min-w-0">
-      <span class="font-mono text-caption shrink-0" :class="qualityTextCls(ex.quality_score)" title="六维质量评分（0-100）">
+      <span
+        class="font-mono text-caption shrink-0"
+        :class="qualityTextCls(ex.quality_score)"
+        title="六维质量评分（0-100）"
+      >
         {{ ex.quality_score ?? 0 }}
       </span>
       <span v-if="firstTag" class="text-caption font-mono text-ink-mute truncate min-w-0" :title="firstTag">{{

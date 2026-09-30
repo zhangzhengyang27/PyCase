@@ -22,7 +22,12 @@ const findings = computed(() => target.value?.risk_findings || [])
 </script>
 
 <template>
-  <AppModal v-if="pendingHighRiskRun && target" title="运行高危示例" width="480px" @close="resolveHighRiskRun(false, false)">
+  <AppModal
+    v-if="pendingHighRiskRun && target"
+    title="运行高危示例"
+    width="480px"
+    @close="resolveHighRiskRun(false, false)"
+  >
     <div class="flex flex-col gap-3">
       <div class="alertline">
         <ShieldAlert :size="18" :stroke-width="1.5" />
@@ -34,7 +39,9 @@ const findings = computed(() => target.value?.risk_findings || [])
         </div>
       </div>
       <p class="m-0 text-control text-ink-dim leading-[1.6]">
-        示例将在独立子进程中运行（30 秒超时、环境变量白名单），但<strong class="text-ink">子进程隔离不是安全沙箱</strong>
+        示例将在独立子进程中运行（30 秒超时、环境变量白名单），但<strong class="text-ink"
+          >子进程隔离不是安全沙箱</strong
+        >
         ——反射调用、运行时拼接的命令，以及第三方库内部行为不受静态扫描覆盖。请确认你信任这段代码。
       </p>
       <label class="flex items-center gap-2 text-control text-ink-dim cursor-pointer select-none">

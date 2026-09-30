@@ -27,8 +27,16 @@ const KEYS: Array<{ keys: string[]; desc: string }> = [
 
 const OPS = [
   { icon: Search, title: '找示例', body: '画廊按主题分区；工具箱按工具体量分组；急用时 ' + modKey + ' K 直接搜。' },
-  { icon: Play, title: '运行与看结果', body: '详情页右侧「终端输出」实时显示；示例生成的图片自动收进「资源」标签，可预览与下载。' },
-  { icon: FileCode2, title: '编辑与保存', body: '左侧 Monaco 编辑器；改动后 ' + modKey + ' S 保存，内置示例可随时恢复原始版本。' }
+  {
+    icon: Play,
+    title: '运行与看结果',
+    body: '详情页右侧「终端输出」实时显示；示例生成的图片自动收进「资源」标签，可预览与下载。'
+  },
+  {
+    icon: FileCode2,
+    title: '编辑与保存',
+    body: '左侧 Monaco 编辑器；改动后 ' + modKey + ' S 保存，内置示例可随时恢复原始版本。'
+  }
 ]
 
 const env = computed(() => envStatus.value)
@@ -75,7 +83,10 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey, true))
         <header class="flex items-center gap-2 h-11 px-3.5 border-b border-line-hairline sticky top-0 bg-card z-[1]">
           <FileCode2 :size="16" :stroke-width="1.5" class="text-ink-mute shrink-0" />
           <span class="text-title font-semibold text-ink">帮助与快捷键</span>
-          <kbd class="ml-auto px-1 py-px text-caption font-mono border border-line-hairline rounded-control text-ink-mute">Esc</kbd>
+          <kbd
+            class="ml-auto px-1 py-px text-caption font-mono border border-line-hairline rounded-control text-ink-mute"
+            >Esc</kbd
+          >
           <button
             class="w-6 h-6 flex items-center justify-center rounded-control border-0 bg-transparent cursor-pointer text-ink-mute hover:text-ink hover:bg-hover"
             title="关闭"
@@ -88,7 +99,9 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey, true))
 
         <div class="p-3.5 flex flex-col gap-3.5">
           <section>
-            <h4 class="m-0 mb-2 text-body font-semibold">快捷键<small class="ml-2 text-caption font-normal text-ink-mute">修饰键随平台：{{ modKey }}</small></h4>
+            <h4 class="m-0 mb-2 text-body font-semibold">
+              快捷键<small class="ml-2 text-caption font-normal text-ink-mute">修饰键随平台：{{ modKey }}</small>
+            </h4>
             <div class="grid grid-cols-[auto_1fr] gap-x-3.5 gap-y-1.5 items-center">
               <template v-for="(row, i) in KEYS" :key="i">
                 <span class="flex items-center gap-1">
@@ -123,7 +136,8 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey, true))
             <div class="alertline">
               <ShieldAlert :size="16" :stroke-width="1.5" />
               <span>
-                <b>安全边界：</b>示例在独立子进程中运行（30 秒超时、环境变量白名单），但子进程隔离<b>不是安全沙箱</b>——反射调用、运行时拼接的命令与第三方库内部行为不受静态扫描覆盖。高危示例运行前会二次确认。
+                <b>安全边界：</b>示例在独立子进程中运行（30
+                秒超时、环境变量白名单），但子进程隔离<b>不是安全沙箱</b>——反射调用、运行时拼接的命令与第三方库内部行为不受静态扫描覆盖。高危示例运行前会二次确认。
               </span>
             </div>
           </section>
@@ -132,11 +146,16 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey, true))
             <h4 class="m-0 mb-2 text-body font-semibold">环境信息</h4>
             <div class="grid grid-cols-[96px_1fr] gap-x-3 gap-y-1 text-caption">
               <span class="text-ink-mute">应用版本</span>
-              <span class="text-ink-dim font-mono">{{ appInfo.version || '—' }}<template v-if="appInfo.electron">（Electron {{ appInfo.electron }}）</template></span>
+              <span class="text-ink-dim font-mono"
+                >{{ appInfo.version || '—'
+                }}<template v-if="appInfo.electron">（Electron {{ appInfo.electron }}）</template></span
+              >
               <span class="text-ink-mute">共享环境</span>
               <span class="text-ink-dim font-mono">{{ envLine }}</span>
               <span class="text-ink-mute">示例库</span>
-              <span class="text-ink-dim font-mono">{{ examples.length }} 条 · {{ userCollectionCount }} 个用户集合</span>
+              <span class="text-ink-dim font-mono"
+                >{{ examples.length }} 条 · {{ userCollectionCount }} 个用户集合</span
+              >
               <span class="text-ink-mute">&nbsp;</span>
               <button
                 class="w-fit border-0 bg-transparent p-0 text-caption text-accent-text cursor-pointer hover:underline"
@@ -150,7 +169,9 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey, true))
 
         <footer class="flex items-center gap-2 px-3.5 py-2.5 border-t border-line-hairline text-caption text-ink-mute">
           <span>{{ modKey }} / 随时打开本页</span>
-          <span class="ml-auto flex items-center gap-1"><CornerDownLeft :size="11" :stroke-width="1.5" /> 关闭：Esc</span>
+          <span class="ml-auto flex items-center gap-1"
+            ><CornerDownLeft :size="11" :stroke-width="1.5" /> 关闭：Esc</span
+          >
         </footer>
       </div>
     </div>

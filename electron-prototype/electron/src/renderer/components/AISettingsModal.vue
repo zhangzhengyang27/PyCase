@@ -33,17 +33,21 @@ const attempted = ref(false)
 const FIELD_IDS = { model: 'setting-model', baseUrl: 'setting-baseurl', apiKey: 'setting-apikey' } as const
 
 // 每次打开时同步当前设置并复位校验状态
-watch(aiSettingsOpen, (open) => {
-  if (open) {
-    key.value = ''
-    model.value = aiSettings.model
-    baseUrl.value = aiSettings.baseUrl
-    touched.model = touched.baseUrl = touched.apiKey = false
-    attempted.value = false
-    // 存储分区：打开设置时拉一次占用（数据在 sidecar 侧，前端不缓存）
-    void loadStorageReport()
-  }
-}, { immediate: true })
+watch(
+  aiSettingsOpen,
+  (open) => {
+    if (open) {
+      key.value = ''
+      model.value = aiSettings.model
+      baseUrl.value = aiSettings.baseUrl
+      touched.model = touched.baseUrl = touched.apiKey = false
+      attempted.value = false
+      // 存储分区：打开设置时拉一次占用（数据在 sidecar 侧，前端不缓存）
+      void loadStorageReport()
+    }
+  },
+  { immediate: true }
+)
 
 async function revokeConsent(): Promise<void> {
   aiSettings.acknowledged = false
@@ -75,9 +79,7 @@ const storagePercent = computed(() => {
 /** 清理确认：两档语义不同，必须让用户看到差别（clean 保留上传资源与运行产物） */
 const cleanMode = ref<'' | 'clean' | 'all'>('')
 const legacyConfirmOpen = ref(false)
-const cleanableCount = computed(
-  () => storageReport.value?.workspace.entries.filter((e) => !e.has_assets).length ?? 0
-)
+const cleanableCount = computed(() => storageReport.value?.workspace.entries.filter((e) => !e.has_assets).length ?? 0)
 
 async function confirmClean(): Promise<void> {
   const mode = cleanMode.value || 'clean'
@@ -228,9 +230,7 @@ async function save(): Promise<void> {
           已同意：AI 代码解释会把选中的代码发送到
           <span class="font-mono">{{ aiSettings.baseUrl }}</span> 处理。
         </p>
-        <p v-else class="m-0 text-control text-ink-dim leading-[1.6]">
-          未同意：首次使用 AI 解释时会先征求你的同意。
-        </p>
+        <p v-else class="m-0 text-control text-ink-dim leading-[1.6]">未同意：首次使用 AI 解释时会先征求你的同意。</p>
         <div class="mt-1.5">
           <BaseButton v-if="aiSettings.acknowledged" size="sm" @click="revokeConsent()">撤回同意</BaseButton>
           <BaseButton v-else size="sm" @click="grantConsent()">现在同意</BaseButton>
@@ -249,8 +249,13 @@ async function save(): Promise<void> {
               {{ mbText(storageReport.workspace.bytes) }} / {{ mbText(storageReport.workspace.max_bytes) }}
             </span>
           </div>
-          <div class="h-1 rounded-full bg-fill-subtle overflow-hidden" role="progressbar"
-               :aria-valuenow="storagePercent" aria-valuemin="0" aria-valuemax="100">
+          <div
+            class="h-1 rounded-full bg-fill-subtle overflow-hidden"
+            role="progressbar"
+            :aria-valuenow="storagePercent"
+            aria-valuemin="0"
+            aria-valuemax="100"
+          >
             <div class="h-full bg-accent" :style="{ width: storagePercent + '%' }"></div>
           </div>
           <div class="flex items-baseline justify-between text-caption text-ink-mute">
@@ -259,11 +264,19 @@ async function save(): Promise<void> {
               {{ storageReport.workspace.asset_entries }} 个含上传资源/运行产物
             </span>
           </div>
-          <div v-if="storageReport.legacy.entries > 0" class="flex items-baseline justify-between text-caption text-ink-mute">
+          <div
+            v-if="storageReport.legacy.entries > 0"
+            class="flex items-baseline justify-between text-caption text-ink-mute"
+          >
             <span>旧版缓存（v1 遗留）</span>
-            <span data-testid="storage-legacy">{{ mbText(storageReport.legacy.bytes) }} · {{ storageReport.legacy.entries }} 项</span>
+            <span data-testid="storage-legacy"
+              >{{ mbText(storageReport.legacy.bytes) }} · {{ storageReport.legacy.entries }} 项</span
+            >
           </div>
-          <div v-if="storageReport.history.bytes > 0" class="flex items-baseline justify-between text-caption text-ink-mute">
+          <div
+            v-if="storageReport.history.bytes > 0"
+            class="flex items-baseline justify-between text-caption text-ink-mute"
+          >
             <span>编辑历史（可恢复编辑的快照）</span>
             <span data-testid="storage-history">{{ mbText(storageReport.history.bytes) }}</span>
           </div>
@@ -271,15 +284,20 @@ async function save(): Promise<void> {
         <p v-else-if="storageLoading" class="m-0 text-caption text-ink-mute">正在读取占用…</p>
         <p v-else class="m-0 text-caption text-ink-mute">暂时读不到占用信息（sidecar 未就绪）</p>
         <div class="flex flex-wrap gap-2 mt-2.5">
-          <BaseButton :loading="storageBusy === 'clean'" @click="cleanMode = 'clean'">
-            清理干净工作区
-          </BaseButton>
-          <BaseButton v-if="storageReport && storageReport.legacy.entries > 0"
-                      :loading="storageBusy === 'legacy'" @click="legacyConfirmOpen = true">
+          <BaseButton :loading="storageBusy === 'clean'" @click="cleanMode = 'clean'"> 清理干净工作区 </BaseButton>
+          <BaseButton
+            v-if="storageReport && storageReport.legacy.entries > 0"
+            :loading="storageBusy === 'legacy'"
+            @click="legacyConfirmOpen = true"
+          >
             回收旧版缓存
           </BaseButton>
-          <BaseButton variant="danger" :loading="storageBusy === 'all'"
-                      @click="cleanMode = 'all'" data-testid="storage-clean-all">
+          <BaseButton
+            variant="danger"
+            :loading="storageBusy === 'all'"
+            @click="cleanMode = 'all'"
+            data-testid="storage-clean-all"
+          >
             全部清理
           </BaseButton>
         </div>
@@ -310,8 +328,9 @@ async function save(): Promise<void> {
         保留含上传资源/运行产物的条目；示例源码不受影响，下次运行会重新生成副本。
       </template>
       <template v-else>
-        将删除<strong class="text-ink text-danger">全部 {{ storageReport?.workspace.entries.length ?? 0 }} 个工作区副本</strong>，
-        <strong class="text-ink">包含你上传的资源与运行产物</strong>——此操作不可撤销。
+        将删除<strong class="text-ink text-danger"
+          >全部 {{ storageReport?.workspace.entries.length ?? 0 }} 个工作区副本</strong
+        >， <strong class="text-ink">包含你上传的资源与运行产物</strong>——此操作不可撤销。
       </template>
     </p>
     <template #footer>

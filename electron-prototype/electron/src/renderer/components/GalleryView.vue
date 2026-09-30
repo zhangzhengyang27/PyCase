@@ -4,7 +4,16 @@
 // 新增清单密度（viewMode）与筛选芯片结果条（BrowseToolbar）。
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { SearchX } from 'lucide-vue-next'
-import { examples, filtered, galleryLimit, galleryMode, loadError, loading, shownGallery, viewMode } from '../src/store/catalog'
+import {
+  examples,
+  filtered,
+  galleryLimit,
+  galleryMode,
+  loadError,
+  loading,
+  shownGallery,
+  viewMode
+} from '../src/store/catalog'
 import { openDetail, runFromCard } from '../src/store/detail'
 import { isFavorite, toggleFavorite } from '../src/store/prefs'
 import ExampleCard from './ExampleCard.vue'
@@ -19,7 +28,8 @@ import BaseButton from './base/BaseButton.vue'
 
 const emit = defineEmits<{ reload: [] }>()
 
-const GRID_CLS = 'flex-1 overflow-y-auto min-h-0 p-4 grid grid-cols-[repeat(auto-fill,minmax(300px,1fr))] gap-4 content-start'
+const GRID_CLS =
+  'flex-1 overflow-y-auto min-h-0 p-4 grid grid-cols-[repeat(auto-fill,minmax(300px,1fr))] gap-4 content-start'
 const LIST_CLS = 'flex-1 overflow-y-auto min-h-0'
 
 function onRun(id: string): void {

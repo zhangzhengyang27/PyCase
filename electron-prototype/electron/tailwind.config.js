@@ -2,20 +2,17 @@
 // 颜色/阴影全部指向 style.css 的 :root 设计令牌（CSS 变量），
 // 这样 dark/light（[data-theme]）切换对 Tailwind 工具类同样生效。
 export default {
-  content: [
-    './src/renderer/index.html',
-    './src/renderer/src/**/*.{ts,js}'
-  ],
+  content: ['./src/renderer/index.html', './src/renderer/src/**/*.{ts,js}'],
   theme: {
     extend: {
       colors: {
         // 表面（背景）
-        page: 'var(--bg-marketing)',     // 窗口最底色
-        panel: 'var(--bg-panel)',        // 工具栏/侧栏/面板
-        card: 'var(--bg-level3)',        // 卡片、激活分段
-        surface: 'var(--bg-secondary)',  // hover 后的次级表面
-        hover: 'var(--bg-hover)',        // 半透明 hover 覆盖层
-        inset: 'var(--bg-inset)',        // 输出终端内嵌背景
+        page: 'var(--bg-marketing)', // 窗口最底色
+        panel: 'var(--bg-panel)', // 工具栏/侧栏/面板
+        card: 'var(--bg-level3)', // 卡片、激活分段
+        surface: 'var(--bg-secondary)', // hover 后的次级表面
+        hover: 'var(--bg-hover)', // 半透明 hover 覆盖层
+        inset: 'var(--bg-inset)', // 输出终端内嵌背景
         // 前景（文字）
         ink: {
           DEFAULT: 'var(--text-primary)',
@@ -52,7 +49,17 @@ export default {
         'elev-inset': 'var(--elevation-inset)'
       },
       fontFamily: {
-        sans: ['"Inter Variable"', '"Inter"', '-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', '"PingFang SC"', '"Hiragino Sans GB"', '"Microsoft YaHei"', 'sans-serif'],
+        sans: [
+          '"Inter Variable"',
+          '"Inter"',
+          '-apple-system',
+          'BlinkMacSystemFont',
+          '"Segoe UI"',
+          '"PingFang SC"',
+          '"Hiragino Sans GB"',
+          '"Microsoft YaHei"',
+          'sans-serif'
+        ],
         mono: ['"Berkeley Mono"', '"JetBrains Mono"', '"Fira Code"', '"SF Mono"', 'Consolas', 'monospace']
       },
       keyframes: {

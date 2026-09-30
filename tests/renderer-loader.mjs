@@ -11,17 +11,17 @@
 //   - 裸模块默认一律报错（守卫语义），确需真实包时用 options.packages 显式放行
 //     （如 store 各域需要真实的 'vue' 提供 ref/computed 响应式）。
 // 需要 electron-prototype/electron 下已安装依赖（CI 对应 job 会先 npm ci）。
-import { existsSync, readFileSync } from "node:fs";
-import { createRequire } from "node:module";
-import { fileURLToPath } from "node:url";
-import { dirname, join, relative } from "node:path";
+import { existsSync, readFileSync } from 'node:fs'
+import { createRequire } from 'node:module'
+import { fileURLToPath } from 'node:url'
+import { dirname, join, relative } from 'node:path'
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const ELECTRON_DIR = join(__dirname, "..", "electron-prototype", "electron");
-const RENDERER_DIR = join(ELECTRON_DIR, "src", "renderer");
-const RENDERER_SRC = join(RENDERER_DIR, "src");
+const __dirname = dirname(fileURLToPath(import.meta.url))
+const ELECTRON_DIR = join(__dirname, '..', 'electron-prototype', 'electron')
+const RENDERER_DIR = join(ELECTRON_DIR, 'src', 'renderer')
+const RENDERER_SRC = join(RENDERER_DIR, 'src')
 
-const ts = createRequire(join(ELECTRON_DIR, "package.json"))("typescript");
+const ts = createRequire(join(ELECTRON_DIR, 'package.json'))('typescript')
 
 /**
  * 创建一个渲染层模块加载器。
@@ -33,61 +33,60 @@ const ts = createRequire(join(ELECTRON_DIR, "package.json"))("typescript");
  *   返回该模块 exports；name 相对渲染层根目录（省略扩展名）。
  */
 export function createRendererLoader(mocks = {}, options = {}) {
-  const cache = new Map();
-  const allowedPackages = options.packages || [];
-  const nodeRequire = createRequire(join(ELECTRON_DIR, "package.json"));
+  const cache = new Map()
+  const allowedPackages = options.packages || []
+  const nodeRequire = createRequire(join(ELECTRON_DIR, 'package.json'))
 
   function fileFor(rel) {
-    const candidates = [join(RENDERER_DIR, `${rel}.ts`), join(RENDERER_SRC, `${rel}.ts`)];
+    const candidates = [join(RENDERER_DIR, `${rel}.ts`), join(RENDERER_SRC, `${rel}.ts`)]
     for (const c of candidates) {
-      if (existsSync(c)) return c;
+      if (existsSync(c)) return c
     }
-    throw new Error(`renderer-loader: 找不到模块 ${rel}.ts`);
+    throw new Error(`renderer-loader: 找不到模块 ${rel}.ts`)
   }
 
   function resolve(spec, fromDir) {
     if (Object.prototype.hasOwnProperty.call(mocks, spec)) {
-      return mocks[spec];
+      return mocks[spec]
     }
-    if (!spec.startsWith(".")) {
+    if (!spec.startsWith('.')) {
       if (allowedPackages.includes(spec)) {
-        return nodeRequire(spec);
+        return nodeRequire(spec)
       }
       throw new Error(
         `renderer-loader: 模块导入 "${spec}" 既未 mock 也不是相对导入；` +
           `如为新的副作用依赖，请在测试的 mocks 中提供替身`
-      );
+      )
     }
-    const rel = relative(RENDERER_DIR, join(fromDir, spec)).replace(/\.ts$/, "");
-    return load(rel);
+    const rel = relative(RENDERER_DIR, join(fromDir, spec)).replace(/\.ts$/, '')
+    return load(rel)
   }
 
   function load(rel) {
     // 缓存里存的是 module 包装对象（为了循环导入时能拿到部分填充的 exports），
     // 对外必须返回 module.exports —— 否则 require 拿到的是 {exports:{...}} 外壳，
     // 被依赖方访问具名导出会得到 undefined。
-    if (cache.has(rel)) return cache.get(rel).exports;
-    const file = fileFor(rel);
-    const js = ts
-      .transpileModule(readFileSync(file, "utf-8"), {
-        compilerOptions: {
-          module: ts.ModuleKind.CommonJS,
-          target: ts.ScriptTarget.ES2022,
-          esModuleInterop: true
-        },
-        fileName: file
-      }).outputText;
+    if (cache.has(rel)) return cache.get(rel).exports
+    const file = fileFor(rel)
+    const js = ts.transpileModule(readFileSync(file, 'utf-8'), {
+      compilerOptions: {
+        module: ts.ModuleKind.CommonJS,
+        target: ts.ScriptTarget.ES2022,
+        esModuleInterop: true
+      },
+      fileName: file
+    }).outputText
     // 先入缓存再执行，兼容模块间循环导入（执行中再次 load 返回部分填充的 exports）
-    const module = { exports: {} };
-    cache.set(rel, module);
-    new Function("require", "module", "exports", "__filename", js)(
+    const module = { exports: {} }
+    cache.set(rel, module)
+    new Function('require', 'module', 'exports', '__filename', js)(
       (spec) => resolve(spec, dirname(file)),
       module,
       module.exports,
       file
-    );
-    return module.exports;
+    )
+    return module.exports
   }
 
-  return { load };
+  return { load }
 }

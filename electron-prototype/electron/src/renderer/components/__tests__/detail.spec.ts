@@ -11,7 +11,20 @@ import CommandPalette from '../CommandPalette.vue'
 import MonacoEditor from '../MonacoEditor.vue'
 import { assets } from '../../src/store/assets'
 import { examples, type VExample } from '../../src/store/catalog'
-import { confirmPrompt, currentArgs, currentRunId, isDirty, isRunning, originalCode, resolveConfirm, runStatusText, saveExample, saving, selectedId, surfaceState } from '../../src/store/detail'
+import {
+  confirmPrompt,
+  currentArgs,
+  currentRunId,
+  isDirty,
+  isRunning,
+  originalCode,
+  resolveConfirm,
+  runStatusText,
+  saveExample,
+  saving,
+  selectedId,
+  surfaceState
+} from '../../src/store/detail'
 import { getTestApi } from '../../src/store/index'
 import { runTimeout, favorites, runHistory } from '../../src/store/prefs'
 import { runnerArgsLine, runnerQuery, runnerSelectedId } from '../../src/store/runner'

@@ -51,4 +51,3 @@ export async function rerunEntry(entry: RunHistoryEntry): Promise<void> {
   if (requiredArgsMissing.value && (entry.args || []).length === 0) return
   runFromDetail()
 }
-

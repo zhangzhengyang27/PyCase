@@ -24,7 +24,12 @@ export const aiShowStop = ref(false)
 
 export async function loadAISettings(): Promise<void> {
   try {
-    const s = (await api.aiGetSettings()) as { hasKey?: boolean; model?: string; baseUrl?: string; acknowledged?: boolean }
+    const s = (await api.aiGetSettings()) as {
+      hasKey?: boolean
+      model?: string
+      baseUrl?: string
+      acknowledged?: boolean
+    }
     aiSettings.hasKey = !!s.hasKey
     aiSettings.model = s.model || 'deepseek-chat'
     aiSettings.baseUrl = s.baseUrl || 'https://api.deepseek.com'
@@ -40,7 +45,6 @@ export function openAISettings(): void {
 export function closeAISettings(): void {
   aiSettingsOpen.value = false
 }
-
 
 export function setAIStatus(text: string, isError = false): void {
   aiStatus.value = text

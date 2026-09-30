@@ -31,7 +31,14 @@ export const TAG_SECTIONS: ReadonlyArray<{ key: string; label: string; tags: str
   {
     key: 'tag:basics',
     label: '语言基础',
-    tags: ['python-basics', 'language-fundamentals', 'python-core-concepts', 'data-types', 'python-modules-files-functions', '基础']
+    tags: [
+      'python-basics',
+      'language-fundamentals',
+      'python-core-concepts',
+      'data-types',
+      'python-modules-files-functions',
+      '基础'
+    ]
   },
   {
     key: 'tag:advanced',
@@ -41,7 +48,17 @@ export const TAG_SECTIONS: ReadonlyArray<{ key: string; label: string; tags: str
   {
     key: 'tag:crawling',
     label: '网络爬虫',
-    tags: ['web-crawling', '网络', 'scrapy-projects', 'http-requests-basics', 'urllib-basics', 'spider-techniques', 'requests-beautifulsoup', '爬虫', 'crawler']
+    tags: [
+      'web-crawling',
+      '网络',
+      'scrapy-projects',
+      'http-requests-basics',
+      'urllib-basics',
+      'spider-techniques',
+      'requests-beautifulsoup',
+      '爬虫',
+      'crawler'
+    ]
   },
   {
     key: 'tag:webapp',
@@ -144,6 +161,7 @@ export function assignSections<T extends ExampleItem>(examples: readonly T[]): O
     { ...PROJECTS_SECTION_META, items: projects.slice().sort(byQuality), kind: 'projects' as const }
   ]
   // 其他桶为空时省略，避免「0 个」的噪音分区
-  if (others.length > 0) sections.push({ ...OTHERS_META, items: others.slice().sort(byQuality), kind: 'others' as const })
+  if (others.length > 0)
+    sections.push({ ...OTHERS_META, items: others.slice().sort(byQuality), kind: 'others' as const })
   return sections
 }

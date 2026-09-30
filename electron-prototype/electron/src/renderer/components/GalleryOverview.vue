@@ -47,10 +47,18 @@ function onRun(id: string): void {
         <div>
           <h1 class="text-page font-semibold text-ink m-0 tracking-[-0.02em]">示例库</h1>
           <div class="flex items-center gap-1.5 mt-2.5 app-no-drag">
-            <span class="stat-chip"><b class="font-mono">{{ galleryExamples.length }}</b> 个示例</span>
-            <span class="stat-chip"><b class="font-mono">{{ THEMES.length }}</b> 大主题</span>
-            <span class="stat-chip stat-chip-ok"><b class="font-mono">{{ runnablePct }}%</b> 可运行</span>
-            <span class="stat-chip"><b class="font-mono">{{ favorites.size }}</b> 收藏</span>
+            <span class="stat-chip"
+              ><b class="font-mono">{{ galleryExamples.length }}</b> 个示例</span
+            >
+            <span class="stat-chip"
+              ><b class="font-mono">{{ THEMES.length }}</b> 大主题</span
+            >
+            <span class="stat-chip stat-chip-ok"
+              ><b class="font-mono">{{ runnablePct }}%</b> 可运行</span
+            >
+            <span class="stat-chip"
+              ><b class="font-mono">{{ favorites.size }}</b> 收藏</span
+            >
           </div>
         </div>
         <div class="app-no-drag flex items-center gap-2 shrink-0">

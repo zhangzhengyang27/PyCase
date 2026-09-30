@@ -7,7 +7,17 @@ import { computed, reactive } from 'vue'
 import { ChevronDown, ChevronUp, SearchX, Star } from 'lucide-vue-next'
 import { buildToolboxGroups } from '../src/toolbox-groups'
 import { toolboxIcon } from '../src/section-icons'
-import { examples, favOnly, loadError, loading, sortBy, sortVExamples, toolboxItems, toolsTotal, toolSearchQuery } from '../src/store/catalog'
+import {
+  examples,
+  favOnly,
+  loadError,
+  loading,
+  sortBy,
+  sortVExamples,
+  toolboxItems,
+  toolsTotal,
+  toolSearchQuery
+} from '../src/store/catalog'
 import { openDetail, runFromCard } from '../src/store/detail'
 import { isFavorite, toggleFavorite } from '../src/store/prefs'
 import ExampleCard from './ExampleCard.vue'
@@ -22,7 +32,9 @@ const emit = defineEmits<{ reload: [] }>()
 
 const PREVIEW_COUNT = 6
 
-const groups = computed(() => buildToolboxGroups(toolboxItems.value).map((g) => ({ ...g, items: sortVExamples(g.items) })))
+const groups = computed(() =>
+  buildToolboxGroups(toolboxItems.value).map((g) => ({ ...g, items: sortVExamples(g.items) }))
+)
 const projectCount = computed(() => groups.value.filter((g) => g.key !== 'standalone').length)
 // 统计口径与画廊总览一致：库级常量，不随搜索浮动
 const runnablePct = computed(() => {

@@ -49,7 +49,12 @@ watch(
         <div v-if="state.truncated" class="text-gutter italic text-caption whitespace-pre-wrap break-all">
           [系统] 输出超过上限，已自动截断，仅保留最近的输出
         </div>
-        <div v-for="(line, i) in state.lines" :key="i" class="whitespace-pre-wrap break-all" :class="LINE_CLS[line.cls]">
+        <div
+          v-for="(line, i) in state.lines"
+          :key="i"
+          class="whitespace-pre-wrap break-all"
+          :class="LINE_CLS[line.cls]"
+        >
           {{ line.text }}
         </div>
       </div>
@@ -60,7 +65,11 @@ watch(
     >
       <div class="text-control font-medium text-ink-dim mb-2">运行结果图片</div>
       <div class="grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-3">
-        <figure v-for="img in state.images" :key="img.url" class="m-0 border border-line-hairline rounded-card overflow-hidden bg-panel">
+        <figure
+          v-for="img in state.images"
+          :key="img.url"
+          class="m-0 border border-line-hairline rounded-card overflow-hidden bg-panel"
+        >
           <img :src="img.url" :alt="img.name" loading="lazy" class="block w-full h-[150px] object-contain bg-page" />
           <figcaption class="flex items-center justify-between gap-1.5 px-2 py-1 text-caption text-ink-mute">
             <span class="truncate" :title="img.name">{{ img.name }}</span>

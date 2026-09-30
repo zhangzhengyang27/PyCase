@@ -7,7 +7,16 @@ import { computed, ref, watch } from 'vue'
 import { FileCode2, Play, Square } from 'lucide-vue-next'
 import { splitArgs } from '../src/utils'
 import { isRunning, runStatusText } from '../src/store/detail'
-import { clearRunnerOutput, runnerArgsLine, runnerExample, runnerHits, runnerQuery, runnerRun, runnerSelectedId, selectRunnerExample } from '../src/store/runner'
+import {
+  clearRunnerOutput,
+  runnerArgsLine,
+  runnerExample,
+  runnerHits,
+  runnerQuery,
+  runnerRun,
+  runnerSelectedId,
+  selectRunnerExample
+} from '../src/store/runner'
 import { stopRun } from '../src/store/detail'
 import OutputPanel from './OutputPanel.vue'
 import BaseButton from './base/BaseButton.vue'
@@ -53,7 +62,13 @@ function onArgsEnter(): void {
     <!-- 左：示例快速选择 + 只读源码 -->
     <div class="w-[40%] min-w-[300px] flex flex-col border-r border-line-subtle min-h-0">
       <div class="relative px-2.5 py-2 border-b border-line-subtle bg-panel shrink-0">
-        <BaseInput v-model="runnerQuery" placeholder="快速查找示例（输入名称关键字）…" aria-label="快速查找示例" :spellcheck="false" @keydown="onSearchKey" />
+        <BaseInput
+          v-model="runnerQuery"
+          placeholder="快速查找示例（输入名称关键字）…"
+          aria-label="快速查找示例"
+          :spellcheck="false"
+          @keydown="onSearchKey"
+        />
         <div
           v-if="runnerQuery"
           class="absolute left-2.5 right-2.5 top-full z-50 max-h-[320px] overflow-y-auto bg-panel border border-line-subtle rounded-panel shadow-elev-3"
@@ -84,7 +99,7 @@ function onArgsEnter(): void {
         </div>
         <pre
           class="flex-1 min-h-0 overflow-auto m-0 px-4 py-3 font-mono text-control leading-[1.55] text-console whitespace-pre"
-        >{{ selected ? selected.code : '在上方搜索并选择示例，代码将在此只读预览。\n修改代码请进示例详情页。' }}</pre>
+          >{{ selected ? selected.code : '在上方搜索并选择示例，代码将在此只读预览。\n修改代码请进示例详情页。' }}</pre>
       </div>
     </div>
 
@@ -101,9 +116,7 @@ function onArgsEnter(): void {
           placeholder="命令行参数，空格分隔（如 --width 100 --name demo）"
           @keydown.enter.prevent="onArgsEnter"
         />
-        <BaseButton v-if="isRunning" title="停止 (Cmd+.)" @click="stopRun()">
-          <Square :size="13" /> 停止
-        </BaseButton>
+        <BaseButton v-if="isRunning" title="停止 (Cmd+.)" @click="stopRun()"> <Square :size="13" /> 停止 </BaseButton>
         <BaseButton v-else variant="primary" :disabled="!selected" title="运行 (Cmd+Enter)" @click="runnerRun()">
           <Play :size="13" /> 运行
         </BaseButton>

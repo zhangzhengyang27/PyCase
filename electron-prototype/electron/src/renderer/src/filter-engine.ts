@@ -3,15 +3,74 @@
 
 // 常见标准库/内置模块：不自动作为标签（避免 os/sys 之类淹没第三方库标签）
 const STDLIB = new Set([
-  'abc', 'argparse', 'ast', 'asyncio', 'base64', 'bisect', 'calendar', 'collections',
-  'concurrent', 'configparser', 'contextlib', 'copy', 'csv', 'ctypes', 'dataclasses',
-  'datetime', 'decimal', 'difflib', 'email', 'enum', 'fnmatch', 'functools', 'glob',
-  'gzip', 'hashlib', 'heapq', 'hmac', 'html', 'http', 'importlib', 'inspect', 'io',
-  'itertools', 'json', 'logging', 'math', 'multiprocessing', 'operator', 'os', 'pathlib',
-  'pickle', 'pprint', 'queue', 'random', 're', 'shutil', 'signal', 'socket', 'sqlite3',
-  'statistics', 'string', 'struct', 'subprocess', 'sys', 'tempfile', 'textwrap',
-  'threading', 'time', 'traceback', 'types', 'typing', 'unittest', 'urllib', 'uuid',
-  'warnings', 'weakref', 'xml', 'zipfile'
+  'abc',
+  'argparse',
+  'ast',
+  'asyncio',
+  'base64',
+  'bisect',
+  'calendar',
+  'collections',
+  'concurrent',
+  'configparser',
+  'contextlib',
+  'copy',
+  'csv',
+  'ctypes',
+  'dataclasses',
+  'datetime',
+  'decimal',
+  'difflib',
+  'email',
+  'enum',
+  'fnmatch',
+  'functools',
+  'glob',
+  'gzip',
+  'hashlib',
+  'heapq',
+  'hmac',
+  'html',
+  'http',
+  'importlib',
+  'inspect',
+  'io',
+  'itertools',
+  'json',
+  'logging',
+  'math',
+  'multiprocessing',
+  'operator',
+  'os',
+  'pathlib',
+  'pickle',
+  'pprint',
+  'queue',
+  'random',
+  're',
+  'shutil',
+  'signal',
+  'socket',
+  'sqlite3',
+  'statistics',
+  'string',
+  'struct',
+  'subprocess',
+  'sys',
+  'tempfile',
+  'textwrap',
+  'threading',
+  'time',
+  'traceback',
+  'types',
+  'typing',
+  'unittest',
+  'urllib',
+  'uuid',
+  'warnings',
+  'weakref',
+  'xml',
+  'zipfile'
 ])
 
 const IMPORT_RE = /^\s*(?:from|import)\s+([\w.]+)/gm
@@ -100,7 +159,9 @@ export function allTagsOf(ex: ExampleLike): string[] {
 /**
  * 由运行历史构建 示例id → 最近一次运行状态 的索引。
  */
-export function buildRunStatusIndex(history: Array<{ id: string; ok: boolean; ts: string }>): Map<string, 'ok' | 'failed'> {
+export function buildRunStatusIndex(
+  history: Array<{ id: string; ok: boolean; ts: string }>
+): Map<string, 'ok' | 'failed'> {
   const idx = new Map<string, 'ok' | 'failed'>()
   if (!Array.isArray(history)) return idx
   for (const h of history) {
@@ -119,8 +180,14 @@ export function normalizeQuery(query: FilterQuery): Required<FilterQuery> {
   return {
     category: typeof q.category === 'string' ? q.category : 'all',
     favOnly: !!q.favOnly,
-    runStatus: (['ok', 'failed', 'never'] as const).includes(q.runStatus as 'ok' | 'failed' | 'never') ? (q.runStatus as 'ok' | 'failed' | 'never') : 'all',
-    runnable: (['runnable', 'missing_deps', 'empty', 'broken', 'risky'] as readonly string[]).includes(String(q.runnable)) ? (q.runnable as RunnableFilter) : 'all',
+    runStatus: (['ok', 'failed', 'never'] as const).includes(q.runStatus as 'ok' | 'failed' | 'never')
+      ? (q.runStatus as 'ok' | 'failed' | 'never')
+      : 'all',
+    runnable: (['runnable', 'missing_deps', 'empty', 'broken', 'risky'] as readonly string[]).includes(
+      String(q.runnable)
+    )
+      ? (q.runnable as RunnableFilter)
+      : 'all',
     tags: Array.isArray(q.tags) ? q.tags.map((t) => String(t).toLowerCase()) : [],
     tagsAny: Array.isArray(q.tagsAny) ? q.tagsAny.map((t) => String(t).toLowerCase()) : [],
     q: typeof q.q === 'string' ? q.q.toLowerCase().trim() : '',
@@ -235,7 +302,12 @@ export function buildLastRunIndex(history: Array<{ id: string; ts: string }>): M
 /**
  * 构建标签 facet：标签 → 命中示例数（按当前 query 中除标签外的条件统计）。
  */
-export function buildTagFacets(list: ExampleLike[], rawQuery: FilterQuery, ctx?: FilterContext, limit?: number): TagFacet[] {
+export function buildTagFacets(
+  list: ExampleLike[],
+  rawQuery: FilterQuery,
+  ctx?: FilterContext,
+  limit?: number
+): TagFacet[] {
   const query = normalizeQuery(rawQuery)
   const base = { ...query, tags: [] } // 统计标签时不应用已选标签
   const counts = new Map<string, number>()

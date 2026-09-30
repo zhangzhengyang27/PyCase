@@ -6,7 +6,19 @@ import { computed } from 'vue'
 import { ArrowLeft, LayoutGrid, List, X } from 'lucide-vue-next'
 import { THEMES } from '../src/themes'
 import { tagSectionLabel, PROJECTS_SECTION_META } from '../src/overview'
-import { activeCategory, activeSectionTags, activeTheme, clearAllFilters, filtered, galleryChips, galleryMode, persistViewPrefs, removeChip, sortBy, viewMode } from '../src/store/catalog'
+import {
+  activeCategory,
+  activeSectionTags,
+  activeTheme,
+  clearAllFilters,
+  filtered,
+  galleryChips,
+  galleryMode,
+  persistViewPrefs,
+  removeChip,
+  sortBy,
+  viewMode
+} from '../src/store/catalog'
 import BaseSelect from './base/BaseSelect.vue'
 
 // 范围标题：主题 > 分区标签组 > 项目区 > 全部示例（三种范围在 store 内互斥）
@@ -47,7 +59,10 @@ function setMode(v: 'grid' | 'list'): void {
 
     <!-- 行 2：筛选芯片 + 排序 + 密度 -->
     <div class="flex items-center gap-2 px-4 h-[var(--toolbar-h)]">
-      <div v-if="galleryChips.length" class="app-no-drag flex-1 min-w-0 flex items-center gap-1.5 overflow-x-auto [scrollbar-width:none]">
+      <div
+        v-if="galleryChips.length"
+        class="app-no-drag flex-1 min-w-0 flex items-center gap-1.5 overflow-x-auto [scrollbar-width:none]"
+      >
         <span
           v-for="chip in galleryChips"
           :key="chip.key + ':' + chip.value"
@@ -79,20 +94,10 @@ function setMode(v: 'grid' | 'list'): void {
       </BaseSelect>
 
       <div class="app-no-drag seg shrink-0" role="group" aria-label="浏览密度">
-        <button
-          title="网格视图"
-          aria-label="网格视图"
-          :aria-pressed="viewMode === 'grid'"
-          @click="setMode('grid')"
-        >
+        <button title="网格视图" aria-label="网格视图" :aria-pressed="viewMode === 'grid'" @click="setMode('grid')">
           <LayoutGrid :size="13" :stroke-width="1.5" /> 网格
         </button>
-        <button
-          title="列表视图"
-          aria-label="列表视图"
-          :aria-pressed="viewMode === 'list'"
-          @click="setMode('list')"
-        >
+        <button title="列表视图" aria-label="列表视图" :aria-pressed="viewMode === 'list'" @click="setMode('list')">
           <List :size="13" :stroke-width="1.5" /> 列表
         </button>
       </div>

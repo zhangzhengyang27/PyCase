@@ -117,7 +117,9 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown, true))
 <template>
   <Teleport to="body">
     <div class="scrim z-[1200] flex items-start justify-center pt-[14vh] px-6" @click.self="emit('close')">
-      <div class="w-[560px] max-w-full bg-card border border-line-hairline rounded-overlay shadow-elev-3 overflow-hidden animate-modal-in">
+      <div
+        class="w-[560px] max-w-full bg-card border border-line-hairline rounded-overlay shadow-elev-3 overflow-hidden animate-modal-in"
+      >
         <!-- 搜索行（页稿板 3：44px 高，输入占主，右侧 Esc 提示） -->
         <div class="flex items-center gap-2.5 px-3 h-11 border-b border-line-hairline">
           <Search :size="15" :stroke-width="1.5" class="text-ink-mute shrink-0" />
@@ -130,7 +132,10 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown, true))
             spellcheck="false"
             class="flex-1 bg-transparent border-0 outline-none text-body text-ink placeholder:text-ink-faint"
           />
-          <kbd class="px-1 py-px text-caption font-mono border border-line-hairline rounded-control text-ink-mute shrink-0">Esc</kbd>
+          <kbd
+            class="px-1 py-px text-caption font-mono border border-line-hairline rounded-control text-ink-mute shrink-0"
+            >Esc</kbd
+          >
         </div>
 
         <div ref="listEl" class="max-h-[380px] overflow-y-auto py-1.5">
@@ -179,9 +184,14 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown, true))
             class="p-row mx-1.5"
             :data-active="(query.trim() ? i : recents.length + i) === idx"
             @click="openItem(item)"
-            @mousemove="idx = (query.trim() ? i : recents.length + i)"
+            @mousemove="idx = query.trim() ? i : recents.length + i"
           >
-            <component :is="item.category === 'tools' ? Wrench : FileCode2" :size="14" :stroke-width="1.5" class="shrink-0 text-ink-mute" />
+            <component
+              :is="item.category === 'tools' ? Wrench : FileCode2"
+              :size="14"
+              :stroke-width="1.5"
+              class="shrink-0 text-ink-mute"
+            />
             <span class="r-name truncate">{{ item.name }}</span>
             <span v-if="item.category" class="shrink-0 text-caption text-ink-mute">{{ item.category }}</span>
             <CornerDownLeft

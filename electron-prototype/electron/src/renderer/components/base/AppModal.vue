@@ -22,9 +22,7 @@ let prevFocus: HTMLElement | null = null
 
 function focusablesIn(panel: HTMLElement): HTMLElement[] {
   return Array.from(
-    panel.querySelectorAll<HTMLElement>(
-      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-    )
+    panel.querySelectorAll<HTMLElement>('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])')
   ).filter((el) => !el.hasAttribute('disabled') && el.offsetParent !== null)
 }
 

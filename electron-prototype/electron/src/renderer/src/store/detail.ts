@@ -56,10 +56,19 @@ export const argsError = ref('')
  * 原生 confirm 是系统模态：样式与应用割裂、自动化走查驱动不了、
  * 也带不了"继续编辑/放弃修改"这类明确的按钮语义。
  */
-export const confirmPrompt = ref<{ title: string; message: string; confirmLabel: string; action: (() => void) | null } | null>(null)
+export const confirmPrompt = ref<{
+  title: string
+  message: string
+  confirmLabel: string
+  action: (() => void) | null
+} | null>(null)
 
 /** 请求确认：用户点确认后执行 action（点取消什么都不做）。 */
-export function requestConfirm(message: string, action: () => void, options?: { title?: string; confirmLabel?: string }): void {
+export function requestConfirm(
+  message: string,
+  action: () => void,
+  options?: { title?: string; confirmLabel?: string }
+): void {
   confirmPrompt.value = {
     title: options?.title ?? '确认操作',
     message,
@@ -322,7 +331,8 @@ export function closeDetail(force = false): void {
 }
 
 // Monaco 实例由组件注册进来；内容变更与取值都经它
-export let editor: { getValue: () => string; setValue: (v: string) => void; getSelectedText?: () => string } | null = null
+export let editor: { getValue: () => string; setValue: (v: string) => void; getSelectedText?: () => string } | null =
+  null
 let _argsCollector: (() => string[]) | null = null
 let _argsSetter: ((idx: number, v: string) => void) | null = null
 
@@ -489,11 +499,6 @@ export function initRunEvents(): void {
     currentRunId.value = null
   })
 }
-
-
-
-
-
 
 // ---------------------------------------------------------------------------
 // 测试钩子（详情页与运行）：由 store/index.ts 的 getTestApi 组合成 window.__app

@@ -45,7 +45,9 @@ describe('客户端接线（api 覆盖协议方法表）', () => {
     const paths = Object.keys(RPC_BINDINGS)
     expect(paths.sort()).toEqual([...RPC_METHODS].sort())
     for (const method of paths) {
-      const fn = RPC_BINDINGS[method].split('.').reduce<unknown>((node, key) => (node as Record<string, unknown>)?.[key], api)
+      const fn = RPC_BINDINGS[method]
+        .split('.')
+        .reduce<unknown>((node, key) => (node as Record<string, unknown>)?.[key], api)
       expect(typeof fn, `${method} → api.${RPC_BINDINGS[method]}`).toBe('function')
     }
   })

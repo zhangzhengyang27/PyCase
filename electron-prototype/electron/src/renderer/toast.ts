@@ -18,7 +18,10 @@ const TIMEOUT_MS: Record<ToastType, number> = { success: 3000, info: 3000, error
 const MAX_VISIBLE = 4
 
 function scheduleDismiss(id: number, type: ToastType): void {
-  timers.set(id, window.setTimeout(() => dismissToast(id), TIMEOUT_MS[type]))
+  timers.set(
+    id,
+    window.setTimeout(() => dismissToast(id), TIMEOUT_MS[type])
+  )
 }
 
 export function pushToast(type: ToastType, text: string): void {

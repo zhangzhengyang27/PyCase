@@ -240,9 +240,7 @@ export const api = {
   downloadResultImage: (url: string, defaultName = ''): Promise<DownloadResult> =>
     request('downloadResultImage', () => bridge.downloadResultImage(url, defaultName)),
   saveTextFile: (params: SaveTextFileParams): Promise<SaveTextResult> =>
-    request('saveTextFile', () =>
-      bridge.saveTextFile({ content: params.content, defaultName: params.defaultName })
-    ),
+    request('saveTextFile', () => bridge.saveTextFile({ content: params.content, defaultName: params.defaultName })),
 
   // 用户示例集合（导入向导 / 删除管理）
   pickDirectory: (): Promise<PickDirectoryResult> => request('file:pickDirectory', () => bridge.pickDirectory()),
@@ -281,8 +279,7 @@ export const api = {
 
   // 环境准备状态（A5.5 首启引导页 / 帮助面板）
   envStatus: (): Promise<EnvPhase> => request('env_status', () => bridge.env.status()),
-  setRunEnv: (mode: 'shared' | 'system'): Promise<EnvPhase> =>
-    request('set_run_env', () => bridge.env.setRunEnv(mode)),
+  setRunEnv: (mode: 'shared' | 'system'): Promise<EnvPhase> => request('set_run_env', () => bridge.env.setRunEnv(mode)),
 
   // 应用信息与日志（帮助面板「环境信息」段、首启页「查看准备日志」）
   appInfo: (): Promise<AppInfo> => request('app:info', () => bridge.app.info()),

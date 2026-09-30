@@ -1,0 +1,36 @@
+# 依赖与构建产物
+node_modules/
+out/
+dist/
+sidecar-dist/
+build-pyinstaller/work/
+.json_examples_cache/
+edit_history/
+logs/
+*.tsbuildinfo
+
+# npm 自身的格式：重排只会制造无意义 diff
+package-lock.json
+
+# 示例真相源（topics/tools/projects/examples_assets/json_examples）：这些是示例内容，
+# 不是本应用的源码——Prettier 重排等于改动用户示例
+topics/
+tools/
+projects/
+examples_assets/
+json_examples/
+
+# 设计稿/文档：HTML 页稿是评审物，Markdown 是散文
+docs/
+*.md
+
+# 其他会话/工具的产物（brainstorm 页稿等），不属于本应用源码
+.superpowers/
+.workbuddy-ai/
+.zcode/
+
+# Python 与工具链产物
+*.py
+__pycache__/
+.pytest_cache/
+.ruff_cache/
