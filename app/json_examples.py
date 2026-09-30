@@ -176,8 +176,9 @@ class ExampleStore:
             description=spec.get("description"),
             json_title=spec.get("title"),
         )
-        # 记录运行所需 sys.path：原始目录及其所有祖先目录（解析兄弟/包导入）
-        item.run_pythonpath = self._run_pythonpath(dir_rel, cache_dir)
+        # 记录运行所需 sys.path：原始目录及其所有祖先目录（解析兄弟/包导入）；
+        # 用户集合条目没有源目录（dir_rel=None），运行路径仅工作区
+        item.run_pythonpath = self._run_pythonpath(dir_rel, cache_dir) if dir_rel and cache_dir else []
         # 原始相对目录透传给渲染层（工具箱按工具项目分组；用户导入条目无此字段）
         item.source_dir = dir_rel
         item.tags = list(spec.get("tags", []))
@@ -389,10 +390,11 @@ class ExampleStore:
         if cached is not None:
             return cached
         findings: list[dict] = []
-        if not item.is_dir and (item.code or "").strip():
-            tree = parse_code(item.code)
+        code = item.code or ""
+        if not item.is_dir and code.strip():
+            tree = parse_code(code)
             if tree is not None:
-                findings = self._high_risk_findings(item, key, item.code, tree)
+                findings = self._high_risk_findings(item, key, code, tree)
         self._risk_findings[key] = findings
         return findings
 

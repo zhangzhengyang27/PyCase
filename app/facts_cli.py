@@ -63,8 +63,8 @@ def collect_requirements(store: ContractStore) -> list[str]:
                 add(str(req))
     local_modules = _local_module_names(ROOT)
     for item in store.index.values():
-        entry = store._fact_entry(item)
-        for mod in (entry or {}).get("deps") or []:
+        facts_entry = store._fact_entry(item)
+        for mod in (facts_entry or {}).get("deps") or []:
             if mod in local_modules:
                 continue
             add(IMPORT_TO_PKG.get(mod, mod))

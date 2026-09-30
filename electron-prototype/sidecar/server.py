@@ -113,6 +113,13 @@ _ai_running: dict[str, threading.Event] = {}
 _bg_tasks: set[asyncio.Task] = set()
 _venv_manager: VenvManager | None = None
 
+
+def _item_of(example_id: Any) -> ExampleItem | None:
+    """按 id 取索引条目；id 非字符串/为空一律 None（调用方按"示例不存在"报错）。"""
+    if not isinstance(example_id, str) or not example_id:
+        return None
+    return _index.get(example_id)
+
 # ---------------------------------------------------------------------------
 # 环境准备状态（首启引导页与帮助面板消费；A5.5）
 # ---------------------------------------------------------------------------
@@ -350,7 +357,7 @@ def method_search_examples(req_id: Any, params: dict[str, Any]) -> None:
 def method_get_example(req_id: Any, params: dict[str, Any]) -> None:
     _ensure_store()
     example_id = params.get("id")
-    item = _index.get(example_id)
+    item = _item_of(example_id)
     if item is None:
         _error(req_id, -32602, f"示例不存在: {example_id}")
         return
@@ -372,7 +379,7 @@ async def method_run_example(req_id: Any, params: dict[str, Any]) -> None:
     except (TypeError, ValueError):
         timeout = 30.0
 
-    item = _index.get(example_id)
+    item = _item_of(example_id)
     if item is None:
         _error(req_id, -32602, f"示例不存在: {example_id}")
         return
@@ -680,6 +687,9 @@ def _terminate_all_running() -> None:
 
 async def method_stop_run(req_id: Any, params: dict[str, Any]) -> None:
     run_id = params.get("run_id")
+    if not isinstance(run_id, str) or not run_id:
+        _error(req_id, -32602, "缺少 run_id 参数")
+        return
     proc = _running.get(run_id)
     if run_id not in _running:
         _error(req_id, -32602, f"运行不存在或已结束: {run_id}")
@@ -750,8 +760,9 @@ def method_reclaim_legacy_cache(req_id: Any, params: dict[str, Any]) -> None:
 def _history_item(example_id: Any) -> ExampleItem | None:
     """按 id 取示例（历史相关方法共用；不存在返回 None，由调用方报错）。"""
     _ensure_store()
-    item = _index.get(example_id)
-    return item if isinstance(example_id, str) else None
+    if not isinstance(example_id, str) or not example_id:
+        return None
+    return _index.get(example_id)
 
 
 def method_list_versions(req_id: Any, params: dict[str, Any]) -> None:
@@ -959,7 +970,7 @@ def method_parse_args(req_id: Any, params: dict[str, Any]) -> None:
 
     if code is None:
         _ensure_store()
-        item = _index.get(example_id)
+        item = _item_of(example_id)
         if item is None:
             _error(req_id, -32602, f"示例不存在: {example_id}")
             return
@@ -980,12 +991,12 @@ def method_save_example(req_id: Any, params: dict[str, Any]) -> None:
         return
 
     _ensure_store()
-    item = _index.get(example_id)
+    item = _item_of(example_id)
     if item is None:
         _error(req_id, -32602, f"示例不存在: {example_id}")
         return
 
-    success = _store.save_item(item, new_code)
+    success = _ensure_store().save_item(item, new_code)
     if success:
         _result(
             req_id,
@@ -1074,7 +1085,7 @@ def method_upload_asset(req_id: Any, params: dict[str, Any]) -> None:
         _error(req_id, -32602, "缺少 id / filename / data 参数")
         return
     _ensure_store()
-    item = _index.get(example_id)
+    item = _item_of(example_id)
     if item is None:
         _error(req_id, -32602, f"示例不存在: {example_id}")
         return
@@ -1112,7 +1123,7 @@ def method_list_assets(req_id: Any, params: dict[str, Any]) -> None:
         _error(req_id, -32602, "缺少 id 参数")
         return
     _ensure_store()
-    item = _index.get(example_id)
+    item = _item_of(example_id)
     if item is None:
         _error(req_id, -32602, f"示例不存在: {example_id}")
         return
@@ -1127,7 +1138,7 @@ def method_delete_asset(req_id: Any, params: dict[str, Any]) -> None:
         _error(req_id, -32602, "缺少 id 或 filename 参数")
         return
     _ensure_store()
-    item = _index.get(example_id)
+    item = _item_of(example_id)
     if item is None:
         _error(req_id, -32602, f"示例不存在: {example_id}")
         return
@@ -1236,14 +1247,15 @@ def method_delete_example(req_id: Any, params: dict[str, Any]) -> None:
     """删除一个用户集合示例（内置集合受保护，sidecar 侧再校验一次）。"""
     _ensure_store()
     example_id = str(params.get("id") or "")
-    item = _index.get(example_id)
+    item = _item_of(example_id)
     if item is None:
         _error(req_id, -32602, f"示例不存在: {example_id}")
         return
-    if not _store.is_user_collection(item.json_file):
+    store = _ensure_store()
+    if not store.is_user_collection(item.json_file):
         _error(req_id, -32602, "仅可删除用户集合中的示例")
         return
-    if not _store.delete_user_example(item):
+    if not store.delete_user_example(item):
         _error(req_id, -32603, f"删除失败: {example_id}")
         return
     _reload_store()
@@ -1326,6 +1338,9 @@ async def method_explain_code(req_id: Any, params: dict[str, Any]) -> None:
 def method_stop_ai(req_id: Any, params: dict[str, Any]) -> None:
     """停止正在进行的 AI 解释（设置 cancel_event，流式读取会在下一行中断）。"""
     run_id = params.get("run_id")
+    if not isinstance(run_id, str) or not run_id:
+        _error(req_id, -32602, "缺少 run_id 参数")
+        return
     event = _ai_running.get(run_id)
     if event is None:
         _error(req_id, -32602, f"AI 解释不存在或已结束: {run_id}")
@@ -1403,7 +1418,7 @@ async def _handle_request(line: str) -> None:
     params = req.get("params") or {}
     req_id = req.get("id")
 
-    handler = METHODS.get(method_name)
+    handler = METHODS.get(method_name) if isinstance(method_name, str) else None
     if handler is None:
         _error(req_id, -32601, f"未知方法: {method_name}")
         return

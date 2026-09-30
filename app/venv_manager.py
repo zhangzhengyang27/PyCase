@@ -75,6 +75,7 @@ class VenvManager:
         self._marker_loaded = False
         # uv 可执行文件路径缓存（None 表示未检测，False 表示不可用）
         self._uv: str | None = None
+        self._uv_checked = False
 
     def _find_uv(self) -> str | None:
         """检测系统中是否有 uv（极速 Python 包管理器），可用则返回路径，否则返回 None。
@@ -83,11 +84,13 @@ class VenvManager:
         能显著缩短首次启动时 150+ 依赖的安装时间。
         仅检测一次，结果缓存在 self._uv 中。
         """
-        if self._uv is not None:
-            return self._uv or None
-        uv_path = shutil.which("uv")
-        self._uv = uv_path or False
-        return uv_path
+        if self._uv_checked:
+            return self._uv
+        # 找不到也要只检测一次（否则每次调用都扫 PATH）；用独立标志位记录"已检测"，
+        # 不再把 False 塞进 str|None（旧的类型骗值）
+        self._uv = shutil.which("uv")
+        self._uv_checked = True
+        return self._uv
 
     # ------------------------------------------------------------ 公共接口
     def get_python_executable(self) -> Path:

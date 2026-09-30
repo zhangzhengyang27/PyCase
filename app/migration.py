@@ -147,7 +147,7 @@ def build_plan(
             taken_ids.add(entry_id)
 
             # 基底取原条目（未知字段保留），再覆盖迁移涉及的字段
-            raw_entry = next(
+            raw_entry: dict[str, Any] = next(
                 (e for e in m.raw.get("examples", []) if str(e.get("id")) == entry.id),
                 {},
             )

@@ -144,18 +144,40 @@ def test_g1_shipped_facts_match_real_tree():
         assert entry["sha256"] == hashlib.sha256(item.path.read_bytes()).hexdigest()
 
 
+def _pause_tracing():
+    """暂停覆盖率插桩（返回可恢复对象）；未启用覆盖率时返回 None。
+
+    性能预算量的是**产品路径**：pytest-cov 的行级追踪会给 load 的每条 Python 语句
+    加常数开销（实测 45ms → 65ms），带着它量等于把仪器算进产品延迟。
+    """
+    try:
+        import coverage  # type: ignore[import-untyped]
+
+        cov = coverage.Coverage.current()
+    except Exception:  # noqa: BLE001 - 未装/未启用覆盖率：不需要暂停
+        return None
+    if cov is not None:
+        cov.stop()
+    return cov
+
+
 def test_g1_cold_start_index_ready_under_budget():
     """冷启动到 list_examples 索引就绪 < 50ms（契约 §8；不含 venv 引导）。
 
     取 3 次加载的最小值：本机 CI/负载会让单次测量抖动，预算判的是"能多快"，
     不是"平均多快"；超过预算说明加载路径引入了新的每条目开销（realpath/读盘）。
     """
-    times = []
-    for _ in range(3):
-        store = ContractStore.for_base_dir(base_dir=REPO_ROOT)
-        t0 = time.perf_counter()
-        store.load()
-        times.append((time.perf_counter() - t0) * 1000)
+    cov = _pause_tracing()
+    try:
+        times = []
+        for _ in range(3):
+            store = ContractStore.for_base_dir(base_dir=REPO_ROOT)
+            t0 = time.perf_counter()
+            store.load()
+            times.append((time.perf_counter() - t0) * 1000)
+    finally:
+        if cov is not None:
+            cov.start()
     best = min(times)
     assert store.facts_source == "shipped"
     assert best < 50, f"冷启动索引就绪 {best:.1f}ms 超预算（3 次: {[round(t, 1) for t in times]}）"

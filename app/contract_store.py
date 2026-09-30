@@ -32,7 +32,7 @@ from .manifest_v2 import Manifest, ManifestEntry, entry_code, load_manifest, res
 from .models import ExampleItem
 from .quality import QualityScorer
 from .run_status import MISSING_DEPS, ModuleIndex, compute_run_status
-from .security import RiskLevel
+from .security import RiskLevel, SecurityChecker
 
 WORKSPACE_DIRNAME = ".json_examples_cache"
 WORKSPACE_VERSION = "v2"
@@ -405,7 +405,7 @@ class ContractStore:
         return hits
 
     @property
-    def _checker(self):  # type: ignore[no-untyped-def]
+    def _checker(self) -> "SecurityChecker":
         """扫描器按需读取（不缓存实例）：与质量评分共用同一个，护栏据此验证"扫描异常不 fail-open"。"""
         return self._scorer.security_checker
 
@@ -611,7 +611,7 @@ class ContractStore:
         for name, digest in sorted(self._baseline_files(item).items()):
             h.update(name.encode("utf-8"))
             h.update(digest.encode("utf-8"))
-        for req in sorted(entry.requirements if entry else []):
+        for req in sorted(entry.requirements if entry is not None else []):
             h.update(req.encode("utf-8"))
         return h.hexdigest()
 
@@ -652,7 +652,8 @@ class ContractStore:
                     # v1 兼容期：真实文件还没外移，用清单内联 code 落进工作区
                     self._write_atomic(dest, lambda tmp: tmp.write_text(self.get_code(item), encoding="utf-8"))
 
-            reqs = [r for r in (self._entry_of(item).requirements if self._entry_of(item) else []) if _VALID_REQ.match(_bare_pkg(r))]
+            entry = self._entry_of(item)
+            reqs = [r for r in (entry.requirements if entry is not None else []) if _VALID_REQ.match(_bare_pkg(r))]
             if reqs:
                 req_file = workspace / "requirements.txt"
                 # 合并：工作区里可能已有用户/前次写入的清单，按行去重保序；同样走原子唯一 tmp
@@ -694,7 +695,7 @@ class ContractStore:
         return paths
 
     @staticmethod
-    def _write_atomic(dest: Path, write: "Callable[[Path], None]") -> None:
+    def _write_atomic(dest: Path, write: "Callable[[Path], object]") -> None:
         """原子写：临时文件名唯一（并发调用不得互相踩踏），写完 os.replace。"""
         dest.parent.mkdir(parents=True, exist_ok=True)
         fd, tmp_name = tempfile.mkstemp(dir=str(dest.parent), prefix=dest.name + ".", suffix=".tmp")
@@ -757,7 +758,8 @@ class ContractStore:
                 _atomic_write_text(manifest_path, json.dumps(data, ensure_ascii=False, indent=1) + "\n")
             else:
                 manifest_path.unlink()  # 空集合：清单一并移除
-            if item.path.is_file() and item.path.resolve().is_relative_to(self.user_dir):
+            user_dir = self.user_dir
+            if user_dir is not None and item.path.is_file() and item.path.resolve().is_relative_to(user_dir):
                 item.path.unlink()
             if not entries:
                 # 源码删空后集合目录也一并收掉：否则下次导入同名目录会被迫改名 _2。

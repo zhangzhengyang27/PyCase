@@ -26,9 +26,17 @@ jobs:
           pip install -r requirements-dev.txt
           pip install ruff==0.6.9
 
-      # 与 .pre-commit-config.yaml 的 ruff 版本保持一致
+      # 与 .pre-commit-config.yaml 的 ruff 版本保持一致；范围含 sidecar（M6-1 起补上）
       - name: ruff 检查
-        run: ruff check app scripts tests
+        run: ruff check app scripts tests electron-prototype/sidecar
+
+      # 类型门禁（M6-1）：app/ 与 sidecar 的公共接口类型（渐进注解口径，见 pyproject [tool.mypy]）
+      - name: mypy 类型检查
+        run: python -m mypy
+
+      # 视觉基线门禁：产品 token 源的对比度组合（A1 起改指 theme.css）
+      - name: 对比度门禁
+        run: python scripts/check_contrast.py
 
       - name: 文档引用防漂移
         run: python3 scripts/check_doc_refs.py
@@ -44,8 +52,9 @@ jobs:
       - name: 版本一致性门禁
         run: python scripts/sync_version.py --check
 
-      - name: pytest
-        run: pytest tests/ -q --tb=short
+      # 覆盖率门禁（M6-1，审计 C11）：app/ + sidecar 行覆盖 ≥70% 起步
+      - name: pytest（含覆盖率门禁）
+        run: pytest tests/ -q --tb=short --cov-fail-under=70
 
   frontend:
     name: 类型检查与前端测试
@@ -66,6 +75,13 @@ jobs:
         working-directory: electron-prototype/electron
         run: npm run typecheck
 
+      # 工程门禁（M6-1）：ESLint + stylelint（正确性）+ Prettier（格式）
+      - name: Lint 与格式门禁
+        working-directory: electron-prototype/electron
+        run: |
+          npm run lint
+          npm run format:check
+
       - name: 多维筛选引擎纯函数测试
         run: node tests/test_filter_engine.mjs
 
@@ -80,6 +96,8 @@ jobs:
 
       - name: 工具箱分组纯函数测试（TS 转译加载）
         run: node tests/test_toolbox_groups.mjs
+      - name: 行级差异纯函数测试（TS 转译加载，A6 版本对比）
+        run: node tests/test_diff.mjs
 
       - name: 渲染层 store 状态编排测试（真实 Vue 响应式 + IPC 桩）
         run: node tests/test_store.mjs

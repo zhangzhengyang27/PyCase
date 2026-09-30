@@ -21,3 +21,28 @@ include = ["app*"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["."]
+# 覆盖率门禁（M6-1，审计 C11）：app/ 与 sidecar 一起算，行覆盖 ≥70% 起步
+# sidecar 以路径形式统计（测试里它作为顶层模块 server 被导入，没有包名）
+# 覆盖率只在此处开报告；fail-under 放 CI 命令行（否则跑单个测试也会因覆盖率不足而红）
+addopts = "--cov=app --cov=electron-prototype/sidecar --cov-report=term-missing:skip-covered"
+
+[tool.coverage.run]
+omit = [
+    "app/facts_cli.py",      # 构建期 CLI：由 CI 步骤直接执行（bake/check/requirements），不进单测口径
+    "app/migration_cli.py",  # 同上（迁移 CLI）
+]
+
+[tool.mypy]
+python_version = "3.13"
+files = ["app", "electron-prototype/sidecar"]
+# app 是命名空间包（无 __init__.py）：显式包基址 + mypy_path 才能解析相对导入
+namespace_packages = true
+explicit_package_bases = true
+mypy_path = "."
+# 渐进注解：公共模块先保接口类型正确，未注解函数体不逐个逼注解（审计 C6 的分档落地）
+allow_untyped_defs = true
+check_untyped_defs = false
+ignore_missing_imports = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+exclude = ["electron-prototype/sidecar/ai_service.py"]

@@ -338,7 +338,7 @@ def import_directory(
     seen_ids: set[str] = set(existing)
     source_modules = build_source_modules(source)
     examples: list[dict] = []
-    skipped: list[tuple[str, str]] = []
+    skipped: list[dict[str, str]] = []
     try:
         py_files = sorted(source.rglob("*.py"))
     except OSError as e:

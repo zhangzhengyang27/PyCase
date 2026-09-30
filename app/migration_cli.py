@@ -71,11 +71,9 @@ def main(argv: list[str] | None = None) -> int:
             _report(plan)
             print("[apply] 校验发现错误，拒绝执行（报告非空即拒写）", file=sys.stderr)
             return 1
-        snapshot = _snapshot(plan)
+        baseline_snapshot = _snapshot(plan)
         ts, backup_dirs = apply_plan(plan, backup_root_of)
-        issues = verify_migration(
-            [m.path for m in plan.manifests], snapshot, plan.renamed_ids
-        )
+        issues = verify_migration([m.path for m in plan.manifests], baseline_snapshot, plan.renamed_ids)
         for issue in issues:
             print(
                 f"  [{issue.level}] {issue.code} {issue.where}: {issue.message}",
@@ -94,15 +92,15 @@ def main(argv: list[str] | None = None) -> int:
             print("[verify] 找不到备份目录，无法复验", file=sys.stderr)
             return 1
         latest = backups[-1]
-        snapshot: dict[Path, dict] = {}
+        baseline: dict[Path, dict] = {}
         # 备份目录里除清单副本外还有回滚记录（*.rollback.json）：按记录取真实清单路径，
         # 避免把记录本身当清单解析，也避免用未解析路径去比对
         for record_path in sorted(latest.glob("*.rollback.json")):
             record = json.loads(record_path.read_text(encoding="utf-8"))
             manifest_path = Path(record["manifest"])
             backup = latest / manifest_path.name
-            snapshot[manifest_path] = json.loads(backup.read_text(encoding="utf-8"))
-        issues = verify_migration(sorted(snapshot.keys()), snapshot, plan.renamed_ids)
+            baseline[manifest_path] = json.loads(backup.read_text(encoding="utf-8"))
+        issues = verify_migration(sorted(baseline.keys()), baseline, plan.renamed_ids)
         for issue in issues:
             print(
                 f"  [{issue.level}] {issue.code} {issue.where}: {issue.message}",
