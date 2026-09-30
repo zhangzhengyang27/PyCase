@@ -477,6 +477,28 @@ describe('设置中心·存储分区（A6 缓存入口）', () => {
     expect(toasts.value.some((t) => t.text.includes('已回收旧缓存 3151 项'))).toBe(true)
   })
 
+  it('代码外发同意可复核可撤销（A6 可恢复编辑的一部分）', async () => {
+    vi.mocked(window.sidecar.storageReport).mockResolvedValue(null as never)
+    aiSettings.acknowledged = true
+    aiSettingsOpen.value = true
+    track(mount(AISettingsModal))
+    await flushPromises()
+
+    const section = document.body.querySelector('[data-testid="settings-consent"]')!
+    expect(section.textContent).toContain('已同意')
+    findButton('撤回同意', section).click()
+    await flushPromises()
+    expect(window.sidecar.ai.setSettings).toHaveBeenCalledWith({ acknowledged: false })
+    expect(aiSettings.acknowledged).toBe(false)
+
+    // 撤回后按钮翻转为「现在同意」
+    await nextTick()
+    findButton('现在同意', document.body.querySelector('[data-testid="settings-consent"]')!)
+      .click()
+    await flushPromises()
+    expect(window.sidecar.ai.setSettings).toHaveBeenCalledWith({ acknowledged: true })
+  })
+
   it('无 v1 遗留时不显示回收按钮', async () => {
     vi.mocked(window.sidecar.storageReport).mockResolvedValue({ ...report, legacy: { root: '/tmp', bytes: 0, entries: 0 } })
     aiSettingsOpen.value = true

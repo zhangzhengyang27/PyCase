@@ -11,6 +11,9 @@ json_examples/.backup/
 # sidecar 日志（开发态 DATA_DIR = 仓库根；打包态走 userData）
 logs/
 
+# 编辑历史快照（开发态 DATA_DIR = 仓库根；打包态走 userData）
+edit_history/
+
 # 共享运行环境：所有示例统一使用仓库根 .venv（由 venv_manager 自动创建）
 .venv/
 

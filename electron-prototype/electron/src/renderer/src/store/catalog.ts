@@ -405,6 +405,8 @@ export function catalogTestHooks(): Record<string, unknown> {
       activeTags.value = new Set(tags)
     },
     tagFacetsFor: (scope: 'gallery' | 'toolbox') => tagFacetsFor(scope),
-    findByName: (name: string) => examples.value.find((e) => e.name === name) || null
+    findByName: (name: string) => examples.value.find((e) => e.name === name) || null,
+    // 走查脚本用：外部（主进程）导入/user 操作后刷新目录列表
+    reload: () => loadExamples()
   }
 }

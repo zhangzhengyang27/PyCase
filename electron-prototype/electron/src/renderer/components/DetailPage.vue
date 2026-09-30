@@ -1,7 +1,7 @@
 <script setup lang="ts">
 // DetailPage：示例详情页（设计规范 v1）
 // 头部 44px（返回/图标块/标题/标签/评分 + 收藏/AI/保存/停止/运行）；
-// 主体左右分区 3:2——左 Monaco 编辑，右参数面板 + 输出/资源/历史三标签；
+// 主体左右分区 3:2——左 Monaco 编辑，右参数面板 + 输出/资源/历史/版本 四标签；
 // <980px 窄屏由 flex 布局自然挤压（右栏 min-width 约束）。快捷键不变：
 // Cmd+S 保存 / Cmd+Enter 运行 / Cmd+. 停止。
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
@@ -13,7 +13,7 @@ import { sectionIcon } from '../src/section-icons'
 import { sectionKeyOf } from '../src/overview'
 import { explainSelectedCode } from '../src/store/ai'
 import { assets } from '../src/store/assets'
-import { closeDetail, clearSurface, currentArgs, installDepsAndRerun, installingDeps, isDirty, isRunning, saving, saveExample, selectedExample, selectedId, surfaceState, runFromDetail, runStatusText } from '../src/store/detail'
+import { closeDetail, clearSurface, currentArgs, installDepsAndRerun, installingDeps, isDirty, isRunning, loadVersions, saving, saveExample, selectedExample, selectedId, surfaceState, runFromDetail, runStatusText } from '../src/store/detail'
 import { deleteUserExample } from '../src/store/import'
 import { isFavorite, toggleFavorite } from '../src/store/prefs'
 import { stopRun } from '../src/store/detail'
@@ -21,6 +21,7 @@ import ArgsForm from './ArgsForm.vue'
 import MonacoEditor from './MonacoEditor.vue'
 import OutputPanel from './OutputPanel.vue'
 import HistoryPanel from './HistoryPanel.vue'
+import VersionsPanel from './VersionsPanel.vue'
 import AssetsPanel from './AssetsPanel.vue'
 import AppModal from './base/AppModal.vue'
 import BaseButton from './base/BaseButton.vue'
@@ -43,7 +44,7 @@ const needsDeps = computed(() => {
   const out = surfaceState('detail').lines
   return out.some((l) => /ModuleNotFoundError|ImportError/.test(l.text))
 })
-const activeTab = ref<'output' | 'assets' | 'history'>('output')
+const activeTab = ref<'output' | 'assets' | 'history' | 'versions'>('output')
 // 删除用户集合示例（确认弹窗由本组件持有；删除动作在 store，成功后自动关闭详情）
 const confirmDelete = ref(false)
 
@@ -80,8 +81,10 @@ const headIcon = computed(() => {
 // 路径副标题（specs §4.3）：分类 / 示例 id（无 id 回退文件名）
 const pathLabel = computed(() => [ex.value?.category, ex.value?.id || ex.value?.name].filter(Boolean).join(' / '))
 
-function switchTab(tab: 'output' | 'assets' | 'history'): void {
+function switchTab(tab: 'output' | 'assets' | 'history' | 'versions'): void {
   activeTab.value = tab
+  // 版本页每次进入都刷新：刚保存过的示例在这里要能看到新快照
+  if (tab === 'versions') void loadVersions()
 }
 
 function onKeydown(e: KeyboardEvent): void {
@@ -246,7 +249,17 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
             aria-controls="detail-panel-history"
             @click="switchTab('history')"
           >
-            历史
+            运行历史
+          </button>
+          <button
+            id="detail-tab-versions"
+            class="tab"
+            role="tab"
+            :aria-selected="activeTab === 'versions'"
+            aria-controls="detail-panel-versions"
+            @click="switchTab('versions')"
+          >
+            版本
           </button>
           <div class="flex-1"></div>
           <span class="stat-dot" :class="DOT_CLS[surfaceState('detail').dot]" :title="runStatusText"></span>
@@ -271,6 +284,13 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
           id="detail-panel-history"
           role="tabpanel"
           aria-labelledby="detail-tab-history"
+        />
+        <VersionsPanel
+          v-show="activeTab === 'versions'"
+          id="detail-panel-versions"
+          role="tabpanel"
+          aria-labelledby="detail-tab-versions"
+          class="flex-1 min-h-0"
         />
       </div>
     </div>

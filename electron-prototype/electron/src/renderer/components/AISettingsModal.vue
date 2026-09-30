@@ -45,6 +45,26 @@ watch(aiSettingsOpen, (open) => {
   }
 }, { immediate: true })
 
+async function revokeConsent(): Promise<void> {
+  aiSettings.acknowledged = false
+  try {
+    await api.aiSetSettings({ acknowledged: false })
+    pushToast('info', '已撤回：下次使用 AI 解释会重新征求同意')
+  } catch (err) {
+    pushToast('error', `撤回失败: ${(err as Error).message}`)
+  }
+}
+
+async function grantConsent(): Promise<void> {
+  aiSettings.acknowledged = true
+  try {
+    await api.aiSetSettings({ acknowledged: true })
+    pushToast('success', '已同意：AI 解释可将选中代码发送到 DeepSeek 处理')
+  } catch (err) {
+    pushToast('error', `保存失败: ${(err as Error).message}`)
+  }
+}
+
 const MB = 1024 * 1024
 const mbText = (bytes: number): string => `${(bytes / MB).toFixed(1)}MB`
 const storagePercent = computed(() => {
@@ -199,6 +219,22 @@ async function save(): Promise<void> {
         <p class="m-0 mt-1.5 text-caption text-ink-mute leading-[1.5]">
           运行超过该时长将被强制终止。长动画、游戏类示例（Pygame）建议放宽。
         </p>
+      </section>
+
+      <section class="border-t border-line-hairline pt-3.5" data-testid="settings-consent">
+        <h3 class="m-0 mb-2 text-control font-semibold text-ink">代码外发</h3>
+        <!-- 同意状态可复核可撤销（审计 A9：原先只有一次性 confirm，事后无从查看与反悔） -->
+        <p v-if="aiSettings.acknowledged" class="m-0 text-control text-ink-dim leading-[1.6]">
+          已同意：AI 代码解释会把选中的代码发送到
+          <span class="font-mono">{{ aiSettings.baseUrl }}</span> 处理。
+        </p>
+        <p v-else class="m-0 text-control text-ink-dim leading-[1.6]">
+          未同意：首次使用 AI 解释时会先征求你的同意。
+        </p>
+        <div class="mt-1.5">
+          <BaseButton v-if="aiSettings.acknowledged" size="sm" @click="revokeConsent()">撤回同意</BaseButton>
+          <BaseButton v-else size="sm" @click="grantConsent()">现在同意</BaseButton>
+        </div>
       </section>
 
       <section class="border-t border-line-hairline pt-3.5" data-testid="settings-storage">

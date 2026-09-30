@@ -9,6 +9,7 @@ import { invalidateExampleVisual } from '../overview'
 import { api, type SidecarError } from '../sidecar-client'
 import { examples, loadExamples } from './catalog'
 import type { RunHistoryEntry } from '../types'
+import type { VersionInfo } from '../../../../../shared/protocol'
 import { recordHistory, runHistory, runTimeout, setSkipHighRiskConfirm, skipHighRiskConfirm } from './prefs'
 import { assets, loadAssets } from './assets'
 
@@ -51,6 +52,65 @@ export const pendingBackfillTokens = ref<string[] | null>(null)
 export const argsError = ref('')
 /** 依赖安装进行中（详情页「安装依赖」按钮的 loading 态） */
 export const installingDeps = ref(false)
+
+// ---------------------------------------------------------------------------
+// 编辑历史（可恢复编辑）：版本列表 / 预览内容 / 还原
+// ---------------------------------------------------------------------------
+export const versions = ref<VersionInfo[]>([])
+export const versionsLoading = ref(false)
+/** 当前预览的历史版本（含内容，用于与当前代码做行级差异） */
+export const versionPreview = ref<{ ts: string; code: string } | null>(null)
+export const restoringVersion = ref(false)
+
+export async function loadVersions(): Promise<void> {
+  const id = selectedId.value
+  if (!id) return
+  versionsLoading.value = true
+  try {
+    const result = await api.listVersions(id)
+    if (selectedId.value === id) versions.value = result.versions
+  } catch (err) {
+    console.error('[versions] 读取编辑历史失败:', err)
+  } finally {
+    versionsLoading.value = false
+  }
+}
+
+export async function previewVersion(ts: string): Promise<void> {
+  const id = selectedId.value
+  if (!id) return
+  try {
+    const result = await api.readVersion(id, ts)
+    if (selectedId.value === id) versionPreview.value = { ts: result.ts, code: result.code }
+  } catch (err) {
+    pushToast('error', `读取版本失败: ${(err as Error).message}`)
+  }
+}
+
+/** 还原到某历史版本：写回真实文件（sidecar 侧还原前也会留快照，可反复回退）。 */
+export async function restoreVersion(ts: string): Promise<boolean> {
+  const id = selectedId.value
+  if (!id || restoringVersion.value) return false
+  restoringVersion.value = true
+  try {
+    await api.restoreVersion(id, ts)
+    // 还原后编辑器与"原件"基线都要跟上，避免显示成"有未保存修改"
+    const detail = await api.getExample(id)
+    if (selectedId.value !== id) return false
+    originalCode.value = detail.code
+    isDirty.value = false
+    editor?.setValue(detail.code)
+    pushToast('success', '已还原到该版本')
+    await loadVersions()
+    versionPreview.value = null
+    return true
+  } catch (err) {
+    pushToast('error', `还原失败: ${(err as Error).message}`)
+    return false
+  } finally {
+    restoringVersion.value = false
+  }
+}
 
 // 运行态（同窗口同时刻至多一个运行；输出汇固定 detail，运行器视图步骤 4 迁移）
 export const isRunning = ref(false)
@@ -269,6 +329,7 @@ export async function saveExample(): Promise<void> {
     }
     appendOutput(`[系统] 已保存: ${result.json_file || result.path || id}\n`, 'system')
     pushToast('success', '示例已保存并回写 JSON')
+    void loadVersions() // 刚才这一版已进历史，面板开着时要立刻看到
   } catch (err) {
     appendOutput(`[错误] 保存失败: ${(err as Error).message}\n`, 'error')
     pushToast('error', `保存失败: ${(err as Error).message}`)
@@ -414,6 +475,20 @@ export function detailTestHooks(): Record<string, unknown> {
     },
     runFromDetail: () => runFromDetail(),
     argsError: () => argsError.value,
+    // 走查脚本用：直接写编辑器内容并走真实保存路径（含快照）
+    closeDetail: () => closeDetail(),
+    setEditorValue: (code: string) => {
+      if (!editor) return false
+      editor.setValue(code)
+      return true
+    },
+    saveExample: () => saveExample(),
+    isDirty: () => isDirty.value,
+    versions: () => versions.value,
+    versionPreview: () => versionPreview.value,
+    loadVersions: () => loadVersions(),
+    previewVersion: (ts: string) => previewVersion(ts),
+    restoreVersion: (ts: string) => restoreVersion(ts),
     retryParseArgs: () => retryParseArgs(),
     installDepsAndRerun: () => installDepsAndRerun(),
     isRunning: () => isRunning.value,

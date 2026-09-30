@@ -205,6 +205,52 @@ describe('DetailPage', () => {
     expect(w.find('[data-testid="install-deps"]').exists()).toBe(true)
   })
 
+  it('版本页：列出编辑历史、预览显示行级差异、可还原（A6 可恢复编辑）', async () => {
+    vi.mocked(window.sidecar.listVersions).mockResolvedValue({
+      id: 't1',
+      versions: [{ ts: '20260929-231500-ab12cd34', bytes: 1024, sha256: 'x' }]
+    })
+    vi.mocked(window.sidecar.readVersion).mockResolvedValue({
+      id: 't1',
+      ts: '20260929-231500-ab12cd34',
+      code: 'print(1)\nprint(2)\n'
+    })
+    vi.mocked(window.sidecar.restoreVersion).mockResolvedValue({ id: 't1', restored: '20260929-231500-ab12cd34' })
+    vi.mocked(window.sidecar.getExample).mockResolvedValue({
+      id: 't1',
+      name: 'alpha.py',
+      code: 'print(1)\n',
+      title: 'Alpha',
+      category: 'topics',
+      tags: [],
+      path: '/tmp/alpha.py'
+    } as never)
+
+    const w = mountDetail({ code: 'print(1)\n' })
+    const tabs = Array.from(w.findAll('[role="tab"]'))
+    const versionTab = tabs.find((t) => t.text() === '版本')!
+    await versionTab.trigger('click')
+    await flushPromises()
+
+    expect(window.sidecar.listVersions).toHaveBeenCalledWith('t1')
+    const panel = w.get('[data-testid="versions-panel"]')
+    expect(panel.text()).toContain('2026-09-29 23:15:00')
+
+    // 预览：与当前编辑器内容（print(1)）比较 → 一行 too many
+    await panel.get('[data-testid="version-20260929-231500-ab12cd34"]').trigger('click')
+    await flushPromises()
+    const diff = w.get('[data-testid="version-diff"]')
+    expect(diff.text()).toContain('+print(2)')
+    expect(diff.text()).toContain('还原后将')
+
+    // 还原：调 sidecar 并同步编辑器基线（不显示成"有未保存修改"）
+    await diff.get('[data-testid="version-restore"]').trigger('click')
+    await flushPromises()
+    expect(window.sidecar.restoreVersion).toHaveBeenCalledWith('t1', '20260929-231500-ab12cd34')
+    expect(isDirty.value).toBe(false)
+    expect(window.sidecar.getExample).toHaveBeenCalledWith('t1')
+  })
+
   it('未选中示例时不渲染详情区，选中后渲染头部标题与分类', () => {
     const empty = track(mount(DetailPage, { attachTo: document.body }))
     expect(empty.find('section').exists()).toBe(false)

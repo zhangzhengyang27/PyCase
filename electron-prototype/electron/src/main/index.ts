@@ -1105,7 +1105,7 @@ function runSmokeTest(): void {
         await sleep(2500); // Monaco 懒加载 + 首次布局
         const host = document.querySelector('[role="tablist"][aria-label="输出面板"]');
         if (!host) return { fatal: '详情页未打开（无标签页）' };
-        // 1) 标签页：三个 .tab + 选中语义（aria-selected 为真值来源）
+        // 1) 标签页：四个 .tab（终端输出/资源/运行历史/版本）+ 选中语义（aria-selected 为真值来源）
         const tabs = Array.from(host.querySelectorAll('.tab'));
         out.tabs = tabs.length;
         out.tabSelected = tabs.filter((t) => t.getAttribute('aria-selected') === 'true').length;
@@ -1143,7 +1143,7 @@ function runSmokeTest(): void {
         const d = detail as Record<string, unknown>
         if (d.fatal) throw new Error(`详情页走查: ${d.fatal}`)
         const problems: string[] = []
-        if (d.tabs !== 3) problems.push(`标签页数 ${d.tabs} != 3`)
+        if (d.tabs !== 4) problems.push(`标签页数 ${d.tabs} != 4`)
         if (d.tabSelected !== 1) problems.push(`选中标签数 ${d.tabSelected} != 1`)
         if (Math.abs((d.tabRowH as number) - (d.expectPaneHeadH as number)) > 1) {
           problems.push(`标签行高 ${d.tabRowH} != --pane-head-h ${d.expectPaneHeadH}`)
@@ -1524,9 +1524,98 @@ function runSmokeTest(): void {
         if (!deps.skipped && !deps.has) {
           throw new Error(`缺依赖示例未出现安装入口: ${JSON.stringify(deps)}`)
         }
+        // 4) 编辑历史入口：第四个标签「版本」可打开（空态文案即"保存前会自动留档"）
+        const versions = (await mainWindow!.webContents.executeJavaScript(`(async () => {
+          const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+          const tab = Array.from(document.querySelectorAll('[role="tab"]')).find((t) => t.textContent.trim() === '版本');
+          if (!tab) return { hasTab: false };
+          tab.click();
+          await sleep(500);
+          const panel = document.querySelector('[data-testid="versions-panel"]');
+          return { hasTab: true, hasPanel: !!panel, text: panel ? panel.textContent.slice(0, 80) : '' };
+        })()`) ) as { hasTab: boolean; hasPanel?: boolean; text?: string }
+        if (!versions.hasTab || !versions.hasPanel) {
+          throw new Error(`编辑历史入口异常: ${JSON.stringify(versions)}`)
+        }
+        // 3.5) 编辑历史端到端：临时用户集合 → 改代码保存 → 版本出现 → 还原 → 内容回退
+        {
+          const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'smoke-version-'))
+          const e2eId = 'version_e2e.py'
+          try {
+            fs.writeFileSync(path.join(tmpDir, e2eId), 'print("v1")\n', 'utf-8')
+            const imp = (await callSidecar('import_examples', { source_path: tmpDir, name: 'smoke_version' })) as {
+              imported: number
+            }
+            if (imp.imported !== 1) throw new Error(`版本链路前置导入失败: ${JSON.stringify(imp)}`)
+            const edit = (await mainWindow!.webContents.executeJavaScript(`(async () => {
+              const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+              const app = window.__app;
+              // 导入是主进程发起的，渲染层目录列表还是旧的——不刷新的话 openDetail 找不到它，
+              // 后续 setEditorValue/save 会打到"上一个选中项"上（曾经因此误改内置示例）
+              await app.reload();
+              await sleep(400);
+              await app.openDetail('${e2eId}');
+              await sleep(300);
+              if (app.selectedId() !== '${e2eId}') {
+                return { fatal: '选中项不是目标示例: ' + String(app.selectedId()) };
+              }
+              // 等 Monaco 挂载并注册进 store（编辑器没注册时 setEditorValue 返回 false）
+              let wrote = false;
+              for (let i = 0; i < 30 && !wrote; i++) {
+                await sleep(200);
+                wrote = app.setEditorValue('print(\"v2\")\\n');
+              }
+              if (!wrote) return { fatal: '编辑器未就绪' };
+              if (!app.isDirty()) return { fatal: '写值后未进入脏态' };
+              await app.saveExample();
+              await sleep(600);
+              await app.loadVersions();
+              await sleep(400);
+              const versions = app.versions();
+              await app.previewVersion(versions[0].ts);
+              await sleep(300);
+              const preview = app.versionPreview();
+              const ok = await app.restoreVersion(versions[0].ts);
+              await sleep(600);
+              app.closeDetail(); // 示例马上会被删除：先收起详情，避免对已删示例发请求
+              await sleep(200);
+              return { count: versions.length, first: versions[0].ts, preview: preview?.code ?? '', ok };
+            })()`) ) as { count: number; first: string; preview: string; ok: boolean }
+            const editErr = (edit as { fatal?: string }).fatal
+            if (editErr) throw new Error(`编辑历史前置失败: ${editErr}`)
+            if (edit.count < 1 || edit.preview !== 'print("v1")\n' || !edit.ok) {
+              throw new Error(`编辑历史异常: ${JSON.stringify(edit)}`)
+            }
+            const after = (await callSidecar('get_example', { id: e2eId })) as { code: string }
+            if (after.code !== 'print("v1")\n') {
+              throw new Error(`还原后内容不符: ${JSON.stringify(after.code)}`)
+            }
+            console.log('[smoke] 编辑历史端到端正常：保存留档 → 预览 → 还原')
+          } finally {
+            try {
+              await callSidecar('delete_example', { id: e2eId })
+            } catch {
+              /* 已删除或未导入成功 */
+            }
+            fs.rmSync(tmpDir, { recursive: true, force: true })
+            // 走查自己的历史快照也清掉：同一个 e2e id 每跑一次就多一版，留着只会污染开发机
+            const historyRoot = path.join(process.env.DESKTOP_APP_DATA_DIR || APP_DIR, 'edit_history')
+            try {
+              for (const entry of fs.readdirSync(historyRoot)) {
+                if (entry.startsWith('version_e2e.py')) {
+                  fs.rmSync(path.join(historyRoot, entry), { recursive: true, force: true })
+                }
+              }
+            } catch {
+              /* 目录不存在等，忽略 */
+            }
+          }
+        }
+
         console.log(
           `[smoke] A6 走查通过：存储报告一致（旧根 ${storage.legacy} 项）· 崩溃横幅出现/消失正常 · ` +
-            (deps.skipped ? '缺依赖入口（库中无 missing_deps 示例，跳过）' : `缺依赖入口 ${deps.id}`)
+            (deps.skipped ? '缺依赖入口（库中无 missing_deps 示例，跳过）' : `缺依赖入口 ${deps.id}`) +
+            ` · 版本页可打开`
         )
       }
       // 留 8s 让渲染进程完成 Monaco 初始化与列表渲染，捕获潜在 console error
