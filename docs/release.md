@@ -52,8 +52,10 @@ git push origin main vX.Y.Z
 2. **产物名必须 ASCII 且带 `${arch}`**：GitHub 上传路径不转义，含中文/空格的 asset 名会 400；
    双架构矩阵同名会互相覆盖（`PyCase-<版本>-<arch>-mac.zip` 这套命名即由此而来）。
 3. **可执行名按平台不同**：mac 用 productName（中文），Windows 用 `executableName: PyCase`；
-   走查脚本按 `*/Contents/MacOS/*` 结构查找，不按名字硬编码，**也别给 `find` 设深度上限**
-   （`dist` 里 app 包外还有一层 `mac-arm64/`，`-maxdepth 4` 会永远找不到）。
+   找主可执行文件统一走 `scripts/find_mac_app_binary.sh`（先定位顶层 .app 再按包名取
+   `Contents/MacOS/<包名>`）——**别用 `find -path '*/Contents/MacOS/*'`**：Electron 包的
+   Frameworks 下还有一组 Helper .app 也匹配该模式，按遍历顺序取第一个会拿到
+   "… Helper (GPU)"；也别给 find 设 `-maxdepth`（dist 里 app 包外还有一层 `mac-arm64/`）。
 4. **走查在 CI runner 上按环境放宽**：runner 是无 GPU 的软件渲染虚拟机（Intel runner 首屏 11s
    vs 本机 0.6–0.9s），且全新机器的共享 venv 首次引导要装几十个包（分钟级、需网络）——
    性能预算走 `SMOKE_PERF_SCALE=6`、运行解释器走 `SMOKE_RUN_ENV=system`（启动即 `PYCASE_RUN_ENV`

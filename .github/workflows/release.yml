@@ -96,10 +96,8 @@ jobs:
           ZIP=$(ls dist/*.zip | head -1)
           TMP=$(mktemp -d)
           ditto -x -k "$ZIP" "$TMP"
-          # 可执行名在 mac 上是 productName（中文），按结构找而不是按名字找（层级不设上限：
-          # 打包目录里 app 包外还有一层 mac-arm64/，写死深度会漏）
-          APP_BIN=$(find "$TMP" -type f -path '*/Contents/MacOS/*' | head -1)
-          test -x "$APP_BIN" || { echo "zip 解包后找不到可执行文件"; find "$TMP" -maxdepth 3 | head; exit 1; }
+          # 主可执行文件的定位口径见 scripts/find_mac_app_binary.sh（Helper.app 与深度坑都在注释里）
+          APP_BIN=$(bash "$GITHUB_WORKSPACE/scripts/find_mac_app_binary.sh" "$TMP")
           SMOKE_TEST=1 "$APP_BIN"
           echo "[release] ${{ matrix.target }} 产物冒烟通过"
 
