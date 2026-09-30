@@ -43,7 +43,7 @@ git push origin main vX.Y.Z
 `.github/workflows/release.yml` 在 `v*` tag 上触发三平台矩阵（mac arm64 / mac x64 / win x64）：
 冻结 sidecar（真启动冒烟）→ 版本一致性校验 → 出包 → **从产物里真跑一次走查** → `gh release` 上传到 GitHub Releases。
 
-三条「无证书发布」的规矩（都来自实测教训）：
+四条「无证书发布」的规矩（都来自实测教训）：
 
 1. **不配签名**：`CSC_IDENTITY_AUTO_DISCOVERY=false`；不设 notarize——electron-builder 在完全没有
    Apple 凭据时只 warn「skipped notarization」并正常出包。**但凭据只配一半会直接抛
@@ -52,7 +52,13 @@ git push origin main vX.Y.Z
 2. **产物名必须 ASCII 且带 `${arch}`**：GitHub 上传路径不转义，含中文/空格的 asset 名会 400；
    双架构矩阵同名会互相覆盖（`PyCase-<版本>-<arch>-mac.zip` 这套命名即由此而来）。
 3. **可执行名按平台不同**：mac 用 productName（中文），Windows 用 `executableName: PyCase`；
-   走查脚本按 `*/Contents/MacOS/*` 结构查找，不按名字硬编码。
+   走查脚本按 `*/Contents/MacOS/*` 结构查找，不按名字硬编码，**也别给 `find` 设深度上限**
+   （`dist` 里 app 包外还有一层 `mac-arm64/`，`-maxdepth 4` 会永远找不到）。
+4. **走查在 CI runner 上按环境放宽**：runner 是无 GPU 的软件渲染虚拟机（Intel runner 首屏 11s
+   vs 本机 0.6–0.9s），且全新机器的共享 venv 首次引导要装几十个包（分钟级、需网络）——
+   性能预算走 `SMOKE_PERF_SCALE=6`、运行解释器走 `SMOKE_RUN_ENV=system`（启动即 `PYCASE_RUN_ENV`
+   预置，跳过建环境；这两个变量只由 CI 工作流设置）。**严格预算仍以真实机器上的走查为准**，
+   CI 只当数量级回归网。
 
 自动更新（electron-updater）本版**未启用**：mac 侧未签名时 Squirrel.Mac 无法应用更新（需签名），
 Windows 侧技术上可用——若将来要开，做法是给 electron-builder 加 `publish` 配置（产物会附带
