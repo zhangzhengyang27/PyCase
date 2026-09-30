@@ -93,7 +93,8 @@
           "from": "sidecar-dist/sidecar",
           "to": "sidecar/sidecar"
         }
-      ]
+      ],
+      "artifactName": "PyCase-${version}-${arch}-mac.${ext}"
     },
     "directories": {
       "output": "dist"
@@ -133,7 +134,18 @@
           "from": "sidecar-dist/sidecar.exe",
           "to": "sidecar/sidecar.exe"
         }
-      ]
+      ],
+      "artifactName": "PyCase-${version}-${arch}-setup.${ext}",
+      "executableName": "PyCase"
+    },
+    "dmg": {
+      "artifactName": "PyCase-${version}-${arch}.${ext}"
+    },
+    "nsis": {
+      "artifactName": "PyCase-${version}-${arch}-setup.${ext}",
+      "shortcutName": "${productName}",
+      "uninstallDisplayName": "${productName}",
+      "createDesktopShortcut": "always"
     }
   },
   "devDependencies": {

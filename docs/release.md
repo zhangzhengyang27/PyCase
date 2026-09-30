@@ -29,6 +29,35 @@
 安装形态已验证：mac 侧 zip 解包运行与 dmg 挂载运行各跑一次完整走查（本机实测）；
 Windows 侧由 CI 执行 NSIS 静默安装 → 启动安装后的 exe 跑走查 → 卸载。
 
+## 发布链（无证书/账号的姿势，对齐 leaf-library）
+
+```bash
+# 1) 定版本：改 VERSION → 同步三处 → 提交
+python scripts/sync_version.py
+git commit -am "release: vX.Y.Z"
+# 2) 打 tag 并推送（tag 是发布的唯一触发器）
+git tag -a vX.Y.Z -m "vX.Y.Z：<一句话>"
+git push origin main vX.Y.Z
+```
+
+`.github/workflows/release.yml` 在 `v*` tag 上触发三平台矩阵（mac arm64 / mac x64 / win x64）：
+冻结 sidecar（真启动冒烟）→ 版本一致性校验 → 出包 → **从产物里真跑一次走查** → `gh release` 上传到 GitHub Releases。
+
+三条「无证书发布」的规矩（都来自实测教训）：
+
+1. **不配签名**：`CSC_IDENTITY_AUTO_DISCOVERY=false`；不设 notarize——electron-builder 在完全没有
+   Apple 凭据时只 warn「skipped notarization」并正常出包。**但凭据只配一半会直接抛
+   InvalidConfigurationError**，要配就配全（`APPLE_ID`/`APPLE_APP_SPECIFIC_PASSWORD`/`APPLE_TEAM_ID`
+   或 `APPLE_API_KEY`/`APPLE_API_KEY_ID`/`APPLE_API_ISSUER`）。
+2. **产物名必须 ASCII 且带 `${arch}`**：GitHub 上传路径不转义，含中文/空格的 asset 名会 400；
+   双架构矩阵同名会互相覆盖（`PyCase-<版本>-<arch>-mac.zip` 这套命名即由此而来）。
+3. **可执行名按平台不同**：mac 用 productName（中文），Windows 用 `executableName: PyCase`；
+   走查脚本按 `*/Contents/MacOS/*` 结构查找，不按名字硬编码。
+
+自动更新（electron-updater）本版**未启用**：mac 侧未签名时 Squirrel.Mac 无法应用更新（需签名），
+Windows 侧技术上可用——若将来要开，做法是给 electron-builder 加 `publish` 配置（产物会附带
+`latest*.yml`）并在设置页加「检查更新」入口。
+
 ## 签名与首次打开
 
 - macOS：ad-hoc 签名（`identity: null`），**未公证**。首次打开需右键「打开」或

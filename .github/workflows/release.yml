@@ -1,0 +1,128 @@
+name: Release
+
+# 发布链（对齐 leaf-library 的成熟做法）：打 v* tag → 三平台矩阵构建 → 上传到 GitHub Releases。
+# 本仓库没有签名证书/公证凭据，因此按「无证书发布」的既定姿势走：
+#   · CSC_IDENTITY_AUTO_DISCOVERY=false：不让 electron-builder 去钥匙串找证书；
+#   · 不配置 notarize：electron-builder 在完全没有 Apple 凭据时只 warn「skipped notarization」；
+#     **但凭据只配一半会抛 InvalidConfigurationError**（要配就配全：APPLE_ID/APPLE_APP_SPECIFIC_PASSWORD/APPLE_TEAM_ID
+#     或 APPLE_API_KEY/APPLE_API_KEY_ID/APPLE_API_ISSUER）；
+#   · 产物名必须 ASCII 且带 ${arch}：GitHub 上传路径不转义（中文名会 400），双架构同名会互相覆盖。
+#
+# 发布步骤：改 VERSION → python scripts/sync_version.py → commit → git tag -a v<版本> → git push origin <tag>
+# 首次打开的放行说明（未公证）见 docs/release.md。
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build & Publish (${{ matrix.target }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest # Apple Silicon
+            target: mac-arm64
+            args: --arm64
+            assets: 'dist/*.zip dist/*.dmg'
+          - os: macos-15-intel # Intel
+            target: mac-x64
+            args: --x64
+            assets: 'dist/*.zip dist/*.dmg'
+          - os: windows-latest
+            target: win-x64
+            args: --x64
+            assets: 'dist/*.exe dist/*.zip'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: 安装前端依赖
+        working-directory: electron-prototype/electron
+        run: npm ci
+
+      # 冻结 sidecar 并冒烟（真启动 / list_examples == 1496）：
+      # 冻包按 runner 架构产出（Apple Silicon runner 出 arm64、Intel runner 出 x64）
+      - name: 冻结 sidecar + 冒烟
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install pyinstaller
+          python scripts/build_sidecar.py --clean --smoke
+
+      - name: 版本一致性校验（VERSION 为唯一来源）
+        run: python scripts/sync_version.py --check
+
+      - name: 前端构建
+        working-directory: electron-prototype/electron
+        run: npm run build
+
+      - name: 出包（macOS）
+        if: matrix.target != 'win-x64'
+        working-directory: electron-prototype/electron
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+        run: npx electron-builder --mac zip dmg ${{ matrix.args }}
+
+      - name: 出包（Windows）
+        if: matrix.target == 'win-x64'
+        working-directory: electron-prototype/electron
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+        run: npx electron-builder --win nsis zip ${{ matrix.args }}
+
+      # 发布前冒烟：从产物里真跑一次（macOS 解包 zip；Windows 跑 --dir 产物太慢，改为 NSIS 安装后跑）
+      - name: 产物冒烟（macOS）
+        if: matrix.target != 'win-x64'
+        working-directory: electron-prototype/electron
+        run: |
+          set -euo pipefail
+          ZIP=$(ls dist/*.zip | head -1)
+          TMP=$(mktemp -d)
+          ditto -x -k "$ZIP" "$TMP"
+          # 可执行名在 mac 上是 productName（中文），按结构找而不是按名字找
+          APP_BIN=$(find "$TMP" -maxdepth 4 -type f -path '*/Contents/MacOS/*' | head -1)
+          test -x "$APP_BIN" || { echo "zip 解包后找不到可执行文件"; find "$TMP" -maxdepth 3 | head; exit 1; }
+          SMOKE_TEST=1 "$APP_BIN"
+          echo "[release] ${{ matrix.target }} 产物冒烟通过"
+
+      - name: 产物冒烟（Windows：NSIS 静默安装后跑）
+        if: matrix.target == 'win-x64'
+        shell: pwsh
+        working-directory: electron-prototype/electron
+        run: |
+          $installer = Get-ChildItem dist/*setup*.exe | Select-Object -First 1
+          if (-not $installer) { throw '未产出 NSIS 安装包' }
+          Start-Process -FilePath $installer.FullName -ArgumentList '/S' -Wait
+          $appExe = Join-Path $env:LOCALAPPDATA 'Programs\Python示例管理器\PyCase.exe'
+          if (-not (Test-Path $appExe)) { throw "安装后找不到可执行文件: $appExe" }
+          $env:SMOKE_TEST = '1'
+          & $appExe
+          if ($LASTEXITCODE -ne 0) { throw "安装后冒烟失败，退出码 $LASTEXITCODE" }
+          $uninstaller = Join-Path (Split-Path $appExe) 'Uninstall 示例管理器.exe'
+          if (Test-Path $uninstaller) { Start-Process -FilePath $uninstaller -ArgumentList '/S' -Wait }
+          Write-Host '[release] Windows 安装冒烟通过'
+
+      # 上传到 GitHub Releases（用 runner 自带的 gh + GITHUB_TOKEN；不依赖第三方 action）
+      - name: 创建/更新 Release 并上传产物
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          gh release view "$TAG" >/dev/null 2>&1 || gh release create "$TAG" --title "$TAG" --notes-from-tag
+          gh release upload "$TAG" ${{ matrix.assets }} --clobber
+          echo "[release] ${{ matrix.target }} 已上传：$TAG"

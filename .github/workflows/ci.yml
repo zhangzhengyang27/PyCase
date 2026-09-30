@@ -204,9 +204,8 @@ jobs:
         working-directory: electron-prototype/electron
         run: |
           set -euo pipefail
-          APP_BIN="dist/mac-arm64/Python示例管理器.app/Contents/MacOS/Python示例管理器"
-          if [ ! -x "$APP_BIN" ]; then APP_BIN="dist/mac/Python示例管理器.app/Contents/MacOS/Python示例管理器"; fi
-          test -x "$APP_BIN" || { echo "找不到打包后的可执行文件"; exit 1; }
+          APP_BIN=$(find dist -maxdepth 4 -type f -path '*/Contents/MacOS/*' | head -1)
+          test -n "$APP_BIN" && test -x "$APP_BIN" || { echo "找不到打包后的可执行文件"; find dist -maxdepth 3 | head; exit 1; }
           SMOKE_TEST=1 "$APP_BIN"
 
       # 分发形态自测（macOS）：出 zip/dmg 并从产物里真跑一次（mt 的 zip 是主要分发格式）
@@ -220,15 +219,15 @@ jobs:
           test -n "$ZIP" || { echo "未产出 zip"; exit 1; }
           TMP=$(mktemp -d)
           ditto -x -k "$ZIP" "$TMP"
-          APP_BIN="$TMP/Python示例管理器.app/Contents/MacOS/Python示例管理器"
-          test -x "$APP_BIN" || { echo "zip 解包后找不到可执行文件"; find "$TMP" -maxdepth 3 | head; exit 1; }
+          APP_BIN=$(find "$TMP" -maxdepth 4 -type f -path '*/Contents/MacOS/*' | head -1)
+          test -n "$APP_BIN" && test -x "$APP_BIN" || { echo "zip 解包后找不到可执行文件"; find "$TMP" -maxdepth 3 | head; exit 1; }
           SMOKE_TEST=1 "$APP_BIN"
           echo "[packaging] zip 解包自测通过: $ZIP"
           DMG=$(ls dist/*.dmg | head -1)
           if [ -n "$DMG" ]; then
             MP=$(hdiutil attach -nobrowse -readonly "$DMG" | tail -1 | awk '{print $NF}')
-            DMG_BIN="$MP/Python示例管理器.app/Contents/MacOS/Python示例管理器"
-            test -x "$DMG_BIN" || { echo "dmg 挂载后找不到可执行文件"; hdiutil detach "$MP" || true; exit 1; }
+            DMG_BIN=$(find "$MP" -maxdepth 4 -type f -path '*/Contents/MacOS/*' | head -1)
+            test -n "$DMG_BIN" && test -x "$DMG_BIN" || { echo "dmg 挂载后找不到可执行文件"; hdiutil detach "$MP" || true; exit 1; }
             SMOKE_TEST=1 "$DMG_BIN" || { hdiutil detach "$MP" || true; exit 1; }
             hdiutil detach "$MP"
             echo "[packaging] dmg 挂载自测通过: $DMG"
@@ -246,7 +245,7 @@ jobs:
           if (-not $installer) { throw '未产出 NSIS 安装包' }
           Write-Host "[packaging] 静默安装 $($installer.FullName)"
           Start-Process -FilePath $installer.FullName -ArgumentList '/S' -Wait
-          $appExe = Join-Path $env:LOCALAPPDATA 'Programs\Python示例管理器\Python示例管理器.exe'
+          $appExe = Join-Path $env:LOCALAPPDATA 'Programs\Python示例管理器\PyCase.exe'
           if (-not (Test-Path $appExe)) { throw "安装后找不到可执行文件: $appExe" }
           Write-Host "[packaging] 启动安装后的应用跑冒烟"
           $env:SMOKE_TEST = '1'
