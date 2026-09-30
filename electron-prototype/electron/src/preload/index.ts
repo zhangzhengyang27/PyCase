@@ -26,21 +26,32 @@ import type {
 // 强调色默认 system（跟随平台系统强调色），品牌靛为可选项。
 // 本文件在无 DOM lib 的 node tsconfig 下编译，globalThis 经结构类型访问。
 try {
-  const savedTheme = localStorage.getItem('app-theme') || 'dark'
-  const matchMedia = (globalThis as unknown as { matchMedia?: (query: string) => { matches: boolean } }).matchMedia
-  const resolved =
-    savedTheme === 'system' ? (matchMedia?.('(prefers-color-scheme: dark)')?.matches ? 'dark' : 'light') : savedTheme
   const root = (
     globalThis as unknown as { document?: { documentElement: { setAttribute(key: string, value: string): void } } }
   ).document?.documentElement
   if (root) {
-    if (resolved) root.setAttribute('data-theme', resolved)
-    // 平台层：darwin → mac，其余（含 Windows）→ win。Linux 暂不在交付面（D7）。
+    // 平台层先行且不依赖任何存储：sandboxed preload 里 localStorage 可能直接抛
+    // （存储区不属于该上下文），原先把三件事写在同一个 try 里，一抛就连平台一起丢了，
+    // Windows 上没人发现——因为渲染层的兜底恰好是 'mac'。
     root.setAttribute('data-platform', process.platform === 'darwin' ? 'mac' : 'win')
-    root.setAttribute('data-accent', localStorage.getItem('app-accent') === 'brand' ? 'brand' : 'system')
+    // 主题偏好是 dark/light/system 三态，system 按 prefers-color-scheme 现场解析；
+    // 强调色默认 system（跟随平台系统强调色），品牌靛为可选项。取不到就各自回落默认。
+    const readPref = (key: string): string | null => {
+      try {
+        return localStorage.getItem(key)
+      } catch {
+        return null
+      }
+    }
+    const savedTheme = readPref('app-theme') || 'dark'
+    const matchMedia = (globalThis as unknown as { matchMedia?: (query: string) => { matches: boolean } }).matchMedia
+    const resolved =
+      savedTheme === 'system' ? (matchMedia?.('(prefers-color-scheme: dark)')?.matches ? 'dark' : 'light') : savedTheme
+    if (resolved) root.setAttribute('data-theme', resolved)
+    root.setAttribute('data-accent', readPref('app-accent') === 'brand' ? 'brand' : 'system')
   }
 } catch {
-  // localStorage 不可用时保持默认主题与平台
+  // DOM 都拿不到时整段放弃，由渲染层 main.ts 兜底
 }
 
 // 类型定义：渲染层通过 window.sidecar.* 调用

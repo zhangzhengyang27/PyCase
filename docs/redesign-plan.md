@@ -94,7 +94,7 @@
 | B2 | B | Python/sidecar 重写（对新契约 + 护栏全绿 + 日志/生命周期/类型） | **已实现（2026-09-29）**：G1–G8 全绿（含再表达后的 G1、新增 G7/G8）；冷启动索引就绪 43–46ms（预算 50ms）、启动零写盘；内置数据已迁移（1426 外移 / 70 原位、1496/1496 逐条复验）；烘焙事实索引 + 依赖清单最小替代（输出与退役脚本逐行一致）；工作区上限/清理/孤儿/资产四组用例齐；**唯一遗留**：E2E 首次运行偶发画廊工具条几何探针竞态（重跑即过，待 B3 走查脚本统一加等待） |
 | B3 | B | 渲染层与壳重写（store 分域、类型化客户端、平台适配、双平台打包） | **已实现（2026-09-29）**：B3-1 单一来源（VERSION + shared/protocol.json 跨语言钉住）；B3-2 类型化客户端（18 方法出入参精确类型 + RPC_BINDINGS 契约测试）+ 平台适配（窗口三键收进 createWindowControls）；B3-3 store 拆 9 域（prefs/catalog/detail/runner/assets/ai/import/env/index，无环）+ 21 组件与 6 规格迁域 import；B3-4 双平台打包（冻结脚本 + 冒烟、win/mac 配置与 CI 矩阵、mac 打包产物自测真跑通）；顺带修两处既有缺陷（资源上传字段名错位、删空集合残留空目录）并把 CI 里早已红掉的 4 份 mjs 测试迁到新架构 |
 | A6 | A | 产品化补课：首启环境可视化、失败恢复、可恢复编辑、缓存入口 | **已实现（2026-09-29）**：缓存入口（设置「存储」分区：占用/上限进度、条目与含资产条目数、v1 旧根占用 + 一键回收、两档清理各自确认）；失败恢复（sidecar 崩溃/熔断横幅 + 重启/看日志、参数解析失败显式报错并可重试、缺依赖一键装包重跑、错误码透传）；可恢复编辑（保存与还原前自动快照、详情页「版本」标签：列表/行级 diff/一键还原、每例保留 10 版；AI 外发同意可在设置复核与撤回）；首启可视化由 A5.5 交付、本轮补齐失败出口；另清掉原生 confirm（未保存守卫与首次外发告知改应用内弹窗）。走查新增 A6 段（存储一致/崩溃横幅/缺依赖入口/版本页）+ 编辑历史端到端（真导入→改码保存→预览→还原→断言文件回退） |
-| M6 | 共同 | 文档 reconcile、性能预算实测、双平台打包与安装冒烟、v1.0.0 | **已实现（2026-09-30）**：工程门禁（ESLint/stylelint/Prettier + noImplicitAny + any 归零；mypy(app+sidecar) + 覆盖率 ≥70% 入 CI）；性能实测入走查（冷启 0.7–1.1s 开发态 / 1.6–1.8s 打包态，预算 3s；长列表首屏 52ms，预算 1.5s；输出截断 5000 行且无丢行对照）；文档 reconcile（README/ROADMAP/electron-prototype 重写 + 7 份过期文档存档）与死文件/幽灵依赖归零（tailwind.config.js、v1 载入器 app/json_examples.py 退役、element-plus 移除）；安装冒烟（CI win 真装真跑 + mac zip/dmg 从产物里跑，本机双形态实测通过）；VERSION → 1.0.0 + 本地 tag v1.0.0 |
+| M6 | 共同 | 文档 reconcile、性能预算实测、双平台打包与安装冒烟、v1.0.0 | **已实现（2026-09-30）**：工程门禁（ESLint/stylelint/Prettier + noImplicitAny + any 归零；mypy(app+sidecar) + 覆盖率 ≥70% 入 CI）；性能实测入走查（冷启 0.7–1.1s 开发态 / 1.6–1.8s 打包态，预算 3s；长列表首屏 52ms，预算 1.5s；输出截断 5000 行且无丢行对照）；文档 reconcile（README/ROADMAP/electron-prototype 重写 + 7 份过期文档存档）与死文件/幽灵依赖归零（tailwind.config.js、v1 载入器 app/json_examples.py 退役、element-plus 移除）；安装冒烟（CI win 真装真跑 + mac zip/dmg 从产物里跑，本机双形态实测通过）；VERSION → 1.0.0 + 本地 tag v1.0.0。**首轮远端 CI 的修正记录（2026-09-30）**：上面"CI win 真装真跑"当时并未成立（win job 从没跑到安装步），第一次真跑到 Windows 就连中三个只在该平台存在的缺陷——① sidecar 用 `connect_read_pipe` 读 stdin，在 proactor + 匿名管道上直接杀进程（发完 ready 就没响应，IPC 通道 = Windows 版整体不可用；改为读线程喂队列）；② 解释器判定被 Microsoft Store 的 `python3` 占位程序骗到（示例运行只收到 149 字符；改为"真跑一次拿到回执才算可用"，4 条单测钉住）；③ preload 的 localStorage 一抛就连带丢 `data-platform`，而渲染层兜底恰好是 `mac`，于是 Windows 一直在按 macOS 的壳渲染且 mac 侧永远看不出来（平台层与存储解耦 + 兜底按 UA + 走查新增"平台属性必须等于主进程平台"的等值断言） |
 
 纪律：任一时刻只有一条轨处于"破坏面"；每轨保持主干可运行；里程碑级轮转，不做日内切换。
 
@@ -122,8 +122,11 @@
 ## 8. 跨平台与验证缺口
 
 - 目标：macOS arm64（本机可验证）+ Windows x64（**本机不可验证**）。
-- 缺口：Windows 真机验证渠道待定——CI 只能覆盖无头冒烟；M6 前需确定真机或虚拟机渠道。
-- 签名/公证：mac 公证需 Apple 开发者账号；Windows 签名证书可选——预算与目标在 M6 前确认。
+- 现状（2026-09-30 更新，替代原"CI 只能覆盖无头冒烟"的假设）：Windows 侧验证 = CI `windows-latest`
+  的 NSIS 静默安装 + **安装后真跑走查**（真窗口、含渲染层与性能探针），并非无头；
+  所以**任何"win 已验证"的口径必须以 CI 的 win job 变绿为准**。首轮 CI 第一次跑到 Windows
+  就揭出三个只在 Windows 存在的产品缺陷（IPC 通道 / 解释器判定 / 平台属性注入，详见 §7 M6 行的修正记录）。
+- 签名/公证：mac 公证需 Apple 开发者账号；Windows 签名证书可选——本版按"无证书发布"走（docs/release.md）。
 
 ## 9. 风险与对策
 

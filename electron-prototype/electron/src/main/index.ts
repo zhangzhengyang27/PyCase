@@ -877,7 +877,11 @@ function runSmokeTest(): void {
         const exp = s.expect as Record<string, number>
         const near = (a: unknown, b: number, tol = 1): boolean => Math.abs((a as number) - b) <= tol
         const problems: string[] = []
-        if (s.platform !== 'mac' && s.platform !== 'win') problems.push(`data-platform=${s.platform}`)
+        if (s.platform !== (process.platform === 'darwin' ? 'mac' : 'win')) {
+          // 不是"mac 或 win 之一"就算过：主进程知道自己是什么平台，两侧必须一致，
+          // 否则 Windows 会带着 macOS 的几何跑完全程而没人报红（首轮 CI 的真实漏法）
+          problems.push(`data-platform=${s.platform}，本机平台应为 ${process.platform === 'darwin' ? 'mac' : 'win'}`)
+        }
         if (s.accent !== 'system' && s.accent !== 'brand') problems.push(`data-accent=${s.accent}`)
         if (!near(s.sidebarW, exp.sidebarW)) problems.push(`侧栏宽 ${s.sidebarW} != ${exp.sidebarW}`)
         if (!near(s.rowH, exp.rowH)) problems.push(`行高 ${s.rowH} != ${exp.rowH}`)
@@ -1781,8 +1785,9 @@ function runSmokeTest(): void {
             const t0 = performance.now();
             await app.runFromDetail();
             // 洪峰预算是"截断与不丢行"的验证，不是吞吐基准：打包态冷启动（venv 预热/首次解释器
-            // 拉起）会显著变慢，给 45s 余量；真挂死仍会被上面的 total timeout 兜住
-            for (let i = 0; i < 450 && app.isRunning(); i++) await sleep(100);
+            // 拉起）会显著变慢，给 45s 余量并按环境系数放大（CI runner 上 6000 行逐条通知
+            // 本身就慢，Windows 尤其）；真挂死仍会被上面的 total timeout 兜住
+            for (let i = 0; i < ${Math.round(450 * perfScale)} && app.isRunning(); i++) await sleep(100);
             const text = app.outputText();
             // 截断提示是面板按 state.truncated 渲染的独立节点，不在输出文本里——
             // 断言要看用户可见的终端内容（DOM），不是拼接后的 store 文本
@@ -1791,6 +1796,8 @@ function runSmokeTest(): void {
               ms: Math.round(performance.now() - t0),
               lines: app.outputLineCount(),
               chars: text.length,
+              // 失败时把实际输出头部带出来：只有计数器就只能猜（Windows 首轮吃过一次）
+              head: text.slice(0, 240),
               received,
               stats: app.outputStats(),
               truncated: consoles.some((el) => (el.textContent || '').includes('已自动截断')),
@@ -1800,6 +1807,7 @@ function runSmokeTest(): void {
             ms?: number
             lines?: number
             chars?: number
+            head?: string
             received?: number
             stats?: Record<string, number | string | boolean>
             truncated?: boolean
@@ -1807,8 +1815,10 @@ function runSmokeTest(): void {
             fatal?: string
           }
           if (flood.fatal) throw new Error(`输出截断前置失败: ${flood.fatal}`)
-          if (!flood.done) throw new Error(`洪峰示例 45s 未跑完: ${JSON.stringify(flood)}`)
+          const floodWindow = Math.round((450 * perfScale) / 10)
+          if (!flood.done) throw new Error(`洪峰示例 ${floodWindow}s 内未跑完: ${JSON.stringify(flood)}`)
           if (!flood.truncated || !(flood.stats?.detailTruncated as boolean)) {
+            // head 里就是子进程真正说了什么（解释器不可用/文件找不到/编码问题都在这）
             throw new Error(`6000 行输出未触发截断提示: ${JSON.stringify(flood)}`)
           }
           if ((flood.lines as number) > 5001) throw new Error(`终端保留行数 ${flood.lines} 超过上限 5000`)

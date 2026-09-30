@@ -21,6 +21,7 @@ import logging
 import os
 import shutil
 import signal
+import subprocess
 import sys
 import threading
 import time
@@ -67,21 +68,60 @@ for p in (str(APP_DIR), str(REPO_ROOT)):
     if p not in sys.path:
         sys.path.insert(0, p)
 
+
+def _python_runs(path: str) -> bool:
+    """这个路径真是「能跑 Python」的解释器吗？
+
+    Windows 上 ``python3`` / ``python`` 常常命中 Microsoft Store 的「应用执行别名」占位程序：
+    ``which`` 找得到，真跑只会说 "Python was not found"（有的版本还会停下等输入）。
+    所以只有真跑一次并读到回执才算数。其它平台不存在这种替身，不为此付一次子进程开销。
+    """
+    if sys.platform != "win32":
+        return True
+    try:
+        proc = subprocess.run(
+            [path, "-c", "import sys; sys.stdout.write('ok')"],
+            capture_output=True,
+            text=True,
+            timeout=8,
+        )
+    except (OSError, subprocess.TimeoutExpired, ValueError):
+        return False
+    return proc.returncode == 0 and proc.stdout.strip() == "ok"
+
+
+def _resolve_frozen_python(venv_python: Path) -> str:
+    """冻结环境里运行示例用的解释器：sys.executable 是 sidecar 自己，必须另找真实 Python。
+
+    顺序：显式 ``PYTHON_EXECUTABLE``（**不探测**——CI 冒烟靠把它指到不存在的路径来短路
+    venv 预热）→ 已建好的共享 venv → python3 / python / py（Windows 逐个真跑验证，跳过
+    Store 占位程序）。一个都没验证通过时退回第一个候选：让失败落在运行链路自己的报错上，
+    而不是把 sidecar 当解释器用。
+    """
+    explicit = os.environ.get("PYTHON_EXECUTABLE")
+    if explicit:
+        return explicit
+    candidates = [
+        str(venv_python) if venv_python.exists() else None,
+        shutil.which("python3"),
+        shutil.which("python"),
+        # Windows 上有人只装了启动器（py.exe），python.exe 不在 PATH
+        shutil.which("py"),
+    ]
+    for cand in candidates:
+        if cand and _python_runs(cand):
+            return cand
+    return next((c for c in candidates if c), None) or sys.executable
+
+
 # PyInstaller 冻结环境中 sys.executable 是 sidecar 自身，
-# 运行示例与创建 venv 必须使用系统真实 Python
+# 运行示例与创建 venv 必须使用系统真实 Python（优先复用已建好的共享 venv）
 if getattr(sys, "frozen", False):
-    # 优先复用已建好的项目共享 venv（.venv 在首次运行示例时创建）
     if sys.platform == "win32":
         _venv_python = REPO_ROOT / ".venv" / "Scripts" / "python.exe"
     else:
         _venv_python = REPO_ROOT / ".venv" / "bin" / "python"
-    REAL_PYTHON = (
-        os.environ.get("PYTHON_EXECUTABLE")
-        or (str(_venv_python) if _venv_python.exists() else None)
-        or shutil.which("python3")
-        or shutil.which("python")
-        or sys.executable
-    )
+    REAL_PYTHON = _resolve_frozen_python(_venv_python)
 else:
     REAL_PYTHON = sys.executable
 

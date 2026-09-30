@@ -10,7 +10,12 @@ const systemDark = window.matchMedia('(prefers-color-scheme: dark)')
 const resolvedTheme = savedTheme === 'system' ? (systemDark.matches ? 'dark' : 'light') : savedTheme
 const rootEl = document.documentElement
 rootEl.setAttribute('data-theme', resolvedTheme)
-if (!rootEl.hasAttribute('data-platform')) rootEl.setAttribute('data-platform', 'mac')
+if (!rootEl.hasAttribute('data-platform')) {
+  // 只有 preload 完全没跑成才走到这里：兜底不能一律写 mac——
+  // Windows 上会把整层平台几何（自绘标题栏/行高/选中语义）错配成 macOS，
+  // 而且因为"猜对了 macOS"，这个错在 mac 上永远看不出来。
+  rootEl.setAttribute('data-platform', /Windows/i.test(navigator.userAgent) ? 'win' : 'mac')
+}
 if (!rootEl.hasAttribute('data-accent')) {
   rootEl.setAttribute('data-accent', localStorage.getItem('app-accent') === 'brand' ? 'brand' : 'system')
 }

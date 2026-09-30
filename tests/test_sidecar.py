@@ -469,6 +469,65 @@ class TestEnvStatus:
                     proc.wait(timeout=10)
 
 
+class TestRealPythonResolution:
+    """冻结版解释器判定。Windows 的 ``which python3/python`` 会命中 Microsoft Store 的
+    「应用执行别名」占位程序——能解析到路径，真跑只会报 "Python was not found"。
+    首轮 Windows CI 的示例运行只收到 149 个字符，就是这个坑；判定逻辑必须能在本机被证伪。"""
+
+    def _fake_bin(self, tmp_path: Path) -> Path:
+        bindir = tmp_path / "bin"
+        bindir.mkdir()
+        stub = bindir / "python3"  # Store 占位：非 0 退出 + 一句提示
+        stub.write_text('#!/bin/sh\necho "Python 3 was not found" >&2\nexit 9009\n', encoding="utf-8")
+        stub.chmod(0o755)
+        real = bindir / "python"  # 真解释器（转发到本机 python）
+        real.write_text(f'#!/bin/sh\nexec "{sys.executable}" "$@"\n', encoding="utf-8")
+        real.chmod(0o755)
+        return bindir
+
+    def _patch_which(self, monkeypatch, bindir: Path) -> None:
+        """只伪造 which 的解析结果：被测的是"选中之后还要真跑一次"这条判定，
+        不是 stdlib 在假 win32 平台上的 PATH 语义（那在本机走的是 nt 分支，会直接炸）。"""
+        monkeypatch.setattr(
+            server.shutil,
+            "which",
+            lambda name: str(bindir / name) if (bindir / name).exists() else None,
+        )
+
+    def test_windows_skips_store_stub(self, tmp_path, monkeypatch):
+        bindir = self._fake_bin(tmp_path)
+        self._patch_which(monkeypatch, bindir)
+        monkeypatch.setattr(sys, "platform", "win32")
+        monkeypatch.delenv("PYTHON_EXECUTABLE", raising=False)
+        picked = server._resolve_frozen_python(tmp_path / ".venv" / "Scripts" / "python.exe")
+        assert picked == str(bindir / "python"), f"占位的 python3 必须被跳过，实际选了 {picked}"
+
+    def test_explicit_python_executable_wins_unprobed(self, tmp_path, monkeypatch):
+        # CI 冒烟靠把它指到不存在的路径来短路 venv 预热：显式指定就不该被"探测失败"改掉
+        bindir = self._fake_bin(tmp_path)
+        self._patch_which(monkeypatch, bindir)
+        monkeypatch.setattr(sys, "platform", "win32")
+        monkeypatch.setenv("PYTHON_EXECUTABLE", str(tmp_path / "no-such-python"))
+        assert server._resolve_frozen_python(tmp_path / "none") == str(tmp_path / "no-such-python")
+
+    def test_all_stub_machine_falls_back_without_using_itself(self, tmp_path, monkeypatch):
+        # 候选全是占位程序：退回第一个候选（运行链路会自己报错），绝不落到 sys.executable
+        bindir = self._fake_bin(tmp_path)
+        (bindir / "python").unlink()  # 只剩 python3 = Store 占位
+        self._patch_which(monkeypatch, bindir)
+        monkeypatch.setattr(sys, "platform", "win32")
+        monkeypatch.delenv("PYTHON_EXECUTABLE", raising=False)
+        assert server._resolve_frozen_python(tmp_path / "none") == str(bindir / "python3")
+
+    def test_non_windows_platform_does_not_pay_for_probing(self, tmp_path, monkeypatch):
+        # 非 Windows 没有这种替身：第一个候选直接采用，不为一次子进程开销买单
+        bindir = self._fake_bin(tmp_path)
+        self._patch_which(monkeypatch, bindir)
+        monkeypatch.setattr(sys, "platform", "darwin")
+        monkeypatch.delenv("PYTHON_EXECUTABLE", raising=False)
+        assert server._resolve_frozen_python(tmp_path / "none") == str(bindir / "python3")
+
+
 class TestCollectAssets:
     """资源面板列出的是工作区里的**用户资产**：受保护文件（示例脚本 / requirements.txt）
     与工作区账本 .manifest.json 不得混入——它们删不掉或属内部数据，列出来只会给出
