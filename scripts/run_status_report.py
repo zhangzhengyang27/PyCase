@@ -28,7 +28,7 @@ for p in (str(ROOT), str(SCRIPT_DIR)):
     if p not in sys.path:
         sys.path.insert(0, p)
 
-from app.json_examples import ExampleStore  # noqa: E402
+from app.contract_store import ContractStore  # noqa: E402
 from app.models import ExampleItem  # noqa: E402
 from app.run_status import BROKEN, EMPTY, MISSING_DEPS, RISKY, RUNNABLE, STATUS_LABELS  # noqa: E402
 
@@ -37,19 +37,10 @@ import regression_smoke as rs  # noqa: E402  复用分层抽样与实跑管线
 RUN_STATUS_ORDER = [RUNNABLE, MISSING_DEPS, EMPTY, BROKEN, RISKY]
 
 
-def collect_all(store: ExampleStore) -> list[ExampleItem]:
+def collect_all(store: ContractStore) -> list[ExampleItem]:
     """全部 JSON 示例条目（含空壳 __init__.py：它们正是 static 判定要暴露的对象）。"""
-    root = store.load()
-    items: list[ExampleItem] = []
-
-    def _walk(item: ExampleItem) -> None:
-        if not item.is_dir and item.json_id:
-            items.append(item)
-        for child in item.children:
-            _walk(child)
-
-    _walk(root)
-    return items
+    store.load()
+    return list(store.index.values())
 
 
 def cross_check(
@@ -157,7 +148,7 @@ def main() -> int:
     venv_py = ROOT / (".venv/Scripts/python.exe" if sys.platform == "win32" else ".venv/bin/python")
     python_exe = str(venv_py) if venv_py.exists() else sys.executable
 
-    store = ExampleStore(base_dir=ROOT)
+    store = ContractStore.for_base_dir(ROOT)
     items = collect_all(store)
     if not items:
         print("[run-status] 未加载到任何示例，跳过。")
@@ -176,11 +167,11 @@ def main() -> int:
 
     # 2) 抽样实跑校准（叶子、排除 __init__.py，与 regression_smoke 口径一致）
     leaves = [it for it in items if it.name != "__init__.py"]
-    sample = rs.stratified_sample(leaves, args.ratio, args.seed, args.limit)
+    sample = rs.stratified_sample(store, leaves, args.ratio, args.seed, args.limit)
     print(f"[run-status] 实跑抽样 {len(sample)} 条，解释器 {python_exe}")
     results = []
     for idx, item in enumerate(sample, 1):
-        result = rs.run_one(item, python_exe, args.timeout)
+        result = rs.run_one(store, item, python_exe, args.timeout)
         results.append(result)
         if idx % 20 == 0:
             print(f"  [{idx}/{len(sample)}] …")

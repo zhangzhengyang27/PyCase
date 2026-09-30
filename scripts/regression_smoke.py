@@ -42,7 +42,7 @@ for p in (str(ROOT), str(SIDECAR_DIR)):
     if p not in sys.path:
         sys.path.insert(0, p)
 
-from app.json_examples import ExampleStore  # noqa: E402
+from app.contract_store import ContractStore  # noqa: E402
 from app.models import ExampleItem  # noqa: E402
 
 import server  # noqa: E402
@@ -93,20 +93,15 @@ class _SamplePlan:
         return {item.json_id for item in self.picked if item.json_id}
 
 
-def collect_leaves() -> list[ExampleItem]:
-    """收集全部叶子示例（排除 __init__.py 与无 json_id 的节点）。"""
-    store = ExampleStore(base_dir=ROOT)
-    root = store.load()
-    leaves: list[ExampleItem] = []
+def collect_leaves() -> tuple[ContractStore, list[ExampleItem]]:
+    """建立契约 v2 索引并返回叶子示例（排除 __init__.py 与无 id 的节点）。
 
-    def _walk(item: ExampleItem) -> None:
-        if not item.is_dir and item.json_id and item.name != "__init__.py":
-            leaves.append(item)
-        for child in item.children:
-            _walk(child)
-
-    _walk(root)
-    return leaves
+    返回 store 一并给调用方：v2 的源码在真实文件里，按需经 store.get_code 读取。
+    """
+    store = ContractStore.for_base_dir(ROOT)
+    store.load()
+    leaves = [it for it in store.index.values() if it.name != "__init__.py"]
+    return store, leaves
 
 
 def needs_arguments(code: str) -> bool:
@@ -120,6 +115,7 @@ def needs_arguments(code: str) -> bool:
 
 
 def stratified_sample(
+    store: ContractStore,
     leaves: list[ExampleItem],
     ratio: float,
     seed: int,
@@ -149,12 +145,12 @@ def stratified_sample(
     import re
 
     for family, pattern in FAMILIES.items():
-        if any(_family_of(item) == family for item in plan.picked):
+        if any(_family_of(store, item) == family for item in plan.picked):
             continue
         candidates = [
             item
             for item in leaves
-            if item.json_id not in plan.ids() and re.search(pattern, item.code or "", re.MULTILINE)
+            if item.json_id not in plan.ids() and re.search(pattern, store.get_code(item), re.MULTILINE)
         ]
         if candidates:
             rng.shuffle(candidates)
@@ -166,11 +162,11 @@ def stratified_sample(
     return plan.picked
 
 
-def _family_of(item: ExampleItem) -> str | None:
+def _family_of(store: ContractStore, item: ExampleItem) -> str | None:
     import re
 
     for family, pattern in FAMILIES.items():
-        if re.search(pattern, item.code or "", re.MULTILINE):
+        if re.search(pattern, store.get_code(item), re.MULTILINE):
             return family
     return None
 
@@ -210,10 +206,10 @@ def resolve_python(override: str | None) -> str:
     return sys.executable
 
 
-def run_one(item: ExampleItem, python_exe: str, timeout: float) -> RunResult:
-    """真实运行单个示例并返回结果。"""
+def run_one(store: ContractStore, item: ExampleItem, python_exe: str, timeout: float) -> RunResult:
+    """真实运行单个示例并返回结果（源码经 store.get_code 按需读真实文件）。"""
     started = time.time()
-    code = item.code or ""
+    code = store.get_code(item)
     if needs_arguments(code):
         return RunResult(item.json_id or item.name, item.name, item.category, "needs_args", 0.0, "声明了必填参数")
 
@@ -320,19 +316,19 @@ def main() -> int:
         print("[regression] 未发现 topics/tools/projects 示例数据目录，跳过抽样回归。")
         return 0
 
-    leaves = collect_leaves()
+    store, leaves = collect_leaves()
     if not leaves:
-        print("[regression] ExampleStore 未加载到任何示例，跳过。")
+        print("[regression] 契约索引未加载到任何示例，跳过。")
         return 0
 
     ratio = 1.0 if args.all else args.ratio
-    sample = stratified_sample(leaves, ratio, args.seed, args.limit)
+    sample = stratified_sample(store, leaves, ratio, args.seed, args.limit)
     python_exe = resolve_python(args.python)
     print(f"[regression] 共 {len(leaves)} 个示例，本次抽样 {len(sample)} 个，解释器 {python_exe}")
 
     results: list[RunResult] = []
     for idx, item in enumerate(sample, 1):
-        result = run_one(item, python_exe, args.timeout)
+        result = run_one(store, item, python_exe, args.timeout)
         results.append(result)
         if idx % 10 == 0 or result.status not in {"pass", "needs_args"}:
             print(f"  [{idx}/{len(sample)}] {result.status:18s} {item.name}")

@@ -1712,7 +1712,7 @@ function runSmokeTest(): void {
             if (cards >= 100) break;
           }
           return { ms: Math.round(performance.now() - t0), cards };
-        })()`) ) as { ms: number; cards: number }
+        })()`)) as { ms: number; cards: number }
         const browse1 = await browseOf()
         const browse2 = await browseOf()
         const browse = browse1.cards >= 100 ? browse1 : browse2
@@ -1760,7 +1760,7 @@ function runSmokeTest(): void {
               truncated: consoles.some((el) => (el.textContent || '').includes('已自动截断')),
               done: !app.isRunning()
             };
-          })()`) ) as {
+          })()`)) as {
             ms?: number
             lines?: number
             chars?: number

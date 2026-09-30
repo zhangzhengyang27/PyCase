@@ -318,7 +318,7 @@ def _tree_to_dict(item: ExampleItem) -> dict[str, Any]:
     }
     if not item.is_dir:
         # 示例节点携带元数据；完整源码只在 examples 数组发一份——
-        # 1349 个示例的 code 重复序列化两份会让 list_examples 响应体翻倍
+        # 上千条示例的 code 重复序列化两份会让 list_examples 响应体翻倍
         node.update(_item_to_dict(item, include_code=False))
     for child in item.children:
         node["children"].append(_tree_to_dict(child))

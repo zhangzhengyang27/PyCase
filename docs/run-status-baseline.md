@@ -1,5 +1,7 @@
 # 可运行性基线报告
 
+> **存档**：可运行性统计快照（口径已由 app/run_status.py + 烘焙事实索引取代）。当前事实以 [docs/redesign-data-contract.md（§3 派生事实）与 tests/test_guard_*.py] 为准；本文件保留作历史记录，不再更新。
+
 > 由 `scripts/run_status_report.py` 生成：静态判定全量 + 抽样实跑校准。
 > 静态可运行率是「推定」（代码体检），实跑通过率是「真跑得通」的度量，两者互补。
 

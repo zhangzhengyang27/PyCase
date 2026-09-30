@@ -1,5 +1,7 @@
 # JSON 示例集数据源（全面改造）
 
+> **存档**：JSON 示例格式说明（描述的是 v1「内联 code + 缓存物化」形态）。当前事实以 [docs/redesign-data-contract.md] 为准；本文件保留作历史记录，不再更新。
+
 > 状态：**已全面落地**。应用现在以 JSON 为**唯一数据源**，不再扫描 `topics/`、`tools/`、`projects/` 目录。
 
 ## 1. 目标
@@ -8,7 +10,7 @@
 
 ## 2. 架构
 
-- **唯一数据源**：`app/json_examples.py` 中的 `ExampleStore`。
+- **唯一数据源（v1 时代）**：`ExampleStore`（其所在模块已于 M6-3 退役删除；当前数据源见数据契约文档）中的示例加载与检索。
   - `load()` 读取 `desktop-app/json_examples/*.json`，构建目录树（根 → 各集合根 `📦 集合名` → 示例）。
   - `search(query, root)` 在名称 / 说明 / 内联代码中检索。
   - `save_item(item, code)` 把编辑结果回写到对应 JSON 文件。

@@ -160,7 +160,6 @@
     "vue-tsc": "^3.3.11"
   },
   "dependencies": {
-    "element-plus": "^2.14.6",
     "lucide-vue-next": "^0.544.0",
     "monaco-editor": "^0.56.0",
     "vue": "^3.5.42"

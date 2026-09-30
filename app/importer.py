@@ -19,8 +19,8 @@ from pathlib import Path
 
 from .logger import get_logger
 
-# 合法 PyPI 包名（不含版本约束部分）；非法名（乱码/无效导入）在依赖合并前被丢弃
-VALID_PKG_RE = re.compile(r"^[A-Za-z0-9]([A-Za-z0-9._-]*[A-Za-z0-9])?$")
+# 合法 PyPI 包名：单一来源在 app/facts.py（依赖聚合与导入共用同一口径）
+from .facts import VALID_PKG_RE  # noqa: E402
 
 SKIP_DIRS = {"__pycache__", ".git", ".venv", "node_modules", ".mypy_cache", ".pytest_cache"}
 

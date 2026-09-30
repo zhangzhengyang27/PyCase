@@ -44,7 +44,7 @@ class QualityScorer:
             return report
 
         # 单次读盘 + 单次 ast.parse，六个子检查共享结果。
-        # （旧实现各子检查独立读盘/parse，1349 例首轮评分累计约 5000 次 parse）
+        # （旧实现各子检查独立读盘/parse，首轮全量评分累计约 5000 次 parse）
         content: str | None = None
         tree: ast.Module | None = None
         syntax_err: SyntaxError | None = None

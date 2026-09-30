@@ -25,7 +25,7 @@ export interface ExampleItem {
   run_status?: string
   /** HIGH 风险明细（仅高危条目携带） */
   risk_findings?: RiskFinding[]
-  /** 所属集合名（📦 前缀已剥离；内置库为集合文件 name 字段） */
+  /** 所属集合名（前缀已剥离；内置库为集合文件 name 字段） */
   collection?: string
   /** 是否属于用户集合（可删除；内置集合受保护） */
   user_collection?: boolean

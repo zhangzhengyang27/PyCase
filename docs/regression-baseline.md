@@ -1,5 +1,7 @@
 # 示例抽样回归报告
 
+> **存档**：抽样回归基线记录（做法仍在 scripts/regression_smoke.py，基线数字属历史快照）。当前事实以 [docs/redesign-data-contract.md（§3 派生事实）与 tests/test_guard_*.py] 为准；本文件保留作历史记录，不再更新。
+
 - 生成时间：2026-09-09 21:53:07
 - 抽样比例：0.1（seed=42），试跑 120 个
 - 解释器：/Users/xiaoye/Desktop/20260803/Python/desktop-app/.venv/bin/python

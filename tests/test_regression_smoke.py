@@ -17,6 +17,16 @@ from app.models import ExampleItem  # noqa: E402
 import regression_smoke as rs  # noqa: E402
 
 
+class _CodeStore:
+    """store 替身：抽样与运行函数只用到 get_code（v2 里源码在真实文件，测试用内存 code 顶替）。"""
+
+    def get_code(self, item: ExampleItem) -> str:
+        return item.code or ""
+
+
+STORE = _CodeStore()
+
+
 def _make_item(name: str, category: str = "topics", code: str = "print('x')\n", idx: int = 0) -> ExampleItem:
     return ExampleItem(
         name=name,
@@ -81,8 +91,8 @@ class TestNeedsArguments:
 class TestStratifiedSample:
     def test_deterministic_with_seed(self):
         leaves = [_make_item(f"a{i}.py", "topics", idx=i) for i in range(40)]
-        first = rs.stratified_sample(leaves, 0.1, 42)
-        second = rs.stratified_sample(leaves, 0.1, 42)
+        first = rs.stratified_sample(STORE, leaves, 0.1, 42)
+        second = rs.stratified_sample(STORE, leaves, 0.1, 42)
         assert [x.json_id for x in first] == [x.json_id for x in second]
 
     def test_every_nonempty_stratum_represented(self):
@@ -91,25 +101,25 @@ class TestStratifiedSample:
             + [_make_item(f"x{i}.py", "tools", idx=i) for i in range(3)]
             + [_make_item(f"p{i}.py", "projects", idx=i) for i in range(2)]
         )
-        picked = rs.stratified_sample(leaves, 0.1, 7)
+        picked = rs.stratified_sample(STORE, leaves, 0.1, 7)
         categories = {x.category for x in picked}
         assert {"topics", "tools", "projects"} <= categories
 
     def test_all_ratio_returns_everything(self):
         leaves = [_make_item(f"a{i}.py", idx=i) for i in range(10)]
-        picked = rs.stratified_sample(leaves, 1.0, 1)
+        picked = rs.stratified_sample(STORE, leaves, 1.0, 1)
         assert len(picked) == 10
 
     def test_family_booster_guarantees_coverage(self):
         # 99 个普通示例 + 1 个 pygame 示例；比例抽样很容易漏掉唯一的家族样本，补足逻辑必须捞回
         leaves = [_make_item(f"a{i}.py", idx=i) for i in range(99)]
         leaves.append(_make_item("game.py", code="import pygame\npygame.init()\n", idx=99))
-        picked = rs.stratified_sample(leaves, 0.05, 1)
+        picked = rs.stratified_sample(STORE, leaves, 0.05, 1)
         assert any("pygame" in (x.code or "") for x in picked)
 
     def test_limit_caps_size(self):
         leaves = [_make_item(f"a{i}.py", idx=i) for i in range(60)]
-        assert len(rs.stratified_sample(leaves, 1.0, 1, limit=5)) == 5
+        assert len(rs.stratified_sample(STORE, leaves, 1.0, 1, limit=5)) == 5
 
 
 # ---------------------------------------------------------------------------
