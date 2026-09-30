@@ -1434,24 +1434,41 @@ async def _handle_request(line: str) -> None:
         _error(req_id, -32603, f"内部错误: {e}")
 
 
+_MAX_LINE_BYTES = 128 * 1024 * 1024
+
+
 async def _stdin_reader() -> None:
-    """从 stdin 逐行读取请求并处理。"""
-    loop = asyncio.get_event_loop()
-    # 默认 limit=64KB：上传 base64 图片/文档会触发 LimitOverrunError 导致 sidecar 崩溃。
-    # 提高到 128MB，足以容纳单次上传的资源文件。
-    reader = asyncio.StreamReader(limit=128 * 1024 * 1024)
-    protocol = asyncio.StreamReaderProtocol(reader)
-    await loop.connect_read_pipe(lambda: protocol, sys.stdin)
+    """从 stdin 逐行读取请求并处理。
+
+    stdin 由一个读线程喂给事件循环，不用 ``loop.connect_read_pipe``：后者在 Windows 的
+    proactor 循环上依赖**重叠（overlapped）管道句柄**，而父进程（Electron / subprocess /
+    PyInstaller onefile 中继）给的都是普通匿名管道——Windows CI 上冻结产物发完
+    sidecar_ready 就再无响应、进程随即退出，正是这条路径抛在事件循环里。
+    线程 + ``call_soon_threadsafe`` 在三个平台语义一致。
+    """
+    loop = asyncio.get_running_loop()
+    queue: asyncio.Queue[bytes | None] = asyncio.Queue()
+
+    def pump() -> None:
+        try:
+            # 读二进制 stdin：解码留给主循环（与协议一致按 UTF-8），也避免文本层缓冲干扰
+            for line in sys.stdin.buffer:
+                loop.call_soon_threadsafe(queue.put_nowait, line)
+        except Exception as e:  # noqa: BLE001 - 读线程出问题时按 EOF 收尾，主循环据此退出
+            get_logger(__name__).error("stdin 读取线程异常: %s", e)
+        finally:
+            loop.call_soon_threadsafe(queue.put_nowait, None)
+
+    threading.Thread(target=pump, name="stdin-reader", daemon=True).start()
 
     while True:
-        try:
-            line = await reader.readline()
-        except (ValueError, asyncio.LimitOverrunError) as e:
-            # 单行超过 128MB 缓冲上限：丢弃该行并保持进程存活，而不是崩出事件循环
-            get_logger(__name__).error("请求行超出缓冲上限，已丢弃: %s", e)
-            continue
-        if not line:
+        line = await queue.get()
+        if not line:  # None 哨兵 = 父进程关闭了管道
             break
+        if len(line) > _MAX_LINE_BYTES:
+            # 单行超过上限（上传 base64 资源）：丢弃该行并保持进程存活，不拖垮整个 sidecar
+            get_logger(__name__).error("请求行超出上限（%d 字节），已丢弃", len(line))
+            continue
         try:
             text = line.decode("utf-8")
         except UnicodeDecodeError:

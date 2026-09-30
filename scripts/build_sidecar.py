@@ -80,8 +80,11 @@ def smoke(binary: Path) -> None:
 
     cwd 用仓库根：冻结模式下 APP_DIR = cwd，仓库根正好具备
     topics/tools/projects/json_examples 的布局，等价于打包后的 resources 目录。
+    stderr 落盘而不是丢弃：Windows CI 上「发完 sidecar_ready 就没响应」这类失败，
+    stderr 里的 traceback 是唯一现场，吞掉就只能盲猜。
     """
     data_dir = Path(tempfile.mkdtemp(prefix="sidecar-smoke-"))
+    err_log = data_dir / "sidecar-stderr.log"
     env = {
         **os.environ,
         "DESKTOP_APP_DATA_DIR": str(data_dir),
@@ -89,12 +92,13 @@ def smoke(binary: Path) -> None:
         "PYTHONIOENCODING": "utf-8",
         "PYTHONUNBUFFERED": "1",
     }
+    err_file = err_log.open("wb")
     proc = subprocess.Popen(
         [str(binary)],
         cwd=str(ROOT),
         stdin=subprocess.PIPE,
         stdout=subprocess.PIPE,
-        stderr=subprocess.DEVNULL,
+        stderr=err_file,
         text=True,
         encoding="utf-8",
         env=env,
@@ -113,15 +117,18 @@ def smoke(binary: Path) -> None:
             while time.monotonic() < deadline:
                 box: list[str] = []
                 got = _read_line(proc.stdout, box, timeout=deadline - time.monotonic())
-                if not got:
-                    break
+                if got is None:
+                    raise SystemExit(f"[sidecar] {method} 等待超时（120s 内没有该 id 的响应）")
+                if got == "":
+                    # stdout 被关闭 = sidecar 进程已经没了，报"超时"会把人带偏
+                    raise SystemExit(f"[sidecar] {method} 无响应：sidecar 已退出（退出码 {proc.poll()}）")
                 try:
                     msg = json.loads(got)
                 except json.JSONDecodeError:
                     continue
                 if msg.get("id") == req_id:
                     return msg
-            raise SystemExit(f"[sidecar] {method} 超时未响应")
+            raise SystemExit(f"[sidecar] {method} 等待超时")
 
         ping = call(1, "ping", {})
         if ping.get("result", {}).get("status") != "ok":
@@ -134,6 +141,13 @@ def smoke(binary: Path) -> None:
             raise SystemExit(f"[sidecar] list_examples 异常: total={total}（期望 {EXPECTED_EXAMPLES}）")
         print(f"[sidecar] list_examples ✓ total={total}")
         print("[sidecar] 冻结产物冒烟通过")
+    except SystemExit as exc:
+        # 失败即现场：退出码 + sidecar stderr 尾部（Windows 上的 traceback 只在这里看得见）
+        print(f"[sidecar] 冒烟失败：{exc}")
+        tail = err_log.read_text(encoding="utf-8", errors="replace").strip().splitlines()[-40:]
+        for line in tail:
+            print(f"[sidecar stderr] {line}")
+        raise
     finally:
         if proc.poll() is None:
             proc.terminate()
@@ -141,6 +155,7 @@ def smoke(binary: Path) -> None:
                 proc.wait(timeout=10)
             except subprocess.TimeoutExpired:
                 proc.kill()
+        err_file.close()
         shutil.rmtree(data_dir, ignore_errors=True)
 
 
