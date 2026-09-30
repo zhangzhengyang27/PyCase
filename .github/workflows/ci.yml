@@ -53,7 +53,11 @@ jobs:
         run: python scripts/sync_version.py --check
 
       # 覆盖率门禁（M6-1，审计 C11）：app/ + sidecar 行覆盖 ≥70% 起步
+      # 冷启微门禁（G1）在 CI 上放宽到 150ms：runner 共享 CPU + 冷页缓存的整组耗时约为本机 2 倍
+      # （实测最小 94.5ms vs 本机 43–46ms），严格预算 50ms 由本机门禁把关，这里只当数量级回归网
       - name: pytest（含覆盖率门禁）
+        env:
+          PYCASE_COLD_START_BUDGET_MS: '150'
         run: pytest tests/ -q --tb=short --cov-fail-under=70
 
   frontend:
@@ -131,8 +135,15 @@ jobs:
         run: npm ci
 
       # 无显示器的 runner 上用 xvfb 起 Electron（Linux 需要；macOS 保留以复用同一脚本）
+      # SMOKE_PERF_SCALE：runner 是无 GPU 的软件渲染虚拟机，绝对耗时是真实机器的 5–15 倍，
+      # 性能预算放宽 ×6 只当粗粒度回归网（严格预算由真实机器上的走查把关，见 src/main/index.ts）；
+      # SMOKE_RUN_ENV=system：全新 runner 的共享 venv 首次引导要装几十个包（分钟级），切系统
+      # Python 跑示例，走查不把时间耗在与输出链路无关的环境引导上（本机走查仍走共享 venv）
       - name: 冒烟自测
         working-directory: electron-prototype/electron
+        env:
+          SMOKE_PERF_SCALE: '6'
+          SMOKE_RUN_ENV: system
         run: npm run smoke
 
   # ---------------------------------------------------------------------------
@@ -202,9 +213,12 @@ jobs:
       - name: 打包产物自测（macOS：启动 .app 内的可执行文件跑走查探针）
         if: matrix.os == 'macos-latest'
         working-directory: electron-prototype/electron
+        env:
+          SMOKE_PERF_SCALE: '6'
+          SMOKE_RUN_ENV: system
         run: |
           set -euo pipefail
-          APP_BIN=$(find dist -maxdepth 4 -type f -path '*/Contents/MacOS/*' | head -1)
+          APP_BIN=$(find dist -type f -path '*/Contents/MacOS/*' | head -1)
           test -n "$APP_BIN" && test -x "$APP_BIN" || { echo "找不到打包后的可执行文件"; find dist -maxdepth 3 | head; exit 1; }
           SMOKE_TEST=1 "$APP_BIN"
 
@@ -212,6 +226,9 @@ jobs:
       - name: 分发产物（zip/dmg）+ 解包自测
         if: matrix.os == 'macos-latest'
         working-directory: electron-prototype/electron
+        env:
+          SMOKE_PERF_SCALE: '6'
+          SMOKE_RUN_ENV: system
         run: |
           set -euo pipefail
           npx electron-builder --mac zip dmg
@@ -219,14 +236,14 @@ jobs:
           test -n "$ZIP" || { echo "未产出 zip"; exit 1; }
           TMP=$(mktemp -d)
           ditto -x -k "$ZIP" "$TMP"
-          APP_BIN=$(find "$TMP" -maxdepth 4 -type f -path '*/Contents/MacOS/*' | head -1)
+          APP_BIN=$(find "$TMP" -type f -path '*/Contents/MacOS/*' | head -1)
           test -n "$APP_BIN" && test -x "$APP_BIN" || { echo "zip 解包后找不到可执行文件"; find "$TMP" -maxdepth 3 | head; exit 1; }
           SMOKE_TEST=1 "$APP_BIN"
           echo "[packaging] zip 解包自测通过: $ZIP"
           DMG=$(ls dist/*.dmg | head -1)
           if [ -n "$DMG" ]; then
             MP=$(hdiutil attach -nobrowse -readonly "$DMG" | tail -1 | awk '{print $NF}')
-            DMG_BIN=$(find "$MP" -maxdepth 4 -type f -path '*/Contents/MacOS/*' | head -1)
+            DMG_BIN=$(find "$MP" -type f -path '*/Contents/MacOS/*' | head -1)
             test -n "$DMG_BIN" && test -x "$DMG_BIN" || { echo "dmg 挂载后找不到可执行文件"; hdiutil detach "$MP" || true; exit 1; }
             SMOKE_TEST=1 "$DMG_BIN" || { hdiutil detach "$MP" || true; exit 1; }
             hdiutil detach "$MP"
@@ -235,6 +252,7 @@ jobs:
 
       # Windows 安装冒烟（§8 遗留：本机不可验证 → CI 真装真跑）：
       # NSIS 静默安装 → 跑安装后的 exe 走查探针 → 静默卸载
+      # 安装目录名随 productName（中文），不做硬编码假设：先探两个常见位置，再按名递归找
       - name: 安装包（NSIS）+ 安装后启动自测（Windows）
         if: matrix.os == 'windows-latest'
         shell: pwsh
@@ -245,12 +263,32 @@ jobs:
           if (-not $installer) { throw '未产出 NSIS 安装包' }
           Write-Host "[packaging] 静默安装 $($installer.FullName)"
           Start-Process -FilePath $installer.FullName -ArgumentList '/S' -Wait
-          $appExe = Join-Path $env:LOCALAPPDATA 'Programs\Python示例管理器\PyCase.exe'
-          if (-not (Test-Path $appExe)) { throw "安装后找不到可执行文件: $appExe" }
+          $progRoot = Join-Path $env:LOCALAPPDATA 'Programs'
+          $appExe = @(
+            (Join-Path $progRoot 'Python示例管理器\PyCase.exe'),
+            (Join-Path $progRoot 'PyCase\PyCase.exe')
+          ) | Where-Object { Test-Path $_ } | Select-Object -First 1
+          if (-not $appExe) {
+            $appExe = Get-ChildItem $progRoot -Recurse -Filter 'PyCase.exe' -ErrorAction SilentlyContinue |
+              Select-Object -First 1 -ExpandProperty FullName
+          }
+          if (-not $appExe) { throw "安装后找不到 PyCase.exe（已扫 $progRoot）" }
+          Write-Host "[packaging] 安装后应用: $appExe"
+          # 安装器可能自动拉起应用（runAfterFinish）：清掉游离实例，避免与冒烟实例抢 userData
+          Get-Process PyCase -ErrorAction SilentlyContinue | Stop-Process -Force
           Write-Host "[packaging] 启动安装后的应用跑冒烟"
           $env:SMOKE_TEST = '1'
-          & $appExe
-          if ($LASTEXITCODE -ne 0) { throw "安装后冒烟失败，退出码 $LASTEXITCODE" }
-          $uninstaller = Join-Path (Split-Path $appExe) 'Uninstall Python示例管理器.exe'
-          if (Test-Path $uninstaller) { Start-Process -FilePath $uninstaller -ArgumentList '/S' -Wait }
+          $env:SMOKE_PERF_SCALE = '6'
+          $env:SMOKE_RUN_ENV = 'system'
+          # PowerShell 不等待 GUI 程序（& $exe 会立刻返回、$LASTEXITCODE 为空）：必须
+          # Start-Process -Wait -PassThru 才拿得到退出码；stdout 落盘再回放，保住冒烟日志
+          $log = Join-Path $env:RUNNER_TEMP 'win-smoke.log'
+          $err = Join-Path $env:RUNNER_TEMP 'win-smoke.err.log'
+          $p = Start-Process -FilePath $appExe -Wait -PassThru -RedirectStandardOutput $log -RedirectStandardError $err
+          if (Test-Path $log) { Get-Content $log -Tail 80 | Write-Host }
+          if (Test-Path $err) { Get-Content $err -Tail 40 | Write-Host }
+          if ($p.ExitCode -ne 0) { throw "安装后冒烟失败，退出码 $($p.ExitCode)" }
+          $uninstaller = Get-ChildItem (Split-Path $appExe) -Filter 'Uninstall*.exe' -ErrorAction SilentlyContinue |
+            Select-Object -First 1 -ExpandProperty FullName
+          if ($uninstaller) { Start-Process -FilePath $uninstaller -ArgumentList '/S' -Wait }
           Write-Host '[packaging] Windows 安装冒烟通过'

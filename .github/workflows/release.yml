@@ -84,16 +84,21 @@ jobs:
         run: npx electron-builder --win nsis zip ${{ matrix.args }}
 
       # 发布前冒烟：从产物里真跑一次（macOS 解包 zip；Windows 跑 --dir 产物太慢，改为 NSIS 安装后跑）
+      # SMOKE_PERF_SCALE：runner 是无 GPU 的软件渲染虚拟机，性能预算放宽 ×6 当粗粒度回归网
       - name: 产物冒烟（macOS）
         if: matrix.target != 'win-x64'
         working-directory: electron-prototype/electron
+        env:
+          SMOKE_PERF_SCALE: '6'
+          SMOKE_RUN_ENV: system
         run: |
           set -euo pipefail
           ZIP=$(ls dist/*.zip | head -1)
           TMP=$(mktemp -d)
           ditto -x -k "$ZIP" "$TMP"
-          # 可执行名在 mac 上是 productName（中文），按结构找而不是按名字找
-          APP_BIN=$(find "$TMP" -maxdepth 4 -type f -path '*/Contents/MacOS/*' | head -1)
+          # 可执行名在 mac 上是 productName（中文），按结构找而不是按名字找（层级不设上限：
+          # 打包目录里 app 包外还有一层 mac-arm64/，写死深度会漏）
+          APP_BIN=$(find "$TMP" -type f -path '*/Contents/MacOS/*' | head -1)
           test -x "$APP_BIN" || { echo "zip 解包后找不到可执行文件"; find "$TMP" -maxdepth 3 | head; exit 1; }
           SMOKE_TEST=1 "$APP_BIN"
           echo "[release] ${{ matrix.target }} 产物冒烟通过"
@@ -106,13 +111,33 @@ jobs:
           $installer = Get-ChildItem dist/*setup*.exe | Select-Object -First 1
           if (-not $installer) { throw '未产出 NSIS 安装包' }
           Start-Process -FilePath $installer.FullName -ArgumentList '/S' -Wait
-          $appExe = Join-Path $env:LOCALAPPDATA 'Programs\Python示例管理器\PyCase.exe'
-          if (-not (Test-Path $appExe)) { throw "安装后找不到可执行文件: $appExe" }
+          $progRoot = Join-Path $env:LOCALAPPDATA 'Programs'
+          $appExe = @(
+            (Join-Path $progRoot 'Python示例管理器\PyCase.exe'),
+            (Join-Path $progRoot 'PyCase\PyCase.exe')
+          ) | Where-Object { Test-Path $_ } | Select-Object -First 1
+          if (-not $appExe) {
+            $appExe = Get-ChildItem $progRoot -Recurse -Filter 'PyCase.exe' -ErrorAction SilentlyContinue |
+              Select-Object -First 1 -ExpandProperty FullName
+          }
+          if (-not $appExe) { throw "安装后找不到 PyCase.exe（已扫 $progRoot）" }
+          Write-Host "[release] 安装后应用: $appExe"
+          # 安装器可能自动拉起应用（runAfterFinish）：清掉游离实例，避免与冒烟实例抢 userData
+          Get-Process PyCase -ErrorAction SilentlyContinue | Stop-Process -Force
           $env:SMOKE_TEST = '1'
-          & $appExe
-          if ($LASTEXITCODE -ne 0) { throw "安装后冒烟失败，退出码 $LASTEXITCODE" }
-          $uninstaller = Join-Path (Split-Path $appExe) 'Uninstall 示例管理器.exe'
-          if (Test-Path $uninstaller) { Start-Process -FilePath $uninstaller -ArgumentList '/S' -Wait }
+          $env:SMOKE_PERF_SCALE = '6'
+          $env:SMOKE_RUN_ENV = 'system'
+          # PowerShell 不等待 GUI 程序（& $exe 会立刻返回、$LASTEXITCODE 为空）：
+          # Start-Process -Wait -PassThru 才拿得到退出码；stdout 落盘再回放，保住冒烟日志
+          $log = Join-Path $env:RUNNER_TEMP 'win-smoke.log'
+          $err = Join-Path $env:RUNNER_TEMP 'win-smoke.err.log'
+          $p = Start-Process -FilePath $appExe -Wait -PassThru -RedirectStandardOutput $log -RedirectStandardError $err
+          if (Test-Path $log) { Get-Content $log -Tail 80 | Write-Host }
+          if (Test-Path $err) { Get-Content $err -Tail 40 | Write-Host }
+          if ($p.ExitCode -ne 0) { throw "安装后冒烟失败，退出码 $($p.ExitCode)" }
+          $uninstaller = Get-ChildItem (Split-Path $appExe) -Filter 'Uninstall*.exe' -ErrorAction SilentlyContinue |
+            Select-Object -First 1 -ExpandProperty FullName
+          if ($uninstaller) { Start-Process -FilePath $uninstaller -ArgumentList '/S' -Wait }
           Write-Host '[release] Windows 安装冒烟通过'
 
       # 上传到 GitHub Releases（用 runner 自带的 gh + GITHUB_TOKEN；不依赖第三方 action）

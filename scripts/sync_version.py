@@ -17,6 +17,11 @@ import re
 import sys
 from pathlib import Path
 
+# Windows 控制台默认 cp1252，本脚本的中文输出会 UnicodeEncodeError（CI 上真踩过）
+for _stream in (sys.stdout, sys.stderr):
+    if hasattr(_stream, "reconfigure"):
+        _stream.reconfigure(encoding="utf-8", errors="replace")
+
 ROOT = Path(__file__).resolve().parent.parent
 VERSION_FILE = ROOT / "VERSION"
 PACKAGE_JSON = ROOT / "electron-prototype" / "electron" / "package.json"

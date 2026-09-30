@@ -133,8 +133,11 @@ _env_state: dict[str, Any] = {
     "error": "",
     "log_path": str(_ENV_LOG),
 }
-# 运行解释器模式：'shared'（默认，共享 venv）或 'system'（用户显式选择「用系统 Python 继续」）
-_run_env_mode = "shared"
+# 运行解释器模式：'shared'（默认，共享 venv）或 'system'（用户显式选择「用系统 Python 继续」）。
+# PYCASE_RUN_ENV 可在启动时预置模式（走查/CI 用：全新机器上共享 venv 引导是分钟级、需网络，
+# 与走查要验的东西无关）；非法值忽略，退回默认 shared
+_boot_run_env = os.environ.get("PYCASE_RUN_ENV", "")
+_run_env_mode = _boot_run_env if _boot_run_env in ("shared", "system") else "shared"
 
 
 def _env_snapshot() -> dict[str, Any]:

@@ -386,6 +386,88 @@ class TestEnvStatus:
         server._env_state["error"] = ""
         server._run_env_mode = "shared"
 
+    def test_boot_env_presets_system_mode_without_provisioning(self, tmp_path):
+        """PYCASE_RUN_ENV=system：启动即系统解释器模式，且不建共享 venv（免白跑一遍引导）。
+
+        这是走查/CI 的真实用法（主进程把 SMOKE_RUN_ENV 透传成 sidecar 的启动环境）；
+        模式在模块导入期定下，只能真启动一个进程来验——同时验「预热线程跳过建 venv」，
+        否则新机器上会白装几十个包（分钟级）。
+        """
+        import subprocess
+        import threading
+        import time
+
+        data_dir = tmp_path / "data"
+        data_dir.mkdir()
+        env = dict(os.environ)
+        env["DESKTOP_APP_DATA_DIR"] = str(data_dir)
+        env["PYCASE_RUN_ENV"] = "system"
+        env["PYTHONUNBUFFERED"] = "1"
+        proc = subprocess.Popen(
+            [sys.executable, str(SIDECAR_DIR / "server.py")],
+            cwd=str(ROOT),
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
+            text=True,
+            encoding="utf-8",
+            env=env,
+        )
+
+        def read_line(timeout: float) -> str:
+            box: list[str] = []
+            t = threading.Thread(target=lambda: box.append(proc.stdout.readline()), daemon=True)
+            t.start()
+            t.join(timeout)
+            return box[0] if box and box[0] else ""
+
+        def call(req_id: int, method: str, params: dict, timeout: float = 30) -> dict:
+            assert proc.stdin is not None
+            proc.stdin.write(json.dumps({"jsonrpc": "2.0", "id": req_id, "method": method, "params": params}) + "\n")
+            proc.stdin.flush()
+            deadline = time.monotonic() + timeout
+            while time.monotonic() < deadline:
+                line = read_line(deadline - time.monotonic())
+                if not line:
+                    break
+                try:
+                    msg = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+                if msg.get("id") == req_id:
+                    return msg
+            raise AssertionError(f"{method} 超时未响应")
+
+        try:
+            deadline = time.monotonic() + 60
+            while time.monotonic() < deadline:
+                if "sidecar_ready" in read_line(deadline - time.monotonic()):
+                    break
+            else:
+                raise AssertionError("sidecar 未就绪")
+
+            req = 1
+            snap: dict = {}
+            while time.monotonic() < deadline:
+                snap = call(req, "env_status", {})["result"]
+                req += 1
+                if snap["phase"] == "ready":
+                    break
+                time.sleep(0.2)
+            assert snap["mode"] == "system", snap
+            # 预热线程看到 system 模式直接置 ready（shared 模式下这里会停在 preparing 数分钟）
+            assert snap["phase"] == "ready", snap
+            assert snap["python_version"], snap
+            assert not (data_dir / ".venv").exists(), "system 模式不应创建共享 venv"
+        finally:
+            if proc.poll() is None:
+                proc.terminate()
+                try:
+                    proc.wait(timeout=10)
+                except subprocess.TimeoutExpired:
+                    proc.kill()
+                    proc.wait(timeout=10)
+
 
 class TestCollectAssets:
     """资源面板列出的是工作区里的**用户资产**：受保护文件（示例脚本 / requirements.txt）

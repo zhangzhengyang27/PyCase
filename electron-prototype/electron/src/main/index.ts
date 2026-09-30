@@ -135,7 +135,9 @@ function spawnSidecar(): void {
         PYTHONIOENCODING: 'utf-8',
         // 仅打包模式注入可写数据根（venv/示例缓存/运行输出放 userData）：
         // 打包后 Resources 只读；开发模式保持仓库根 .venv 与缓存（README 约定的共享环境）
-        ...(IS_PACKAGED ? { DESKTOP_APP_DATA_DIR: app.getPath('userData') } : {})
+        ...(IS_PACKAGED ? { DESKTOP_APP_DATA_DIR: app.getPath('userData') } : {}),
+        // 走查/CI 上预置运行解释器模式（sidecar 启动即读，避免新机器上白跑一遍共享 venv 引导）
+        ...(process.env.SMOKE_RUN_ENV ? { PYCASE_RUN_ENV: process.env.SMOKE_RUN_ENV } : {})
       }
     })
   } catch (err) {
@@ -751,6 +753,13 @@ function runSmokeTest(): void {
       await waitFor(() => sidecarReady, 'sidecar ready')
       const ping = (await callSidecar('ping')) as { status?: string }
       if (!ping || ping.status !== 'ok') throw new Error('ping 返回异常')
+      // 全新机器上共享 venv 的首次引导要装几十个包（分钟级、需网络，且持锁期间所有运行排队）。
+      // 走查里跑代码的探针（输出洪峰）验的是输出链路，不是环境引导：CI 用 SMOKE_RUN_ENV=system
+      // 显式切到「系统 Python」模式（与首启页「用系统 Python 继续」同一个 RPC），本机不设则照常走共享 venv。
+      if (process.env.SMOKE_RUN_ENV) {
+        await callSidecar('set_run_env', { mode: process.env.SMOKE_RUN_ENV })
+        console.log(`[smoke] 运行解释器模式已置为 ${process.env.SMOKE_RUN_ENV}`)
+      }
       step = 'list_examples'
       const list = (await callSidecar('list_examples')) as { total?: number; tree?: { children?: unknown[] } }
       if (!list || !list.total || list.total < 100) throw new Error(`示例数量异常: ${list && list.total}`)
@@ -827,16 +836,19 @@ function runSmokeTest(): void {
         out.rootFs = px(getComputedStyle(root).fontSize);
         out.bodyFs = px(getComputedStyle(document.body).fontSize);
         out.fsBody = px(cs.getPropertyValue('--fs-body'));
-        // 8) 窗口控制：直接 IPC 往返（只测可逆的最大化/还原，不碰最小化与关闭）
+        // 8) 窗口控制：直接 IPC 往返（只测可逆的最大化/还原，不碰最小化与关闭）。
+        //    断言口径是「状态必须翻转再翻回」，不假设初值——CI runner 的虚拟显示器比默认窗口
+        //    还小，窗口一启动就可能被系统顶到工作区，macOS 把这种窗口报成 zoomed（isMaximized
+        //    为真），拿初值当断言会假红。返回值只记录不判：macOS 的 zoom 是动画，同步返回可能滞后。
         try {
           const before = await window.sidecar.win.isMaximized();
-          const toMax = await window.sidecar.win.toggleMaximize();
+          const ret1 = await window.sidecar.win.toggleMaximize();
           await sleep(400);
-          const afterEvents = await window.sidecar.win.isMaximized();
-          await window.sidecar.win.toggleMaximize();
+          const s1 = await window.sidecar.win.isMaximized();
+          const ret2 = await window.sidecar.win.toggleMaximize();
           await sleep(400);
-          const restored = await window.sidecar.win.isMaximized();
-          out.winCtl = { before, toMax, afterEvents, restored };
+          const s2 = await window.sidecar.win.isMaximized();
+          out.winCtl = { before, ret1, s1, ret2, s2 };
         } catch (e) {
           out.winCtl = { error: String(e) };
         }
@@ -846,13 +858,13 @@ function runSmokeTest(): void {
           const btns = document.querySelectorAll('.titlebar-win .caption-btn');
           out.captionClickable = btns.length;
           if (btns.length === 3) {
+            out.clickPre = await window.sidecar.win.isMaximized();
             btns[1].click(); // 最大化/还原
             await sleep(500);
-            const afterClick = await window.sidecar.win.isMaximized();
+            out.clickMid = await window.sidecar.win.isMaximized();
             btns[1].click();
             await sleep(500);
-            out.maximizedByClick = afterClick;
-            out.restoredByClick = await window.sidecar.win.isMaximized();
+            out.clickBack = await window.sidecar.win.isMaximized();
           }
         } catch (e) {
           out.captionCtl = { error: String(e) };
@@ -885,19 +897,22 @@ function runSmokeTest(): void {
         }
         const wc = s.winCtl as Record<string, unknown>
         if (wc.error) problems.push(`窗口控制 IPC: ${wc.error}`)
-        else if (wc.toMax !== true || wc.afterEvents !== true || wc.restored !== false) {
+        else if (wc.s1 === wc.before || wc.s2 !== wc.before) {
+          // 翻转再翻回：IPC 没接上 / toggle 不生效 / 状态写错，任一环断了都会红
           problems.push(`窗口控制往返异常: ${JSON.stringify(wc)}`)
         }
         if (!String(s.focusShadow).trim()) problems.push('焦点环令牌为空')
         if (s.rootFs !== 16) problems.push(`根字号 ${s.rootFs}px（rem 基准应为 16px）`)
         if (s.bodyFs !== s.fsBody) problems.push(`正文字号 ${s.bodyFs} != --fs-body ${s.fsBody}`)
         if (s.captionClickable !== 3) problems.push(`标题栏按钮缺失（${s.captionClickable} 个）`)
-        else if (s.maximizedByClick !== true || s.restoredByClick !== false) {
-          problems.push(`按钮点击链路异常: ${JSON.stringify({ m: s.maximizedByClick, r: s.restoredByClick })}`)
+        else if (s.clickMid === s.clickPre || s.clickBack !== s.clickPre) {
+          problems.push(`按钮点击链路异常: ${JSON.stringify({ pre: s.clickPre, mid: s.clickMid, back: s.clickBack })}`)
         }
         if (problems.length) throw new Error('壳走查失败: ' + problems.join('; '))
+        const wcv = (s.winCtl || {}) as Record<string, unknown>
         console.log(
-          `[smoke] 壳走查通过：${s.platform}/${s.theme}/${s.accent} 侧栏 ${s.sidebarW} 行高 ${s.rowH} 标题栏 ${s.headH} 状态栏 ${s.statusH} 选中底 ${s.selBg}`
+          `[smoke] 壳走查通过：${s.platform}/${s.theme}/${s.accent} 侧栏 ${s.sidebarW} 行高 ${s.rowH} 标题栏 ${s.headH} 状态栏 ${s.statusH} 选中底 ${s.selBg}` +
+            ` 窗口往返 ${wcv.before}→${wcv.s1}→${wcv.s2}`
         )
       }
       // 画廊/工具箱走查（A3）：在真实窗口里走一遍页面语言——图标来源、字重、状态圆点、分段控件
@@ -1684,12 +1699,24 @@ function runSmokeTest(): void {
       // M6-2 性能实测：冷启到可交互 / 长列表首屏 / 输出截断（数字写进 plan §7）
       step = '性能实测'
       {
+        // 环境系数：CI runner 是无 GPU 的软件渲染虚拟机，绝对耗时是真实机器的 5–15 倍
+        // （实测 Intel runner 首屏 11s vs 本机 0.6–0.9s）。系数只由显式环境变量给出，
+        // 本机走查恒为 1——严格预算（3000/1500ms）仍由真实机器上的走查把关；
+        // CI 上放大的预算只当粗粒度回归网，且超严格预算会另打一行 [perf][松] 供持续观察。
+        const perfScale = Math.max(1, Number(process.env.SMOKE_PERF_SCALE || 1) || 1)
+        const coldBudget = Math.round(3000 * perfScale)
+        const browseBudget = Math.round(1500 * perfScale)
+        const overStrict: string[] = []
+        const coldNote = perfScale > 1 ? `${coldBudget}ms=3000×${perfScale}` : `${coldBudget}ms`
+        const browseNote = perfScale > 1 ? `${browseBudget}ms=1500×${perfScale}` : `${browseBudget}ms`
+
         const cold = firstListRenderedAt - PROCESS_STARTED_AT
         const toSidecar = sidecarReadyAt - PROCESS_STARTED_AT
         const toFirstList = firstListRenderedAt - sidecarReadyAt
-        if (cold <= 0 || cold > 3000) {
-          throw new Error(`冷启到可交互 ${cold}ms 超预算 3000ms（sidecar ${toSidecar}ms + 首屏 ${toFirstList}ms）`)
+        if (cold <= 0 || cold > coldBudget) {
+          throw new Error(`冷启到可交互 ${cold}ms 超预算 ${coldNote}（sidecar ${toSidecar}ms + 首屏 ${toFirstList}ms）`)
         }
+        if (cold > 3000) overStrict.push(`冷启 ${cold}ms`)
 
         // 长列表：进浏览态 → 卡片落到 DOM 的耗时（含 120 张卡的首次渲染）；测两次取最小
         const browseOf = async () =>
@@ -1717,12 +1744,19 @@ function runSmokeTest(): void {
         const browse2 = await browseOf()
         const browse = browse1.cards >= 100 ? browse1 : browse2
         if (browse.cards < 100) throw new Error(`浏览态卡片数异常: ${JSON.stringify({ browse1, browse2 })}`)
-        if (browse.ms > 1500) throw new Error(`长列表首屏 ${browse.ms}ms 超预算 1500ms（${browse.cards} 张卡）`)
+        if (browse.ms > browseBudget)
+          throw new Error(`长列表首屏 ${browse.ms}ms 超预算 ${browseNote}（${browse.cards} 张卡）`)
+        if (browse.ms > 1500) overStrict.push(`长列表 ${browse.ms}ms`)
 
         console.log(
-          `[perf] 冷启到可交互 ${cold}ms（sidecar ${toSidecar}ms + 首屏 ${toFirstList}ms，预算 3000ms）· ` +
-            `长列表首屏 ${browse.ms}ms（${browse.cards} 张卡，预算 1500ms）`
+          `[perf] 冷启到可交互 ${cold}ms（sidecar ${toSidecar}ms + 首屏 ${toFirstList}ms，预算 ${coldNote}）· ` +
+            `长列表首屏 ${browse.ms}ms（${browse.cards} 张卡，预算 ${browseNote}）`
         )
+        if (overStrict.length) {
+          console.log(
+            `[perf][松] 超出真实机器严格预算：${overStrict.join('；')}（当前环境系数 ×${perfScale}，仅 CI 粗筛）`
+          )
+        }
 
         // 输出截断：6000 行洪峰 → 终端保留 ≤5000 行 + 明确截断提示，且整链路在预算内跑完
         const tmpFlood = fs.mkdtempSync(path.join(os.tmpdir(), 'smoke-flood-'))

@@ -25,6 +25,12 @@ import threading
 import time
 from pathlib import Path
 
+# Windows 控制台默认 cp1252，本脚本的中文输出会 UnicodeEncodeError（CI 上真踩过）；
+# 日志侧（GitHub Actions）按 UTF-8 解码，这里统一改 UTF-8 并对个别字符降级
+for _stream in (sys.stdout, sys.stderr):
+    if hasattr(_stream, "reconfigure"):
+        _stream.reconfigure(encoding="utf-8", errors="replace")
+
 ROOT = Path(__file__).resolve().parent.parent
 ELECTRON_DIR = ROOT / "electron-prototype" / "electron"
 SPEC = ELECTRON_DIR / "build-pyinstaller" / "sidecar.spec"
