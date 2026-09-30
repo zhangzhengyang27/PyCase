@@ -1,0 +1,2 @@
+# 纯格式化提交（git blame 时忽略；用法：git config blame.ignoreRevsFile .git-blame-ignore-revs）
+ac41abf5704aaa8a8c819a2d5f4b12d13f6e32c2  # style: 全仓 Prettier 格式化（M6-1）
