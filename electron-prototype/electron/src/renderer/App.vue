@@ -26,12 +26,15 @@ import {
 import { api } from './src/sidecar-client'
 import { createWindowControls, modKeyLabel } from './src/platform'
 import AlertBanner from './components/base/AlertBanner.vue'
+import AppModal from './components/base/AppModal.vue'
+import BaseButton from './components/base/BaseButton.vue'
 import { statusDotCls } from './src/utils'
 import { applyMonacoTheme } from './monaco'
 import { aiPanelOpen, aiSettingsOpen, initAIEvents, loadAISettings, openAISettings } from './src/store/ai'
 import { activeView, examples, filtered, galleryExamples, loading, toolboxItems, toolsTotal, type ViewKey } from './src/store/catalog'
 import { initRunEvents, runStatusText, selectedId } from './src/store/detail'
 import { closeHelp, dismissOnboarding, helpOpen, initEnvEvents, loadAppInfo, loadOnboarding, onboardingOpen, openHelp, openLog, retryEnvPrepare } from './src/store/env'
+import { confirmPrompt, resolveConfirm } from './src/store/detail'
 import { openImportWizard } from './src/store/import'
 import { loadAll } from './src/store/index'
 import GalleryView from './components/GalleryView.vue'
@@ -324,6 +327,17 @@ onBeforeUnmount(() => {
           </button>
         </AlertBanner>
       </div>
+
+      <!-- 应用内确认弹窗（A6 产品化：替换原生 confirm；未保存守卫与 AI 首次外发共用） -->
+      <AppModal v-if="confirmPrompt" :title="confirmPrompt.title" :max-width="440" @close="resolveConfirm(false)">
+        <p class="m-0 text-control text-ink-dim leading-[1.6]">{{ confirmPrompt.message }}</p>
+        <template #footer>
+          <BaseButton data-testid="confirm-cancel" @click="resolveConfirm(false)">取消</BaseButton>
+          <BaseButton variant="danger" data-testid="confirm-ok" @click="resolveConfirm(true)">
+            {{ confirmPrompt.confirmLabel }}
+          </BaseButton>
+        </template>
+      </AppModal>
 
       <main class="flex-1 min-h-0 min-w-0 flex bg-page">
         <GalleryView v-show="!selectedId && activeView === 'gallery'" class="animate-view-in" @reload="loadAll()" />

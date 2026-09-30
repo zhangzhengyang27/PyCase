@@ -954,7 +954,12 @@ function runSmokeTest(): void {
           }
         }
         // 4) 浏览态工具条高度 = --toolbar-h（平台几何）
+        // 进浏览态是异步渲染（视图切换 + 过渡），布局盒可能还没建立——先等它出现（最多 2s）再量，
+        // 否则会量到 0 并误报"工具条高 0"（2026-09-29 起偶发的走查竞态）
         const toolbarRow = seg ? seg.parentElement : null;
+        for (let i = 0; i < 20 && toolbarRow && toolbarRow.getBoundingClientRect().height === 0; i++) {
+          await sleep(100);
+        }
         out.chipRowH = toolbarRow ? Math.round(toolbarRow.getBoundingClientRect().height) : null;
         out.expectToolbarH = parseFloat(getComputedStyle(root).getPropertyValue('--toolbar-h'));
         // 保持在浏览态：主进程随后截图取证；复位交给后续 store 探针的 resetViewFilters

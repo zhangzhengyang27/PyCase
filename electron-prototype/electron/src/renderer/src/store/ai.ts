@@ -2,7 +2,7 @@
 import { reactive, ref } from 'vue'
 import { pushToast } from '../../toast'
 import { api } from '../sidecar-client'
-import { editor, selectedExample, selectedId } from './detail'
+import { editor, requestConfirm, selectedExample, selectedId } from './detail'
 
 // ===========================================================================
 // AI 代码解释（DeepSeek 流式；语义从旧 ai.ts 移植：设置弹窗 / 首次外发告知 /
@@ -84,14 +84,18 @@ export async function explainSelectedCode(): Promise<void> {
     openAISettings()
     return
   }
-  // 首次使用外发告知
+  // 首次使用外发告知（应用内弹窗；同意状态可在设置里复核与撤回）
   if (!aiSettings.acknowledged) {
-    const ok = window.confirm(
-      `代码解释功能会将选中的代码发送到 DeepSeek 服务器（${aiSettings.baseUrl}）进行处理。是否继续？`
+    requestConfirm(
+      `代码解释会把选中的代码发送到 ${aiSettings.baseUrl} 处理。同意后可在「设置 → 代码外发」里撤回。`,
+      () => {
+        aiSettings.acknowledged = true
+        void api.aiSetSettings({ acknowledged: true })
+        void explainSelectedCode()
+      },
+      { title: '把代码发送到外部服务？', confirmLabel: '同意并解释' }
     )
-    if (!ok) return
-    aiSettings.acknowledged = true
-    void api.aiSetSettings({ acknowledged: true })
+    return
   }
 
   const code = editor?.getSelectedText?.() || editor?.getValue() || ''

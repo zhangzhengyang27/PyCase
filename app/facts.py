@@ -18,6 +18,7 @@
 """
 
 import hashlib
+import re
 import json
 import time
 from pathlib import Path
@@ -30,6 +31,9 @@ SCHEMA_VERSION = 2
 # 旧烘焙文件随即失效（头部版本比对），不会把旧规则的结果当成事实用。
 FACTS_RULES_VERSION = 1
 FACTS_FILENAME = "facts.json"
+
+# 合法 PyPI 包名（剥离版本约束后）
+VALID_PKG_RE = re.compile(r"^[A-Za-z0-9]([A-Za-z0-9._-]*[A-Za-z0-9])?$")
 
 # 静态状态里"无需再过缺依赖维度"的终态（与 compute_run_status 的优先级一致）
 TERMINAL_STATIC = {BROKEN, EMPTY, UNKNOWN}
@@ -190,4 +194,54 @@ def fingerprint(data: dict[str, Any]) -> str:
     for key, entry in sorted(data.get("items", {}).items()):
         h.update(f"{key}:{entry.get('sha256', '')}".encode())
     return h.hexdigest()[:16]
+
+# ---------------------------------------------------------------------------
+# 依赖清单聚合口径（requirements.txt 汇总 / 缺依赖修复共用；不是 PyPI 包的直接剔除）
+# ---------------------------------------------------------------------------
+# 装不上的历史名（原名自退役的 scripts/gen_shared_requirements.py）（自退役的 scripts/gen_shared_requirements.py 原样继承，勿删）：
+# - pycrypto / typed-ast / pyqt5 / autotest：无 wheel 或源码编译必败，pip 报错即整份清单失败；
+# - c01 / c1104 / corner-widget / tencentyoutuyun / ternary-new：原仓库源码里的无效导入名，
+#   PyPI 上不存在（ternary-new 是科研绘图示例内嵌的本地模块，不是包）。
+EXCLUDED_PKGS = {
+    "pycrypto",
+    "typed-ast",
+    "pyqt5",
+    "autotest",
+    "c01",
+    "c1104",
+    "corner-widget",
+    "tencentyoutuyun",
+    "ternary-new",
+}
+
+def _norm_pkg(raw: str) -> str | None:
+    """规范化包名（PEP 503 小写去点），非法/带版本约束的输入返回 None。"""
+    name = raw.strip().split("==")[0].split(">=")[0].split("<=")[0].split("~=")[0].split(">")[0].split("<")[0]
+    name = name.split("[")[0].strip()
+    if not VALID_PKG_RE.match(name):
+        return None
+    return name.lower().replace("_", "-")
+
+
+def _local_module_names(root: Path) -> set[str]:
+    """示例树里能被 PYTHONPATH 解析的本地模块名（示例项目自己的包，不是 PyPI 包）。
+
+    - ``projects/movie-cat`` 这类多目录项目会 import 自己的 ``common`` / ``config``
+      （未必有 ``__init__.py``，靠 __main__ 目录在 sys.path 上解析）；
+    - ``examples_assets/.../ternary_new`` 是被示例源码内联引用的随仓库小库；
+    把它们写进 requirements.txt 会让 pip 报"找不到包"而拖垮整份清单。
+    """
+    names: set[str] = set()
+    for top in ("topics", "tools", "projects", "examples_assets"):
+        base = root / top
+        if not base.is_dir():
+            continue
+        for path in base.rglob("*"):
+            if path.is_dir():
+                if any(path.glob("*.py")) or (path / "__init__.py").is_file() or any(path.rglob("*.py")):
+                    names.add(path.name)
+            elif path.suffix == ".py":
+                names.add(path.stem)
+    return names
+
 

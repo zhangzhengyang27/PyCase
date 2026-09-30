@@ -50,6 +50,30 @@ export const argsLoading = ref(false)
 export const pendingBackfillTokens = ref<string[] | null>(null)
 /** 参数解析失败信息（非空时参数区显式报错并可重试，不再静默空参数区） */
 export const argsError = ref('')
+
+/**
+ * 应用内确认弹窗（替换原生 window.confirm；未保存改动守卫、AI 首次外发告知共用）。
+ * 原生 confirm 是系统模态：样式与应用割裂、自动化走查驱动不了、
+ * 也带不了"继续编辑/放弃修改"这类明确的按钮语义。
+ */
+export const confirmPrompt = ref<{ title: string; message: string; confirmLabel: string; action: (() => void) | null } | null>(null)
+
+/** 请求确认：用户点确认后执行 action（点取消什么都不做）。 */
+export function requestConfirm(message: string, action: () => void, options?: { title?: string; confirmLabel?: string }): void {
+  confirmPrompt.value = {
+    title: options?.title ?? '确认操作',
+    message,
+    confirmLabel: options?.confirmLabel ?? '继续',
+    action
+  }
+}
+
+/** 用户在确认弹窗上的选择：ok=true 执行挂起的动作。 */
+export function resolveConfirm(ok: boolean): void {
+  const pending = confirmPrompt.value
+  confirmPrompt.value = null
+  if (ok && pending?.action) pending.action()
+}
 /** 依赖安装进行中（详情页「安装依赖」按钮的 loading 态） */
 export const installingDeps = ref(false)
 
@@ -202,11 +226,16 @@ export function clearSurface(surface: OutputSurface): void {
 }
 
 /** 打开详情页：返回参数解析 Promise（卡片「运行」据此决定自动运行或引导填参） */
-export async function openDetail(id: string): Promise<ArgSpec[]> {
+export async function openDetail(id: string, skipGuard = false): Promise<ArgSpec[]> {
   const ex = examples.value.find((e) => e.id === id)
   if (!ex) return []
   // 未保存的编辑不得静默丢弃：切换到不同示例前需要确认
-  if (selectedId.value && selectedId.value !== id && isDirty.value && !window.confirm('当前示例有未保存的修改，丢弃并继续？')) {
+  if (!skipGuard && selectedId.value && selectedId.value !== id && isDirty.value) {
+    // 不在 openDetail 里同步询问：改为渲染层弹窗 + 用户确认后重放本次切换
+    requestConfirm('当前示例有未保存的修改，放弃并打开另一个示例？', () => void openDetail(id, true), {
+      title: '放弃未保存的修改？',
+      confirmLabel: '放弃修改'
+    })
     return []
   }
   if (selectedId.value !== id) {
@@ -281,8 +310,14 @@ export async function installDepsAndRerun(): Promise<void> {
   if (selectedId.value === id) runFromDetail()
 }
 
-export function closeDetail(): void {
-  if (isDirty.value && !window.confirm('当前示例有未保存的修改，丢弃并返回？')) return
+export function closeDetail(force = false): void {
+  if (!force && isDirty.value) {
+    requestConfirm('当前示例有未保存的修改，放弃并返回？', () => closeDetail(true), {
+      title: '放弃未保存的修改？',
+      confirmLabel: '放弃修改'
+    })
+    return
+  }
   selectedId.value = null
 }
 
@@ -477,6 +512,9 @@ export function detailTestHooks(): Record<string, unknown> {
     argsError: () => argsError.value,
     // 走查脚本用：直接写编辑器内容并走真实保存路径（含快照）
     closeDetail: () => closeDetail(),
+    confirmPrompt: () => confirmPrompt.value,
+    resolveConfirm: (ok: boolean) => resolveConfirm(ok),
+    requestConfirm: (message: string, action: () => void) => requestConfirm(message, action),
     setEditorValue: (code: string) => {
       if (!editor) return false
       editor.setValue(code)

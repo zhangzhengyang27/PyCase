@@ -11,7 +11,7 @@ import CommandPalette from '../CommandPalette.vue'
 import MonacoEditor from '../MonacoEditor.vue'
 import { assets } from '../../src/store/assets'
 import { examples, type VExample } from '../../src/store/catalog'
-import { currentArgs, currentRunId, isDirty, isRunning, originalCode, runStatusText, saveExample, saving, selectedId, surfaceState } from '../../src/store/detail'
+import { confirmPrompt, currentArgs, currentRunId, isDirty, isRunning, originalCode, resolveConfirm, runStatusText, saveExample, saving, selectedId, surfaceState } from '../../src/store/detail'
 import { getTestApi } from '../../src/store/index'
 import { runTimeout, favorites, runHistory } from '../../src/store/prefs'
 import { runnerArgsLine, runnerQuery, runnerSelectedId } from '../../src/store/runner'
@@ -442,18 +442,22 @@ describe('DetailPage', () => {
     expect(vi.mocked(window.sidecar.stopRun)).toHaveBeenCalledWith('r1')
   })
 
-  it('返回按钮调用 closeDetail；有未保存修改时受 confirm 守卫', async () => {
-    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false)
+  it('返回按钮调用 closeDetail；有未保存修改时弹应用内确认（不再是原生 confirm）', async () => {
     const w = mountDetail({ id: 't1' })
     isDirty.value = true
     await nextTick()
 
     await w.get('button[aria-label="返回画廊"]').trigger('click')
-    expect(confirmSpy).toHaveBeenCalled()
+    // 守卫挂起：不关闭，等待用户选择（弹窗由壳层渲染，组件测试只断言 store 态与动作语义）
+    expect(confirmPrompt.value).not.toBeNull()
     expect(selectedId.value).toBe('t1')
 
-    confirmSpy.mockReturnValue(true)
+    resolveConfirm(false) // 「取消」
+    await nextTick()
+    expect(selectedId.value).toBe('t1')
+
     await w.get('button[aria-label="返回画廊"]').trigger('click')
+    resolveConfirm(true) // 「放弃修改」
     await nextTick()
     expect(selectedId.value).toBe(null)
     expect(w.find('section').exists()).toBe(false)

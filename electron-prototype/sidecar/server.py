@@ -703,7 +703,7 @@ async def method_stop_run(req_id: Any, params: dict[str, Any]) -> None:
 
 def _example_packages(store: ContractStore, item: ExampleItem) -> list[str]:
     """该示例要装的包：清单 requirements ∪ 派生 deps 的包名映射（去重、排序、剔本地/黑名单）。"""
-    from app.facts_cli import EXCLUDED_PKGS, _local_module_names, _norm_pkg  # 复用聚合口径
+    from app.facts import EXCLUDED_PKGS, _local_module_names, _norm_pkg  # 聚合口径单一来源
     from app.importer import IMPORT_TO_PKG
 
     entry = store._entry_of(item)

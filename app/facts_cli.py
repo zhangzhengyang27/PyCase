@@ -17,11 +17,11 @@
 """
 
 import argparse
-import re
 import sys
 from pathlib import Path
 
 from . import facts as facts_mod
+from .facts import EXCLUDED_PKGS, _local_module_names, _norm_pkg
 from .contract_store import ContractStore
 from .importer import IMPORT_TO_PKG
 from .logger import configure_logging, get_logger
@@ -30,25 +30,6 @@ ROOT = Path(__file__).resolve().parent.parent
 BUILTIN_ROOT = ROOT / "json_examples"
 USER_ROOT = ROOT / "user_examples"
 REQUIREMENTS_OUT = ROOT / "requirements.txt"
-
-# 合法 PyPI 包名（剥离版本约束后）
-VALID_PKG_RE = re.compile(r"^[A-Za-z0-9]([A-Za-z0-9._-]*[A-Za-z0-9])?$")
-
-# 装不上的历史名（自退役的 scripts/gen_shared_requirements.py 原样继承，勿删）：
-# - pycrypto / typed-ast / pyqt5 / autotest：无 wheel 或源码编译必败，pip 报错即整份清单失败；
-# - c01 / c1104 / corner-widget / tencentyoutuyun / ternary-new：原仓库源码里的无效导入名，
-#   PyPI 上不存在（ternary-new 是科研绘图示例内嵌的本地模块，不是包）。
-EXCLUDED_PKGS = {
-    "pycrypto",
-    "typed-ast",
-    "pyqt5",
-    "autotest",
-    "c01",
-    "c1104",
-    "corner-widget",
-    "tencentyoutuyun",
-    "ternary-new",
-}
 
 _HEADER = """# 全项目共享依赖清单（自动生成，勿手改）：python -m app.facts_cli requirements
 # 模型：本项目是一个应用，json_examples 里的示例是它的模块；
@@ -65,37 +46,6 @@ def _store() -> ContractStore:
     )
     store.load()
     return store
-
-
-def _norm_pkg(raw: str) -> str | None:
-    """规范化包名（PEP 503 小写去点），非法/带版本约束的输入返回 None。"""
-    name = raw.strip().split("==")[0].split(">=")[0].split("<=")[0].split("~=")[0].split(">")[0].split("<")[0]
-    name = name.split("[")[0].strip()
-    if not VALID_PKG_RE.match(name):
-        return None
-    return name.lower().replace("_", "-")
-
-
-def _local_module_names(root: Path) -> set[str]:
-    """示例树里能被 PYTHONPATH 解析的本地模块名（示例项目自己的包，不是 PyPI 包）。
-
-    - ``projects/movie-cat`` 这类多目录项目会 import 自己的 ``common`` / ``config``
-      （未必有 ``__init__.py``，靠 __main__ 目录在 sys.path 上解析）；
-    - ``examples_assets/.../ternary_new`` 是被示例源码内联引用的随仓库小库；
-    把它们写进 requirements.txt 会让 pip 报"找不到包"而拖垮整份清单。
-    """
-    names: set[str] = set()
-    for top in ("topics", "tools", "projects", "examples_assets"):
-        base = root / top
-        if not base.is_dir():
-            continue
-        for path in base.rglob("*"):
-            if path.is_dir():
-                if any(path.glob("*.py")) or (path / "__init__.py").is_file() or any(path.rglob("*.py")):
-                    names.add(path.name)
-            elif path.suffix == ".py":
-                names.add(path.stem)
-    return names
 
 
 def collect_requirements(store: ContractStore) -> list[str]:
