@@ -65,7 +65,7 @@ node tests/test_diff.mjs
 cd electron-prototype/electron && npm test
 ```
 
-测试规模（v1.0.0 收口实测）：pytest **200**（行覆盖 ≥70% 入 CI）、Vitest **273**、mjs 纯函数 **8 份**、
+测试规模（v1.0.0 收口实测）：pytest **200**（行覆盖 77%，门禁 ≥70%）、Vitest **273**、mjs 纯函数 **7 份**、
 真实 Electron 走查（`npm run smoke`，含壳/画廊/详情/全局层/首启/资源/A6 产品化/性能段）
 与 E2E 全链路、双平台打包矩阵（CI）。
 

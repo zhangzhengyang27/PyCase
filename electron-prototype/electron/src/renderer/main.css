@@ -1,5 +1,5 @@
 /* Vue 渲染层样式入口：令牌层见 ./src/theme.css（v2 三层绑定） */
-@import './src/theme.css';
+@import "./src/theme.css";
 
 /* Vue 页面精简 reset（置于 base 层让工具类可覆盖） */
 @layer base {
@@ -151,7 +151,7 @@
     background: var(--bg-inset);
     color: var(--text-secondary);
   }
-  html[data-platform='win'] .chip-ic {
+  html[data-platform="win"] .chip-ic {
     background: var(--bg-card);
   }
 
@@ -190,22 +190,22 @@
   .seg > button:hover {
     color: var(--text-primary);
   }
-  html[data-platform='mac'] .seg > button[aria-pressed='true'] {
+  html[data-platform="mac"] .seg > button[aria-pressed="true"] {
     background: var(--bg-pressed);
     color: var(--text-primary);
   }
-  html[data-platform='win'] .seg {
+  html[data-platform="win"] .seg {
     border-color: transparent;
   }
-  html[data-platform='win'] .seg > button {
+  html[data-platform="win"] .seg > button {
     padding: 0 12px;
     font-size: var(--fs-body);
   }
-  html[data-platform='win'] .seg > button[aria-pressed='true'] {
+  html[data-platform="win"] .seg > button[aria-pressed="true"] {
     color: var(--accent-text);
   }
-  html[data-platform='win'] .seg > button[aria-pressed='true']::after {
-    content: '';
+  html[data-platform="win"] .seg > button[aria-pressed="true"]::after {
+    content: "";
     position: absolute;
     left: 8px;
     right: 8px;
@@ -263,15 +263,15 @@
   .tab:hover {
     color: var(--text-primary);
   }
-  html[data-platform='mac'] .tab[aria-selected='true'] {
+  html[data-platform="mac"] .tab[aria-selected="true"] {
     background: var(--bg-pressed);
     color: var(--text-primary);
   }
-  html[data-platform='win'] .tab[aria-selected='true'] {
+  html[data-platform="win"] .tab[aria-selected="true"] {
     color: var(--accent-text);
   }
-  html[data-platform='win'] .tab[aria-selected='true']::after {
-    content: '';
+  html[data-platform="win"] .tab[aria-selected="true"]::after {
+    content: "";
     position: absolute;
     left: 8px;
     right: 8px;
@@ -291,7 +291,7 @@
     inset: 0;
     background: rgba(0, 0, 0, 0.38);
   }
-  html[data-platform='win'] .scrim {
+  html[data-platform="win"] .scrim {
     background: rgba(0, 0, 0, 0.3);
   }
 
@@ -317,23 +317,23 @@
     min-width: 0;
   }
   .p-row:hover,
-  .p-row[data-hover='true'] {
+  .p-row[data-hover="true"] {
     background: var(--bg-hover);
   }
-  html[data-platform='mac'] .p-row[data-active='true'] {
+  html[data-platform="mac"] .p-row[data-active="true"] {
     background: var(--accent);
     color: var(--on-accent);
   }
-  html[data-platform='mac'] .p-row[data-active='true'] .r-name {
+  html[data-platform="mac"] .p-row[data-active="true"] .r-name {
     color: var(--on-accent);
   }
-  html[data-platform='win'] .p-row[data-active='true'] {
+  html[data-platform="win"] .p-row[data-active="true"] {
     background: var(--bg-subtle);
   }
-  html[data-platform='win'] .p-row[data-active='true'] .r-name {
+  html[data-platform="win"] .p-row[data-active="true"] .r-name {
     color: var(--text-primary);
   }
-  html[data-platform='win'] .p-row[data-active='true'] .r-mark {
+  html[data-platform="win"] .p-row[data-active="true"] .r-mark {
     color: var(--accent-text);
   }
   .p-row:focus-visible {
@@ -356,7 +356,7 @@
     flex: none;
     margin-top: 2px;
   }
-  html[data-platform='win'] .alertline {
+  html[data-platform="win"] .alertline {
     margin: 12px 0 6px;
     padding: 10px 12px;
     border: 1px solid var(--line-hairline);
@@ -372,13 +372,13 @@
     margin-top: 14px;
     width: 100%;
   }
-  html[data-platform='mac'] .d-actions {
+  html[data-platform="mac"] .d-actions {
     justify-content: flex-end;
   }
-  html[data-platform='win'] .d-actions {
+  html[data-platform="win"] .d-actions {
     justify-content: flex-start;
   }
-  html[data-platform='win'] .d-actions .d-primary {
+  html[data-platform="win"] .d-actions .d-primary {
     order: -1;
   }
 
@@ -462,10 +462,10 @@
     background: var(--bg-sidebar-fallback);
     border-right: 1px solid var(--line-hairline);
   }
-  html[data-platform='mac'] .sidebar {
+  html[data-platform="mac"] .sidebar {
     background: var(--bg-sidebar);
   }
-  html[data-platform='win'] .sidebar {
+  html[data-platform="win"] .sidebar {
     border-right-color: transparent;
   }
 
@@ -508,7 +508,7 @@
     background: var(--side-sel-bg);
     color: var(--side-sel-fg);
   }
-  html[data-platform='win'] .navitem.sel {
+  html[data-platform="win"] .navitem.sel {
     font-weight: 600;
   }
   .navitem:focus-visible {
@@ -557,7 +557,7 @@
     color: var(--text-tertiary);
     font-size: var(--fs-caption);
   }
-  html[data-platform='win'] .statusbar {
+  html[data-platform="win"] .statusbar {
     color: var(--text-secondary);
     background: var(--bg-chrome);
   }
@@ -567,7 +567,7 @@
     display: none;
     height: var(--titlebar-h);
   }
-  html[data-platform='win'] .titlebar-win {
+  html[data-platform="win"] .titlebar-win {
     display: flex;
   }
   .caption-btn {

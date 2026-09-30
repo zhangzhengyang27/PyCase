@@ -1,3 +1,48 @@
+# v1.0.0 发布说明（macOS arm64 + Windows x64）
+
+> 版本号单一来源 = 仓库根 `VERSION`；本版为 2026-09 大厂级重设计的收口版本
+> （双轨计划与逐批记录见 [docs/redesign-plan.md](redesign-plan.md)）。
+
+## 本版内容（相对 v0.10.0）
+
+- **视觉与交互重做**：token 三层绑定（平台 × 主题 × 强调色）、壳与导航、画廊/工具箱、运行器/详情、
+  全局层（⌘K 面板 / 高危确认 / 设置 / 导入向导）、帮助面板与全屏首启引导页；
+  组件层自研（移除 Element Plus），图标单一 Lucide，字重/对比度有门禁。
+- **数据契约 v2**：清单只存元数据 + 真实 `.py` 源码树；启动零写盘（索引就绪 ~45ms）；
+  派生事实构建期烘焙 + 启动哈希校验；依赖清单由 `app.facts_cli requirements` 汇总（生成器脚本退役）；
+  用户集合导入即 v2、旧集合启动自动迁移（含备份）。
+- **产品化补课**：失败恢复（崩溃横幅/参数报错可重试/缺依赖一键装包装跑）、可恢复编辑
+  （保存与还原前自动快照、版本页行级差异 + 一键还原）、存储治理（占用可视化、两档清理、旧版缓存回收）、
+  AI 外发同意可复核可撤回。
+- **工程门禁**：护栏 G1–G9 + 迁移演练 G8、ruff/mypy/覆盖率 ≥70%、ESLint/stylelint/Prettier、
+  tsc/vue-tsc（noImplicitAny）、真实窗口走查（`npm run smoke`，含性能段与故障注入）、E2E、
+  双平台打包矩阵（含 Windows 安装冒烟）。
+
+## 产物
+
+| 平台 | 产物 | 说明 |
+|---|---|---|
+| macOS arm64 | `dist/Python示例管理器-1.0.0-arm64-mac.zip` | 免安装压缩包（推荐分发格式） |
+| macOS arm64 | `dist/Python示例管理器-1.0.0-arm64.dmg` | 安装镜像 |
+| Windows x64 | `dist/Python示例管理器 Setup 1.0.0.exe`（NSIS）与 zip | 由 CI `packaging` 矩阵产出 |
+
+安装形态已验证：mac 侧 zip 解包运行与 dmg 挂载运行各跑一次完整走查（本机实测）；
+Windows 侧由 CI 执行 NSIS 静默安装 → 启动安装后的 exe 跑走查 → 卸载。
+
+## 签名与首次打开
+
+- macOS：ad-hoc 签名（`identity: null`），**未公证**。首次打开需右键「打开」或
+  `xattr -dr com.apple.quarantine "/Applications/Python示例管理器.app"`；
+  正式分发建议配置 Apple 开发者证书 + 公证（预算/账号待定）。
+- Windows：未签名（SmartScreen 会提示）；正式分发建议购买代码签名证书。
+
+## 首次运行
+
+首次启动显示首启引导页并后台创建共享 `.venv`（按 `requirements.txt` 装依赖，数分钟，进度可见、
+失败可重试或改用系统 Python）；示例运行在隔离工作区，运行产物与上传资源不会被清理动作误删。
+
+---
+
 # 打包与发布说明（macOS / Windows）
 
 > 历史版本说明（v0.5.0，macOS arm64）保留在本文件末尾的存档段；本条以下为 B3-4 起的

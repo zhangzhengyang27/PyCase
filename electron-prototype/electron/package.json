@@ -1,6 +1,6 @@
 {
   "name": "python-example-manager-electron",
-  "version": "0.10.0",
+  "version": "1.0.0",
   "description": "Electron 壳 + Python sidecar（vite + TypeScript + tailwindcss）",
   "main": "out/main/index.js",
   "scripts": {
