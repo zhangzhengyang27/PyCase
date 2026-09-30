@@ -47,7 +47,6 @@ function stateOf(phase: EnvStatus['phase']): StepState {
   return 'pending'
 }
 
-const failedPhase = computed(() => PHASES.find((p) => stateOf(p.key) === 'failed'))
 const ready = computed(() => env.value?.phase === 'ready')
 const busy = computed(() => !!env.value && env.value.phase !== 'ready' && env.value.phase !== 'failed')
 

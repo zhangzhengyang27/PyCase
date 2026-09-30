@@ -7,8 +7,7 @@ import { pushToast } from '../../toast'
 import * as FilterEngine from '../filter-engine'
 import { invalidateExampleVisual } from '../overview'
 import { api, type SidecarError } from '../sidecar-client'
-import { examples, loadExamples } from './catalog'
-import type { RunHistoryEntry } from '../types'
+import { examples } from './catalog'
 import type { VersionInfo } from '../../../../../shared/protocol'
 import { recordHistory, runHistory, runTimeout, setSkipHighRiskConfirm, skipHighRiskConfirm } from './prefs'
 import { assets, loadAssets } from './assets'
@@ -394,7 +393,7 @@ export function runFromDetail(): void {
 
 /** 卡片「运行」入口：必填参数缺失则留在表单引导填写，否则按表单值自动运行 */
 export async function runFromCard(id: string): Promise<void> {
-  const args = await openDetail(id)
+  await openDetail(id) // 参数落到 currentArgs；运行走 runFromDetail 的收集路径
   if (selectedId.value !== id) return // 等待期间用户已切换
   if (requiredArgsMissing.value) return
   runFromDetail()

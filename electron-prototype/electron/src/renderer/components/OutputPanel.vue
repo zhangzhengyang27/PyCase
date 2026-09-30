@@ -10,12 +10,6 @@ const props = defineProps<{ surface: OutputSurface }>()
 
 const viewer = ref<HTMLDivElement | null>(null)
 const state = computed(() => surfaceState(props.surface))
-const DOT_CLS: Record<string, string> = {
-  idle: 'bg-ink-faint',
-  running: 'bg-warn animate-pulse',
-  success: 'bg-ok',
-  error: 'bg-danger'
-}
 // 终端行：底/正文用 --text-console（跟随主题），系统提示降到 gutter 级，错误/成功保留语义色
 const LINE_CLS: Record<string, string> = {
   base: 'text-console',

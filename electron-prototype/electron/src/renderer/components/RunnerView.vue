@@ -5,7 +5,6 @@
 // 明确不做：编辑（去详情页）、参数表单、资源、AI。
 import { computed, ref, watch } from 'vue'
 import { FileCode2, Play, Square } from 'lucide-vue-next'
-import { splitArgs } from '../src/utils'
 import { isRunning, runStatusText } from '../src/store/detail'
 import {
   clearRunnerOutput,
@@ -14,7 +13,6 @@ import {
   runnerHits,
   runnerQuery,
   runnerRun,
-  runnerSelectedId,
   selectRunnerExample
 } from '../src/store/runner'
 import { stopRun } from '../src/store/detail'

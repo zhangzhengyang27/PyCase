@@ -87,8 +87,10 @@ watch(toolSearchQuery, (v) => {
 // ---------------------------------------------------------------------------
 // 主题谓词表（静态，构建一次）
 // ---------------------------------------------------------------------------
-const THEME_MATCHERS: Record<string, (e: ExampleItem) => boolean> = Object.fromEntries(
-  THEMES.map((t) => [t.key, t.filter as (e: ExampleItem) => boolean])
+// 谓词只读 theme_key（判定在服务端），因此按引擎侧的 ExampleLike 收窄类型——
+// 原先 cast 成 (e: ExampleItem) 需要调用方再 cast 回 any，等于把类型检查关掉
+const THEME_MATCHERS: Record<string, (e: FilterEngine.ExampleLike) => boolean> = Object.fromEntries(
+  THEMES.map((t) => [t.key, t.filter as (e: FilterEngine.ExampleLike) => boolean])
 )
 
 // ---------------------------------------------------------------------------

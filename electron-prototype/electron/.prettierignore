@@ -1,0 +1,8 @@
+# Prettier 从 cwd 找 ignore 文件，因此 electron 工程内也要有一份（根目录那份管仓库根）
+out/
+dist/
+sidecar-dist/
+node_modules/
+build-pyinstaller/work/
+*.tsbuildinfo
+package-lock.json

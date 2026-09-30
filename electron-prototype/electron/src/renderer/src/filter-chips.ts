@@ -2,7 +2,7 @@
 // 从 FilterQuery 快照生成可逐个移除的芯片列表，让「当前生效了哪些筛选」
 // 不必到侧栏 36 行里找高亮。标签映射导出供 BrowseToolbar 与测试共用。
 import { THEMES } from './themes'
-import { tagSectionLabel, PROJECTS_SECTION_META } from './overview'
+
 import type { FilterQuery } from './filter-engine'
 
 export type ChipKey = 'fav' | 'runStatus' | 'runnable' | 'theme' | 'quality' | 'tag' | 'tagsAny' | 'category' | 'q'

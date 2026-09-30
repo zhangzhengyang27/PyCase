@@ -115,7 +115,7 @@ export interface FilterContext {
   favorites?: Set<string>
   runStatus?: Map<string, string>
   /** 主题 key → 谓词（THEMES[].filter，由调用方注入，保持本模块零业务依赖） */
-  themeMatchers?: Record<string, (ex: any) => boolean>
+  themeMatchers?: Record<string, (ex: ExampleLike) => boolean>
   /** 示例 id → 最近一次运行时间戳 ms（排序用） */
   lastRunAt?: Map<string, number>
   /** 服务端代码检索命中 id（v2 列表不含 code，代码搜索由 sidecar 承接） */

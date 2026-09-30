@@ -32,7 +32,6 @@ import { selectedId, pendingHighRiskRun, isRunning, currentRunId, currentRunMeta
 import { importWizardOpen } from '../../src/store/import'
 import { getTestApi } from '../../src/store/index'
 import { runTimeout, skipHighRiskConfirm } from '../../src/store/prefs'
-import { storageReport } from '../../src/store/storage'
 import { toasts } from '../../toast'
 
 // ---------------------------------------------------------------------------

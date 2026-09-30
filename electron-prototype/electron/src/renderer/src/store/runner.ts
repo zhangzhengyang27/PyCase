@@ -45,7 +45,7 @@ export function clearRunnerOutput(): void {
 /** 历史重跑：等参数装载完成后回填记录参数再运行（ArgsForm 消费回填令牌） */
 export async function rerunEntry(entry: RunHistoryEntry): Promise<void> {
   if (isRunning.value) return
-  const argsSpecs = await openDetail(entry.id)
+  await openDetail(entry.id)
   if (selectedId.value !== entry.id) return
   pendingBackfillTokens.value = entry.args || []
   if (requiredArgsMissing.value && (entry.args || []).length === 0) return

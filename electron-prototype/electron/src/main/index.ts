@@ -182,7 +182,7 @@ function spawnSidecar(): void {
     }
     if (!isCurrent) return // 陈旧进程的退出事件：新进程已在运行
     // 应用退出阶段不重启
-    if ((app as any).isQuitting) return
+    if (appWithQuitFlag.isQuitting) return
     // 崩溃熔断：5 分钟内崩溃超 3 次则停止自动重启，避免崩溃循环
     const now = Date.now()
     sidecarCrashTimestamps.push(now)
@@ -199,7 +199,7 @@ function spawnSidecar(): void {
       `[sidecar] ${SIDECAR_RESTART_DELAY_MS}ms 后自动重启（本次窗口内崩溃 ${sidecarCrashTimestamps.length} 次）`
     )
     setTimeout(() => {
-      if (!sidecarProcess && !(app as any).isQuitting) spawnSidecar()
+      if (!sidecarProcess && !appWithQuitFlag.isQuitting) spawnSidecar()
     }, SIDECAR_RESTART_DELAY_MS)
   })
 
@@ -509,7 +509,7 @@ ipcMain.handle('ai:setSettings', async (_e, patch: Partial<AISettings>) => {
   const cur = ((await readStore('aiSettings')) as AISettings) || {}
   const next: AISettings = { ...cur }
   for (const k of AI_SETTINGS_FIELDS) {
-    if (k in patch) next[k] = patch[k] as any
+    if (k in patch) (next as Record<string, unknown>)[k] = (patch as Record<string, unknown>)[k]
   }
   // 空字符串 key 视为清除
   if (next.apiKey === '') delete next.apiKey
@@ -1619,7 +1619,7 @@ function runSmokeTest(): void {
               let wrote = false;
               for (let i = 0; i < 30 && !wrote; i++) {
                 await sleep(200);
-                wrote = app.setEditorValue('print(\"v2\")\\n');
+                wrote = app.setEditorValue('print("v2")\\n');
               }
               if (!wrote) return { fatal: '编辑器未就绪' };
               if (!app.isDirty()) return { fatal: '写值后未进入脏态' };
@@ -1903,16 +1903,18 @@ app.whenReady().then(() => {
     }
     // macOS 关窗后从 Dock 重开：窗口重建的同时恢复 sidecar
     // （此前只重建窗口，sidecar 若已退出则应用不可用）
-    if (!sidecarProcess && !(app as any).isQuitting) {
+    if (!sidecarProcess && !appWithQuitFlag.isQuitting) {
       spawnSidecar()
     }
   })
 })
 
-// isQuitting 此前只被读取从未赋值：退出阶段 sidecar 被 kill 后 close 事件
-// 仍走"崩溃"分支排定 2 秒后重启，可产生僵尸 sidecar；必须在退出起点置位
+// Electron 的 App 类型没有 isQuitting 字段，但退出阶段必须能读到它：
+// 此前只被读取从未赋值，退出时 sidecar 被 kill 后 close 事件仍走"崩溃"分支
+// 排定 2 秒后重启，可产生僵尸 sidecar
+const appWithQuitFlag = app as Electron.App & { isQuitting?: boolean }
 app.on('before-quit', () => {
-  ;(app as any).isQuitting = true
+  appWithQuitFlag.isQuitting = true
 })
 
 app.on('window-all-closed', () => {
