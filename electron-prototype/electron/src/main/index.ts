@@ -11,6 +11,11 @@ import { fileURLToPath } from 'node:url'
 // ---------------------------------------------------------------------------
 // 路径解析
 // ---------------------------------------------------------------------------
+// 性能预算（M6-2）计时锚点：模块加载即进程起点（早于 app ready / 建窗 / 拉起 sidecar）
+const PROCESS_STARTED_AT = Date.now()
+let sidecarReadyAt = 0
+let firstListRenderedAt = 0
+
 const IS_PACKAGED = app.isPackaged
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -230,6 +235,7 @@ function handleSidecarMessage(line: string): void {
     if (msg.method === 'sidecar_ready') {
       sidecarReady = true
       console.log('[sidecar] ready')
+      if (!sidecarReadyAt) sidecarReadyAt = Date.now()
       broadcast('sidecar:status', { ready: true })
       // 发送缓存的消息
       while (readyQueue.length > 0) {
@@ -758,6 +764,7 @@ function runSmokeTest(): void {
         )) as number
         return n > 100
       }, 'Vue 应用加载示例')
+      if (!firstListRenderedAt) firstListRenderedAt = Date.now()
       // 首启页在首次运行时是全屏遮罩，会盖住后续截图与点击：先收起（其自身的走查放到最后）
       await mainWindow!.webContents.executeJavaScript(
         'window.__app && window.__app.dismissOnboarding && window.__app.dismissOnboarding()'
@@ -1673,6 +1680,116 @@ function runSmokeTest(): void {
             (deps.skipped ? '缺依赖入口（库中无 missing_deps 示例，跳过）' : `缺依赖入口 ${deps.id}`) +
             ` · 版本页可打开`
         )
+      }
+      // M6-2 性能实测：冷启到可交互 / 长列表首屏 / 输出截断（数字写进 plan §7）
+      step = '性能实测'
+      {
+        const cold = firstListRenderedAt - PROCESS_STARTED_AT
+        const toSidecar = sidecarReadyAt - PROCESS_STARTED_AT
+        const toFirstList = firstListRenderedAt - sidecarReadyAt
+        if (cold <= 0 || cold > 3000) {
+          throw new Error(`冷启到可交互 ${cold}ms 超预算 3000ms（sidecar ${toSidecar}ms + 首屏 ${toFirstList}ms）`)
+        }
+
+        // 长列表：进浏览态 → 卡片落到 DOM 的耗时（含 120 张卡的首次渲染）；测两次取最小
+        const browseOf = async () =>
+          (await mainWindow!.webContents.executeJavaScript(`(async () => {
+          const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+          const app = window.__app;
+          app.resetViewFilters();
+          app.setView ? app.setView('gallery') : null;
+          const t0 = performance.now();
+          // 与画廊走查同一条真实路径：总览页「浏览全部」
+          const browseAll = Array.from(document.querySelectorAll('button')).find((b) =>
+            (b.textContent || '').includes('浏览全部')
+          );
+          if (!browseAll) return { ms: -1, cards: 0, fatal: '找不到「浏览全部」' };
+          browseAll.click();
+          let cards = 0;
+          for (let i = 0; i < 60; i++) {
+            await sleep(50);
+            cards = document.querySelectorAll('main [role="button"]').length;
+            if (cards >= 100) break;
+          }
+          return { ms: Math.round(performance.now() - t0), cards };
+        })()`) ) as { ms: number; cards: number }
+        const browse1 = await browseOf()
+        const browse2 = await browseOf()
+        const browse = browse1.cards >= 100 ? browse1 : browse2
+        if (browse.cards < 100) throw new Error(`浏览态卡片数异常: ${JSON.stringify({ browse1, browse2 })}`)
+        if (browse.ms > 1500) throw new Error(`长列表首屏 ${browse.ms}ms 超预算 1500ms（${browse.cards} 张卡）`)
+
+        console.log(
+          `[perf] 冷启到可交互 ${cold}ms（sidecar ${toSidecar}ms + 首屏 ${toFirstList}ms，预算 3000ms）· ` +
+            `长列表首屏 ${browse.ms}ms（${browse.cards} 张卡，预算 1500ms）`
+        )
+
+        // 输出截断：6000 行洪峰 → 终端保留 ≤5000 行 + 明确截断提示，且整链路在预算内跑完
+        const tmpFlood = fs.mkdtempSync(path.join(os.tmpdir(), 'smoke-flood-'))
+        const floodId = 'perf_flood.py'
+        try {
+          fs.writeFileSync(path.join(tmpFlood, floodId), 'for i in range(6000):\n    print(f"line {i}")\n', 'utf-8')
+          const imp = (await callSidecar('import_examples', { source_path: tmpFlood, name: 'smoke_flood' })) as {
+            imported: number
+          }
+          if (imp.imported !== 1) throw new Error(`洪峰前置导入失败: ${JSON.stringify(imp)}`)
+          const flood = (await mainWindow!.webContents.executeJavaScript(`(async () => {
+            const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+            const app = window.__app;
+            // 收到多少条 runOutput 通知（preload 侧计数）：与 store 里的行数对比可定位丢在哪一段
+            let received = 0;
+            window.sidecar.onRunOutput(() => { received++; });
+            await app.reload();
+            await sleep(400);
+            await app.openDetail('${floodId}');
+            await sleep(300);
+            if (app.selectedId() !== '${floodId}') return { fatal: '选中项不是洪峰示例: ' + String(app.selectedId()) };
+            const t0 = performance.now();
+            await app.runFromDetail();
+            for (let i = 0; i < 200 && app.isRunning(); i++) await sleep(100);
+            const text = app.outputText();
+            // 截断提示是面板按 state.truncated 渲染的独立节点，不在输出文本里——
+            // 断言要看用户可见的终端内容（DOM），不是拼接后的 store 文本
+            const consoles = Array.from(document.querySelectorAll('.console'));
+            return {
+              ms: Math.round(performance.now() - t0),
+              lines: app.outputLineCount(),
+              chars: text.length,
+              received,
+              stats: app.outputStats(),
+              truncated: consoles.some((el) => (el.textContent || '').includes('已自动截断')),
+              done: !app.isRunning()
+            };
+          })()`) ) as {
+            ms?: number
+            lines?: number
+            chars?: number
+            received?: number
+            stats?: Record<string, number | string | boolean>
+            truncated?: boolean
+            done?: boolean
+            fatal?: string
+          }
+          if (flood.fatal) throw new Error(`输出截断前置失败: ${flood.fatal}`)
+          if (!flood.done) throw new Error(`洪峰示例 20s 未跑完: ${JSON.stringify(flood)}`)
+          if (!flood.truncated || !(flood.stats?.detailTruncated as boolean)) {
+            throw new Error(`6000 行输出未触发截断提示: ${JSON.stringify(flood)}`)
+          }
+          if ((flood.lines as number) > 5001) throw new Error(`终端保留行数 ${flood.lines} 超过上限 5000`)
+          if ((flood.stats?.appended as number) !== (flood.received as number)) {
+            throw new Error(`输出丢行：收到 ${flood.received} 条但只追加 ${flood.stats?.appended} 条`)
+          }
+          console.log(
+            `[perf] 输出截断正常：6000 行洪峰 → 渲染层收到 ${flood.received} 条 / 终端保留 ${flood.lines} 行（上限 5000，截断提示已在 DOM），整链路 ${flood.ms}ms`
+          )
+        } finally {
+          try {
+            await callSidecar('delete_example', { id: floodId })
+          } catch {
+            /* 未导入成功或已删 */
+          }
+          fs.rmSync(tmpFlood, { recursive: true, force: true })
+        }
       }
       // 留 8s 让渲染进程完成 Monaco 初始化与列表渲染，捕获潜在 console error
       step = '渲染层错误观察窗'

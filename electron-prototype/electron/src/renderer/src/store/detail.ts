@@ -438,6 +438,7 @@ async function beginRun(id: string, args: string[], sink: OutputSurface = 'detai
     currentRunId.value = result.run_id || null
     appendOutput(`  run_id: ${currentRunId.value}\n`, 'system', sink)
     // 补放 run_id 回包前到达的早期输出
+    outputStats.replayed += _earlyOutputBuffer.length
     for (const line of _earlyOutputBuffer) surfaces[runSink.value].lines.push(line)
     _earlyOutputBuffer = []
   } catch (err) {
@@ -459,15 +460,23 @@ export async function stopRun(): Promise<void> {
   }
 }
 
+// 运行输出计数（诊断用，走查探针据此定位丢行环节）
+export const outputStats = { received: 0, buffered: 0, dropped: 0, appended: 0, replayed: 0 }
+
 export function initRunEvents(): void {
   api.on('runOutput', (data) => {
+    outputStats.received++
     if (data.run_id !== currentRunId.value) {
       // run_id 回包前的早期输出进缓冲，避免丢弃
       if (isRunning.value && currentRunId.value === null) {
+        outputStats.buffered++
         _earlyOutputBuffer.push({ text: data.text || '', cls: 'base' })
+      } else {
+        outputStats.dropped++
       }
       return
     }
+    outputStats.appended++
     const text = data.text || ''
     const cls: OutputLine['cls'] = text.startsWith('[系统]') || text.startsWith('[错误]') ? 'system' : 'base'
     appendOutput(text, cls, runSink.value)
@@ -536,6 +545,14 @@ export function detailTestHooks(): Record<string, unknown> {
     isRunning: () => isRunning.value,
     runStatusText: () => runStatusText.value,
     outputText: () => surfaces.detail.lines.map((l) => l.text).join(''),
+    outputLineCount: () => surfaces.detail.lines.length,
+    outputStats: () => ({
+      ...outputStats,
+      sink: runSink.value,
+      detailLines: surfaces.detail.lines.length,
+      runnerLines: surfaces.runner.lines.length,
+      detailTruncated: surfaces.detail.truncated
+    }),
     detailHistory: () => detailHistory.value
   }
 }
