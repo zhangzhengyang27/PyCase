@@ -1746,7 +1746,9 @@ function runSmokeTest(): void {
             if (app.selectedId() !== '${floodId}') return { fatal: '选中项不是洪峰示例: ' + String(app.selectedId()) };
             const t0 = performance.now();
             await app.runFromDetail();
-            for (let i = 0; i < 200 && app.isRunning(); i++) await sleep(100);
+            // 洪峰预算是"截断与不丢行"的验证，不是吞吐基准：打包态冷启动（venv 预热/首次解释器
+            // 拉起）会显著变慢，给 45s 余量；真挂死仍会被上面的 total timeout 兜住
+            for (let i = 0; i < 450 && app.isRunning(); i++) await sleep(100);
             const text = app.outputText();
             // 截断提示是面板按 state.truncated 渲染的独立节点，不在输出文本里——
             // 断言要看用户可见的终端内容（DOM），不是拼接后的 store 文本
@@ -1771,7 +1773,7 @@ function runSmokeTest(): void {
             fatal?: string
           }
           if (flood.fatal) throw new Error(`输出截断前置失败: ${flood.fatal}`)
-          if (!flood.done) throw new Error(`洪峰示例 20s 未跑完: ${JSON.stringify(flood)}`)
+          if (!flood.done) throw new Error(`洪峰示例 45s 未跑完: ${JSON.stringify(flood)}`)
           if (!flood.truncated || !(flood.stats?.detailTruncated as boolean)) {
             throw new Error(`6000 行输出未触发截断提示: ${JSON.stringify(flood)}`)
           }
