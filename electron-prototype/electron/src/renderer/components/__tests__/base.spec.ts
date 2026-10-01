@@ -511,3 +511,25 @@ describe('AppToast', () => {
     expect(toasts.value).toHaveLength(0)
   })
 })
+
+// ---------------------------------------------------------------------------
+// 表单控件可访问性（审计 P2）
+// ---------------------------------------------------------------------------
+describe('表单控件可访问性', () => {
+  it('BaseInput 错误文案经 aria-describedby 关联输入框（读屏能听到错在哪）', () => {
+    const w = mount(BaseInput, { props: { modelValue: '', id: 'api-key', error: 'Key 不能为空' } })
+    expect(w.get('input').attributes('aria-describedby')).toBe('api-key-error')
+    expect(w.get('p').attributes('id')).toBe('api-key-error')
+  })
+
+  it('BaseInput 未传 id 时自动生成稳定关联', () => {
+    const w = mount(BaseInput, { props: { modelValue: '', error: '必填' } })
+    expect(w.get('input').attributes('aria-describedby')).toBe(w.get('p').attributes('id'))
+  })
+
+  it('BaseSelect 支持 ariaLabel 作为可访问名（title 只是悬停提示）', () => {
+    const w = mount(BaseSelect, { props: { modelValue: 'a', title: '排序', ariaLabel: '排序方式' } })
+    expect(w.get('select').attributes('aria-label')).toBe('排序方式')
+    expect(w.get('select').attributes('title')).toBe('排序')
+  })
+})

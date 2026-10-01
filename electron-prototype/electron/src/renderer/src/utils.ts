@@ -96,6 +96,14 @@ export function runStatusTextCls(status: string | undefined): string {
   return status === 'risky' ? 'text-danger' : 'text-ink-mute'
 }
 
+/**
+ * 负面可运行性徽章口径（DetailPage / ExampleCard / ExampleListItem 三处同源收拢）：
+ * 只显示负面状态；runnable 是正向不占视觉，risky 由高危标记承担展示，避免重复。
+ */
+export function statusBadgeOf(status: string | undefined): string {
+  return status && status !== 'runnable' && status !== 'risky' ? status : ''
+}
+
 /** 卡片/详情页状态徽章的悬浮提示文案 */
 export function runStatusHint(status: string | undefined): string {
   switch (status) {

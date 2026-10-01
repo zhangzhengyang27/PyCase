@@ -166,3 +166,33 @@ describe('OnboardingView', () => {
     expect(win.find('.d-primary').exists()).toBe(true)
   })
 })
+
+// ---------------------------------------------------------------------------
+describe('HelpSheet 焦点圈定（审计 P2：手写模态不得把 Tab 放去背景层）', () => {
+  it('面板内末尾按 Tab 回绕到首个可聚焦元素', () => {
+    mount(HelpSheet, { attachTo: document.body })
+    const panel = document.body.querySelector('[role="dialog"][aria-label="帮助与快捷键"]') as HTMLElement
+    const focusables = panel.querySelectorAll<HTMLElement>(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    )
+    expect(focusables.length).toBeGreaterThan(0)
+    const last = focusables[focusables.length - 1]
+    last.focus()
+    expect(document.activeElement).toBe(last)
+
+    last.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true }))
+    expect(document.activeElement).toBe(focusables[0])
+  })
+
+  it('首个可聚焦元素上 Shift+Tab 回绕到末尾', () => {
+    mount(HelpSheet, { attachTo: document.body })
+    const panel = document.body.querySelector('[role="dialog"][aria-label="帮助与快捷键"]') as HTMLElement
+    const focusables = panel.querySelectorAll<HTMLElement>(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    )
+    const first = focusables[0]
+    first.focus()
+    first.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', shiftKey: true, bubbles: true, cancelable: true }))
+    expect(document.activeElement).toBe(focusables[focusables.length - 1])
+  })
+})

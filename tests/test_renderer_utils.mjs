@@ -116,3 +116,11 @@ console.assert(utils.escapeHtml('') === '', 'escapeHtml 空串')
 console.assert(utils.escapeHtml(null) === '', 'escapeHtml null 兜底')
 
 console.log('renderer-utils: 全部断言通过')
+
+// statusBadgeOf：负面徽章口径收拢（DetailPage/ExampleCard/ExampleListItem 三处同源，审计 P2）
+console.assert(utils.statusBadgeOf('missing_deps') === 'missing_deps', 'statusBadgeOf 缺依赖保留')
+console.assert(utils.statusBadgeOf('broken') === 'broken', 'statusBadgeOf 语法损坏保留')
+console.assert(utils.statusBadgeOf('empty') === 'empty', 'statusBadgeOf 空壳保留')
+console.assert(utils.statusBadgeOf('runnable') === '', 'statusBadgeOf runnable 让位正向展示')
+console.assert(utils.statusBadgeOf('risky') === '', 'statusBadgeOf risky 让位高危徽章')
+console.assert(utils.statusBadgeOf(undefined) === '', 'statusBadgeOf undefined 返回空')

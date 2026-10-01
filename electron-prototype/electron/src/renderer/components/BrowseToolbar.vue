@@ -132,7 +132,13 @@ function facetSuffix(has: boolean, n: number | undefined): string {
       </button>
 
       <!-- 主题：全部主题 + THEMES（与侧栏分区菜单可叠加，两者语义不同，不去重） -->
-      <BaseSelect :model-value="activeTheme" title="主题" data-testid="filter-theme" @update:model-value="setTheme">
+      <BaseSelect
+        :model-value="activeTheme"
+        title="主题"
+        aria-label="按主题筛选"
+        data-testid="filter-theme"
+        @update:model-value="setTheme"
+      >
         <option value="all">全部主题</option>
         <option v-for="t in THEMES" :key="t.key" :value="t.key">
           {{ t.label }}{{ facetSuffix(true, facetCounts.themeCounts.get(t.key)) }}
@@ -143,6 +149,7 @@ function facetSuffix(has: boolean, n: number | undefined): string {
       <BaseSelect
         :model-value="activeRunnable"
         title="可运行性"
+        aria-label="按可运行性筛选"
         data-testid="filter-runnable"
         @update:model-value="setRunnable"
       >
@@ -155,6 +162,7 @@ function facetSuffix(has: boolean, n: number | undefined): string {
       <BaseSelect
         :model-value="String(minQuality)"
         title="质量分"
+        aria-label="按质量分筛选"
         data-testid="filter-quality"
         @update:model-value="setQuality"
       >
@@ -167,6 +175,7 @@ function facetSuffix(has: boolean, n: number | undefined): string {
       <BaseSelect
         :model-value="activeRunStatus"
         title="运行状态"
+        aria-label="按运行状态筛选"
         data-testid="filter-run-status"
         @update:model-value="setRunStatus"
       >
@@ -180,7 +189,7 @@ function facetSuffix(has: boolean, n: number | undefined): string {
 
       <!-- 排序 + 密度：右推（不足则整体换行，自身恒一行高，不横向溢出） -->
       <div class="ml-auto flex items-center gap-2 shrink-0 h-[var(--toolbar-h)]">
-        <BaseSelect v-model="sortBy" title="排序" data-testid="filter-sort" class="app-no-drag">
+        <BaseSelect v-model="sortBy" title="排序" aria-label="排序方式" data-testid="filter-sort" class="app-no-drag">
           <option value="quality_desc">质量分优先</option>
           <option value="name">按名称</option>
           <option value="last_run">最近运行</option>

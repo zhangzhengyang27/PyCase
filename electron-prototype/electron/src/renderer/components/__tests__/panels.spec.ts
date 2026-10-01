@@ -999,3 +999,15 @@ describe('AssetsPanel', () => {
     expect(assets.value.map((a) => a.filename)).toEqual(['a.png'])
   })
 })
+
+// ---------------------------------------------------------------------------
+describe('AIExplainPanel 可访问性（审计 P2）', () => {
+  it('流式输出区 role=log + aria-live=polite，状态行 role=status（读屏能感知流式进度）', () => {
+    aiStatus.value = '正在生成解释…'
+    const w = track(mount(AIExplainPanel))
+    const log = w.get('[role="log"]')
+    expect(log.attributes('aria-live')).toBe('polite')
+    expect(log.text()).toContain(aiOutputText.value)
+    expect(w.get('[role="status"]').text()).toContain('正在生成解释…')
+  })
+})

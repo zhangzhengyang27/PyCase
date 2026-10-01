@@ -54,11 +54,39 @@ const envLine = computed(() => {
   return parts.join(' · ')
 })
 
+// 焦点圈定口径与 base.spec / overlays.spec 的测试查询一致（审计 P2）
+const FOCUSABLE = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+
 function onKey(e: KeyboardEvent): void {
   if (e.key === 'Escape') {
     e.stopPropagation()
     e.preventDefault()
     emit('close')
+    return
+  }
+  // Tab 圈定：手写模态此前会把焦点放去背景层（reka-ui 系弹窗由底座承担）
+  if (e.key === 'Tab') {
+    const panel = panelEl.value
+    if (!panel) return
+    const items = Array.from(panel.querySelectorAll<HTMLElement>(FOCUSABLE)).filter(
+      (el) => !el.hasAttribute('disabled')
+    )
+    if (items.length === 0) return
+    const first = items[0]
+    const last = items[items.length - 1]
+    const active = document.activeElement as HTMLElement | null
+    const inside = active !== null && panel.contains(active)
+    if (e.shiftKey) {
+      if (active === first || !inside) {
+        e.preventDefault()
+        last.focus()
+      }
+      return
+    }
+    if (active === last || !inside) {
+      e.preventDefault()
+      first.focus()
+    }
   }
 }
 

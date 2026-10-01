@@ -5,7 +5,14 @@
 import { computed } from 'vue'
 import { Play, Star } from 'lucide-vue-next'
 import { exampleIcon } from '../src/icons'
-import { qualityTextCls, runStatusDotCls, runStatusHint, runStatusLabel, runStatusTextCls } from '../src/utils'
+import {
+  qualityTextCls,
+  runStatusDotCls,
+  runStatusHint,
+  runStatusLabel,
+  runStatusTextCls,
+  statusBadgeOf
+} from '../src/utils'
 import { sectionIcon } from '../src/section-icons'
 import { sectionKeyOf } from '../src/overview'
 import type { VExample } from '../src/store/catalog'
@@ -19,12 +26,8 @@ const title = computed(() => {
 })
 // 图标与分区头同源（与 ExampleCard 一致）
 const icon = computed(() => sectionIcon(sectionKeyOf(props.ex)) ?? exampleIcon(props.ex))
-// 与 ExampleCard 同口径：只显示负面可运行性状态；risky 由高危标记承担展示
-const statusBadge = computed(() =>
-  props.ex.run_status && props.ex.run_status !== 'runnable' && props.ex.run_status !== 'risky'
-    ? props.ex.run_status
-    : ''
-)
+// 与 ExampleCard 同口径（utils.statusBadgeOf 同源收拢）：只显示负面状态，risky 由高危标记承担展示
+const statusBadge = computed(() => statusBadgeOf(props.ex.run_status))
 // 列表行的质量提示：仅低分（<80）显示，高分不打扰扫读
 const lowQuality = computed(() => (props.ex.quality_score ?? 0) < 80)
 
