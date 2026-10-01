@@ -14,7 +14,6 @@ import { app, type BrowserWindow } from 'electron'
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
-import { resolveDataDir } from '../../../shared/paths'
 
 /** 产品主进程暴露给走查索具的只读门面（禁止索具反向修改产品状态） */
 export interface SmokeContext {

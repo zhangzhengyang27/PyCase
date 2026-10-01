@@ -3,7 +3,6 @@
 import { app, BrowserWindow, ipcMain, dialog, Menu, shell, type MenuItemConstructorOptions } from 'electron'
 import { spawn, type ChildProcess } from 'node:child_process'
 import path from 'node:path'
-import os from 'node:os'
 import fs from 'node:fs'
 import { StringDecoder } from 'node:string_decoder'
 import { fileURLToPath } from 'node:url'

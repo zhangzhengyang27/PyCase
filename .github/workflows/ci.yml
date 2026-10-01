@@ -58,13 +58,12 @@ jobs:
           python -m app.facts_cli check
           python -m app.facts_cli requirements --check
 
-      # 依赖锁新鲜度：uv 重算与 requirements.lock.txt 逐字一致（漂移即红，重生成走人工审查）；
-      # venv_manager 引导安装优先读锁（全钉版本，首启装包可复现）
-      - name: 依赖锁文件新鲜度
-        run: |
-          python -m pip install uv
-          uv pip compile requirements.txt -o /tmp/req.lock.check --universal --header --strip-extras --quiet
-          diff requirements.lock.txt /tmp/req.lock.check
+      # 依赖锁一致性：锁必须覆盖清单全部直接依赖（名字级，PEP 503 归一化）。
+      # 不做字节级 diff：锁的职责是可复现（钉版本）而非追新，上游发新版不应打红 CI；
+      # 真正要挡的是「改了 requirements.txt 却忘了重新生成锁」。
+      # venv_manager 引导安装优先读锁（全钉版本，首启装包可复现）。
+      - name: 依赖锁一致性
+        run: python scripts/check_requirements_lock.py
 
       # 版本号单一来源：VERSION 与 package.json / pyproject / app/_version.py 必须一致
       - name: 版本一致性门禁
