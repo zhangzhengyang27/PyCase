@@ -5,6 +5,15 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  # Release 的发布前置门禁复用本文件（release.yml `uses: ./.github/workflows/ci.yml`）：
+  # v1.0.0 教训——release 与 CI 是两条互不感知的链，tag 打在 CI 全红的日子照样出包
+  workflow_call:
+
+# 同 ref 重复触发只保留一条：PR 新推送取消旧 run；main push 与 workflow_call
+# （Release 门禁）不取消——门禁结论必须完整落档
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 # 说明：示例运行依赖仓库根 .venv（按 requirements.txt 装齐，含 opencv/pygame 等重包），
 # CI 不重建该环境——Python job 只跑不依赖第三方库的单元测试与核心逻辑。
@@ -13,6 +22,7 @@ jobs:
   python:
     name: Python 单元测试
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
 
@@ -58,11 +68,16 @@ jobs:
       - name: pytest（含覆盖率门禁）
         env:
           PYCASE_COLD_START_BUDGET_MS: '150'
-        run: pytest tests/ -q --tb=short --cov-fail-under=70
+        # 覆盖率参数只活在 CI（pyproject 注释）：pytest-cov 不进共享 .venv
+        run: >
+          pytest tests/ -q --tb=short
+          --cov=app --cov=electron-prototype/sidecar --cov-report=term-missing:skip-covered
+          --cov-fail-under=70
 
   frontend:
     name: 类型检查与前端测试
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
 
@@ -106,6 +121,12 @@ jobs:
       - name: 渲染层 store 状态编排测试（真实 Vue 响应式 + IPC 桩）
         run: node tests/test_store.mjs
 
+      - name: 主题令牌 ↔ 组件类名一致性（审计 P1 回归网：line-hairline 整族漏映射的守卫）
+        run: node tests/test_theme_tokens.mjs
+
+      - name: shared/paths 数据根契约（openLog 双模式路径的单一来源）
+        run: node tests/test_shared_paths.mjs
+
       # Vue 组件渲染层：Vitest + jsdom，与 electron.vite.config.ts 共用 @vitejs/plugin-vue
       - name: Vue 组件渲染层测试
         working-directory: electron-prototype/electron
@@ -119,6 +140,7 @@ jobs:
     name: Electron smoke (macos)
     runs-on: macos-latest
     needs: frontend
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
 
@@ -156,6 +178,7 @@ jobs:
     name: Packaging (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     needs: frontend
+    timeout-minutes: 150
     strategy:
       fail-fast: false
       matrix:
