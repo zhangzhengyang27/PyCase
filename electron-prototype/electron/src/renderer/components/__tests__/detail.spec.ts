@@ -15,6 +15,7 @@ import {
   confirmPrompt,
   currentArgs,
   currentRunId,
+  editor,
   isDirty,
   isRunning,
   openDetail,
@@ -51,7 +52,16 @@ import { applyMonacoTheme } from '../../monaco'
 // getValue 读回——这样「注册进 store 的编辑器」与「组件持有的编辑器」是同一份内容，
 // saveExample / isDirty 这类依赖取值的断言才有意义。
 const h = vi.hoisted(() => {
-  const state = { value: '', listeners: [] as Array<() => void> }
+  const state = {
+    value: '',
+    listeners: [] as Array<() => void>,
+    selection: null as { isEmpty: () => boolean } | null,
+    selectedText: ''
+  }
+  // getValueInRange 桩只回放 state.selectedText：组件实现应把选区 range 交给 model 取值
+  const fakeModel = {
+    getValueInRange: vi.fn(() => state.selectedText)
+  }
   const fakeEditor = {
     getValue: vi.fn(() => state.value),
     setValue: vi.fn((v: string) => {
@@ -60,13 +70,15 @@ const h = vi.hoisted(() => {
     onDidChangeModelContent: vi.fn((cb: () => void) => {
       state.listeners.push(cb)
     }),
+    getSelection: vi.fn(() => state.selection),
+    getModel: vi.fn(() => fakeModel),
     dispose: vi.fn()
   }
   const create = vi.fn((_el: unknown, opts: Record<string, unknown>) => {
     state.value = typeof opts.value === 'string' ? opts.value : ''
     return fakeEditor
   })
-  return { state, fakeEditor, create }
+  return { state, fakeEditor, fakeModel, create }
 })
 
 vi.mock('../../monaco', () => ({
@@ -90,6 +102,9 @@ function resetMonaco(): void {
   h.fakeEditor.onDidChangeModelContent.mockImplementation((cb: () => void) => {
     h.state.listeners.push(cb)
   })
+  h.fakeEditor.getSelection.mockImplementation(() => h.state.selection)
+  h.fakeEditor.getModel.mockImplementation(() => h.fakeModel)
+  h.fakeModel.getValueInRange.mockImplementation(() => h.state.selectedText)
 }
 
 // ---------------------------------------------------------------------------
@@ -1085,6 +1100,24 @@ describe('MonacoEditor', () => {
     isDirty.value = true
     await saveExample()
     expect(vi.mocked(window.sidecar.saveExample)).toHaveBeenCalledWith('t1', 'print(1)\n')
+  })
+
+  it('注册的编辑器暴露 getSelectedText：有选区给选中文本，无/空选区给空串（AI「解释选中」不再静默降级全文）', () => {
+    originalCode.value = 'line1\nline2\n'
+    selectedId.value = 't1'
+    mountEditor()
+
+    // 有选区：range 交给 model 取值——ai store 的 getSelectedText?.() 由此拿到真选中文本
+    h.state.selection = { isEmpty: () => false }
+    h.state.selectedText = 'line2'
+    expect(editor?.getSelectedText?.()).toBe('line2')
+    expect(h.fakeModel.getValueInRange).toHaveBeenCalledWith(h.state.selection)
+
+    // 空选区 / 无选区：空串——ai store 走 || 全文兜底，语义不变
+    h.state.selection = { isEmpty: () => true }
+    expect(editor?.getSelectedText?.()).toBe('')
+    h.state.selection = null
+    expect(editor?.getSelectedText?.()).toBe('')
   })
 
   it('originalCode 为空时以占位代码创建', () => {

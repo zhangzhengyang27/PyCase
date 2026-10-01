@@ -37,7 +37,16 @@ onMounted(() => {
   editor.onDidChangeModelContent(() => {
     if (selectedId.value) onEditorContentChanged(editor!.getValue())
   })
-  registerEditor({ getValue: () => editor!.getValue(), setValue: (v: string) => editor!.setValue(v) })
+  registerEditor({
+    getValue: () => editor!.getValue(),
+    setValue: (v: string) => editor!.setValue(v),
+    // 选中文本给 AI「解释选中」用；无/空选区返回空串，调用方回退全文
+    getSelectedText: () => {
+      const selection = editor?.getSelection()
+      if (!selection || selection.isEmpty()) return ''
+      return editor?.getModel()?.getValueInRange(selection) ?? ''
+    }
+  })
 })
 
 // 切换示例：装载新代码（plain setValue，与旧行为一致）
