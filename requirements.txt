@@ -8,8 +8,6 @@ baidu-aip
 beautifulsoup4
 click
 colorama
-dotenv
-ffmpeg
 flask
 flask-apscheduler
 flask-debugtoolbar
@@ -23,7 +21,6 @@ matplotlib-venn
 meshio
 mysql-connector-python
 netcdf4
-nice
 numpy
 opencv-python
 openpyxl
@@ -36,6 +33,7 @@ pygmt
 pymysql
 pypdf
 python-docx
+python-dotenv
 python-pptx
 pytmx
 pyyaml
@@ -46,5 +44,4 @@ seaborn
 selenium
 sqlalchemy
 tornado
-vega
 wordcloud

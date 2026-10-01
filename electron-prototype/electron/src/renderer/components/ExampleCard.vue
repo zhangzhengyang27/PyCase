@@ -6,7 +6,14 @@
 import { computed } from 'vue'
 import { Play, Star } from 'lucide-vue-next'
 import { exampleIcon } from '../src/icons'
-import { qualityTextCls, runStatusDotCls, runStatusHint, runStatusLabel, runStatusTextCls } from '../src/utils'
+import {
+  qualityTextCls,
+  runStatusDotCls,
+  runStatusHint,
+  runStatusLabel,
+  runStatusTextCls,
+  statusBadgeOf
+} from '../src/utils'
 import { sectionIcon } from '../src/section-icons'
 import { sectionKeyOf } from '../src/overview'
 import type { VExample } from '../src/store/catalog'
@@ -22,13 +29,8 @@ const title = computed(() => {
 const icon = computed(() => sectionIcon(sectionKeyOf(props.ex)) ?? exampleIcon(props.ex))
 // 主标签：只展示第一个（样张卡片底部的依赖名位），避免整排截断标签的噪音
 const firstTag = computed(() => (props.ex.tags || [])[0] || '')
-// 可运行性状态：只显示负面状态（缺依赖/空壳/语法损坏）；runnable 正向不占视觉，
-// risky 由高危标记承担展示，避免同一问题两处重复
-const statusBadge = computed(() =>
-  props.ex.run_status && props.ex.run_status !== 'runnable' && props.ex.run_status !== 'risky'
-    ? props.ex.run_status
-    : ''
-)
+// 可运行性状态徽章口径收拢到 utils.statusBadgeOf（与列表行/详情页同源）
+const statusBadge = computed(() => statusBadgeOf(props.ex.run_status))
 
 // content-visibility：触底加载后 DOM 只增不减（可能上千张卡），屏外卡片跳过布局/绘制；
 // contain-intrinsic-size 的 auto 让渲染过的卡片记住真实高度，滚动条不跳动。
@@ -42,6 +44,7 @@ const enterDelay = computed(() => ({
 </script>
 
 <template>
+  <!-- .self 守卫：焦点在内嵌收藏/运行按钮上时按键只归按钮（原生激活），容器不再冒泡出 open -->
   <div
     :class="[CARD_CLS, selected ? 'card-sel' : '']"
     :style="enterDelay"
@@ -49,8 +52,8 @@ const enterDelay = computed(() => ({
     tabindex="0"
     :aria-label="`${title}（详情）`"
     @click="emit('open')"
-    @keydown.enter="emit('open')"
-    @keydown.space.prevent="emit('open')"
+    @keydown.enter.self="emit('open')"
+    @keydown.space.self.prevent="emit('open')"
   >
     <!-- 行 1：语义图标 chip + 标题 + 收藏 -->
     <div class="flex items-center gap-2.5 px-3 pt-3 pb-0">

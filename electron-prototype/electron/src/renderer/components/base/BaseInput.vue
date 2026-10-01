@@ -1,7 +1,7 @@
 <script setup lang="ts">
 // BaseInput：统一文本输入框（md 28 / lg 32）
 // 错误态（error 显示红框 + 下方错误文案）与密码可见性切换（showPassword）。
-import { computed, ref } from 'vue'
+import { computed, ref, useId } from 'vue'
 import { Eye, EyeOff } from 'lucide-vue-next'
 
 const props = withDefaults(
@@ -33,6 +33,15 @@ const props = withDefaults(
 )
 const emit = defineEmits<{ 'update:modelValue': [v: string] }>()
 
+// 外部透传的交互语义（role/aria-expanded/aria-controls…）必须落在 <input> 上，
+// 而不是根 div——combobox 等模式要求可访问关系挂在真正可聚焦的元素上（审计 P2）
+defineOptions({ inheritAttrs: false })
+
+// 错误文案关联（审计 P2）：读屏用户光有 aria-invalid 听不到「错在哪」，
+// 经 aria-describedby 把下方错误 <p> 挂到输入框上
+const autoId = useId()
+const errorId = computed(() => `${props.id || autoId}-error`)
+
 const passwordVisible = ref(false)
 const effectiveType = computed(() => {
   if (props.type !== 'password' || !props.showPassword) return props.type
@@ -53,6 +62,7 @@ const inputCls = computed(() => [
   <div class="w-full">
     <div class="relative">
       <input
+        v-bind="$attrs"
         :id="id"
         :value="modelValue"
         :type="effectiveType"
@@ -61,6 +71,7 @@ const inputCls = computed(() => [
         :title="title"
         :aria-label="ariaLabel"
         :aria-invalid="error ? 'true' : undefined"
+        :aria-describedby="error ? errorId : undefined"
         :spellcheck="spellcheck"
         :class="inputCls"
         @input="emit('update:modelValue', ($event.target as HTMLInputElement).value)"
@@ -75,6 +86,6 @@ const inputCls = computed(() => [
         <component :is="passwordVisible ? EyeOff : Eye" :size="13" />
       </button>
     </div>
-    <p v-if="error" class="m-0 mt-1 text-caption text-danger">{{ error }}</p>
+    <p v-if="error" :id="errorId" class="m-0 mt-1 text-caption text-danger">{{ error }}</p>
   </div>
 </template>

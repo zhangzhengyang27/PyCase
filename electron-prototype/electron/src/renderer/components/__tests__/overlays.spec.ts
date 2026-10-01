@@ -166,3 +166,45 @@ describe('OnboardingView', () => {
     expect(win.find('.d-primary').exists()).toBe(true)
   })
 })
+
+// ---------------------------------------------------------------------------
+describe('HelpSheet 焦点圈定（审计 P2：手写模态不得把 Tab 放去背景层）', () => {
+  it('面板内末尾按 Tab 回绕到首个可聚焦元素', () => {
+    mount(HelpSheet, { attachTo: document.body })
+    const panel = document.body.querySelector('[role="dialog"][aria-label="帮助与快捷键"]') as HTMLElement
+    const focusables = panel.querySelectorAll<HTMLElement>(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    )
+    expect(focusables.length).toBeGreaterThan(0)
+    const last = focusables[focusables.length - 1]
+    last.focus()
+    expect(document.activeElement).toBe(last)
+
+    last.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true }))
+    expect(document.activeElement).toBe(focusables[0])
+  })
+
+  it('首个可聚焦元素上 Shift+Tab 回绕到末尾', () => {
+    mount(HelpSheet, { attachTo: document.body })
+    const panel = document.body.querySelector('[role="dialog"][aria-label="帮助与快捷键"]') as HTMLElement
+    const focusables = panel.querySelectorAll<HTMLElement>(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    )
+    const first = focusables[0]
+    first.focus()
+    first.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', shiftKey: true, bubbles: true, cancelable: true }))
+    expect(document.activeElement).toBe(focusables[focusables.length - 1])
+  })
+})
+
+// ---------------------------------------------------------------------------
+describe('OnboardingView 弹层语义（审计 P2）', () => {
+  it('首启层带 role=dialog + aria-modal，初始焦点落在主操作「开始浏览」', async () => {
+    mount(OnboardingView, { attachTo: document.body })
+    const dlg = document.querySelector('[data-testid="onboarding"]')
+    expect(dlg?.getAttribute('role')).toBe('dialog')
+    expect(dlg?.getAttribute('aria-modal')).toBe('true')
+    expect(dlg?.getAttribute('aria-label')).toBe('首次启动引导')
+    expect(document.activeElement?.textContent).toContain('开始浏览')
+  })
+})

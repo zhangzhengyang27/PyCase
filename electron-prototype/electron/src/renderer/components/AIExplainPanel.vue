@@ -32,11 +32,15 @@ const BTN_CLS =
     <div
       class="px-3.5 py-1.5 text-caption border-b border-line-subtle shrink-0"
       :class="aiStatusError ? 'text-danger' : 'text-ink-mute'"
+      role="status"
     >
       {{ aiStatus }}
     </div>
+    <!-- role=log + aria-live：流式输出对读屏可感知（审计 P2） -->
     <div
       class="flex-1 overflow-auto px-3.5 py-3 text-body leading-[1.65] text-ink whitespace-pre-wrap break-words font-sans"
+      role="log"
+      aria-live="polite"
     >
       {{ aiOutputText }}
     </div>

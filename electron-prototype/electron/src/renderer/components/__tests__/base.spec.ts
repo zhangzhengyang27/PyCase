@@ -2,7 +2,7 @@
 // 这一层是 22 个组件里最「纯」的部分——只靠 props/emits/slots 通信，因此也是
 // 组件测试基建的第一块试金石：跑通即证明 @vitejs/plugin-vue + jsdom + test-utils 链路可用。
 import { describe, expect, it, afterEach, beforeEach, vi } from 'vitest'
-import { mount } from '@vue/test-utils'
+import { flushPromises, mount, type VueWrapper } from '@vue/test-utils'
 import { markRaw } from 'vue'
 
 import BaseButton from '../base/BaseButton.vue'
@@ -219,76 +219,95 @@ describe('BaseSelect', () => {
 })
 
 // ---------------------------------------------------------------------------
-// AppModal
+// AppModal（reka-ui Dialog 底座：Portal 内容经 Presence 异步挂载，
+// 挂载后必须 flush 才能在 body 上查到；拆壳要先 unmount 再清 body，
+// 否则 reka 的清理路径会踩到已被拔掉的节点）
 // ---------------------------------------------------------------------------
 describe('AppModal', () => {
-  function mountModal(props: Record<string, unknown> = {}, slots: Record<string, string> = {}) {
-    return mount(AppModal, {
-      props: { title: '标题', ...props },
-      slots,
-      attachTo: document.body
-    })
+  const mounted = new Set<VueWrapper>()
+  function track<T extends VueWrapper>(w: T): T {
+    mounted.add(w)
+    return w
   }
 
-  it('Teleport 到 body，渲染标题、role=dialog、aria-modal、aria-label', () => {
-    mountModal({}, { default: '内容' })
+  async function mountModal(props: Record<string, unknown> = {}, slots: Record<string, string> = {}) {
+    const w = track(
+      mount(AppModal, {
+        props: { title: '标题', ...props },
+        slots,
+        attachTo: document.body
+      })
+    )
+    await flushPromises()
+    return w
+  }
+
+  afterEach(() => {
+    for (const w of mounted) w.unmount()
+    mounted.clear()
+  })
+
+  it('Portal 到 body，渲染标题、role=dialog、aria-modal（标题经 aria-labelledby 关联）', async () => {
+    await mountModal({}, { default: '内容' })
     const dialog = document.body.querySelector('[role="dialog"]')!
     expect(dialog).toBeTruthy()
     expect(dialog.getAttribute('aria-modal')).toBe('true')
-    expect(dialog.getAttribute('aria-label')).toBe('标题')
-    expect(dialog.textContent).toContain('标题')
+    const labelId = dialog.getAttribute('aria-labelledby')!
+    expect(document.getElementById(labelId)!.textContent).toBe('标题')
     expect(dialog.textContent).toContain('内容')
   })
 
-  it('width 默认 440px 并可通过 prop 覆盖（写成 inline style）', () => {
-    mountModal()
+  it('width 默认 440px 并可通过 prop 覆盖（写成 inline style）', async () => {
+    const w1 = await mountModal()
     expect(document.body.querySelector('[role="dialog"]')!.getAttribute('style')).toContain('width: 440px')
+    w1.unmount()
+    mounted.delete(w1)
 
-    document.body.innerHTML = ''
-    mountModal({ width: '720px' })
+    await mountModal({ width: '720px' })
     expect(document.body.querySelector('[role="dialog"]')!.getAttribute('style')).toContain('width: 720px')
   })
 
   it('点击关闭按钮 emit close', async () => {
-    const w = mountModal()
+    const w = await mountModal()
     const closeBtn = document.body.querySelector('button[aria-label="关闭"]') as HTMLElement
     closeBtn.click()
     await w.vm.$nextTick()
     expect(w.emitted('close')).toHaveLength(1)
   })
 
-  it('Esc 关闭', async () => {
-    const w = mountModal()
-    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))
+  it('Esc 关闭（reka-ui 在 document 上接 Escape，真实路径 = 弹窗内按键冒泡到 document）', async () => {
+    const w = await mountModal()
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
     await w.vm.$nextTick()
     expect(w.emitted('close')).toHaveLength(1)
   })
 
-  it('点击遮罩自身（@click.self）关闭', async () => {
-    const w = mountModal()
+  it('点击遮罩关闭（reka-ui 口径：遮罩上的 pointerdown 属于 content 外点）', async () => {
+    const w = await mountModal()
     const backdrop = document.body.querySelector('.scrim') as HTMLElement
-    backdrop.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+    backdrop.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }))
     await w.vm.$nextTick()
     expect(w.emitted('close')).toHaveLength(1)
   })
 
-  it('仅当提供 footer 插槽时才渲染底栏', () => {
-    mountModal()
+  it('仅当提供 footer 插槽时才渲染底栏', async () => {
+    const w1 = await mountModal()
     expect(document.body.querySelector('.border-t')).toBeNull()
+    w1.unmount()
+    mounted.delete(w1)
 
-    document.body.innerHTML = ''
-    mountModal({}, { footer: '<button>确定</button>' })
+    await mountModal({}, { footer: '<button>确定</button>' })
     expect(document.body.querySelector('.border-t')).toBeTruthy()
   })
 
-  it('draggable=false 时头部不带拖拽光标类', () => {
-    mountModal({ draggable: false })
+  it('draggable=false 时头部不带拖拽光标类', async () => {
+    await mountModal({ draggable: false })
     const header = document.body.querySelector('[role="dialog"] > div')!
     expect(header.className).not.toContain('cursor-grab')
   })
 
   it('头部拖拽（pointerdown + pointermove）写入 translate 位移', async () => {
-    const w = mountModal({ draggable: true })
+    const w = await mountModal({ draggable: true })
     const dialog = document.body.querySelector('[role="dialog"]') as HTMLElement
     const header = dialog.firstElementChild as HTMLElement
 
@@ -303,7 +322,7 @@ describe('AppModal', () => {
   })
 
   it('点击头部内的按钮不触发拖拽（closest("button") 守卫）', async () => {
-    const w = mountModal({ draggable: true })
+    const w = await mountModal({ draggable: true })
     const dialog = document.body.querySelector('[role="dialog"]') as HTMLElement
     const closeBtn = dialog.querySelector('button') as HTMLElement
 
@@ -315,7 +334,7 @@ describe('AppModal', () => {
   })
 
   it('拖拽被钳制在视口内（不会把面板整个拖出屏幕）', async () => {
-    const w = mountModal({ draggable: true })
+    const w = await mountModal({ draggable: true })
     const dialog = document.body.querySelector('[role="dialog"]') as HTMLElement
     const header = dialog.firstElementChild as HTMLElement
 
@@ -490,5 +509,27 @@ describe('AppToast', () => {
     expect(toasts.value).toHaveLength(0)
     vi.advanceTimersByTime(8000)
     expect(toasts.value).toHaveLength(0)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// 表单控件可访问性（审计 P2）
+// ---------------------------------------------------------------------------
+describe('表单控件可访问性', () => {
+  it('BaseInput 错误文案经 aria-describedby 关联输入框（读屏能听到错在哪）', () => {
+    const w = mount(BaseInput, { props: { modelValue: '', id: 'api-key', error: 'Key 不能为空' } })
+    expect(w.get('input').attributes('aria-describedby')).toBe('api-key-error')
+    expect(w.get('p').attributes('id')).toBe('api-key-error')
+  })
+
+  it('BaseInput 未传 id 时自动生成稳定关联', () => {
+    const w = mount(BaseInput, { props: { modelValue: '', error: '必填' } })
+    expect(w.get('input').attributes('aria-describedby')).toBe(w.get('p').attributes('id'))
+  })
+
+  it('BaseSelect 支持 ariaLabel 作为可访问名（title 只是悬停提示）', () => {
+    const w = mount(BaseSelect, { props: { modelValue: 'a', title: '排序', ariaLabel: '排序方式' } })
+    expect(w.get('select').attributes('aria-label')).toBe('排序方式')
+    expect(w.get('select').attributes('title')).toBe('排序')
   })
 })

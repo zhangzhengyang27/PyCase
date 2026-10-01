@@ -1,26 +1,18 @@
 <script setup lang="ts">
-// GalleryView：画廊两级浏览——总览分区落地页（默认）↔ 下钻浏览态
-// 浏览态保留旧行为：FilterSidebar + 触底无限加载（galleryLimit 只增不减）；
-// 新增清单密度（viewMode）与筛选芯片结果条（BrowseToolbar）。
+// GalleryView：画廊单态视图（原「总览 ↔ 下钻」双态退役，统一为浏览态）
+// 结构：页头（GalleryHeader，常驻定位条）→ 结果条（BrowseToolbar，筛选维度收成工具栏下拉）
+//       → 网格/清单（响应式 auto-fill）。
+// 上一版的并排筛选栏与 <1100px 浮层已退役——筛选改由工具栏下拉承担（见 BrowseToolbar）。
+// 状态齐备：加载（骨架）/ 错误（横幅 + 重试）/ 库空 / 筛选无结果 / 有内容。
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { SearchX } from 'lucide-vue-next'
-import {
-  examples,
-  filtered,
-  galleryLimit,
-  galleryMode,
-  loadError,
-  loading,
-  shownGallery,
-  viewMode
-} from '../src/store/catalog'
+import { examples, filtered, galleryLimit, loadError, loading, shownGallery, viewMode } from '../src/store/catalog'
 import { openDetail, runFromCard } from '../src/store/detail'
 import { isFavorite, toggleFavorite } from '../src/store/prefs'
 import ExampleCard from './ExampleCard.vue'
 import ExampleListItem from './ExampleListItem.vue'
 import BrowseToolbar from './BrowseToolbar.vue'
-import GalleryOverview from './GalleryOverview.vue'
-import FilterSidebar from './FilterSidebar.vue'
+import GalleryHeader from './GalleryHeader.vue'
 import SkeletonCard from './base/SkeletonCard.vue'
 import AppEmpty from './base/AppEmpty.vue'
 import AlertBanner from './base/AlertBanner.vue'
@@ -28,8 +20,9 @@ import BaseButton from './base/BaseButton.vue'
 
 const emit = defineEmits<{ reload: [] }>()
 
+// minmax 由 300px 降到 260px：窄窗下也能落下一列，避免 auto-fill 找不到列而横向溢出
 const GRID_CLS =
-  'flex-1 overflow-y-auto min-h-0 p-4 grid grid-cols-[repeat(auto-fill,minmax(300px,1fr))] gap-4 content-start'
+  'flex-1 overflow-y-auto min-h-0 p-4 grid grid-cols-[repeat(auto-fill,minmax(260px,1fr))] gap-4 content-start'
 const LIST_CLS = 'flex-1 overflow-y-auto min-h-0'
 
 function onRun(id: string): void {
@@ -59,76 +52,58 @@ onBeforeUnmount(() => io?.disconnect())
 </script>
 
 <template>
-  <section class="flex-1 min-w-0 min-h-0 flex bg-page overflow-hidden">
-    <!-- 总览态：全宽分区落地页（侧栏仅在下钻浏览态出现） -->
-    <div v-show="galleryMode === 'overview'" class="flex-1 min-w-0 flex flex-col min-h-0 animate-view-in">
-      <div
-        v-if="loading && examples.length === 0"
-        class="flex-1 min-h-0 p-8 grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-4 content-start"
-      >
-        <SkeletonCard v-for="i in 8" :key="i" />
-      </div>
-      <div v-else-if="loadError" class="flex-1 flex flex-col items-center justify-center gap-3">
-        <AlertBanner :title="`加载失败: ${loadError}`" class="w-[420px]" />
-        <BaseButton variant="primary" @click="emit('reload')">重试</BaseButton>
-      </div>
-      <AppEmpty
-        v-else-if="examples.length === 0"
-        :icon="SearchX"
-        title="示例库为空"
-        description="检查 sidecar 与内置示例集合后重试"
-      />
-      <GalleryOverview v-else />
+  <section class="flex-1 min-w-0 min-h-0 flex flex-col bg-page overflow-hidden">
+    <!-- 页头：全宽定位条（统计 chip + 浏览全部 / 我的收藏），与旧总览页头同位置外观 -->
+    <GalleryHeader />
+
+    <!-- 结果条：筛选维度收成工具栏下拉（工具栏常驻，空态下仍是清筛选的入口） -->
+    <BrowseToolbar />
+
+    <!-- 状态：加载 / 错误 / 库空 / 筛选无结果 -->
+    <div v-if="loading && examples.length === 0" :class="GRID_CLS">
+      <SkeletonCard v-for="i in 8" :key="i" />
+    </div>
+    <div v-else-if="loadError" class="flex-1 flex flex-col items-center justify-center gap-3">
+      <AlertBanner :title="`加载失败: ${loadError}`" class="w-[420px]" />
+      <BaseButton variant="primary" @click="emit('reload')">重试</BaseButton>
+    </div>
+    <AppEmpty
+      v-else-if="examples.length === 0"
+      :icon="SearchX"
+      title="示例库为空"
+      description="检查 sidecar 与内置示例集合后重试"
+    />
+    <div v-else-if="filtered.length === 0" class="flex-1 flex items-center justify-center">
+      <AppEmpty :icon="SearchX" title="没有匹配的示例" description="调整筛选条件或搜索词试试" />
     </div>
 
-    <!-- 浏览态：侧栏 + 结果条 + 网格/清单 -->
-    <div v-show="galleryMode === 'browse'" class="flex-1 min-w-0 flex min-h-0 animate-view-in">
-      <FilterSidebar scope="gallery" />
-
-      <div class="flex-1 min-w-0 flex flex-col min-h-0">
-        <BrowseToolbar />
-
-        <!-- 状态：加载 / 错误 / 空态 -->
-        <div v-if="loading && examples.length === 0" :class="GRID_CLS">
-          <SkeletonCard v-for="i in 8" :key="i" />
-        </div>
-        <div v-else-if="loadError" class="flex-1 flex flex-col items-center justify-center gap-3">
-          <AlertBanner :title="`加载失败: ${loadError}`" class="w-[420px]" />
-          <BaseButton variant="primary" @click="emit('reload')">重试</BaseButton>
-        </div>
-        <div v-else-if="filtered.length === 0" class="flex-1 flex items-center justify-center">
-          <AppEmpty :icon="SearchX" title="没有匹配的示例" description="调整筛选条件或搜索词试试" />
-        </div>
-
-        <!-- 内容流：网格 / 清单 -->
-        <div v-else :class="viewMode === 'list' ? LIST_CLS : GRID_CLS">
-          <template v-if="viewMode === 'grid'">
-            <ExampleCard
-              v-for="(ex, i) in shownGallery"
-              :key="ex.id"
-              :ex="ex"
-              :enter-index="i"
-              :faved="isFavorite(ex.id)"
-              @open="openDetail(ex.id)"
-              @fav="toggleFavorite(ex.id)"
-              @run="onRun(ex.id)"
-            />
-          </template>
-          <template v-else>
-            <ExampleListItem
-              v-for="(ex, i) in shownGallery"
-              :key="ex.id"
-              :ex="ex"
-              :enter-index="i"
-              :faved="isFavorite(ex.id)"
-              @open="openDetail(ex.id)"
-              @fav="toggleFavorite(ex.id)"
-              @run="onRun(ex.id)"
-            />
-          </template>
-          <div ref="sentinelEl" class="col-span-full h-4" aria-hidden="true"></div>
-        </div>
-      </div>
+    <!-- 内容流：网格 / 清单 -->
+    <div v-else :class="viewMode === 'list' ? LIST_CLS : GRID_CLS">
+      <template v-if="viewMode === 'grid'">
+        <ExampleCard
+          v-for="(ex, i) in shownGallery"
+          :key="ex.id"
+          :ex="ex"
+          :enter-index="i"
+          :faved="isFavorite(ex.id)"
+          @open="openDetail(ex.id)"
+          @fav="toggleFavorite(ex.id)"
+          @run="onRun(ex.id)"
+        />
+      </template>
+      <template v-else>
+        <ExampleListItem
+          v-for="(ex, i) in shownGallery"
+          :key="ex.id"
+          :ex="ex"
+          :enter-index="i"
+          :faved="isFavorite(ex.id)"
+          @open="openDetail(ex.id)"
+          @fav="toggleFavorite(ex.id)"
+          @run="onRun(ex.id)"
+        />
+      </template>
+      <div ref="sentinelEl" class="col-span-full h-4" aria-hidden="true"></div>
     </div>
   </section>
 </template>

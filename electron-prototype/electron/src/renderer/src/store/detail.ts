@@ -8,7 +8,7 @@ import * as FilterEngine from '../filter-engine'
 import { invalidateExampleVisual } from '../overview'
 import { api, type SidecarError } from '../sidecar-client'
 import { examples } from './catalog'
-import type { VersionInfo } from '../../../../../shared/protocol'
+import type { ExampleDetail, VersionInfo } from '../../../../../shared/protocol'
 import { recordHistory, runHistory, runTimeout, setSkipHighRiskConfirm, skipHighRiskConfirm } from './prefs'
 import { assets, loadAssets } from './assets'
 
@@ -248,11 +248,19 @@ export async function openDetail(id: string, skipGuard = false): Promise<ArgSpec
   }
   if (selectedId.value !== id) {
     selectedId.value = id
-    originalCode.value = ex.code || ''
+    // 源码不在这里取：契约 v2 起列表项不含 code，只能按 id 单独拉（loadSourceCode）。
+    // 先置空而不是回落占位串——「请选择示例」占位只允许出现在未选中任何示例时。
+    originalCode.value = ''
     isDirty.value = false
     resetOutputSurface('detail')
     runStatusText.value = '就绪'
     assets.value = []
+    void loadSourceCode(id)
+  } else if (originalCode.value === '' && !isDirty.value) {
+    // 同一 id 重复打开（双击卡片 / Cmd+K 再次选中当前示例）：源码还没到位就补发一次，
+    // 覆盖「首次装载失败后重新打开可重试」与「在途时重复打开」两种情形。
+    // 有内容或有未保存编辑时一律不补发——否则 watch(originalCode) → setValue 会顶掉用户正在编辑的内容。
+    void loadSourceCode(id)
   }
   // 参数解析与资源列表并行；带序号防过期响应（旧版竞态的响应式等价物）
   const seq = ++_openDetailSeq
@@ -279,6 +287,51 @@ export async function openDetail(id: string, skipGuard = false): Promise<ArgSpec
   return argsPromise
 }
 let _openDetailSeq = 0
+// 源码装载的序号**独立于** _openDetailSeq：只在真正发起一次装载时才自增。
+// 若复用 openDetail 的共享序号，同一 id 重复打开（走不到切换分支、不会发起新装载）
+// 也会把序号推高，于是那唯一一次 getExample 的回包被自己的守卫判为过期而丢弃，
+// 源码永远停在空串——重复点击同一张卡片就会把代码块饿死成空白（与本次要修的缺陷同症状）。
+let _sourceSeq = 0
+/** 在途装载的目标 id：同一 id 的重复调用直接忽略，既不重复请求也不作废在途那一次。 */
+let _sourceInflightId: string | null = null
+
+/**
+ * 装载示例源码（详情页源码的唯一来源）。
+ *
+ * 契约 v2 起 `list_examples` 不再下发源码（1496 条只为元数据序列化），源码必须由
+ * `get_example` 按 id 单独读取。渲染层若继续从列表项取 `ex.code`，恒为空串 →
+ * Monaco 回落到「请选择示例」占位注释 → 用户看到的就是「代码块全空白」。
+ *
+ * 过期判定用本域自己的序号：快速切换示例时，先发后到的响应不得覆盖当前内容。
+ * 失败不静默：置空 + toast，让用户看到「加载失败」而不是「这个示例是空的」。
+ */
+async function loadSourceCode(id: string): Promise<void> {
+  if (_sourceInflightId === id) return
+  const seq = ++_sourceSeq
+  _sourceInflightId = id
+  try {
+    const detail: Partial<ExampleDetail> | null = await api.getExample(id)
+    if (seq !== _sourceSeq || selectedId.value !== id) return
+    // 在途期间用户已在编辑器里敲过字（isDirty 为真）：跳过写入，保住用户输入——
+    // 否则 watch(originalCode) → setValue 会把刚敲的内容整段覆盖掉。
+    // 代价（已评估可接受）：这种情况下源码永不落地，originalCode 停在 ''、isDirty 保持 true。
+    // 保存链路不受影响（saveExample 写的是编辑器当前内容）；要重新拿到真源码须先保存或放弃
+    // 本次修改——切换示例会被未保存守卫拦下确认，同 id 重开的补发条件也要求 !isDirty。
+    // 只守成功分支：失败分支仍要置空 + toast，不能被脏标记吞掉。
+    if (isDirty.value) return
+    originalCode.value = detail?.code ?? ''
+    isDirty.value = false
+  } catch (err) {
+    if (seq !== _sourceSeq || selectedId.value !== id) return
+    console.error('[detail] 加载源码失败:', err)
+    pushToast('error', `加载源码失败: ${(err as Error).message}`)
+    originalCode.value = ''
+    isDirty.value = false
+  } finally {
+    // 只有仍是最新那次装载才释放「在途」标记，避免并发的旧响应提前清空它
+    if (seq === _sourceSeq) _sourceInflightId = null
+  }
+}
 
 /** 参数解析失败后的重试（沿用当前选中项）。 */
 export function retryParseArgs(): Promise<ArgSpec[]> {

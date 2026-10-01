@@ -62,7 +62,7 @@ function createSidecarStub() {
     },
 
     app: {
-      info: vi.fn(async () => ({ name: 'PyCase', version: pkg.version, electron: '33.0.0' })),
+      info: vi.fn(async () => ({ name: 'PyCase', version: pkg.version, electron: '44.5.1' })),
       openLog: vi.fn(async () => ({ ok: true }))
     },
 

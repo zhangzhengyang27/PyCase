@@ -2,7 +2,11 @@
 // CommandPalette：Cmd+K 全局命令面板（设计规范 v1）
 // 最近运行 5 条置顶；输入按名称/标题匹配 Top 12；↑↓ 导航，Enter 打开详情，
 // Cmd+Enter 直接运行，Esc 关闭。数据全部来自 store 派生。
+// 壳 = reka-ui Dialog（Portal / 遮罩 / 焦点圈定 / aria）；键盘导航仍由本组件在
+// window 捕获阶段统一接管——Esc 在这里 stopPropagation 后自行关闭，
+// 不让事件落到面板下方的弹层（reka-ui 的分层只管 reka 自家的弹层）。
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { DialogContent, DialogOverlay, DialogPortal, DialogRoot, DialogTitle } from 'reka-ui'
 import { Clock, CornerDownLeft, FileCode2, Play, Search, Wrench } from 'lucide-vue-next'
 import { examples } from '../src/store/catalog'
 import { openDetail, runFromCard } from '../src/store/detail'
@@ -115,11 +119,16 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown, true))
 </script>
 
 <template>
-  <Teleport to="body">
-    <div class="scrim z-[1200] flex items-start justify-center pt-[14vh] px-6" @click.self="emit('close')">
-      <div
-        class="w-[560px] max-w-full bg-card border border-line-hairline rounded-overlay shadow-elev-3 overflow-hidden animate-modal-in"
+  <DialogRoot :open="true" @update:open="(v: boolean) => !v && emit('close')">
+    <DialogPortal>
+      <DialogOverlay class="scrim z-[1200]" />
+      <DialogContent
+        aria-label="命令面板"
+        :aria-describedby="undefined"
+        class="fixed left-1/2 top-[14vh] z-[1200] w-[560px] max-w-full -translate-x-1/2 bg-card border border-line-hairline rounded-overlay shadow-elev-3 overflow-hidden animate-modal-in outline-none"
       >
+        <DialogTitle class="sr-only">命令面板</DialogTitle>
+
         <!-- 搜索行（页稿板 3：44px 高，输入占主，右侧 Esc 提示） -->
         <div class="flex items-center gap-2.5 px-3 h-11 border-b border-line-hairline">
           <Search :size="15" :stroke-width="1.5" class="text-ink-mute shrink-0" />
@@ -208,7 +217,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown, true))
           <span>↵ 打开详情</span>
           <span>{{ modKey }}↵ 直接运行</span>
         </div>
-      </div>
-    </div>
-  </Teleport>
+      </DialogContent>
+    </DialogPortal>
+  </DialogRoot>
 </template>

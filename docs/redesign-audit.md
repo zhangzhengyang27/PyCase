@@ -91,3 +91,13 @@ store.ts 1112 行 ｜ 非标字重 47 处 / 20 文件 ｜ window.confirm 3 处�
 noImplicitAny:false（两个 tsconfig）｜ CI 3 job、ruff 覆盖不含 sidecar ｜ sidecar 无 signal/atexit/killpg ｜
 tests 无 run_example 用例 ｜ main.css 9 处 light 覆盖块 ｜ MAX_OUTPUT_LINES=5000（store.ts:409）｜
 GalleryView 有错误态+重试（:74,:98）｜ main.ts 仅 import main.css（style.css 确为孤儿）。
+
+## 6. 后续变更注记（画廊改造）
+
+> 上文表格与复核行号均为 **审计时点（2026-09-29，基线 8847a16）实测**，作为历史记录保留，不随代码演进更新。
+
+- 上文引用 `R/components/GalleryOverview.vue` 的 A3/A4 等条目对应组件已退役：画廊由「落地总览（五大主题横向卡片带 + 「还有 N 个」下钻）→ 下钻浏览态」改为 **单态浏览 + 侧栏二级分区菜单**——「示例画廊」nav 项下挂「全部示例」+ 15 个分区（5 主题 / 8 标签组 / 项目 / 其它，各带计数与选中态），点选即在右侧响应式网格中浏览。
+- 页头（统计 chips + 浏览全部 / 我的收藏）抽为 `GalleryHeader.vue`，观感不变。
+- 三维下钻（`activeTheme` / `activeSectionTags` / `activeCategory`）收敛为单一 `activeSectionKey`，并新增筛选引擎 `sections` 维度（OR 语义，经既有 `sectionKeyOf` 派生），`countBaseQuery` 剥离之。
+- v2（同日迭代）：并排筛选栏（`FilterSidebar.vue`）退役，筛选维度收进工具栏下拉（收藏开关 + 主题 / 可运行性 / 质量分 / 运行状态 / 标签 + 排序 + 密度，flex-wrap 换行）；关键字搜索框保留在工具栏行 2（写 `searchQuery`，元数据 + 源码双通道）。上文引用 `R/components/FilterSidebar.vue` 的 A4/A5/B3 条目行号因此失效，语义已由 `BrowseToolbar.vue` / `TagFilterSelect.vue` 承接。
+- 走查口径同步：画廊池 = 1333 条（`examples` 1496 中剔除 `category === 'tools'` 的 163 条），分区成员合计对的是池大小而非全库。

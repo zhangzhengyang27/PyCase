@@ -26,6 +26,14 @@ __pycache__/
 *.egg-info/
 .pytest_cache/
 .mypy_cache/
+.ruff_cache/
+
+# 本地测试产物（覆盖率二进制，每次跑测试都会重写）
+.coverage
+
+# AI 会话/工具产物（会话记忆与计划文档，不入库）
+.workbuddy/
+.workbuddy-ai/
 
 # 编辑器 / 系统
 .idea/

@@ -6,7 +6,14 @@
 // Cmd+S 保存 / Cmd+Enter 运行 / Cmd+. 停止。
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { ArrowLeft, ChevronRight, PackagePlus, Play, Save, Sparkles, Square, Star, Trash2 } from 'lucide-vue-next'
-import { qualityTextCls, runStatusDotCls, runStatusHint, runStatusLabel, runStatusTextCls } from '../src/utils'
+import {
+  qualityTextCls,
+  runStatusDotCls,
+  runStatusHint,
+  runStatusLabel,
+  runStatusTextCls,
+  statusBadgeOf
+} from '../src/utils'
 import { categoryIcon } from '../src/icons'
 import { CATEGORY_ICONS } from '../src/category-meta'
 import { sectionIcon } from '../src/section-icons'
@@ -78,15 +85,10 @@ const title = computed(() => {
 })
 // 分类图标：收录分类走语义图标，未知分类回退 categoryIcon（全部已知分类都有图标）
 const metaIcon = computed(() => CATEGORY_ICONS[ex.value?.category || ''] ?? categoryIcon(ex.value?.category || ''))
-// 可运行性徽章：与卡片（ExampleCard / ExampleListItem）保持同一口径——
-// runnable 是正向状态不占视觉，risky 由高危徽章承担展示（见 utils.ts 中
-// RUN_STATUS_LABELS 上方的注释）。若直接拿 runStatusLabel() 判定，详情页会多出一个
-// 卡片刻意不显示的「可运行」徽章，risk_high 示例还会出现两个「高危」。
-const statusBadge = computed(() =>
-  ex.value?.run_status && ex.value.run_status !== 'runnable' && ex.value.run_status !== 'risky'
-    ? ex.value.run_status
-    : ''
-)
+// 可运行性徽章：与卡片（ExampleCard / ExampleListItem）同源收拢到 utils.statusBadgeOf——
+// 若直接拿 runStatusLabel() 判定，详情页会多出一个卡片刻意不显示的「可运行」徽章，
+// risk_high 示例还会出现两个「高危」。
+const statusBadge = computed(() => statusBadgeOf(ex.value?.run_status))
 // 详情页图标与卡片/分区头同源（分区语义图标），未命中回退分类图标；
 // 追踪 ex.code：保存后 invalidateExampleVisual 清备忘，此处随之重算，图标即时刷新
 const headIcon = computed(() => {
@@ -101,6 +103,22 @@ function switchTab(tab: 'output' | 'assets' | 'history' | 'versions'): void {
   activeTab.value = tab
   // 版本页每次进入都刷新：刚保存过的示例在这里要能看到新快照
   if (tab === 'versions') void loadVersions()
+}
+
+// ARIA tabs 方向键导航（审计 P2）：←/→ 在标签间循环、Home/End 跳两端，选中即移动焦点。
+// 四个 tab 常驻 DOM（Tab 键本就可达），方向键只负责标签间横移——roving tabindex 从简。
+const TAB_ORDER = ['output', 'assets', 'history', 'versions'] as const
+function onTablistKeydown(e: KeyboardEvent): void {
+  const cur = TAB_ORDER.indexOf(activeTab.value)
+  let next: (typeof TAB_ORDER)[number] | null = null
+  if (e.key === 'ArrowRight') next = TAB_ORDER[(cur + 1) % TAB_ORDER.length]
+  else if (e.key === 'ArrowLeft') next = TAB_ORDER[(cur - 1 + TAB_ORDER.length) % TAB_ORDER.length]
+  else if (e.key === 'Home') next = TAB_ORDER[0]
+  else if (e.key === 'End') next = TAB_ORDER[TAB_ORDER.length - 1]
+  if (!next) return
+  e.preventDefault()
+  switchTab(next)
+  document.getElementById(`detail-tab-${next}`)?.focus()
 }
 
 function onKeydown(e: KeyboardEvent): void {
@@ -257,7 +275,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
         </div>
 
         <!-- 三标签行 -->
-        <div class="tab-row shrink-0" role="tablist" aria-label="输出面板">
+        <div class="tab-row shrink-0" role="tablist" aria-label="输出面板" @keydown="onTablistKeydown">
           <button
             id="detail-tab-output"
             class="tab"

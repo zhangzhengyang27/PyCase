@@ -5,7 +5,8 @@
 // 而不是像 v1 那样塞 code 让前端跑正则。
 import { createRendererLoader } from './renderer-loader.mjs'
 
-const { assignSections, TAG_SECTIONS, tagSectionLabel, PROJECTS_SECTION_META } = createRendererLoader().load('overview')
+const { assignSections, TAG_SECTIONS, tagSectionLabel, PROJECTS_SECTION_META, SECTION_CATALOG, sectionLabelOf } =
+  createRendererLoader().load('overview')
 
 function ex(id, { theme = null, name = id, tags = [], quality } = {}) {
   return { id, name, category: 'topics', path: `x/${id}`, theme_key: theme, tags, quality_score: quality }
@@ -136,6 +137,36 @@ console.log('assignSections')
   check('大小写不敏感', tagSectionLabel(['Web-Crawling']) === '网络爬虫')
   check('未知标签返回 undefined', tagSectionLabel(['no-such-tag']) === undefined)
   check('项目区元数据可导出', PROJECTS_SECTION_META.label === '综合项目')
+}
+
+// 8. SECTION_CATALOG：侧栏二级分区菜单的完整元数据（全部 15 项，others 恒在）
+{
+  check('15 项 = 5 主题 + 8 标签组 + 综合项目 + 其他', SECTION_CATALOG.length === 15)
+  // 与 assignSections 同序；assignSections 空库省略 others，这里补回正好对齐 15 项
+  check(
+    '键序与 assignSections 一致（others 恒在末尾）',
+    SECTION_CATALOG.map((s) => s.key).join() === [...assignSections([]).map((s) => s.key), 'others'].join()
+  )
+  check(
+    "kind 分布：5 theme + 8 tags + 1 projects + 1 others",
+    SECTION_CATALOG.filter((s) => s.kind === 'theme').length === 5 &&
+      SECTION_CATALOG.filter((s) => s.kind === 'tags').length === TAG_SECTIONS.length &&
+      SECTION_CATALOG.filter((s) => s.kind === 'projects').length === 1 &&
+      SECTION_CATALOG.filter((s) => s.kind === 'others').length === 1
+  )
+  check(
+    "标签组项带 tags（下钻/图标解析用）",
+    SECTION_CATALOG.filter((s) => s.kind === 'tags').every((s) => Array.isArray(s.tags) && s.tags.length > 0)
+  )
+  check('projects / others 收尾', SECTION_CATALOG[13].key === 'projects' && SECTION_CATALOG[14].key === 'others')
+  check(
+    'sectionLabelOf 反查（分区 key → 展示名）',
+    sectionLabelOf('tag:crawling') === '网络爬虫' &&
+      sectionLabelOf('others') === '其他示例' &&
+      sectionLabelOf('projects') === '综合项目' &&
+      sectionLabelOf(null) === undefined &&
+      sectionLabelOf('no-such-key') === undefined
+  )
 }
 
 if (failed) {

@@ -87,6 +87,32 @@ export const TAG_SECTIONS: ReadonlyArray<{ key: string; label: string; tags: str
   }
 ]
 
+/**
+ * 侧栏二级分区菜单的完整元数据表（与 assignSections 完全同序：
+ * 5 主题 → 8 标签组 → 综合项目 → 其他 = 15 项）。
+ * 与 assignSections 的唯一差别：others 恒在（菜单需完整 15 项，计数为 0 也展示），
+ * 而 assignSections 会在 others 为空时省略该分区以避开「0 个」噪音。
+ * 分区下钻统一走「分区」筛选维度（FilterQuery.sections），故此处不再需要 kind 驱动下钻分支。
+ */
+export interface SectionMeta {
+  key: string
+  label: string
+  kind: 'theme' | 'tags' | 'projects' | 'others'
+  tags?: string[]
+}
+
+export const SECTION_CATALOG: readonly SectionMeta[] = [
+  ...THEMES.map((t) => ({ key: t.key, label: t.label, kind: 'theme' as const })),
+  ...TAG_SECTIONS.map((s) => ({ key: s.key, label: s.label, kind: 'tags' as const, tags: s.tags })),
+  { ...PROJECTS_SECTION_META, kind: 'projects' as const },
+  { ...OTHERS_META, kind: 'others' as const }
+]
+
+/** 分区 key → 展示名（侧栏菜单 / 结果条范围标题 / 筛选芯片共用）；未命中返回 undefined */
+export function sectionLabelOf(key: string | null | undefined): string | undefined {
+  return key ? SECTION_CATALOG.find((s) => s.key === key)?.label : undefined
+}
+
 /** 卡片视觉元数据解析：与 assignSections 完全同序的 first-match——
     主题 → 综合项目 → 标签组；未命中（others/未知分类）返回 undefined，消费方回退分类图标。
     WeakMap 备忘：filter 谓词会对 code 跑正则，逐卡渲染时不重复计算。 */

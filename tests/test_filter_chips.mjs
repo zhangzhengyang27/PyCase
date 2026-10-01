@@ -60,6 +60,26 @@ console.log('buildFilterChips')
   )
 }
 
+// 3b. 分区（侧栏二级菜单范围）→ 单个置首芯片
+{
+  const chips = buildFilterChips({ sections: ['tag:basics'] })
+  check('section → 分区展示名', labels(chips).join() === '语言基础')
+  check('section 芯片 value = 分区 key', chips[0].key === 'section' && chips[0].value === 'tag:basics')
+
+  const others = buildFilterChips({ sections: ['others'] })
+  check('others 分区同样可成芯片（只能用该维度表达）', labels(others).join() === '其他示例')
+
+  // 未知分区 key 回退中性文案，不露空白
+  const unknown = buildFilterChips({ sections: ['no-such-key'] })
+  check('未知分区 key 回退「分区」', labels(unknown).join() === '分区')
+
+  check('空 sections 数组不产生芯片', buildFilterChips({ sections: [] }).length === 0)
+
+  // 分区芯片置首、其余维度叠加在后
+  const combined = buildFilterChips({ sections: ['projects'], favOnly: true, theme: 'viz' })
+  check('分区芯片置首且与其它维度共存', labels(combined).join() === '综合项目,我的收藏,数据可视化')
+}
+
 // 4. 组合查询 → 顺序稳定（fav → runStatus → runnable → theme → quality → tags → q）
 {
   const chips = buildFilterChips({

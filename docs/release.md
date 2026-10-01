@@ -43,6 +43,12 @@ git push origin main vX.Y.Z
 `.github/workflows/release.yml` 在 `v*` tag 上触发三平台矩阵（mac arm64 / mac x64 / win x64）：
 冻结 sidecar（真启动冒烟）→ 版本一致性校验 → 出包 → **从产物里真跑一次走查** → `gh release` 上传到 GitHub Releases。
 
+> **v1.0.0 勘误 + 门禁收口（2026-10-01）**：v1.0.0 tag 时点上述链路**从未走通**——Release #1
+> 在 4 分半内失败（GitHub Releases 上没有任何产物），且 tag 落在三处 Windows 致命缺陷修复
+> （`c453de1` 等，见 redesign-plan §7 修正记录）之前。自下个版本起，Release workflow 先整体
+> 复用 ci.yml 作为发布前置门禁（`needs: ci`，经 `workflow_call`），全绿才进构建矩阵——
+> 「tag 只在验收全绿后创建」由口头纪律变成机器强制。
+
 四条「无证书发布」的规矩（都来自实测教训）：
 
 1. **不配签名**：`CSC_IDENTITY_AUTO_DISCOVERY=false`；不设 notarize——electron-builder 在完全没有

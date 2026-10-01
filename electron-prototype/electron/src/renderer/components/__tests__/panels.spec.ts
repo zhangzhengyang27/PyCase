@@ -8,7 +8,7 @@
 //      上一个用例遗留的 Esc 监听会在下一个用例里误触弹窗关闭——因此统一 track + unmount。
 import { describe, expect, it, afterEach, beforeEach, vi } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
-import { nextTick } from 'vue'
+import { nextTick, type Component } from 'vue'
 
 import AIExplainPanel from '../AIExplainPanel.vue'
 import AISettingsModal from '../AISettingsModal.vue'
@@ -43,6 +43,13 @@ const mounted: Array<{ unmount: () => void }> = []
 /** 登记 wrapper 以便 afterEach 统一卸载（释放 AppModal 的 window 监听）。 */
 function track<T extends { unmount: () => void }>(w: T): T {
   mounted.push(w)
+  return w
+}
+
+/** 经 AppModal 的组件用 reka-ui Dialog 底座：Portal 内容要一拍后才挂上 body，挂载后统一 flush。 */
+async function trackMount<T extends Component>(comp: T) {
+  const w = track(mount(comp))
+  await nextTick()
   return w
 }
 
@@ -219,16 +226,16 @@ describe('AIExplainPanel', () => {
 // AISettingsModal：store 可见性 + 校验 + 保存 + 运行/安全分区
 // ---------------------------------------------------------------------------
 describe('AISettingsModal', () => {
-  it('aiSettingsOpen=false 时不渲染弹窗', () => {
-    track(mount(AISettingsModal))
+  it('aiSettingsOpen=false 时不渲染弹窗', async () => {
+    await trackMount(AISettingsModal)
     expect(document.body.querySelector('[role="dialog"]')).toBeNull()
   })
 
-  it('打开时标题为「设置」，model / baseUrl 回填 store，Key 始终为空输入', () => {
+  it('打开时标题为「设置」，model / baseUrl 回填 store，Key 始终为空输入', async () => {
     aiSettings.model = 'deepseek-reasoner'
     aiSettings.baseUrl = 'https://api.example.com'
     aiSettingsOpen.value = true
-    track(mount(AISettingsModal))
+    await trackMount(AISettingsModal)
 
     const dialog = document.body.querySelector('[role="dialog"]')!
     expect(dialog.getAttribute('aria-label')).toBe('设置')
@@ -242,7 +249,7 @@ describe('AISettingsModal', () => {
 
   it('模型清空后（已触碰）即时显示校验错误并标红', async () => {
     aiSettingsOpen.value = true
-    track(mount(AISettingsModal))
+    await trackMount(AISettingsModal)
     const input = document.body.querySelector('#setting-model') as HTMLInputElement
     input.value = ''
     input.dispatchEvent(new Event('input'))
@@ -256,7 +263,7 @@ describe('AISettingsModal', () => {
 
   it('Base URL 非 http(s) 时提示格式错误，改回合法地址后错误消失', async () => {
     aiSettingsOpen.value = true
-    track(mount(AISettingsModal))
+    await trackMount(AISettingsModal)
     const input = document.body.querySelector('#setting-baseurl') as HTMLInputElement
 
     input.value = 'ftp://nope'
@@ -272,7 +279,7 @@ describe('AISettingsModal', () => {
 
   it('API Key 少于 8 字符报错；留空视为「不修改」不报错', async () => {
     aiSettingsOpen.value = true
-    track(mount(AISettingsModal))
+    await trackMount(AISettingsModal)
     const input = document.body.querySelector('#setting-apikey') as HTMLInputElement
 
     input.value = 'short'
@@ -290,7 +297,7 @@ describe('AISettingsModal', () => {
     aiSettings.model = ''
     aiSettings.baseUrl = ''
     aiSettingsOpen.value = true
-    track(mount(AISettingsModal))
+    await trackMount(AISettingsModal)
 
     findButton('保存').click()
     await flushPromises()
@@ -305,7 +312,7 @@ describe('AISettingsModal', () => {
   it('保存成功：写回 store、提示成功、关闭弹窗；空 Key 不进入 patch', async () => {
     vi.mocked(window.sidecar.ai.setSettings).mockResolvedValue({ ok: true, hasKey: true })
     aiSettingsOpen.value = true
-    track(mount(AISettingsModal))
+    await trackMount(AISettingsModal)
 
     findButton('保存').click()
     await flushPromises()
@@ -323,7 +330,7 @@ describe('AISettingsModal', () => {
   it('填入新 Key 时随 patch 一并提交', async () => {
     vi.mocked(window.sidecar.ai.setSettings).mockResolvedValue({ ok: true, hasKey: true })
     aiSettingsOpen.value = true
-    track(mount(AISettingsModal))
+    await trackMount(AISettingsModal)
     const key = document.body.querySelector('#setting-apikey') as HTMLInputElement
     key.value = 'sk-12345678'
     key.dispatchEvent(new Event('input'))
@@ -338,7 +345,7 @@ describe('AISettingsModal', () => {
   it('保存失败：提示错误、弹窗保持打开、loading 复位', async () => {
     vi.mocked(window.sidecar.ai.setSettings).mockRejectedValue(new Error('网络不可达'))
     aiSettingsOpen.value = true
-    track(mount(AISettingsModal))
+    await trackMount(AISettingsModal)
 
     findButton('保存').click()
     await flushPromises()
@@ -351,7 +358,7 @@ describe('AISettingsModal', () => {
 
   it('超时下拉：选项固定，改值写入 store 并持久化 runPrefs', async () => {
     aiSettingsOpen.value = true
-    track(mount(AISettingsModal))
+    await trackMount(AISettingsModal)
     const select = document.body.querySelector('select') as HTMLSelectElement
     expect(select.value).toBe('30')
     expect(Array.from(select.options).map((o) => o.value)).toEqual(['15', '30', '60', '120', '300'])
@@ -366,7 +373,7 @@ describe('AISettingsModal', () => {
 
   it('高危确认勾选框映射 skipHighRiskConfirm（取消勾选 = 不再提示并持久化）', async () => {
     aiSettingsOpen.value = true
-    track(mount(AISettingsModal))
+    await trackMount(AISettingsModal)
     const cb = document.body.querySelector('input[type="checkbox"]') as HTMLInputElement
     // skip=false → 勾选态
     expect(cb.checked).toBe(true)
@@ -381,7 +388,7 @@ describe('AISettingsModal', () => {
 
   it('再次打开时复位输入与校验状态（Key 清空、错误消失）', async () => {
     aiSettingsOpen.value = true
-    track(mount(AISettingsModal))
+    await trackMount(AISettingsModal)
     const key = document.body.querySelector('#setting-apikey') as HTMLInputElement
     key.value = 'bad'
     key.dispatchEvent(new Event('input'))
@@ -420,7 +427,7 @@ describe('设置中心·存储分区（A6 缓存入口）', () => {
   it('打开设置时拉取占用：显示工作区/旧根/编辑历史与含资产条目数', async () => {
     vi.mocked(window.sidecar.storageReport).mockResolvedValue(report)
     aiSettingsOpen.value = true
-    track(mount(AISettingsModal))
+    await trackMount(AISettingsModal)
     await flushPromises()
 
     expect(window.sidecar.storageReport).toHaveBeenCalled()
@@ -436,7 +443,7 @@ describe('设置中心·存储分区（A6 缓存入口）', () => {
     vi.mocked(window.sidecar.storageReport).mockResolvedValue(report)
     vi.mocked(window.sidecar.cleanWorkspace).mockResolvedValue({ removed: 1, kept: 1, freed_bytes: 100 })
     aiSettingsOpen.value = true
-    track(mount(AISettingsModal))
+    await trackMount(AISettingsModal)
     await flushPromises()
 
     findButton('清理干净工作区', document.body).click()
@@ -455,7 +462,7 @@ describe('设置中心·存储分区（A6 缓存入口）', () => {
     vi.mocked(window.sidecar.storageReport).mockResolvedValue(report)
     vi.mocked(window.sidecar.cleanWorkspace).mockResolvedValue({ removed: 2, kept: 0, freed_bytes: 300 })
     aiSettingsOpen.value = true
-    track(mount(AISettingsModal))
+    await trackMount(AISettingsModal)
     await flushPromises()
 
     ;(document.body.querySelector('[data-testid="storage-clean-all"]') as HTMLButtonElement).click()
@@ -473,7 +480,7 @@ describe('设置中心·存储分区（A6 缓存入口）', () => {
     vi.mocked(window.sidecar.storageReport).mockResolvedValue(report)
     vi.mocked(window.sidecar.reclaimLegacyCache).mockResolvedValue({ removed: 3151, freed_bytes: 1024 * 1024 * 120 })
     aiSettingsOpen.value = true
-    track(mount(AISettingsModal))
+    await trackMount(AISettingsModal)
     await flushPromises()
 
     findButton('回收旧版缓存', document.body).click()
@@ -489,7 +496,7 @@ describe('设置中心·存储分区（A6 缓存入口）', () => {
     vi.mocked(window.sidecar.storageReport).mockResolvedValue(null as never)
     aiSettings.acknowledged = true
     aiSettingsOpen.value = true
-    track(mount(AISettingsModal))
+    await trackMount(AISettingsModal)
     await flushPromises()
 
     const section = document.body.querySelector('[data-testid="settings-consent"]')!
@@ -512,7 +519,7 @@ describe('设置中心·存储分区（A6 缓存入口）', () => {
       legacy: { root: '/tmp', bytes: 0, entries: 0 }
     })
     aiSettingsOpen.value = true
-    track(mount(AISettingsModal))
+    await trackMount(AISettingsModal)
     await flushPromises()
     const reclaimBtn = Array.from(document.body.querySelectorAll('button')).find((b) =>
       (b.textContent || '').includes('回收旧版缓存')
@@ -548,14 +555,14 @@ describe('ImportWizardModal', () => {
     return document.body.querySelector('[role="dialog"]')?.getAttribute('aria-label') ?? null
   }
 
-  it('importWizardOpen=false 时不渲染', () => {
-    track(mount(ImportWizardModal))
+  it('importWizardOpen=false 时不渲染', async () => {
+    await trackMount(ImportWizardModal)
     expect(document.body.querySelector('[role="dialog"]')).toBeNull()
   })
 
-  it('第一步：未选目录时展示占位文案，扫描按钮禁用', () => {
+  it('第一步：未选目录时展示占位文案，扫描按钮禁用', async () => {
     importWizardOpen.value = true
-    track(mount(ImportWizardModal))
+    await trackMount(ImportWizardModal)
     const dialog = document.body.querySelector('[role="dialog"]')!
     expect(dialog.getAttribute('aria-label')).toBe('导入示例目录')
     expect(dialog.textContent).toContain('尚未选择目录')
@@ -564,7 +571,7 @@ describe('ImportWizardModal', () => {
 
   it('选目录后自动扫描进入预览：展示文件、最多 2 个依赖徽标与体积', async () => {
     importWizardOpen.value = true
-    track(mount(ImportWizardModal))
+    await trackMount(ImportWizardModal)
     await gotoPreview('/home/me/myset', FILES, [{ file: 'skip.py', reason: 'empty' }])
 
     expect(window.sidecar.scanImportSource).toHaveBeenCalledWith('/home/me/myset')
@@ -584,7 +591,7 @@ describe('ImportWizardModal', () => {
 
   it('取消选择目录时不进入扫描，保持第一步', async () => {
     importWizardOpen.value = true
-    track(mount(ImportWizardModal))
+    await trackMount(ImportWizardModal)
     mockPick(null)
     findButton('选择目录').click()
     await flushPromises()
@@ -595,7 +602,7 @@ describe('ImportWizardModal', () => {
 
   it('目录内无可导入 .py 时停在第一步并给出错误', async () => {
     importWizardOpen.value = true
-    track(mount(ImportWizardModal))
+    await trackMount(ImportWizardModal)
     await gotoPreview('/tmp/empty', [])
 
     expect(dialogLabel()).toBe('导入示例目录')
@@ -604,7 +611,7 @@ describe('ImportWizardModal', () => {
 
   it('扫描抛错时把错误消息展示出来（不静默吞掉）', async () => {
     importWizardOpen.value = true
-    track(mount(ImportWizardModal))
+    await trackMount(ImportWizardModal)
     mockPick('/tmp/boom')
     vi.mocked(window.sidecar.scanImportSource).mockRejectedValue(new Error('permission denied'))
     findButton('选择目录').click()
@@ -615,7 +622,7 @@ describe('ImportWizardModal', () => {
 
   it('扫描失败后按钮恢复可用，可手动重扫并进入预览', async () => {
     importWizardOpen.value = true
-    track(mount(ImportWizardModal))
+    await trackMount(ImportWizardModal)
     await gotoPreview('/tmp/retry', [])
 
     const scan = findButton('扫描并预览')
@@ -630,7 +637,7 @@ describe('ImportWizardModal', () => {
   it('执行导入成功：进入完成步、提示成功并刷新示例列表', async () => {
     vi.mocked(window.sidecar.importExamples).mockResolvedValue({ imported: 2, skipped: [], collection: 'myset' })
     importWizardOpen.value = true
-    track(mount(ImportWizardModal))
+    await trackMount(ImportWizardModal)
     await gotoPreview('/home/me/myset', FILES)
 
     findButton('导入 2 个示例').click()
@@ -651,7 +658,7 @@ describe('ImportWizardModal', () => {
       collection: 'myset'
     })
     importWizardOpen.value = true
-    track(mount(ImportWizardModal))
+    await trackMount(ImportWizardModal)
     await gotoPreview()
 
     findButton('导入 2 个示例').click()
@@ -663,7 +670,7 @@ describe('ImportWizardModal', () => {
   it('导入失败：提示错误并留在预览步', async () => {
     vi.mocked(window.sidecar.importExamples).mockRejectedValue(new Error('磁盘已满'))
     importWizardOpen.value = true
-    track(mount(ImportWizardModal))
+    await trackMount(ImportWizardModal)
     await gotoPreview()
 
     findButton('导入 2 个示例').click()
@@ -676,7 +683,7 @@ describe('ImportWizardModal', () => {
 
   it('「上一步」回到第一步但保留已选目录', async () => {
     importWizardOpen.value = true
-    track(mount(ImportWizardModal))
+    await trackMount(ImportWizardModal)
     await gotoPreview()
 
     findButton('上一步').click()
@@ -689,7 +696,7 @@ describe('ImportWizardModal', () => {
   it('完成步「完成」关闭向导', async () => {
     vi.mocked(window.sidecar.importExamples).mockResolvedValue({ imported: 1, skipped: [], collection: 'myset' })
     importWizardOpen.value = true
-    track(mount(ImportWizardModal))
+    await trackMount(ImportWizardModal)
     await gotoPreview()
     findButton('导入 2 个示例').click()
     await flushPromises()
@@ -728,23 +735,23 @@ describe('HighRiskConfirmModal', () => {
     return document.body.querySelector('[role="dialog"]')
   }
 
-  it('无待确认运行时完全不渲染', () => {
+  it('无待确认运行时完全不渲染', async () => {
     seedRiskExample()
-    track(mount(HighRiskConfirmModal))
+    await trackMount(HighRiskConfirmModal)
     expect(dialog()).toBeNull()
   })
 
-  it('pending 指向的示例不存在时（target 为空）也不渲染', () => {
+  it('pending 指向的示例不存在时（target 为空）也不渲染', async () => {
     seedRiskExample()
     setPending('missing-id')
-    track(mount(HighRiskConfirmModal))
+    await trackMount(HighRiskConfirmModal)
     expect(dialog()).toBeNull()
   })
 
-  it('渲染标题、示例名与全部高危明细', () => {
+  it('渲染标题、示例名与全部高危明细', async () => {
     seedRiskExample()
     setPending()
-    track(mount(HighRiskConfirmModal))
+    await trackMount(HighRiskConfirmModal)
 
     const d = dialog()!
     expect(d.getAttribute('aria-label')).toBe('运行高危示例')
@@ -753,17 +760,17 @@ describe('HighRiskConfirmModal', () => {
     expect(items).toEqual(['删除用户文件', '执行系统命令'])
   })
 
-  it('示例无 title 时回退展示 name', () => {
+  it('示例无 title 时回退展示 name', async () => {
     seedRiskExample({ title: undefined, name: 'no-title.py' })
     setPending()
-    track(mount(HighRiskConfirmModal))
+    await trackMount(HighRiskConfirmModal)
     expect(dialog()!.textContent).toContain('no-title.py')
   })
 
   it('取消：清空待确认运行且不发起运行', async () => {
     seedRiskExample()
     setPending()
-    track(mount(HighRiskConfirmModal))
+    await trackMount(HighRiskConfirmModal)
 
     findButton('取消').click()
     await flushPromises()
@@ -775,7 +782,7 @@ describe('HighRiskConfirmModal', () => {
   it('「仍要运行」（未勾选不再提示）：清空 pending、发起运行、不改持久化开关', async () => {
     seedRiskExample()
     setPending('risk-1', ['--force'])
-    track(mount(HighRiskConfirmModal))
+    await trackMount(HighRiskConfirmModal)
 
     findButton('仍要运行').click()
     await flushPromises()
@@ -790,7 +797,7 @@ describe('HighRiskConfirmModal', () => {
   it('勾选「不再提示」后仍要运行：持久化 skipHighRiskConfirm 并继续运行', async () => {
     seedRiskExample()
     setPending()
-    track(mount(HighRiskConfirmModal))
+    await trackMount(HighRiskConfirmModal)
     const cb = document.body.querySelector('input[type="checkbox"]') as HTMLInputElement
     cb.click()
     await nextTick()
@@ -806,7 +813,7 @@ describe('HighRiskConfirmModal', () => {
   it('点关闭（X）等同取消：清空 pending、不运行', async () => {
     seedRiskExample()
     setPending()
-    track(mount(HighRiskConfirmModal))
+    await trackMount(HighRiskConfirmModal)
 
     ;(document.body.querySelector('button[aria-label="关闭"]') as HTMLElement).click()
     await flushPromises()
@@ -834,18 +841,18 @@ describe('AssetsPanel', () => {
       .filter((t) => t === '图片' || t === '文档')
   }
 
-  it('无资源时展示空态文案，不渲染任何分组标题', () => {
-    const w = track(mount(AssetsPanel))
+  it('无资源时展示空态文案，不渲染任何分组标题', async () => {
+    const w = await trackMount(AssetsPanel)
     expect(w.text()).toContain('尚未上传资源')
     expect(groupLabels(w.element)).toEqual([])
   })
 
-  it('按 is_image 分组展示（图片在前），并格式化体积', () => {
+  it('按 is_image 分组展示（图片在前），并格式化体积', async () => {
     assets.value = [
       makeAsset({ filename: 'pic.png', is_image: true, size: 2048 }),
       makeAsset({ filename: 'note.md', is_image: false, size: 300 })
     ]
-    const w = track(mount(AssetsPanel))
+    const w = await trackMount(AssetsPanel)
     const text = w.text()
     expect(groupLabels(w.element)).toEqual(['图片', '文档'])
     expect(text).toContain('pic.png')
@@ -854,14 +861,14 @@ describe('AssetsPanel', () => {
     expect(text).toContain('300 B')
   })
 
-  it('只有单一类型时另一分组标题不出现', () => {
+  it('只有单一类型时另一分组标题不出现', async () => {
     assets.value = [makeAsset({ filename: 'pic.png', is_image: true })]
-    const w = track(mount(AssetsPanel))
+    const w = await trackMount(AssetsPanel)
     expect(groupLabels(w.element)).toEqual(['图片'])
   })
 
   it('上传按钮在未选中示例或加载中时禁用，否则可用', async () => {
-    const w = track(mount(AssetsPanel))
+    const w = await trackMount(AssetsPanel)
     const upload = (): HTMLButtonElement => findButton('上传图片', w.element)
 
     expect(upload().hasAttribute('disabled')).toBe(true)
@@ -877,7 +884,7 @@ describe('AssetsPanel', () => {
 
   it('点击上传按钮触发隐藏 file input 的 click', async () => {
     selectedId.value = 'ex-1'
-    const w = track(mount(AssetsPanel))
+    const w = await trackMount(AssetsPanel)
     const input = w.get('input[type="file"]').element as HTMLInputElement
     const clickSpy = vi.spyOn(input, 'click')
 
@@ -889,7 +896,7 @@ describe('AssetsPanel', () => {
   it('选择文件后上传并刷新资源列表', async () => {
     selectedId.value = 'ex-1'
     vi.mocked(window.sidecar.listAssets).mockResolvedValue({ assets: [makeAsset({ filename: 'a.png' })] })
-    const w = track(mount(AssetsPanel))
+    const w = await trackMount(AssetsPanel)
     const input = w.get('input[type="file"]').element as HTMLInputElement
 
     dispatchFiles(input, [new File(['hi'], 'a.png', { type: 'image/png' })])
@@ -910,7 +917,7 @@ describe('AssetsPanel', () => {
 
   it('.py 文件被拒收（与示例脚本冲突），不发起上传', async () => {
     selectedId.value = 'ex-1'
-    const w = track(mount(AssetsPanel))
+    const w = await trackMount(AssetsPanel)
     const input = w.get('input[type="file"]').element as HTMLInputElement
 
     dispatchFiles(input, [new File(['x'], 'evil.py')])
@@ -922,7 +929,7 @@ describe('AssetsPanel', () => {
 
   it('超过 15MB 的文件被拒收，不发起上传', async () => {
     selectedId.value = 'ex-1'
-    const w = track(mount(AssetsPanel))
+    const w = await trackMount(AssetsPanel)
     const input = w.get('input[type="file"]').element as HTMLInputElement
     const big = new File(['x'], 'big.bin')
     Object.defineProperty(big, 'size', { value: 16 * 1024 * 1024 })
@@ -935,7 +942,7 @@ describe('AssetsPanel', () => {
   })
 
   it('未选中示例时选择文件不触发上传', async () => {
-    const w = track(mount(AssetsPanel))
+    const w = await trackMount(AssetsPanel)
     const input = w.get('input[type="file"]').element as HTMLInputElement
 
     dispatchFiles(input, [new File(['hi'], 'a.png')])
@@ -947,7 +954,7 @@ describe('AssetsPanel', () => {
   it('点「删除」弹出确认框并展示文件名', async () => {
     selectedId.value = 'ex-1'
     assets.value = [makeAsset({ filename: 'a.png' })]
-    const w = track(mount(AssetsPanel))
+    const w = await trackMount(AssetsPanel)
 
     findButton('删除', w.element).click()
     await nextTick()
@@ -963,7 +970,7 @@ describe('AssetsPanel', () => {
     selectedId.value = 'ex-1'
     assets.value = [makeAsset({ filename: 'a.png' })]
     vi.mocked(window.sidecar.deleteAsset).mockResolvedValue({ deleted: 'a.png', assets: [] })
-    const w = track(mount(AssetsPanel))
+    const w = await trackMount(AssetsPanel)
 
     findButton('删除', w.element).click()
     await nextTick()
@@ -979,7 +986,7 @@ describe('AssetsPanel', () => {
   it('确认框「取消」关闭弹窗且不删除', async () => {
     selectedId.value = 'ex-1'
     assets.value = [makeAsset({ filename: 'a.png' })]
-    const w = track(mount(AssetsPanel))
+    const w = await trackMount(AssetsPanel)
 
     findButton('删除', w.element).click()
     await nextTick()
@@ -990,5 +997,17 @@ describe('AssetsPanel', () => {
     expect(window.sidecar.deleteAsset).not.toHaveBeenCalled()
     expect(document.body.querySelector('[role="dialog"]')).toBeNull()
     expect(assets.value.map((a) => a.filename)).toEqual(['a.png'])
+  })
+})
+
+// ---------------------------------------------------------------------------
+describe('AIExplainPanel 可访问性（审计 P2）', () => {
+  it('流式输出区 role=log + aria-live=polite，状态行 role=status（读屏能感知流式进度）', () => {
+    aiStatus.value = '正在生成解释…'
+    const w = track(mount(AIExplainPanel))
+    const log = w.get('[role="log"]')
+    expect(log.attributes('aria-live')).toBe('polite')
+    expect(log.text()).toContain(aiOutputText.value)
+    expect(w.get('[role="status"]').text()).toContain('正在生成解释…')
   })
 })

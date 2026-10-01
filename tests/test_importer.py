@@ -152,3 +152,23 @@ def test_spec_from_file_merges_declared_and_guessed(tmp_path):
     spec = spec_from_file(src / "a.py", src, set(), is_available=lambda m: False)
     assert spec["requirements"] == ["flask", "opencv-python"]  # 声明在前、猜测去重追加
     assert json.dumps(spec)  # 可 JSON 序列化
+
+
+def test_import_to_pkg_maps_import_names_to_real_pypi_packages():
+    """审计 A4：import 名 ≠ PyPI 包名的映射正确性（曾回退 import 名装到影子包）。"""
+    # `from dotenv import load_dotenv` 的 PyPI 正主是 python-dotenv
+    # （PyPI `dotenv` 是无人维护的劣质影子包）
+    assert IMPORT_TO_PKG["dotenv"] == "python-dotenv"
+    # import 名带下划线：旧键 "speechrecognition" 永远命不中（全语料零命中）
+    assert "speechrecognition" not in IMPORT_TO_PKG
+    assert IMPORT_TO_PKG["speech_recognition"] == "SpeechRecognition"
+    # ffmpeg-python 才提供 ffmpeg 模块；PyPI `ffmpeg` 是空壳
+    assert IMPORT_TO_PKG["ffmpeg"] == "ffmpeg-python"
+    # 全语料零 import、来历不明的键退役
+    assert "valley" not in IMPORT_TO_PKG
+
+
+def test_guess_requirements_maps_dotenv_to_python_dotenv():
+    is_avail = lambda m: False  # noqa: E731
+    code = "from dotenv import load_dotenv\n"
+    assert guess_requirements(code, set(), is_available=is_avail) == ["python-dotenv"]

@@ -30,8 +30,11 @@ class VenvManager:
     LEGACY_CACHE_DIR_NAME = ".desktop-app-venvs"  # 旧版按示例隔离的 venv 缓存
     MARKER_FILE_NAME = ".installed-requirements.json"
     # 项目级共享依赖清单（仓库根，由 scripts/gen_shared_requirements.py 生成）：
-    # 本项目是一个应用，全部示例是它的模块，依赖在此声明一次
+    # 本项目是一个应用，全部示例是它的模块，依赖在此声明一次。
+    # requirements.txt 为派生源（未钉版），requirements.lock.txt 为其 uv 解析锁
+    # （全钉版本）；引导安装优先读锁，首启装包可复现（审计 P1）
     MANIFEST_FILE_NAME = "requirements.txt"
+    LOCK_FILE_NAME = "requirements.lock.txt"
 
     # 清单缺失时的兜底常用库（开发/测试注入用）
     BOOTSTRAP_PACKAGES = (
@@ -224,12 +227,19 @@ class VenvManager:
             self._save_marker(marker)
 
     def _manifest_packages(self) -> list[str]:
-        """读取仓库根的共享依赖清单（requirements.txt），过滤注释与空行。"""
-        try:
-            lines = (self.repo_root / self.MANIFEST_FILE_NAME).read_text(encoding="utf-8", errors="ignore").splitlines()
-        except OSError:
-            return []
-        return [line.strip() for line in lines if line.strip() and not line.startswith("#")]
+        """读取共享依赖清单：优先锁文件（全钉版，可复现），缺失回退未钉版清单。
+
+        注释与空行一律过滤；锁文件存在但为空时同样回退（不把空清单当有效口径）。
+        """
+        for name in (self.LOCK_FILE_NAME, self.MANIFEST_FILE_NAME):
+            try:
+                lines = (self.repo_root / name).read_text(encoding="utf-8", errors="ignore").splitlines()
+            except OSError:
+                continue
+            pkgs = [line.strip() for line in lines if line.strip() and not line.startswith("#")]
+            if pkgs:
+                return pkgs
+        return []
 
     def _install_example_requirements(self, file_path: Path) -> None:
         """把示例目录的 requirements.txt 安装进共享 venv（按内容 hash 去重）。"""

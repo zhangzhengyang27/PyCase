@@ -9,6 +9,7 @@ import { isRunning, runStatusText } from '../src/store/detail'
 import {
   clearRunnerOutput,
   runnerArgsLine,
+  runnerCode,
   runnerExample,
   runnerHits,
   runnerQuery,
@@ -65,16 +66,27 @@ function onArgsEnter(): void {
           placeholder="快速查找示例（输入名称关键字）…"
           aria-label="快速查找示例"
           :spellcheck="false"
+          role="combobox"
+          :aria-expanded="runnerQuery ? 'true' : 'false'"
+          aria-controls="runner-hits"
+          aria-autocomplete="list"
+          :aria-activedescendant="runnerHits.length ? `runner-hit-${hitIdx}` : undefined"
           @keydown="onSearchKey"
         />
         <div
           v-if="runnerQuery"
+          id="runner-hits"
+          role="listbox"
+          aria-label="匹配的示例"
           class="absolute left-2.5 right-2.5 top-full z-50 max-h-[320px] overflow-y-auto bg-panel border border-line-subtle rounded-panel shadow-elev-3"
         >
           <div v-if="runnerHits.length === 0" class="px-3 py-2 text-control text-ink-faint">无匹配示例</div>
           <button
             v-for="(e, i) in runnerHits"
             :key="e.id"
+            role="option"
+            :id="`runner-hit-${i}`"
+            :aria-selected="i === hitIdx"
             class="w-full flex items-center gap-2 px-3 py-1.5 text-left border-0 bg-transparent cursor-pointer text-control text-ink-dim hover:bg-hover hover:text-ink"
             :class="i === hitIdx ? 'bg-accent/15 text-ink' : ''"
             :data-active="i === hitIdx"
@@ -97,7 +109,11 @@ function onArgsEnter(): void {
         </div>
         <pre
           class="flex-1 min-h-0 overflow-auto m-0 px-4 py-3 font-mono text-control leading-[1.55] text-console whitespace-pre"
-          >{{ selected ? selected.code : '在上方搜索并选择示例，代码将在此只读预览。\n修改代码请进示例详情页。' }}</pre>
+          >{{
+            selected
+              ? runnerCode || '正在读取源码…'
+              : '在上方搜索并选择示例，代码将在此只读预览。\n修改代码请进示例详情页。'
+          }}</pre>
       </div>
     </div>
 

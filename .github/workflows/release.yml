@@ -10,18 +10,34 @@ name: Release
 #
 # 发布步骤：改 VERSION → python scripts/sync_version.py → commit → git tag -a v<版本> → git push origin <tag>
 # 首次打开的放行说明（未公证）见 docs/release.md。
+#
+# 门禁前置（2026-10）：本 workflow 先整体复用 ci.yml（workflow_call）——全绿才进构建矩阵。
+# v1.0.0 教训：Release #1 在 CI 全红的日子独立出包，4 分半即失败，tag 里还带着
+# tag 之后才修复的 Windows 致命缺陷；「tag 只在验收全绿后创建」从口头纪律变成机器强制。
 
 on:
   push:
     tags:
       - 'v*'
 
+# 发布矩阵不取消：三条平台腿互不牵连，失败腿可单独重跑
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
 permissions:
   contents: write
 
 jobs:
+  # 发布前置：完整 CI 门禁（pytest+mypy+ruff+前端四件套+smoke+双平台打包矩阵）
+  ci:
+    name: CI 门禁（发布前置）
+    uses: ./.github/workflows/ci.yml
+
   release:
     name: Build & Publish (${{ matrix.target }})
+    needs: ci
+    timeout-minutes: 180
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false

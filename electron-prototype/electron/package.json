@@ -32,6 +32,10 @@
         "to": "requirements.txt"
       },
       {
+        "from": "../../requirements.lock.txt",
+        "to": "requirements.lock.txt"
+      },
+      {
         "from": "../../json_examples",
         "to": "json_examples"
       },
@@ -68,6 +72,10 @@
         {
           "from": "../../requirements.txt",
           "to": "requirements.txt"
+        },
+        {
+          "from": "../../requirements.lock.txt",
+          "to": "requirements.lock.txt"
         },
         {
           "from": "../../json_examples",
@@ -109,6 +117,10 @@
         {
           "from": "../../requirements.txt",
           "to": "requirements.txt"
+        },
+        {
+          "from": "../../requirements.lock.txt",
+          "to": "requirements.lock.txt"
         },
         {
           "from": "../../json_examples",
@@ -154,7 +166,7 @@
     "@types/node": "^22.20.1",
     "@vitejs/plugin-vue": "^6.0.8",
     "@vue/test-utils": "^2.5.1",
-    "electron": "^33.0.0",
+    "electron": "^44.5.1",
     "electron-builder": "^26.15.3",
     "electron-vite": "^3.1.0",
     "eslint": "^9.39.4",
@@ -174,6 +186,7 @@
   "dependencies": {
     "lucide-vue-next": "^0.544.0",
     "monaco-editor": "^0.56.0",
+    "reka-ui": "^2.10.5",
     "vue": "^3.5.42"
   }
 }

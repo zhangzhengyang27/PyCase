@@ -134,13 +134,11 @@ async function resetState() {
   S.searchQuery.value = ''
   S.toolSearchQuery.value = ''
   S.activeView.value = 'gallery'
-  S.galleryMode.value = 'overview'
+  S.activeSectionKey.value = null
   S.activeTheme.value = 'all'
   S.minQuality.value = 0
   S.sortBy.value = 'quality_desc'
   S.galleryLimit.value = 120
-  S.activeSectionTags.value = []
-  S.activeCategory.value = 'all'
   S.viewMode.value = 'grid'
   S.favorites.value = new Set()
   S.favOnly.value = false
@@ -227,20 +225,18 @@ console.log('筛选重置')
 S.activeTheme.value = 'turtle'
 S.minQuality.value = 80
 S.activeTags.value = new Set(['基础'])
-S.activeSectionTags.value = ['x']
-S.activeCategory.value = 'projects'
+S.activeSectionKey.value = 'tag:crawling'
 S.activeRunStatus.value = 'ok'
 S.activeRunnable.value = 'risky'
 S.favOnly.value = true
 calls.length = 0
 S.clearFilters()
 check(
-  'clearFilters 归零全部维度',
+  'clearFilters 归零全部维度（含分区范围）',
   S.activeTheme.value === 'all' &&
     S.minQuality.value === 0 &&
     S.activeTags.value.size === 0 &&
-    S.activeSectionTags.value.length === 0 &&
-    S.activeCategory.value === 'all' &&
+    S.activeSectionKey.value === null &&
     S.activeRunStatus.value === 'all' &&
     S.activeRunnable.value === 'all'
 )
@@ -263,12 +259,9 @@ S.activeTheme.value = 'turtle'
 calls.length = 0
 S.removeChip({ key: 'theme' })
 check('theme 芯片 → all 且持久化', S.activeTheme.value === 'all' && setCalls('viewPrefs').length === 1)
-S.activeSectionTags.value = ['a', 'b']
-S.removeChip({ key: 'tagsAny' })
-check('tagsAny 芯片 → 清空', S.activeSectionTags.value.length === 0)
-S.activeCategory.value = 'projects'
-S.removeChip({ key: 'category' })
-check('category 芯片 → all', S.activeCategory.value === 'all')
+S.activeSectionKey.value = 'tag:basics'
+S.removeChip({ key: 'section' })
+check('section 芯片 → 全部示例（null）', S.activeSectionKey.value === null)
 S.minQuality.value = 90
 calls.length = 0
 S.removeChip({ key: 'quality' })
@@ -280,33 +273,56 @@ S.searchQuery.value = 'plot'
 S.removeChip({ key: 'q' })
 check('q 芯片 → 清空搜索框', S.searchQuery.value === '')
 
-console.log('浏览态下钻：三种范围互斥')
+console.log('侧栏分区范围（selectSection / openGallery）')
 await boot()
+// 选分区：设置 sections 维度并清掉主题 facet（避免分区主题与主题维度叠出空集）。
+// 夹具分区落位：t1 命中 tag:basics，proj1 进 projects，t2/t3/risk 落 others。
 S.activeTheme.value = 'turtle'
-S.openGalleryBrowse({ tags: ['爬虫', '办公'] })
-check(
-  'tags 下钻清空 theme/category',
-  S.activeSectionTags.value.join(',') === '爬虫,办公' &&
-    S.activeTheme.value === 'all' &&
-    S.activeCategory.value === 'all'
-)
-S.openGalleryBrowse({ category: 'projects' })
-check(
-  'category 下钻清空 tags/theme',
-  S.activeCategory.value === 'projects' && S.activeSectionTags.value.length === 0 && S.activeTheme.value === 'all'
-)
 calls.length = 0
-S.openGalleryBrowse({ theme: 'viz' })
+S.selectSection('others')
+check('selectSection 设置分区范围', S.activeSectionKey.value === 'others')
+check('selectSection 清掉主题 facet 并持久化', S.activeTheme.value === 'all' && setCalls('viewPrefs').length === 1)
+check('分区范围驱动 filtered（sections OR 语义）', ids(S.filtered.value) === 't2,t3,risk')
+S.selectSection('projects')
+check('切换到综合项目分区', ids(S.filtered.value) === 'proj1')
+await boot()
+S.selectSection('tag:basics')
+check('标签组分区命中互斥成员', ids(S.filtered.value) === 't1')
+// 回到全部示例：不清主题（主题 facet 可独立叠加在「全部示例」之上）
+S.activeTheme.value = 'viz'
+calls.length = 0
+S.selectSection(null)
+check('selectSection(null) → 全部示例', S.activeSectionKey.value === null)
+check('selectSection(null) 不动主题 facet', S.activeTheme.value === 'viz' && setCalls('viewPrefs').length === 0)
+S.activeTheme.value = 'all'
+// 页头入口：范围归零，可选叠加收藏
+S.selectSection('projects')
+S.openGallery()
+check('openGallery() 范围归零', S.activeSectionKey.value === null)
+S.openGallery({ favOnly: true })
+check('openGallery({favOnly}) 置收藏开关', S.favOnly.value === true)
+
+console.log('侧栏分区菜单数据（gallerySectionNav）')
+await boot()
+const nav = S.gallerySectionNav.value
+check('gallerySectionNav 完整 15 项', nav.length === 15)
 check(
-  'theme 下钻清空 tags/category 且持久化',
-  S.activeTheme.value === 'viz' &&
-    S.activeSectionTags.value.length === 0 &&
-    S.activeCategory.value === 'all' &&
-    setCalls('viewPrefs').length === 1
+  '键序 = THEMES + 标签组 + 综合项目 + 其他',
+  nav[0].key === 'turtle' && nav[13].key === 'projects' && nav[14].key === 'others'
 )
-check('下钻即进入浏览态', S.galleryMode.value === 'browse')
-S.openGalleryBrowse({ favOnly: true })
-check('favOnly 下钻置位', S.favOnly.value === true)
+check(
+  '计数取互斥分配成员数',
+  nav.find((s) => s.key === 'tag:basics').count === 1 &&
+    nav.find((s) => s.key === 'projects').count === 1 &&
+    nav.find((s) => s.key === 'others').count === 3 &&
+    nav.find((s) => s.key === 'turtle').count === 0
+)
+const baseRunnable = S.facetCounts.value.runnableCounts.get('runnable')
+S.selectSection('others')
+check(
+  '分区范围不缩放侧栏 facet 计数（countBaseQuery 剥离 sections）',
+  S.facetCounts.value.runnableCounts.get('runnable') === baseRunnable
+)
 
 console.log('loadAll：成功路径')
 await resetState()
