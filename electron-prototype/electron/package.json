@@ -32,6 +32,10 @@
         "to": "requirements.txt"
       },
       {
+        "from": "../../requirements.lock.txt",
+        "to": "requirements.lock.txt"
+      },
+      {
         "from": "../../json_examples",
         "to": "json_examples"
       },
@@ -68,6 +72,10 @@
         {
           "from": "../../requirements.txt",
           "to": "requirements.txt"
+        },
+        {
+          "from": "../../requirements.lock.txt",
+          "to": "requirements.lock.txt"
         },
         {
           "from": "../../json_examples",
@@ -109,6 +117,10 @@
         {
           "from": "../../requirements.txt",
           "to": "requirements.txt"
+        },
+        {
+          "from": "../../requirements.lock.txt",
+          "to": "requirements.lock.txt"
         },
         {
           "from": "../../json_examples",

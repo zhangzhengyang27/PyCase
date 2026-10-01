@@ -9,7 +9,9 @@
   启动零写盘，运行/上传先进**按需工作区**（`.json_examples_cache/v2/`），编辑保存写回真实文件
   （可恢复：每次覆盖前自动留快照，详情页可看差异并还原）。
 - 全项目共用仓库根一份 `.venv`，依赖按项目级 `requirements.txt`（由 `python -m app.facts_cli
-  requirements` 从清单与派生 import 分析汇总）一次装齐，示例本身不单独建环境。
+  requirements` 从清单与派生 import 分析汇总）一次装齐，示例本身不单独建环境；
+  首启装包优先读 `requirements.lock.txt`（`uv pip compile` 生成的全钉锁，CI 有新鲜度门禁），
+  可复现且不随 PyPI 上新漂移。
 
 ## 技术栈
 

@@ -566,3 +566,33 @@ def test_version_single_source_is_in_sync():
     pkg = json.loads((APP_DIR / "electron-prototype" / "electron" / "package.json").read_text(encoding="utf-8"))
     assert pkg["version"] == version
     assert f'version = "{version}"' in (APP_DIR / "pyproject.toml").read_text(encoding="utf-8")
+
+
+def test_bootstrap_prefers_lock_file_over_manifest(tmp_path, monkeypatch):
+    """锁文件（requirements.lock.txt，全钉版本）优先于未钉版 requirements.txt——
+    首启装包可复现，不随 PyPI 上新漂移（审计 P1：运行时依赖零锁定）。"""
+    installed: list[str] = []
+    mgr = VenvManager(repo_root=tmp_path, bootstrap_packages=("fallback-pkg",))
+
+    def fake_pip_install(args, timeout):
+        installed.extend(args)
+        return True
+
+    def fake_create_venv():
+        mgr.get_python_executable().parent.mkdir(parents=True, exist_ok=True)
+        return True
+
+    monkeypatch.setattr(mgr, "_pip_install", fake_pip_install)
+    monkeypatch.setattr(mgr, "_create_venv", fake_create_venv)
+
+    (tmp_path / "requirements.txt").write_text("requests\n", encoding="utf-8")
+    (tmp_path / "requirements.lock.txt").write_text(
+        "# 由 uv pip compile 生成（勿手改）：uv pip compile requirements.txt -o requirements.lock.txt --universal\n"
+        "requests==2.32.3\n",
+        encoding="utf-8",
+    )
+    mgr.prepare()
+
+    assert "requests==2.32.3" in installed
+    assert "requests" not in installed  # 未钉版条目不得混入
+    assert "fallback-pkg" not in installed
