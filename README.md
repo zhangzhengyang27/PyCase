@@ -57,6 +57,12 @@ node tests/test_overview.mjs
 node tests/test_filter_chips.mjs
 node tests/test_toolbox_groups.mjs
 
+# 主题令牌 ↔ 组件类名一致性（@theme 漏映射即红，审计 P1 回归网）
+node tests/test_theme_tokens.mjs
+
+# shared/paths 数据根契约（openLog 双模式路径的单一来源）
+node tests/test_shared_paths.mjs
+
 # 渲染层状态编排与行级差异（加载真实 store 域与 diff.ts，vue 走真实响应式，IPC 用桩）
 node tests/test_store.mjs
 node tests/test_diff.mjs
@@ -65,7 +71,8 @@ node tests/test_diff.mjs
 cd electron-prototype/electron && npm test
 ```
 
-测试规模（v1.0.0 收口实测）：pytest **200**（行覆盖 77%，门禁 ≥70%）、Vitest **273**、mjs 纯函数 **7 份**、
+测试规模（2026-10-01 实测）：pytest **206**（覆盖率门禁 ≥70%，覆盖率参数只在 CI）、Vitest **293**、
+mjs 纯函数 **9 份**、
 真实 Electron 走查（`npm run smoke`，含壳/画廊/详情/全局层/首启/资源/A6 产品化/性能段）
 与 E2E 全链路、双平台打包矩阵（CI）。
 
