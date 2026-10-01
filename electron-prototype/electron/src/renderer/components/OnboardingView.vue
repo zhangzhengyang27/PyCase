@@ -55,6 +55,8 @@ const now = ref(Date.now() / 1000)
 let ticker: ReturnType<typeof setInterval> | null = null
 onMounted(() => {
   ticker = setInterval(() => (now.value = Date.now() / 1000), 1000)
+  // 全屏接管层即模态：初始焦点落主操作（审计 P2；失败态时 .d-primary 是「重试」）
+  document.querySelector<HTMLButtonElement>('[data-testid="onboarding"] .d-actions .d-primary')?.focus()
 })
 onBeforeUnmount(() => {
   if (ticker) clearInterval(ticker)
@@ -73,6 +75,9 @@ const versionText = computed(() => (appInfo.value.version ? `v${appInfo.value.ve
 <template>
   <div
     data-testid="onboarding"
+    role="dialog"
+    aria-modal="true"
+    aria-label="首次启动引导"
     class="fixed inset-0 z-[1300] bg-page flex items-center justify-center p-5 overflow-y-auto"
   >
     <div class="w-[620px] max-w-full bg-card border border-line-hairline rounded-overlay shadow-elev-3 overflow-hidden">
@@ -91,7 +96,7 @@ const versionText = computed(() => (appInfo.value.version ? `v${appInfo.value.ve
 
       <p class="m-0 px-4.5 pb-3.5 text-body text-ink-dim leading-[1.65]">
         内置
-        <b class="text-ink">{{ env?.examples || 1496 }} 条 Python 示例</b
+        <b class="text-ink">{{ env?.examples || 1493 }} 条 Python 示例</b
         >：浏览、运行、改代码都在一个窗口里完成。<template v-if="!ready"
           >首次启动需要几分钟准备运行环境，这一步不会挡住浏览。</template
         ><template v-else>运行环境已就绪，可以直接运行任何示例。</template>

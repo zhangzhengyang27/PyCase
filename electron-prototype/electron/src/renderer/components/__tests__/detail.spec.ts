@@ -659,6 +659,29 @@ describe('DetailPage', () => {
     expect(w.find('.tab-row').exists()).toBe(true)
   })
 
+  it('tablist 方向键导航：→/← 循环移动选中与焦点，Home/End 跳两端（ARIA tabs，审计 P2）', async () => {
+    const w = mountDetail()
+
+    await w.get('#detail-tab-output').trigger('keydown', { key: 'ArrowRight' })
+    expect(w.get('#detail-tab-assets').attributes('aria-selected')).toBe('true')
+    expect(document.activeElement?.id).toBe('detail-tab-assets')
+
+    // 末尾再 → 回绕到第一个（先点选到最后一个标签）
+    await w.get('#detail-tab-versions').trigger('click')
+    await w.get('#detail-tab-versions').trigger('keydown', { key: 'ArrowRight' })
+    expect(w.get('#detail-tab-output').attributes('aria-selected')).toBe('true')
+
+    // 首个 ← 回绕到最后一个
+    await w.get('#detail-tab-output').trigger('keydown', { key: 'ArrowLeft' })
+    expect(w.get('#detail-tab-versions').attributes('aria-selected')).toBe('true')
+    expect(document.activeElement?.id).toBe('detail-tab-versions')
+
+    await w.get('#detail-tab-history').trigger('keydown', { key: 'Home' })
+    expect(w.get('#detail-tab-output').attributes('aria-selected')).toBe('true')
+    await w.get('#detail-tab-output').trigger('keydown', { key: 'End' })
+    expect(w.get('#detail-tab-versions').attributes('aria-selected')).toBe('true')
+  })
+
   it('清空按钮清空 detail 输出汇；状态点跟随 surfaceState', async () => {
     const st = surfaceState('detail')
     st.lines.push({ text: 'hello', cls: 'base' })
@@ -1177,5 +1200,36 @@ describe('MonacoEditor', () => {
     const w = mountEditor()
     unmountNow(w)
     expect(h.fakeEditor.dispose).toHaveBeenCalledTimes(1)
+  })
+})
+
+// ---------------------------------------------------------------------------
+describe('RunnerView 联想下拉可访问性（审计 P2）', () => {
+  it('输入框带 combobox 语义，下拉为 listbox，命中项为 option 且 aria-activedescendant 跟随高亮', async () => {
+    examples.value = [
+      makeExample({ id: 'r1', name: 'alpha_demo.py' }),
+      makeExample({ id: 'r2', name: 'alpha_extra.py' })
+    ]
+    const w = track(mount(RunnerView))
+    runnerQuery.value = 'alpha'
+    await nextTick()
+
+    const input = w.get('input[role="combobox"]')
+    expect(input.attributes('aria-expanded')).toBe('true')
+    expect(input.attributes('aria-controls')).toBe('runner-hits')
+    expect(input.attributes('aria-autocomplete')).toBe('list')
+
+    const listbox = w.get('[role="listbox"]')
+    expect(listbox.attributes('id')).toBe('runner-hits')
+
+    const options = w.findAll('[role="option"]')
+    expect(options).toHaveLength(2)
+    expect(options[0].attributes('id')).toBe('runner-hit-0')
+    expect(input.attributes('aria-activedescendant')).toBe('runner-hit-0')
+
+    // 高亮移动（↑/↓ 键盘路径已存在，aria-activedescendant 语义跟随）
+    await input.trigger('keydown', { key: 'ArrowDown' })
+    await nextTick()
+    expect(input.attributes('aria-activedescendant')).toBe('runner-hit-1')
   })
 })

@@ -66,16 +66,27 @@ function onArgsEnter(): void {
           placeholder="快速查找示例（输入名称关键字）…"
           aria-label="快速查找示例"
           :spellcheck="false"
+          role="combobox"
+          :aria-expanded="runnerQuery ? 'true' : 'false'"
+          aria-controls="runner-hits"
+          aria-autocomplete="list"
+          :aria-activedescendant="runnerHits.length ? `runner-hit-${hitIdx}` : undefined"
           @keydown="onSearchKey"
         />
         <div
           v-if="runnerQuery"
+          id="runner-hits"
+          role="listbox"
+          aria-label="匹配的示例"
           class="absolute left-2.5 right-2.5 top-full z-50 max-h-[320px] overflow-y-auto bg-panel border border-line-subtle rounded-panel shadow-elev-3"
         >
           <div v-if="runnerHits.length === 0" class="px-3 py-2 text-control text-ink-faint">无匹配示例</div>
           <button
             v-for="(e, i) in runnerHits"
             :key="e.id"
+            role="option"
+            :id="`runner-hit-${i}`"
+            :aria-selected="i === hitIdx"
             class="w-full flex items-center gap-2 px-3 py-1.5 text-left border-0 bg-transparent cursor-pointer text-control text-ink-dim hover:bg-hover hover:text-ink"
             :class="i === hitIdx ? 'bg-accent/15 text-ink' : ''"
             :data-active="i === hitIdx"

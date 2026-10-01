@@ -196,3 +196,15 @@ describe('HelpSheet 焦点圈定（审计 P2：手写模态不得把 Tab 放去�
     expect(document.activeElement).toBe(focusables[focusables.length - 1])
   })
 })
+
+// ---------------------------------------------------------------------------
+describe('OnboardingView 弹层语义（审计 P2）', () => {
+  it('首启层带 role=dialog + aria-modal，初始焦点落在主操作「开始浏览」', async () => {
+    mount(OnboardingView, { attachTo: document.body })
+    const dlg = document.querySelector('[data-testid="onboarding"]')
+    expect(dlg?.getAttribute('role')).toBe('dialog')
+    expect(dlg?.getAttribute('aria-modal')).toBe('true')
+    expect(dlg?.getAttribute('aria-label')).toBe('首次启动引导')
+    expect(document.activeElement?.textContent).toContain('开始浏览')
+  })
+})

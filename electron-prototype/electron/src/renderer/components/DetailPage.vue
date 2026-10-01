@@ -105,6 +105,22 @@ function switchTab(tab: 'output' | 'assets' | 'history' | 'versions'): void {
   if (tab === 'versions') void loadVersions()
 }
 
+// ARIA tabs 方向键导航（审计 P2）：←/→ 在标签间循环、Home/End 跳两端，选中即移动焦点。
+// 四个 tab 常驻 DOM（Tab 键本就可达），方向键只负责标签间横移——roving tabindex 从简。
+const TAB_ORDER = ['output', 'assets', 'history', 'versions'] as const
+function onTablistKeydown(e: KeyboardEvent): void {
+  const cur = TAB_ORDER.indexOf(activeTab.value)
+  let next: (typeof TAB_ORDER)[number] | null = null
+  if (e.key === 'ArrowRight') next = TAB_ORDER[(cur + 1) % TAB_ORDER.length]
+  else if (e.key === 'ArrowLeft') next = TAB_ORDER[(cur - 1 + TAB_ORDER.length) % TAB_ORDER.length]
+  else if (e.key === 'Home') next = TAB_ORDER[0]
+  else if (e.key === 'End') next = TAB_ORDER[TAB_ORDER.length - 1]
+  if (!next) return
+  e.preventDefault()
+  switchTab(next)
+  document.getElementById(`detail-tab-${next}`)?.focus()
+}
+
 function onKeydown(e: KeyboardEvent): void {
   if (!(e.ctrlKey || e.metaKey)) return
   if (e.key === 's') {
@@ -259,7 +275,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
         </div>
 
         <!-- 三标签行 -->
-        <div class="tab-row shrink-0" role="tablist" aria-label="输出面板">
+        <div class="tab-row shrink-0" role="tablist" aria-label="输出面板" @keydown="onTablistKeydown">
           <button
             id="detail-tab-output"
             class="tab"

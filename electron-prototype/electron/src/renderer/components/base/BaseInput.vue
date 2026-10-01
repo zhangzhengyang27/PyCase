@@ -33,6 +33,10 @@ const props = withDefaults(
 )
 const emit = defineEmits<{ 'update:modelValue': [v: string] }>()
 
+// 外部透传的交互语义（role/aria-expanded/aria-controls…）必须落在 <input> 上，
+// 而不是根 div——combobox 等模式要求可访问关系挂在真正可聚焦的元素上（审计 P2）
+defineOptions({ inheritAttrs: false })
+
 // 错误文案关联（审计 P2）：读屏用户光有 aria-invalid 听不到「错在哪」，
 // 经 aria-describedby 把下方错误 <p> 挂到输入框上
 const autoId = useId()
@@ -58,6 +62,7 @@ const inputCls = computed(() => [
   <div class="w-full">
     <div class="relative">
       <input
+        v-bind="$attrs"
         :id="id"
         :value="modelValue"
         :type="effectiveType"
