@@ -53,6 +53,7 @@ test('normalizeQuery: 缺省补齐与非法运行状态回退 all', () => {
     runnable: 'all',
     tags: [],
     tagsAny: [],
+    sections: [],
     q: '',
     theme: 'all',
     minQuality: 0
@@ -157,6 +158,44 @@ test('五维 AND 组合：收藏 + 运行成功 + numpy 标签 + 名称', () => 
       { favorites: fav, runStatus }
     ),
     false
+  )
+})
+
+// 分区维度（sections）：画廊侧栏二级菜单的统一机制。
+// 命中其中任一注入分区 key 即通过（OR）；分区判定由 ctx.sectionKeyOf 注入（真实来源 = overview.sectionKeyOf），
+// 未注入时不放行（宁缺毋滥）。「其他示例」这类非主题/非标签/非类目的分区只能在此维度表达。
+test('sections 维度：任一命中即放行（OR），others 分区可表达，未注入不放行', () => {
+  const list = [
+    { id: 'a', name: 'a.py', category: 'topics', tags: ['python-basics'] },
+    { id: 'b', name: 'b.py', category: 'projects', tags: [] },
+    { id: 'c', name: 'c.py', category: 'topics', tags: [] } // 既非主题、非项目、无组内标签 → others
+  ]
+  // 与 overview.sectionKeyOf 同形的派发（测试内联，避免把 overview 业务依赖拖进引擎单测）
+  const sectionKeyOf = (ex) => {
+    if (ex.category === 'projects') return 'projects'
+    if ((ex.tags || []).includes('python-basics')) return 'tag:basics'
+    return 'others'
+  }
+  const ctx = { sectionKeyOf }
+  // OR：命中 tag:basics 或 projects
+  assert.deepEqual(
+    FE.filterExamples(list, { sections: ['tag:basics', 'projects'] }, ctx).map((e) => e.id),
+    ['a', 'b']
+  )
+  // others 分区只能靠该维度表达
+  assert.deepEqual(
+    FE.filterExamples(list, { sections: ['others'] }, ctx).map((e) => e.id),
+    ['c']
+  )
+  // 空数组 = 不筛
+  assert.equal(FE.filterExamples(list, { sections: [] }, ctx).length, 3)
+  // 未注入 sectionKeyOf（或分区 key 不匹配）→ 不放行，避免「选了分区却静默全通过」
+  assert.equal(FE.matchExample(list[0], { sections: ['tag:basics'] }, {}), false)
+  assert.equal(FE.matchExample(list[0], { sections: ['no-such-key'] }, ctx), false)
+  // 与分类维度 AND：others 分区 ∩ projects 类目 = 空
+  assert.deepEqual(
+    FE.filterExamples(list, { sections: ['others'], category: 'projects' }, ctx).map((e) => e.id),
+    []
   )
 })
 

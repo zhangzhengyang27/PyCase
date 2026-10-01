@@ -9,6 +9,7 @@ import { isRunning, runStatusText } from '../src/store/detail'
 import {
   clearRunnerOutput,
   runnerArgsLine,
+  runnerCode,
   runnerExample,
   runnerHits,
   runnerQuery,
@@ -97,7 +98,11 @@ function onArgsEnter(): void {
         </div>
         <pre
           class="flex-1 min-h-0 overflow-auto m-0 px-4 py-3 font-mono text-control leading-[1.55] text-console whitespace-pre"
-          >{{ selected ? selected.code : '在上方搜索并选择示例，代码将在此只读预览。\n修改代码请进示例详情页。' }}</pre>
+          >{{
+            selected
+              ? runnerCode || '正在读取源码…'
+              : '在上方搜索并选择示例，代码将在此只读预览。\n修改代码请进示例详情页。'
+          }}</pre>
       </div>
     </div>
 

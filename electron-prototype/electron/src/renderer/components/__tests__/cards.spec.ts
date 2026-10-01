@@ -11,7 +11,7 @@ import { nextTick } from 'vue'
 import ExampleCard from '../ExampleCard.vue'
 import ExampleListItem from '../ExampleListItem.vue'
 import BrowseToolbar from '../BrowseToolbar.vue'
-import GalleryOverview from '../GalleryOverview.vue'
+import GalleryHeader from '../GalleryHeader.vue'
 import ArgsForm from '../ArgsForm.vue'
 import HistoryPanel from '../HistoryPanel.vue'
 import OutputPanel from '../OutputPanel.vue'
@@ -19,12 +19,10 @@ import OutputPanel from '../OutputPanel.vue'
 import { runStatusHint } from '../../src/utils'
 import type { RunHistoryEntry } from '../../src/types'
 import {
-  activeCategory,
-  activeSectionTags,
+  activeSectionKey,
   activeTheme,
   examples,
   favOnly,
-  galleryMode,
   sortBy,
   viewMode,
   type VExample
@@ -379,23 +377,25 @@ describe('BrowseToolbar', () => {
     return el.text()
   }
 
-  it('范围标题优先级：主题 > 分区标签组 > 项目区 > 全部示例', () => {
+  it('范围标题优先级：分区 > 主题 > 全部示例', () => {
     expect(scopeTitle()).toBe('全部示例')
 
     activeTheme.value = 'turtle'
     expect(scopeTitle()).toBe('Turtle 绘图')
 
+    // 分区（侧栏二级菜单）标题优先于主题 facet
     activeTheme.value = 'all'
-    activeSectionTags.value = ['python-basics']
+    activeSectionKey.value = 'tag:basics'
     expect(scopeTitle()).toBe('语言基础')
 
-    // 标签组认不出来时回退到「全部分区」，而不是露出空白标题
-    activeSectionTags.value = ['不存在的标签']
-    expect(scopeTitle()).toBe('全部分区')
-
-    activeSectionTags.value = []
-    activeCategory.value = 'projects'
+    activeTheme.value = 'viz'
+    activeSectionKey.value = 'projects'
     expect(scopeTitle()).toBe('综合项目')
+
+    // 分区 key 认不出来时回退到主题 / 全部示例，不露空白标题
+    activeSectionKey.value = 'no-such-key'
+    activeTheme.value = 'all'
+    expect(scopeTitle()).toBe('全部示例')
   })
 
   it('结果计数取 filtered.length（tools 不进画廊池）并带 aria-live', () => {
@@ -441,7 +441,7 @@ describe('BrowseToolbar', () => {
 
   it('排序下拉双向绑定 sortBy', async () => {
     const w = mount(BrowseToolbar)
-    const select = w.get('select')
+    const select = w.get('select[data-testid="filter-sort"]')
     expect(select.attributes('title')).toBe('排序')
     expect((select.element as HTMLSelectElement).value).toBe('quality_desc')
 
@@ -466,25 +466,39 @@ describe('BrowseToolbar', () => {
     )
   })
 
-  it('面包屑「返回总览」把 galleryMode 置回 overview', async () => {
-    galleryMode.value = 'browse'
+  it('面包屑「示例库」把分区范围归零（回到全部示例）', async () => {
+    activeSectionKey.value = 'projects'
     const w = mount(BrowseToolbar)
-    await w.get('button[title="返回总览"]').trigger('click')
-    expect(galleryMode.value).toBe('overview')
+    await w.get('button[title="全部示例"]').trigger('click')
+    expect(activeSectionKey.value).toBeNull()
+  })
+
+  it('筛选维度收成工具栏下拉：5 个维度 + 排序（旧「筛选」按钮与浮层已退役）', () => {
+    const w = mount(BrowseToolbar)
+    expect(w.find('[data-testid="gallery-filter-toggle"]').exists()).toBe(false)
+    expect(w.find('select[data-testid="filter-theme"]').exists()).toBe(true)
+    expect(w.find('select[data-testid="filter-runnable"]').exists()).toBe(true)
+    expect(w.find('select[data-testid="filter-quality"]').exists()).toBe(true)
+    expect(w.find('select[data-testid="filter-run-status"]').exists()).toBe(true)
+    expect(w.find('select[data-testid="filter-sort"]').exists()).toBe(true)
+    expect(w.find('[data-testid="tag-filter-select"]').exists()).toBe(true)
+    expect(w.find('[data-testid="filter-fav-toggle"]').exists()).toBe(true)
   })
 })
 
 // ---------------------------------------------------------------------------
-// GalleryOverview
+// GalleryHeader
 // ---------------------------------------------------------------------------
-describe('GalleryOverview', () => {
+// 总览落地页退役后，头区抽为独立组件：统计 chip + 浏览全部 / 我的收藏。
+// 分区导航改由侧栏二级菜单承担（见 App.vue），此处只锁定页头的统计口径与入口行为。
+describe('GalleryHeader', () => {
   it('页头统计与卡片同口径：示例数 / 主题数 / 可运行百分比 / 收藏数', () => {
     examples.value = [
       makeExample({ id: 'a', run_status: 'runnable' }),
       makeExample({ id: 'b', run_status: 'missing_deps' })
     ]
     favorites.value = new Set(['a'])
-    const w = mount(GalleryOverview)
+    const w = mount(GalleryHeader)
 
     const chips = w.findAll('.stat-chip')
     expect(chips.map((c) => c.text())).toEqual(['2 个示例', '5 大主题', '50% 可运行', '1 收藏'])
@@ -493,120 +507,47 @@ describe('GalleryOverview', () => {
   })
 
   it('空库时可运行百分比回退 0，不出现 NaN', () => {
-    const w = mount(GalleryOverview)
+    const w = mount(GalleryHeader)
     expect(w.findAll('.stat-chip')[2].text()).toBe('0% 可运行')
   })
 
-  it('分区最多预览 6 张卡，超出部分以「还有 N 个」入口承接', () => {
+  it('横向卡片带已退役：页头不再渲染卡片与「还有 N 个」下钻', () => {
     examples.value = Array.from({ length: 7 }, (_, i) =>
       makeExample({ id: `t${i}`, name: `turtle-demo-${i}.py`, quality_score: 90 - i, theme_key: 'turtle' })
     )
-    const w = mount(GalleryOverview)
-
-    const sec = w.findAll('section').find((s) => s.get('h2').text() === 'Turtle 绘图')!
-    expect(sec.text()).toContain('7 个')
-    expect(sec.findAllComponents(ExampleCard)).toHaveLength(6)
-
-    const more = sec.findAll('button').find((b) => b.text().includes('还有'))!
-    expect(more.text()).toContain('还有 1 个')
-    expect(more.attributes('title')).toBe('浏览Turtle 绘图全部示例')
+    const w = mount(GalleryHeader)
+    // 卡片统一由右侧网格渲染，页头只剩统计 chip 与两个入口按钮
+    expect(w.findAllComponents(ExampleCard)).toHaveLength(0)
+    expect(w.findAll('button').every((b) => !b.text().includes('还有'))).toBe(true)
   })
 
-  it('分区下钻预置范围：主题分区设 activeTheme，标签组分区设 activeSectionTags', async () => {
-    examples.value = [
-      ...Array.from({ length: 7 }, (_, i) => makeExample({ id: `t${i}`, name: `turtle-${i}.py`, theme_key: 'turtle' })),
-      makeExample({ id: 'basic', name: 'basic-demo', tags: ['python-basics'] })
-    ]
-    const w = mount(GalleryOverview)
-
-    const turtleSec = w.findAll('section').find((s) => s.get('h2').text() === 'Turtle 绘图')!
-    await turtleSec
-      .findAll('button')
-      .find((b) => b.text().startsWith('查看全部'))!
-      .trigger('click')
-    expect(activeTheme.value).toBe('turtle')
-    expect(galleryMode.value).toBe('browse')
-
-    const basicSec = w.findAll('section').find((s) => s.get('h2').text() === '语言基础')!
-    await basicSec
-      .findAll('button')
-      .find((b) => b.text().startsWith('查看全部'))!
-      .trigger('click')
-    // 标签组下钻用 tagsAny（OR 语义），并且必须清掉上一次的主题范围
-    expect(activeSectionTags.value).toEqual(expect.arrayContaining(['python-basics']))
-    expect(activeTheme.value).toBe('all')
-  })
-
-  it('项目区与「其他示例」区下钻分别设 activeCategory 与全部范围', async () => {
-    examples.value = [
-      makeExample({ id: 'proj', category: 'projects', name: 'my-project' }),
-      makeExample({ id: 'misc', name: 'misc-demo' })
-    ]
-    const w = mount(GalleryOverview)
-
-    const projSec = w.findAll('section').find((s) => s.get('h2').text() === '综合项目')!
-    await projSec
-      .findAll('button')
-      .find((b) => b.text().startsWith('查看全部'))!
-      .trigger('click')
-    expect(activeCategory.value).toBe('projects')
-
-    const othersSec = w.findAll('section').find((s) => s.get('h2').text() === '其他示例')!
-    await othersSec
-      .findAll('button')
-      .find((b) => b.text().startsWith('查看全部'))!
-      .trigger('click')
-    // others 无范围可预置：仅进入浏览态，且清掉上一次的项目范围
-    expect(galleryMode.value).toBe('browse')
-    expect(activeCategory.value).toBe('all')
-    expect(activeTheme.value).toBe('all')
-  })
-
-  it('卡片收藏按钮走 toggleFavorite，星标即时跟随 favorites 变化', async () => {
+  it('收藏 chip 数随 favorites 变化即时更新', async () => {
     examples.value = [makeExample({ id: 'a' })]
-    const w = mount(GalleryOverview)
-    expect(w.getComponent(ExampleCard).props('faved')).toBe(false)
+    const w = mount(GalleryHeader)
+    expect(w.findAll('.stat-chip')[3].text()).toBe('0 收藏')
 
-    await w.getComponent(ExampleCard).get('button[title="收藏"]').trigger('click')
-    expect(favorites.value.has('a')).toBe(true)
-    expect(w.getComponent(ExampleCard).props('faved')).toBe(true)
-    // 页头收藏计数同源，一起更新
+    favorites.value = new Set(['a'])
+    await w.vm.$nextTick()
     expect(w.findAll('.stat-chip')[3].text()).toBe('1 收藏')
   })
 
-  it('卡片打开 / 运行按钮分别走 openDetail 与 runFromCard（运行会顺带打开详情并起跑）', async () => {
-    examples.value = [makeExample({ id: 'a', name: 'demo.py' })]
-    const w = mount(GalleryOverview)
-
-    await w.getComponent(ExampleCard).get('[role="button"]').trigger('click')
-    await flushPromises()
-    expect(selectedId.value).toBe('a')
-
-    selectedId.value = null
-    await w.getComponent(ExampleCard).get('button[title="运行"]').trigger('click')
-    await flushPromises()
-    // runFromCard = 先 openDetail 装载参数，无必填缺失则直接运行
-    expect(selectedId.value).toBe('a')
-    expect(isRunning.value).toBe(true)
-  })
-
-  it('页头入口：浏览全部设全部范围，我的收藏额外打开 favOnly', async () => {
-    const w = mount(GalleryOverview)
+  it('页头入口：浏览全部范围归零；我的收藏额外打开 favOnly（并清掉分区范围）', async () => {
+    activeSectionKey.value = 'projects'
+    const w = mount(GalleryHeader)
 
     await w
       .findAll('button')
       .find((b) => b.text() === '浏览全部')!
       .trigger('click')
-    expect(galleryMode.value).toBe('browse')
-    expect(activeTheme.value).toBe('all')
+    expect(activeSectionKey.value).toBeNull()
 
-    galleryMode.value = 'overview'
+    activeSectionKey.value = 'projects'
     await w
       .findAll('button')
       .find((b) => b.text() === '我的收藏')!
       .trigger('click')
     expect(favOnly.value).toBe(true)
-    expect(galleryMode.value).toBe('browse')
+    expect(activeSectionKey.value).toBeNull()
   })
 })
 

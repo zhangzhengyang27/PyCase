@@ -1,10 +1,11 @@
 // catalog.ts：示例目录域（画廊 / 工具箱的浏览与筛选）。
 //
 // 职责：示例列表加载、视图与筛选状态、派生列表（筛选/排序/分页/facet/标签计数）、
-// 浏览态芯片与两级浏览入口。持久化数据（收藏/历史/偏好）在 prefs.ts。
+// 浏览态芯片与侧栏分区范围。持久化数据（收藏/历史/偏好）在 prefs.ts。
 import { computed, ref, watch } from 'vue'
 import * as FilterEngine from '../filter-engine'
 import { THEMES } from '../themes'
+import { SECTION_CATALOG, assignSections, sectionKeyOf } from '../overview'
 import { buildFilterChips, type FilterChip } from '../filter-chips'
 import type { ExampleItem } from '../types'
 import { api } from '../sidecar-client'
@@ -35,19 +36,15 @@ export const activeView = ref<ViewKey>('gallery')
 export const searchQuery = ref('')
 export const toolSearchQuery = ref('')
 
-// 画廊两级浏览：总览（主题分区落地页）→ 下钻浏览（侧栏 + 结果条 + 网格/清单）。
-// galleryMode 不持久化——落地页是每次打开应用的默认起点
-export const galleryMode = ref<'overview' | 'browse'>('overview')
+// 画廊分区范围（侧栏二级菜单：'全部示例' = null；否则为一个分区 key）。
+// 不持久化——每次打开应用都从「全部示例」起步；会话内随侧栏点击切换。
+export const activeSectionKey = ref<string | null>(null)
 
 // 画廊筛选维度
 export const activeTheme = ref('all')
 export const minQuality = ref(0)
 export const sortBy = ref<SortBy>('quality_desc')
 export const galleryLimit = ref(120)
-// 总览标签分区/项目区下钻的会话级范围（不持久化，与 activeTags 同策略）；
-// tagsAny 在引擎内为 OR 语义（分区 = 一组同义标签），与侧栏多选 tags 的 AND 互不干扰
-export const activeSectionTags = ref<string[]>([])
-export const activeCategory = ref<'all' | 'projects'>('all')
 
 // 浏览密度（画廊浏览态网格/清单，随 viewPrefs 持久化）
 export const viewMode = ref<ViewDensity>('grid')
@@ -99,12 +96,20 @@ const THEME_MATCHERS: Record<string, (e: FilterEngine.ExampleLike) => boolean> =
 const runStatusIndex = computed(() => FilterEngine.buildRunStatusIndex(runHistory.value))
 const lastRunIndex = computed(() => FilterEngine.buildLastRunIndex(runHistory.value))
 
+// 分区筛选判定：sectionKeyOf 对「未命中任何主题/项目/标签组」的条目返回 undefined
+// （卡片据此回退分类图标），但这些条目正是 assignSections 的 others 桶——筛选侧需补成
+// 'others'，侧栏 15 个分区（含「其他示例」）才能在 sections 维度统一表达。
+const sectionKeyForFilter = (ex: FilterEngine.ExampleLike): string | undefined =>
+  sectionKeyOf(ex as ExampleItem) ?? 'others'
+
 const filterContext = computed<FilterEngine.FilterContext>(() => ({
   favorites: favorites.value,
   runStatus: runStatusIndex.value,
   themeMatchers: THEME_MATCHERS,
   lastRunAt: lastRunIndex.value,
-  codeHitIds: codeHitIds.value
+  codeHitIds: codeHitIds.value,
+  // 分区判定单一来源：overview.sectionKeyOf（与 assignSections 同序的 first-match）
+  sectionKeyOf: sectionKeyForFilter
 }))
 
 const galleryQuery = computed<FilterEngine.FilterQuery>(() => ({
@@ -114,8 +119,8 @@ const galleryQuery = computed<FilterEngine.FilterQuery>(() => ({
   theme: activeTheme.value,
   minQuality: minQuality.value,
   tags: Array.from(activeTags.value),
-  tagsAny: activeSectionTags.value,
-  category: activeCategory.value,
+  // 分区范围 = 侧栏二级菜单选中项（null → 全部示例，空数组即不筛）
+  sections: activeSectionKey.value ? [activeSectionKey.value] : [],
   q: appliedSearch.value
 }))
 
@@ -129,12 +134,11 @@ const toolboxQuery = computed<FilterEngine.FilterQuery>(() => ({
 }))
 
 /** 计数基准：剥离 theme/quality/tags 自身维度（与旧 facets.ts 口径一致）；
- *  分区范围（tagsAny/category）同 theme 一样剥离——侧栏 facet 计数不随下钻范围缩放 */
+ *  分区范围（sections）同 theme 一样剥离——侧栏 facet 计数不随分区范围缩放 */
 const countBaseQuery = computed<FilterEngine.FilterQuery>(() => ({
   ...galleryQuery.value,
   tags: [],
-  tagsAny: [],
-  category: 'all',
+  sections: [],
   theme: 'all',
   minQuality: 0
 }))
@@ -142,9 +146,25 @@ const countBaseQuery = computed<FilterEngine.FilterQuery>(() => ({
 // ---------------------------------------------------------------------------
 // 派生数据（旧版 renderGalleryGrid / renderToolboxGrid / renderFacets 的数据部分）
 // ---------------------------------------------------------------------------
-/** 画廊池：工具只待在工具箱——画廊（总览分区/浏览筛选/侧栏 facet）一律不含 tools，
+/** 画廊池：工具只待在工具箱——画廊（侧栏分区/浏览筛选/侧栏 facet）一律不含 tools，
  *  与工具箱查询的 category:'tools' 互为补集 */
 export const galleryExamples = computed<VExample[]>(() => examples.value.filter((e) => e.category !== 'tools'))
+
+/** 画廊分区（互斥分配，质量降序）：侧栏菜单计数与卡片徽章同口径 */
+export const gallerySections = computed(() => assignSections(galleryExamples.value))
+
+export interface GallerySectionNav {
+  key: string
+  label: string
+  count: number
+}
+
+/** 侧栏二级分区菜单的数据：完整 15 项（SECTION_CATALOG 恒含空分区，计数为 0 也展示），
+ *  计数取互斥分配后的成员数（与卡片徽章 / 结果条一致） */
+export const gallerySectionNav = computed<GallerySectionNav[]>(() => {
+  const counts = new Map(gallerySections.value.map((s) => [s.key, s.items.length]))
+  return SECTION_CATALOG.map((s) => ({ key: s.key, label: s.label, count: counts.get(s.key) || 0 }))
+})
 
 /** 服务端代码检索：命中 id 并入筛选（失败时静默降级为仅元数据匹配） */
 async function refreshCodeHits(query: string): Promise<void> {
@@ -182,15 +202,20 @@ export interface FacetCounts {
   themeCounts: Map<string, number>
   qualityCounts: Map<number, number>
   runnableCounts: Map<string, number>
+  /** 运行状态档位计数（成功过 / 失败过 / 未运行）——供工具栏「运行状态」下拉显示 facet 计数 */
+  runStatusCounts: Map<string, number>
 }
 
 const QUALITY_FACETS = [0, 90, 80, 60]
 const RUNNABLE_FACET_KEYS = ['runnable', 'missing_deps', 'empty', 'broken', 'risky']
+// 运行状态档位：runStatusIndex 只记 ok/failed，无记录即「未运行」
+const RUN_STATUS_FACET_KEYS = ['ok', 'failed', 'never'] as const
 
 export const facetCounts = computed<FacetCounts>(() => {
   const themeCounts = new Map<string, number>()
   const qualityCounts = new Map<number, number>()
   const runnableCounts = new Map<string, number>()
+  const runStatusCounts = new Map<string, number>()
   const ctx = filterContext.value
   for (const ex of galleryExamples.value) {
     if (!FilterEngine.matchExample(ex, countBaseQuery.value, ctx)) continue
@@ -204,8 +229,13 @@ export const facetCounts = computed<FacetCounts>(() => {
     for (const key of RUNNABLE_FACET_KEYS) {
       if (ex.run_status === key) runnableCounts.set(key, (runnableCounts.get(key) || 0) + 1)
     }
+    for (const key of RUN_STATUS_FACET_KEYS) {
+      if (((ctx.runStatus && ctx.runStatus.get(ex.id)) || 'never') === key) {
+        runStatusCounts.set(key, (runStatusCounts.get(key) || 0) + 1)
+      }
+    }
   }
-  return { themeCounts, qualityCounts, runnableCounts }
+  return { themeCounts, qualityCounts, runnableCounts, runStatusCounts }
 })
 
 const toolboxFacetBase = computed<FilterEngine.FilterQuery>(() => ({ ...toolboxQuery.value, tags: [] }))
@@ -262,8 +292,7 @@ export function clearFilters(): void {
   activeTags.value = new Set()
   activeTheme.value = 'all'
   minQuality.value = 0
-  activeSectionTags.value = []
-  activeCategory.value = 'all'
+  activeSectionKey.value = null
   persistViewPrefs()
 }
 
@@ -273,6 +302,9 @@ export const galleryChips = computed<FilterChip[]>(() => buildFilterChips(galler
 /** 移除单个芯片 = 反向应用该维度的默认值（搜索词清输入框，防抖后 applied 随之清空） */
 export function removeChip(chip: FilterChip): void {
   switch (chip.key) {
+    case 'section':
+      activeSectionKey.value = null
+      break
     case 'fav':
       favOnly.value = false
       break
@@ -285,12 +317,6 @@ export function removeChip(chip: FilterChip): void {
     case 'theme':
       activeTheme.value = 'all'
       persistViewPrefs()
-      break
-    case 'tagsAny':
-      activeSectionTags.value = []
-      break
-    case 'category':
-      activeCategory.value = 'all'
       break
     case 'quality':
       minQuality.value = 0
@@ -316,30 +342,21 @@ export function clearAllFilters(): void {
   toolSearchQuery.value = ''
 }
 
-/** 从总览态下钻进入浏览态，可选地预置范围（主题 / 分区标签组 / 项目类目 / 收藏）。
- *  三种范围互斥：设置其一即清空另两者（分区下钻 = 重新选择范围，避免 AND 出空集） */
-export function openGalleryBrowse(preset?: {
-  theme?: string
-  tags?: string[]
-  category?: 'projects'
-  favOnly?: boolean
-}): void {
-  if (preset?.tags) {
-    activeSectionTags.value = preset.tags
+/** 侧栏二级菜单选取分区范围：null = 全部示例。
+ *  分区是「范围」而非叠加筛选——切换范围时清掉主题 facet，避免分区主题与主题维度叠出空集
+ *  （15 个分区含 others 统一走 sections 维度，故不再需要 theme/tagsAny/category 三套下钻） */
+export function selectSection(key: string | null): void {
+  activeSectionKey.value = key
+  if (key !== null && activeTheme.value !== 'all') {
     activeTheme.value = 'all'
-    activeCategory.value = 'all'
-  } else if (preset?.category) {
-    activeCategory.value = preset.category
-    activeSectionTags.value = []
-    activeTheme.value = 'all'
-  } else if (preset?.theme) {
-    activeTheme.value = preset.theme
-    activeSectionTags.value = []
-    activeCategory.value = 'all'
     persistViewPrefs()
   }
+}
+
+/** 页头入口：范围归零（全部示例），可选叠加「我的收藏」开关 */
+export function openGallery(preset?: { favOnly?: boolean }): void {
+  selectSection(null)
   if (preset?.favOnly) favOnly.value = true
-  galleryMode.value = 'browse'
 }
 
 /** 拉取示例列表并建立筛选预处理缓存（v2：import 标签用服务端下发的派生事实）。 */
@@ -364,14 +381,12 @@ export function catalogTestHooks(): Record<string, unknown> {
     // 冒烟探针从干净筛选态开始：本机 viewPrefs/runHistory 可能残留主题、搜索词等
     // 筛选状态（CI 干净环境无此问题），不清理会让 favorites/facets 断言失真
     resetViewFilters: () => {
-      galleryMode.value = 'overview'
+      activeSectionKey.value = null
       activeTheme.value = 'all'
       minQuality.value = 0
       activeRunnable.value = 'all'
       activeRunStatus.value = 'all'
       activeTags.value = new Set()
-      activeSectionTags.value = []
-      activeCategory.value = 'all'
       favOnly.value = false
       searchQuery.value = ''
       toolSearchQuery.value = ''

@@ -550,6 +550,54 @@
     display: var(--nav-indicator);
   }
 
+  /* 二级导航行（侧栏「示例画廊」下的分区菜单）：比 navitem 更密、更弱，缩进体现层级。
+     颜色仍走侧栏语义（secondary ≥ tertiary 达标），无新增字面量。 */
+  .subnav {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    width: 100%;
+    height: var(--row-h);
+    padding: 0 8px;
+    border: 0;
+    border-radius: var(--r-control);
+    background: transparent;
+    color: var(--text-secondary);
+    font-family: var(--font-ui);
+    font-size: var(--fs-caption);
+    font-weight: 400;
+    text-align: left;
+    cursor: pointer;
+    transition:
+      background-color var(--dur-fast) var(--ease-std),
+      color var(--dur-fast) var(--ease-std);
+  }
+  .subnav:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+  }
+  .subnav.sel {
+    background: var(--side-sel-bg);
+    color: var(--side-sel-fg);
+  }
+  html[data-platform="win"] .subnav.sel {
+    font-weight: 600;
+  }
+  .subnav:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-shadow);
+  }
+  .subnav .badge-n {
+    margin-left: auto;
+    font-family: var(--font-code);
+    font-size: var(--fs-caption);
+    color: var(--text-tertiary);
+  }
+  .subnav.sel .badge-n {
+    color: inherit;
+    opacity: 0.8;
+  }
+
   /* 状态栏：mac 融于窗口底（仅细线），win 用窗口色 */
   .statusbar {
     height: var(--statusbar-h);

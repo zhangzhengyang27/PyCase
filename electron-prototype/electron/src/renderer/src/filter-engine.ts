@@ -104,6 +104,9 @@ export interface FilterQuery {
   tags?: string[]
   /** 标签任一命中（OR）：总览分区下钻用——一个分区对应一组同义标签 */
   tagsAny?: string[]
+  /** 分区维度（画廊侧栏二级菜单）：命中其中任一分区 key 即通过（OR）。
+   *  判定经 ctx.sectionKeyOf（由调用方注入 overview.sectionKeyOf，保持本模块零业务依赖） */
+  sections?: string[]
   q?: string
   /** 主题维度（画廊筛选条）：'all' 或主题 key，匹配器由 ctx.themeMatchers 提供 */
   theme?: string
@@ -120,6 +123,8 @@ export interface FilterContext {
   lastRunAt?: Map<string, number>
   /** 服务端代码检索命中 id（v2 列表不含 code，代码搜索由 sidecar 承接） */
   codeHitIds?: Set<string>
+  /** 示例 → 分区 key（overview.sectionKeyOf，由调用方注入；sections 维度据此判定互斥归属） */
+  sectionKeyOf?: (ex: ExampleLike) => string | undefined
 }
 
 export interface TagFacet {
@@ -190,6 +195,8 @@ export function normalizeQuery(query: FilterQuery): Required<FilterQuery> {
       : 'all',
     tags: Array.isArray(q.tags) ? q.tags.map((t) => String(t).toLowerCase()) : [],
     tagsAny: Array.isArray(q.tagsAny) ? q.tagsAny.map((t) => String(t).toLowerCase()) : [],
+    // 分区 key 是大小写敏感的内部标识（tag:basics / projects / others），不做小写化
+    sections: Array.isArray(q.sections) ? q.sections.map((s) => String(s)) : [],
     q: typeof q.q === 'string' ? q.q.toLowerCase().trim() : '',
     theme: typeof q.theme === 'string' && q.theme ? q.theme : 'all',
     minQuality
@@ -244,6 +251,14 @@ export function matchExample(ex: ExampleLike, rawQuery: FilterQuery, ctx?: Filte
   if (query.tagsAny.length > 0) {
     const tags = allTagsOf(ex)
     if (!query.tagsAny.some((t) => tags.includes(t))) return false
+  }
+
+  // 7c) 分区（OR，画廊侧栏二级菜单）：命中其中任一 key 即放行。
+  // 分区判定由调用方注入（overview.sectionKeyOf 单一来源）——未注入时不放行（宁缺毋滥，
+  // 避免「选了分区却静默全通过」）。（'其他示例' 这类非主题/非标签/非类目分区只能在此表达）
+  if (query.sections.length > 0) {
+    const key = ctx && ctx.sectionKeyOf ? ctx.sectionKeyOf(ex) : undefined
+    if (!key || !query.sections.includes(key)) return false
   }
 
   // 8) 全文（名称 / 标签 / 代码）

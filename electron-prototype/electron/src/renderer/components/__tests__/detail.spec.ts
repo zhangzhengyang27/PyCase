@@ -17,6 +17,7 @@ import {
   currentRunId,
   isDirty,
   isRunning,
+  openDetail,
   originalCode,
   resolveConfirm,
   runStatusText,
@@ -27,7 +28,14 @@ import {
 } from '../../src/store/detail'
 import { getTestApi } from '../../src/store/index'
 import { runTimeout, favorites, runHistory } from '../../src/store/prefs'
-import { runnerArgsLine, runnerQuery, runnerSelectedId } from '../../src/store/runner'
+import {
+  clearRunnerSelection,
+  runnerArgsLine,
+  runnerCode,
+  runnerQuery,
+  runnerSelectedId,
+  selectRunnerExample
+} from '../../src/store/runner'
 import type { RunHistoryEntry } from '../../src/types'
 import { toasts } from '../../toast'
 import { applyMonacoTheme } from '../../monaco'
@@ -87,13 +95,15 @@ function resetMonaco(): void {
 // ---------------------------------------------------------------------------
 // 夹具与工具
 // ---------------------------------------------------------------------------
+// 契约 v2：list_examples 不下发源码，列表项里根本没有 code 字段（线上实测 1496 条
+// 全部无 code）。夹具必须对齐这一形状——否则「源码从列表项取」的缺陷会被夹具喂饱，
+// 线上全空而测试全绿。需要源码的用例走下面的 stubGetExample。
 function makeExample(over: Partial<VExample> = {}): VExample {
   return {
     id: 't1',
     name: 'alpha.py',
     category: 'topics',
     path: 'topics/alpha.py',
-    code: 'print(1)\n',
     title: 'Alpha',
     tags: [],
     quality_score: 90,
@@ -101,6 +111,20 @@ function makeExample(over: Partial<VExample> = {}): VExample {
     _tagsAll: [],
     ...over
   }
+}
+
+/** get_example 的桩：契约 v2 下源码只有这一个来源，需要源码的用例统一走这里。 */
+function stubGetExample(code: string, over: Record<string, unknown> = {}): void {
+  vi.mocked(window.sidecar.getExample).mockResolvedValue({
+    id: 't1',
+    name: 'alpha.py',
+    title: 'Alpha',
+    category: 'topics',
+    tags: [],
+    path: '/tmp/alpha.py',
+    code,
+    ...over
+  } as never)
 }
 
 function makeRun(id: string, i = 0): RunHistoryEntry {
@@ -152,7 +176,7 @@ function resetStore(): void {
   runTimeout.value = 30
   runHistory.value = []
   favorites.value = new Set()
-  runnerSelectedId.value = null
+  clearRunnerSelection()
   runnerQuery.value = ''
   runnerArgsLine.value = ''
   for (const key of ['detail', 'runner'] as const) {
@@ -182,13 +206,117 @@ afterEach(() => {
 // DetailPage
 // ===========================================================================
 describe('DetailPage', () => {
-  function mountDetail(over: Partial<VExample> = {}): VueWrapper {
+  // 第二参数是「已装载的源码」：真实路径由 openDetail → get_example 写入 originalCode，
+  // 这里直接设定终态（这些用例不测源码装载，只测详情区的其余行为）。
+  function mountDetail(over: Partial<VExample> = {}, code = 'print(1)\n'): VueWrapper {
     const ex = makeExample(over)
     examples.value = [ex]
     selectedId.value = ex.id
-    originalCode.value = ex.code || ''
+    originalCode.value = code
     return track(mount(DetailPage, { attachTo: document.body }))
   }
+
+  it('源码来自 get_example 而非列表项（v2 列表不含 code）——回归「代码块全空白」', async () => {
+    stubGetExample('# 来自 get_example 的源码\nprint(1)\n')
+    // 列表项刻意不带 code：与线上 list_examples 的真实形状一致
+    examples.value = [makeExample({ id: 't1' })]
+
+    await openDetail('t1')
+    await flushPromises()
+
+    expect(window.sidecar.getExample).toHaveBeenCalledWith('t1')
+    expect(originalCode.value).toBe('# 来自 get_example 的源码\nprint(1)\n')
+    expect(isDirty.value).toBe(false)
+  })
+
+  it('选中示例后 Monaco 不以「请选择示例」占位串初始化（占位只属于未选中态）', async () => {
+    stubGetExample('print(1)\n')
+    examples.value = [makeExample({ id: 't1' })]
+
+    await openDetail('t1')
+    await flushPromises()
+    track(mount(DetailPage, { attachTo: document.body }))
+
+    expect(h.create).toHaveBeenCalledTimes(1)
+    expect(h.create.mock.calls[0][1].value).not.toBe('# 在画廊或工具箱中选择示例查看与编辑代码\n')
+    expect(h.create.mock.calls[0][1].value).toBe('print(1)\n')
+  })
+
+  it('get_example 失败时不静默：源码置空并给出错误 toast', async () => {
+    vi.mocked(window.sidecar.getExample).mockRejectedValue(new Error('boom'))
+    examples.value = [makeExample({ id: 't1' })]
+
+    await openDetail('t1')
+    await flushPromises()
+
+    expect(originalCode.value).toBe('')
+    expect(isDirty.value).toBe(false)
+    expect(toasts.value.some((t) => t.type === 'error' && t.text.includes('加载源码失败'))).toBe(true)
+  })
+
+  it('快速切换示例时丢弃过期的源码响应（序号守卫）', async () => {
+    const pending: Array<(v: unknown) => void> = []
+    vi.mocked(window.sidecar.getExample).mockImplementation(
+      (() => new Promise<unknown>((resolve) => pending.push(resolve))) as never
+    )
+    examples.value = [makeExample({ id: 't1' }), makeExample({ id: 't2' })]
+
+    void openDetail('t1')
+    await flushPromises()
+    void openDetail('t2')
+    await flushPromises()
+
+    // t1 的响应先发后到：不得覆盖当前（t2）的源码
+    pending[0]({ id: 't1', code: 't1-code\n' })
+    pending[1]({ id: 't2', code: 't2-code\n' })
+    await flushPromises()
+
+    expect(selectedId.value).toBe('t2')
+    expect(originalCode.value).toBe('t2-code\n')
+  })
+
+  it('首次装载失败后重新打开同一 id 会重试取源码（空源码才补发）', async () => {
+    vi.mocked(window.sidecar.getExample)
+      .mockRejectedValueOnce(new Error('boom'))
+      .mockResolvedValue({ id: 't1', code: 'retry-ok\n' } as never)
+    examples.value = [makeExample({ id: 't1' })]
+
+    await openDetail('t1')
+    await flushPromises()
+    expect(originalCode.value).toBe('')
+
+    // 同一 id 重开：源码仍是空 → 补发一次装载（失败后重开必须能自愈）
+    await openDetail('t1')
+    await flushPromises()
+
+    expect(window.sidecar.getExample).toHaveBeenCalledTimes(2)
+    expect(originalCode.value).toBe('retry-ok\n')
+    expect(isDirty.value).toBe(false)
+  })
+
+  it('源码已在位或存在未保存编辑时，同 id 重复打开不补发装载（dirty 安全）', async () => {
+    stubGetExample('orig\n')
+    examples.value = [makeExample({ id: 't1' })]
+
+    await openDetail('t1')
+    await flushPromises()
+    expect(originalCode.value).toBe('orig\n')
+    expect(window.sidecar.getExample).toHaveBeenCalledTimes(1)
+
+    // 源码已在位：不补发——否则 watch(originalCode) → setValue 会顶掉用户正在编辑的内容
+    await openDetail('t1')
+    await flushPromises()
+    expect(window.sidecar.getExample).toHaveBeenCalledTimes(1)
+    expect(originalCode.value).toBe('orig\n')
+
+    // 有未保存编辑（哪怕基线是空）同样不补发
+    isDirty.value = true
+    originalCode.value = ''
+    await openDetail('t1')
+    await flushPromises()
+    expect(window.sidecar.getExample).toHaveBeenCalledTimes(1)
+    expect(isDirty.value).toBe(true)
+  })
 
   it('缺依赖时给出「安装依赖」入口：点击后装依赖并按结果重跑（A6 失败恢复）', async () => {
     vi.mocked(window.sidecar.installExampleDeps).mockResolvedValue({
@@ -239,7 +367,7 @@ describe('DetailPage', () => {
       path: '/tmp/alpha.py'
     } as never)
 
-    const w = mountDetail({ code: 'print(1)\n' })
+    const w = mountDetail()
     const tabs = Array.from(w.findAll('[role="tab"]'))
     const versionTab = tabs.find((t) => t.text() === '版本')!
     await versionTab.trigger('click')
@@ -554,13 +682,41 @@ describe('RunnerView', () => {
     expect(w.get('pre').text()).toContain('在上方搜索并选择示例')
     expect(w.text()).not.toContain('alpha.py')
 
-    examples.value = [makeExample({ id: 't1', name: 'alpha.py', code: 'print(1)\n' })]
-    runnerSelectedId.value = 't1'
-    await nextTick()
+    // 源码经 get_example 取（列表项不含 code），故选择动作要走 selectRunnerExample
+    stubGetExample('print(1)\n')
+    examples.value = [makeExample({ id: 't1', name: 'alpha.py' })]
+    selectRunnerExample('t1')
+    await flushPromises()
 
     expect(w.get('pre').text()).toContain('print(1)')
     expect(w.text()).toContain('alpha.py')
     expect(w.text()).not.toContain('在上方搜索并选择示例')
+  })
+
+  it('只读预览的源码来自 get_example，而非列表项（v2 列表不含 code）', async () => {
+    stubGetExample('# 只读预览\nprint(1)\n')
+    examples.value = [makeExample({ id: 't1', name: 'alpha.py' })]
+    const w = mountRunner()
+
+    expect(runnerCode.value).toBe('')
+    selectRunnerExample('t1')
+    await flushPromises()
+
+    expect(window.sidecar.getExample).toHaveBeenCalledWith('t1')
+    expect(runnerCode.value).toBe('# 只读预览\nprint(1)\n')
+    expect(w.get('pre').text()).toContain('# 只读预览')
+  })
+
+  it('get_example 失败时预览区不静默（错误 toast）', async () => {
+    vi.mocked(window.sidecar.getExample).mockRejectedValue(new Error('boom'))
+    examples.value = [makeExample({ id: 't1', name: 'alpha.py' })]
+    mountRunner()
+
+    selectRunnerExample('t1')
+    await flushPromises()
+
+    expect(runnerCode.value).toBe('')
+    expect(toasts.value.some((t) => t.type === 'error' && t.text.includes('加载源码失败'))).toBe(true)
   })
 
   it('搜索按名称匹配（大小写不敏感）并截断到 8 条', async () => {
@@ -613,10 +769,12 @@ describe('RunnerView', () => {
   })
 
   it('点击命中项选中示例并清空搜索框', async () => {
-    examples.value = [makeExample({ id: 't1', name: 'alpha.py', code: 'print(1)\n' })]
+    stubGetExample('print(1)\n')
+    examples.value = [makeExample({ id: 't1', name: 'alpha.py' })]
     const w = mountRunner()
     await searchInput(w).setValue('alpha')
     await w.get('button[data-active]').trigger('click')
+    await flushPromises()
 
     expect(runnerSelectedId.value).toBe('t1')
     expect(runnerQuery.value).toBe('')
@@ -698,8 +856,11 @@ describe('RunnerView', () => {
 // CommandPalette（Teleport 到 body，查询一律走 document.body）
 // ===========================================================================
 describe('CommandPalette', () => {
-  function mountPalette(): VueWrapper {
-    return track(mount(CommandPalette, { attachTo: document.body }))
+  // reka-ui Dialog 的 Portal 内容经 Presence 异步挂载：mount 后先 flush 再查询
+  async function mountPalette(): Promise<VueWrapper> {
+    const w = track(mount(CommandPalette, { attachTo: document.body }))
+    await flushPromises()
+    return w
   }
 
   function setQuery(text: string): void {
@@ -726,16 +887,16 @@ describe('CommandPalette', () => {
     return Array.from(matchItems()).findIndex((e) => e.getAttribute('data-active') === 'true')
   }
 
-  it('挂载后渲染到 body 并聚焦搜索框', () => {
-    mountPalette()
+  it('挂载后渲染到 body 并聚焦搜索框', async () => {
+    await mountPalette()
     const input = document.body.querySelector('input[aria-label="全局搜索示例"]')
     expect(input).toBeTruthy()
     expect(document.activeElement).toBe(input)
   })
 
-  it('空查询渲染示例分组并截断到 12 条', () => {
+  it('空查询渲染示例分组并截断到 12 条', async () => {
     examples.value = Array.from({ length: 15 }, (_, i) => makeExample({ id: `e${i}`, name: `ex_${i}.py` }))
-    mountPalette()
+    await mountPalette()
 
     const items = matchItems()
     expect(items).toHaveLength(12)
@@ -743,10 +904,10 @@ describe('CommandPalette', () => {
     expect(document.body.textContent).toContain('示例')
   })
 
-  it('最近运行按 id 去重取前 5', () => {
+  it('最近运行按 id 去重取前 5', async () => {
     examples.value = ['a', 'b', 'c', 'd', 'e'].map((n) => makeExample({ id: n, name: `${n}.py` }))
     runHistory.value = ['a', 'a', 'b', 'c', 'd', 'e'].map((id, i) => makeRun(id, i))
-    mountPalette()
+    await mountPalette()
 
     const rows = document.body.querySelectorAll('div[role="button"]')
     expect(rows).toHaveLength(5)
@@ -761,7 +922,7 @@ describe('CommandPalette', () => {
       makeExample({ id: 'cherry', name: 'cherry.py', title: undefined, _tagsAll: ['爬虫'] })
     ]
     runHistory.value = [makeRun('apple')]
-    mountPalette()
+    await mountPalette()
 
     setQuery('a')
     await nextTick()
@@ -778,7 +939,7 @@ describe('CommandPalette', () => {
   })
 
   it('空库与无匹配分别给出不同空态文案', async () => {
-    mountPalette()
+    await mountPalette()
     expect(document.body.textContent).toContain('库中暂无示例')
 
     examples.value = [makeExample({ id: 't1', name: 'alpha.py', title: undefined })]
@@ -789,7 +950,7 @@ describe('CommandPalette', () => {
 
   it('↑↓ 在平铺列表内回绕，Enter 打开高亮项并关闭面板', async () => {
     examples.value = ['a', 'b', 'c'].map((n) => makeExample({ id: n, name: `${n}.py`, title: undefined }))
-    const w = mountPalette()
+    const w = await mountPalette()
     setQuery('py')
     await nextTick()
     expect(matchItems()).toHaveLength(3)
@@ -812,7 +973,7 @@ describe('CommandPalette', () => {
 
   it('搜索框聚焦时，单次 ↑↓ 只移动一行（回归：曾因双重监听一次跨两行）', async () => {
     examples.value = ['a', 'b', 'c'].map((n) => makeExample({ id: n, name: `${n}.py`, title: undefined }))
-    mountPalette()
+    await mountPalette()
     setQuery('py')
     await nextTick()
     expect(activeIndexOf()).toBe(0)
@@ -824,7 +985,7 @@ describe('CommandPalette', () => {
 
   it('搜索框聚焦时，单次 Enter 只打开一次并只 emit 一次 close（回归：曾触发两次）', async () => {
     examples.value = [makeExample({ id: 't1', name: 'alpha.py', title: undefined })]
-    const w = mountPalette()
+    const w = await mountPalette()
     setQuery('alpha')
     await nextTick()
 
@@ -835,23 +996,23 @@ describe('CommandPalette', () => {
   })
 
   it('Escape 关闭面板', async () => {
-    const w = mountPalette()
+    const w = await mountPalette()
     window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))
     await nextTick()
     expect(w.emitted('close')).toHaveLength(1)
   })
 
-  it('点击遮罩自身关闭面板', async () => {
-    const w = mountPalette()
+  it('点击遮罩关闭面板（reka-ui 口径：遮罩上的 pointerdown 属于 content 外点）', async () => {
+    const w = await mountPalette()
     const mask = document.body.querySelector('.scrim') as HTMLElement
-    mask.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+    mask.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }))
     await nextTick()
     expect(w.emitted('close')).toHaveLength(1)
   })
 
   it('点击条目打开详情并关闭面板', async () => {
     examples.value = [makeExample({ id: 't1', name: 'alpha.py', title: undefined })]
-    const w = mountPalette()
+    const w = await mountPalette()
     setQuery('alpha')
     await nextTick()
 
@@ -864,7 +1025,7 @@ describe('CommandPalette', () => {
   it('最近项的「运行」按钮直接运行，且不冒泡成第二次打开', async () => {
     examples.value = [makeExample({ id: 't1', name: 'alpha.py' })]
     runHistory.value = [makeRun('t1')]
-    const w = mountPalette()
+    const w = await mountPalette()
 
     const runBtn = document.body.querySelector('button[aria-label="直接运行"]') as HTMLElement
     runBtn.click()
@@ -877,7 +1038,7 @@ describe('CommandPalette', () => {
 
   it('Cmd+Enter 直接运行高亮项', async () => {
     examples.value = [makeExample({ id: 't1', name: 'alpha.py', title: undefined })]
-    mountPalette()
+    await mountPalette()
     setQuery('alpha')
     await nextTick()
 
@@ -886,10 +1047,10 @@ describe('CommandPalette', () => {
     expect(vi.mocked(window.sidecar.runExample)).toHaveBeenCalledTimes(1)
   })
 
-  it('卸载时移除同一个 window keydown 监听，避免跨用例泄漏', () => {
+  it('卸载时移除同一个 window keydown 监听，避免跨用例泄漏', async () => {
     const addSpy = vi.spyOn(window, 'addEventListener')
     const removeSpy = vi.spyOn(window, 'removeEventListener')
-    const w = mountPalette()
+    const w = await mountPalette()
 
     const handler = addSpy.mock.calls.find((c) => c[0] === 'keydown')?.[1]
     expect(typeof handler).toBe('function')
@@ -930,6 +1091,15 @@ describe('MonacoEditor', () => {
     originalCode.value = ''
     mountEditor()
     expect(h.create.mock.calls[0][1].value).toBe('# 在画廊或工具箱中选择示例查看与编辑代码\n')
+  })
+
+  it('已选中示例时即使源码还未到位也不用占位串（占位只属于未选中态）', () => {
+    // 源码由 get_example 异步装载：装载完成前 originalCode 仍是空串。
+    // 此时若回落占位串，用户看到的就是「请选择示例」——即「代码块全空白」的观感。
+    originalCode.value = ''
+    selectedId.value = 't1'
+    mountEditor()
+    expect(h.create.mock.calls[0][1].value).toBe('')
   })
 
   it('originalCode 变化时经 setValue 同步，内容已相同时不重复写入', async () => {

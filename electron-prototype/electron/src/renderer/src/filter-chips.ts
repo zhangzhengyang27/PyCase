@@ -2,10 +2,11 @@
 // 从 FilterQuery 快照生成可逐个移除的芯片列表，让「当前生效了哪些筛选」
 // 不必到侧栏 36 行里找高亮。标签映射导出供 BrowseToolbar 与测试共用。
 import { THEMES } from './themes'
+import { sectionLabelOf } from './overview'
 
 import type { FilterQuery } from './filter-engine'
 
-export type ChipKey = 'fav' | 'runStatus' | 'runnable' | 'theme' | 'quality' | 'tag' | 'tagsAny' | 'category' | 'q'
+export type ChipKey = 'section' | 'fav' | 'runStatus' | 'runnable' | 'theme' | 'quality' | 'tag' | 'q'
 
 export interface FilterChip {
   key: ChipKey
@@ -30,6 +31,11 @@ export const RUNNABLE_LABELS: Record<string, string> = {
 
 export function buildFilterChips(q: FilterQuery): FilterChip[] {
   const chips: FilterChip[] = []
+  // 分区（侧栏二级菜单的范围）置首：它是「看哪个分区」的顶层范围，其余维度都叠加在它之上
+  const sectionKeys = q.sections || []
+  if (sectionKeys.length > 0) {
+    chips.push({ key: 'section', value: sectionKeys[0], label: sectionLabelOf(sectionKeys[0]) || '分区' })
+  }
   if (q.favOnly) chips.push({ key: 'fav', value: '1', label: '我的收藏' })
   if (q.runStatus && q.runStatus !== 'all') {
     chips.push({ key: 'runStatus', value: q.runStatus, label: RUN_STATUS_LABELS[q.runStatus] || q.runStatus })

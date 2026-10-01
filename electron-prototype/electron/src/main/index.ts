@@ -924,30 +924,42 @@ function runSmokeTest(): void {
       const page = (await mainWindow!.webContents.executeJavaScript(`(async () => {
         const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
         const root = document.documentElement;
-        const isWin = root.getAttribute('data-platform') === 'win';
         const out = {};
         const emojiRe = /[\\u{1F300}-\\u{1FAFF}\\u{2600}-\\u{27BF}]/u;
-        // 1) 总览态：分区构成（分类是派生事实，漂移必须会红）+ 卡片语言
-        const secEls = Array.from(document.querySelectorAll('main section'));
-        out.sections = secEls.length;
+        const app = window.__app;
+        app.resetViewFilters(); // 干净筛选态：本机可能残留主题/搜索/收藏筛选
+        // 1) 侧栏二级分区菜单（新形态：总览横向卡片带退役）——「全部示例」+ 15 分区，每项 label + 计数
+        const subnav = document.querySelector('[data-testid="gallery-subnav"]');
+        out.subnav = !!subnav;
+        const subItems = subnav ? Array.from(subnav.querySelectorAll('[data-section-key]')) : [];
+        out.subCount = subItems.length;
+        out.subSectionCount = subItems.filter((b) => b.getAttribute('data-section-key') !== 'all').length;
+        out.subAll = subItems.some((b) => b.getAttribute('data-section-key') === 'all');
         out.sectionCounts = {};
-        for (const sec of secEls) {
-          const h2 = sec.querySelector('h2');
-          const label = h2 ? (h2.textContent || '').trim() : '?';
-          const nums = Array.from(sec.querySelectorAll('span')).map((n) => (n.textContent || '').trim());
-          const count = nums.find((t) => /^[0-9,]+ 个$/.test(t));
-          out.sectionCounts[label] = count ? Number(count.replace(/[, 个]/g, '')) : -1;
+        for (const b of subItems) {
+          const label = (b.getAttribute('data-section-label') || '').trim();
+          if (!label || label === '全部示例') continue;
+          out.sectionCounts[label] = Number(b.getAttribute('data-section-count') || '-1');
         }
-        const cards = Array.from(document.querySelectorAll('[role="button"][aria-label$="（详情）"]'));
+        out.subnavIcons = subnav ? subnav.querySelectorAll('svg').length : 0;
+        const chromeText = (el) => Array.from(el.querySelectorAll('.chip-ic, .hue-chip, .font-semibold, .stat-dot, button')).map((n) => n.textContent || '').join('');
+        out.subnavEmoji = subnav ? emojiRe.test(chromeText(subnav)) : true;
+        // 画廊池口径：分区只覆盖画廊（tools 只待在工具箱），成员合计应等于池大小
+        out.poolTotal = app.examples().filter((e) => e.category !== 'tools').length;
+        // 2) 点侧栏「全部示例」→ 网格落地（真实用户路径；侧栏二级菜单是新的唯一分区入口）
+        const allBtn = subnav ? subnav.querySelector('[data-section-key="all"]') : null;
+        if (!allBtn) return { fatal: '侧栏二级菜单缺少「全部示例」入口' };
+        allBtn.click();
+        await sleep(600);
+        // 3) 网格卡片语言（与旧口径一致：语义图标 chip / 无 emoji / 字重白名单）
+        const cards = Array.from(document.querySelectorAll('main [role="button"][aria-label$="（详情）"]'));
         out.cards = cards.length;
-        if (!cards.length) return { fatal: '画廊总览没有卡片' };
+        if (!cards.length) return { fatal: '画廊网格没有卡片' };
         const card = cards[0];
         const chip = card.querySelector('.chip-ic');
         out.cardChip = !!chip;
         out.cardChipSvg = !!(chip && chip.querySelector('svg'));
         out.cardChipText = chip ? (chip.textContent || '').trim() : 'MISSING';
-        // 只查 UI chrome：chip 容器与标题——示例描述/标签属数据，可能自带 emoji，不算 UI 语言
-        const chromeText = (el) => Array.from(el.querySelectorAll('.chip-ic, .hue-chip, .font-semibold, .stat-dot, button')).map((n) => n.textContent || '').join('');
         out.cardEmoji = emojiRe.test(chromeText(card));
         out.cardsEmoji = cards.slice(0, 30).some((c) => emojiRe.test(chromeText(c)));
         // 字重：卡片标题必须是 600（v2 只允许 400/500/600）
@@ -959,16 +971,7 @@ function runSmokeTest(): void {
           for (const n of el.querySelectorAll('*')) weights.add(getComputedStyle(n).fontWeight);
         }
         out.cardWeights = Array.from(weights).sort();
-        // 分区头：语义图标 + 无 emoji
-        const secHead = document.querySelector('main section .chip-ic');
-        out.sectionChipSvg = !!(secHead && secHead.querySelector('svg'));
-        const secs = Array.from(document.querySelectorAll('main section'));
-        out.sectionEmoji = secs.some((sec) => {
-          const head = sec.firstElementChild;
-          return head ? emojiRe.test(chromeText(head)) : false;
-        });
-        // 1b) 服务端代码搜索：列表已不含 code，按代码标识符必须仍能命中
-        const app = window.__app;
+        // 4) 服务端代码搜索：列表已不含 code，按代码标识符必须仍能命中
         const codeHit = await window.sidecar.searchExamples('randint', 20);
         out.codeHitReasons = (codeHit.hits || []).map((h) => h.reason);
         out.codeHitCount = (codeHit.hits || []).length;
@@ -976,19 +979,13 @@ function runSmokeTest(): void {
         const metaHit = await window.sidecar.searchExamples('fizzbuzz', 20);
         out.metaHitCount = (metaHit.hits || []).length;
         // UI 路径：搜索框输入代码词 → 防抖 + 服务端检索 → 命中集合与结果集
-        window.__app.resetViewFilters();
-        window.__app.setSearch('randint');
+        app.setSearch('randint');
         await sleep(900);
-        out.uiCodeHits = window.__app.codeHitIds().length;
-        out.uiFiltered = window.__app.filteredCount();
-        window.__app.setSearch('');
+        out.uiCodeHits = app.codeHitIds().length;
+        out.uiFiltered = app.filteredCount();
+        app.setSearch('');
         await sleep(300);
-        // 2) 进浏览态：点「浏览全部」（真实用户路径）
-        const browseAll = Array.from(document.querySelectorAll('button')).find((b) => (b.textContent || '').includes('浏览全部'));
-        if (!browseAll) return { fatal: '总览页找不到「浏览全部」按钮' };
-        browseAll.click();
-        await sleep(700);
-        // 3) 分段控件：平台语义（mac = 抬起段底 + 主文字；win = 强调文字 + 下划线）
+        // 5) 分段控件：平台语义（mac = 抬起段底 + 主文字；win = 强调文字 + 下划线）
         const seg = document.querySelector('.seg');
         out.seg = !!seg;
         if (seg) {
@@ -1014,14 +1011,32 @@ function runSmokeTest(): void {
             probe2.remove();
           }
         }
-        // 4) 浏览态工具条高度 = --toolbar-h（平台几何）
-        // 进浏览态是异步渲染（视图切换 + 过渡），布局盒可能还没建立——先等它出现（最多 2s）再量，
-        // 否则会量到 0 并误报"工具条高 0"（2026-09-29 起偶发的走查竞态）
+        // 4) 浏览态工具条几何（平台相关：--toolbar-h 随 mac/win 取 44/48）
+        //    ① 排序+密度组：自身固定 h-[var(--toolbar-h)]，换行时也不得被拉伸 → 严格等于一档；
+        //    ② 行 2 是 flex-wrap 容器：窄窗允许换行，但每行仍应恰为一档行高
+        //       （量的时候要扣掉容器上下 padding 与行间 row-gap）。
+        //    进浏览态是异步渲染（视图切换 + 过渡），布局盒可能还没建立——先等它出现（最多 2s）再量，
+        //    否则会量到 0 并误报"工具条高 0"（2026-09-29 起偶发的走查竞态）
         const toolbarRow = seg ? seg.parentElement : null;
+        const wrapRow = document.querySelector('[data-testid="browse-toolbar-row"]');
+        out.wrapRow = !!wrapRow;
         for (let i = 0; i < 20 && toolbarRow && toolbarRow.getBoundingClientRect().height === 0; i++) {
           await sleep(100);
         }
         out.chipRowH = toolbarRow ? Math.round(toolbarRow.getBoundingClientRect().height) : null;
+        if (wrapRow) {
+          out.rowH = Math.round(wrapRow.getBoundingClientRect().height);
+          out.rowOverflow = wrapRow.scrollWidth - wrapRow.clientWidth;
+          // 逐「flex 行」取最高子控件（同一 offset 即同一行）：换行后各行高度可以不同
+          // （含排序+密度组的那行是一档行高，其余行是控件自身高度），故按行而不是按总量断言
+          const lineMax = new Map();
+          for (const k of Array.from(wrapRow.children)) {
+            const r = k.getBoundingClientRect();
+            const top = Math.round(r.top);
+            lineMax.set(top, Math.max(lineMax.get(top) || 0, Math.round(r.height)));
+          }
+          out.rowLines = Array.from(lineMax.values()).sort((a, b) => b - a);
+        }
         out.expectToolbarH = parseFloat(getComputedStyle(root).getPropertyValue('--toolbar-h'));
         // 保持在浏览态：主进程随后截图取证；复位交给后续 store 探针的 resetViewFilters
         return out;
@@ -1031,9 +1046,14 @@ function runSmokeTest(): void {
         if (p.fatal) throw new Error(`页面走查: ${p.fatal}`)
         const problems: string[] = []
         if ((p.cards as number) < 1) problems.push('画廊无卡片')
+        // 侧栏二级分区菜单（v2 唯一分区入口）：16 项 = 「全部示例」+ 15 分区，且不得残留 emoji
+        if (p.subnav !== true) problems.push('侧栏缺二级分区菜单')
+        if (p.subCount !== 16) problems.push(`侧栏分区项总数 ${p.subCount} != 16（全部示例 + 15 分区）`)
+        if (p.subSectionCount !== 15) problems.push(`侧栏分区数 ${p.subSectionCount} != 15`)
+        if (p.subAll !== true) problems.push('侧栏二级菜单缺「全部示例」入口')
         if (p.cardChip !== true || p.cardChipSvg !== true) problems.push('卡片缺语义图标 chip')
         if (p.cardChipText !== '') problems.push(`图标 chip 内含文本（emoji 残留？）: ${p.cardChipText}`)
-        if (p.cardEmoji || p.cardsEmoji || p.sectionEmoji) problems.push('页面仍有 emoji 文本')
+        if (p.cardEmoji || p.cardsEmoji || p.subnavEmoji) problems.push('页面仍有 emoji 文本')
         // 代码搜索（契约 §5）：列表不带 code，命中必须来自服务端按需读文件
         if ((p.codeHitCount as number) < 1) problems.push('代码检索无命中（服务端检索未接线？）')
         if (!(p.codeHitReasons as string[]).includes('code'))
@@ -1042,8 +1062,8 @@ function runSmokeTest(): void {
         if ((p.uiCodeHits as number) < 1) problems.push('渲染层未合并服务端代码命中（切面未接线？）')
         if ((p.uiFiltered as number) < 1) problems.push('按代码词搜索后结果为空')
         // 分区构成：主题分类是服务端下发的派生事实（契约 §3.2/§5），漂移必须暴露。
-        // 冻结基线口径 = **画廊池（不含 tools）**，数值等于迁移前 v1 的 TS 谓词分类结果
-        // （已用 themes.ts 原谓词对 1496 条逐条独立复核：零不一致）。
+        // 冻结基线口径 = **画廊池（不含 tools；当前 1333 条 = 1496 - 163 tools）**，
+        // 数值等于迁移前 v1 的 TS 谓词分类结果（已用 themes.ts 原谓词对 1496 条逐条独立复核：零不一致）。
         // 数据增删示例时必须同步更新这几个数字——它们是"分类没漂移"的锚点。
         const FROZEN_THEMES: Record<string, number> = {
           'Turtle 绘图': 355,
@@ -1056,18 +1076,37 @@ function runSmokeTest(): void {
         for (const [label, expect] of Object.entries(FROZEN_THEMES)) {
           if (counts[label] !== expect) problems.push(`分区「${label}」成员 ${counts[label]} != 冻结基线 ${expect}`)
         }
+        // 合计对的是「画廊池」而非全库：tools 不在任何分区里，拿 1496 对会永远差 163。
+        // 分区是一次互斥分配，成员合计必须等于池大小——这条不随示例增删漂移，是结构性不变量
         const memberSum = Object.values(counts).reduce((a, b) => a + (b > 0 ? b : 0), 0)
-        if (memberSum !== 1496) problems.push(`分区成员合计 ${memberSum} != 1496（分区不完整或重复计数）`)
+        if (memberSum !== p.poolTotal) {
+          problems.push(`分区成员合计 ${memberSum} != 画廊池 ${p.poolTotal}（分区不完整或重复计数）`)
+        }
         if (p.cardTitleWeight !== '600') problems.push(`卡片标题字重 ${p.cardTitleWeight} != 600`)
         const allowed = ['400', '500', '600']
         const badWeights = (p.cardWeights as string[]).filter((w) => !allowed.includes(w))
         if (badWeights.length) problems.push(`卡片内非标字重: ${badWeights.join(',')}`)
-        if (!p.sectionChipSvg) problems.push('分区头缺语义图标')
         if (p.seg !== true) problems.push('浏览态缺分段控件')
         if (p.segCount !== 2) problems.push(`分段控件按钮数 ${p.segCount}`)
         if (p.segActive !== true) problems.push('分段控件无选中段')
-        if (p.chipRowH === null || Math.abs((p.chipRowH as number) - (p.expectToolbarH as number)) > 1) {
-          problems.push(`工具条高 ${p.chipRowH} != --toolbar-h ${p.expectToolbarH}`)
+        // ① 排序+密度组：自身固定一档行高，不随换行拉伸——严格等于 --toolbar-h
+        const segH = p.chipRowH as number | null
+        const unitH = p.expectToolbarH as number
+        if (segH === null || Math.abs(segH - unitH) > 1) {
+          problems.push(`排序+密度组高 ${p.chipRowH} != --toolbar-h ${p.expectToolbarH}（被换行拉伸？）`)
+        }
+        // ② 行 2 是 flex-wrap 容器：窄窗换行合法，但一不得横向溢出、二每行都不得被拉伸
+        //    （各行高度允许不同：含排序+密度组的行是一档行高，其余行是控件自身高度）
+        const lines = (p.rowLines as number[]) || []
+        const overflow = (p.rowOverflow as number) ?? 0
+        if (p.wrapRow !== true) {
+          problems.push('工具条缺 [data-testid="browse-toolbar-row"] 行容器（几何探针失锚）')
+        } else {
+          if (!lines.length) problems.push('工具条行容器无子控件')
+          if (lines.some((h) => h > unitH + 1)) {
+            problems.push(`工具条有被拉伸的行 ${lines.join('/')} > --toolbar-h ${unitH}`)
+          }
+          if (overflow > 0) problems.push(`工具条横向溢出 ${overflow}px（flex-wrap 未生效）`)
         }
         if (problems.length) throw new Error('画廊页面走查失败: ' + problems.join('; '))
         // 走查取证：SMOKE_SHOTS=<dir> 时截浏览态（不带系统窗口装饰，纯页面布局）
@@ -1087,7 +1126,9 @@ function runSmokeTest(): void {
               ? '强调下划线(win)'
               : '未知'
         console.log(
-          `[smoke] 画廊走查通过：分区 ${p.sections} 卡片 ${p.cards} 图标 chip ✓ 字重 ${(p.cardWeights as string[]).join('/')} 分段 ${mode}`
+          `[smoke] 画廊走查通过：侧栏分区 ${p.subSectionCount}（合计 ${memberSum}/池 ${p.poolTotal}）` +
+            ` 网格卡片 ${p.cards} 图标 chip ✓ 字重 ${(p.cardWeights as string[]).join('/')} 分段 ${mode}` +
+            ` 工具条 ${p.rowH}px/${lines.length} 行`
         )
       }
       // 渲染层链路探针：经 window.__app 驱动 Vue 应用（store 状态 + 持久化 + 筛选）
@@ -1730,12 +1771,10 @@ function runSmokeTest(): void {
           app.resetViewFilters();
           app.setView ? app.setView('gallery') : null;
           const t0 = performance.now();
-          // 与画廊走查同一条真实路径：总览页「浏览全部」
-          const browseAll = Array.from(document.querySelectorAll('button')).find((b) =>
-            (b.textContent || '').includes('浏览全部')
-          );
-          if (!browseAll) return { ms: -1, cards: 0, fatal: '找不到「浏览全部」' };
-          browseAll.click();
+          // 与画廊走查同一条真实路径：侧栏二级菜单「全部示例」（浏览态已是默认视图）
+          const allBtn = document.querySelector('[data-testid="gallery-subnav-all"]');
+          if (!allBtn) return { ms: -1, cards: 0, fatal: '找不到侧栏「全部示例」' };
+          allBtn.click();
           let cards = 0;
           for (let i = 0; i < 60; i++) {
             await sleep(50);

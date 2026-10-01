@@ -1,8 +1,9 @@
 <script setup lang="ts">
-// AppModal：轻量弹窗（ElDialog 替代）：backdrop 点击 / Esc 关闭，180ms 面板动效，
-// 头部可拖拽移动（边界钳制在视口内，关闭按钮等控件不触发拖拽）。
-// 焦点管理：打开时聚焦面板、Tab 在弹窗内循环、关闭后归还触发点焦点。
-import { nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
+// AppModal：轻量弹窗（reka-ui Dialog 底座）——遮罩点击 / Esc 关闭、焦点圈定与
+// 背景滚动锁由 reka-ui 承担；头部可拖拽移动（边界钳制在视口内，关闭按钮等
+// 控件不触发拖拽）是本组件自留的唯一行为。
+import { onBeforeUnmount, onMounted, ref } from 'vue'
+import { DialogClose, DialogContent, DialogOverlay, DialogPortal, DialogRoot, DialogTitle } from 'reka-ui'
 import { X } from 'lucide-vue-next'
 
 withDefaults(defineProps<{ title: string; width?: string; draggable?: boolean }>(), {
@@ -20,38 +21,15 @@ let startOffset = { x: 0, y: 0 }
 let startRect = { left: 0, top: 0, width: 0, height: 0 }
 let prevFocus: HTMLElement | null = null
 
-function focusablesIn(panel: HTMLElement): HTMLElement[] {
-  return Array.from(
-    panel.querySelectorAll<HTMLElement>('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])')
-  ).filter((el) => !el.hasAttribute('disabled') && el.offsetParent !== null)
-}
-
-function onKey(e: KeyboardEvent): void {
-  if (e.key === 'Escape') {
-    emit('close')
-    return
-  }
-  if (e.key !== 'Tab' || !panelRef.value) return
-  const focusables = focusablesIn(panelRef.value)
-  if (focusables.length === 0) {
-    e.preventDefault()
-    panelRef.value.focus()
-    return
-  }
-  const first = focusables[0]
-  const last = focusables[focusables.length - 1]
-  const active = document.activeElement
-  if (e.shiftKey && (active === first || active === panelRef.value)) {
-    e.preventDefault()
-    last.focus()
-  } else if (!e.shiftKey && (active === last || active === document.body || active === null)) {
-    e.preventDefault()
-    first.focus()
-  }
+// reka-ui 的 ref 经 Primitive 落到 DOM 元素；兜底一层 $el（以防版本行为变化）
+function panelEl(): HTMLElement | null {
+  const v = panelRef.value as HTMLElement | { $el?: HTMLElement } | null
+  if (!v) return null
+  return v instanceof HTMLElement ? v : (v.$el ?? null)
 }
 
 function onHeaderDown(e: PointerEvent): void {
-  const el = panelRef.value
+  const el = panelEl()
   if (!el || (e.target as HTMLElement).closest('button')) return
   dragging = true
   startPointer = { x: e.clientX, y: e.clientY }
@@ -81,44 +59,42 @@ function onPointerUp(): void {
   window.removeEventListener('pointerup', onPointerUp)
 }
 
+// 关闭由父级 v-if 卸载本组件完成：reka-ui 的「归还焦点」挂在 open→false 过渡上，
+// 覆盖不到卸载路径，这里自己记录并归还。
 onMounted(() => {
   prevFocus = document.activeElement as HTMLElement | null
-  window.addEventListener('keydown', onKey)
-  void nextTick(() => panelRef.value?.focus())
 })
 onBeforeUnmount(() => {
-  window.removeEventListener('keydown', onKey)
   onPointerUp()
   prevFocus?.focus?.()
 })
 </script>
 
 <template>
-  <Teleport to="body">
-    <div class="scrim z-[1000] flex items-center justify-center p-6" @click.self="emit('close')">
-      <div
+  <DialogRoot :open="true" @update:open="(v: boolean) => !v && emit('close')">
+    <DialogPortal>
+      <DialogOverlay class="scrim z-[1000]" />
+      <DialogContent
         ref="panelRef"
-        role="dialog"
-        aria-modal="true"
         :aria-label="title"
-        tabindex="-1"
-        class="bg-panel border border-line-hairline rounded-overlay shadow-elev-3 max-w-[92vw] max-h-[86vh] flex flex-col animate-modal-in outline-none"
-        :style="{ width: width, transform: `translate(${dx}px, ${dy}px)` }"
+        aria-modal="true"
+        :aria-describedby="undefined"
+        class="fixed left-1/2 top-1/2 z-[1000] flex max-h-[86vh] max-w-[92vw] flex-col bg-panel border border-line-hairline rounded-overlay shadow-elev-3 outline-none animate-modal-in"
+        :style="{ width: width, transform: `translate(-50%, -50%) translate(${dx}px, ${dy}px)` }"
       >
         <div
           class="flex items-center justify-between px-4 h-11 border-b border-line-hairline shrink-0 select-none"
           :class="draggable ? 'cursor-grab active:cursor-grabbing' : ''"
           @pointerdown="draggable && onHeaderDown($event)"
         >
-          <span class="text-title font-semibold text-ink">{{ title }}</span>
-          <button
+          <DialogTitle as="span" class="text-title font-semibold text-ink">{{ title }}</DialogTitle>
+          <DialogClose
             class="w-6 h-6 flex items-center justify-center rounded-control text-ink-mute hover:text-ink hover:bg-hover cursor-pointer border-0 bg-transparent"
             title="关闭"
             aria-label="关闭"
-            @click="emit('close')"
           >
             <X :size="14" />
-          </button>
+          </DialogClose>
         </div>
         <div class="px-4 py-3.5 overflow-y-auto overscroll-contain">
           <slot />
@@ -126,7 +102,7 @@ onBeforeUnmount(() => {
         <div v-if="$slots.footer" class="flex justify-end gap-2 px-4 py-3 border-t border-line-hairline shrink-0">
           <slot name="footer" />
         </div>
-      </div>
-    </div>
-  </Teleport>
+      </DialogContent>
+    </DialogPortal>
+  </DialogRoot>
 </template>

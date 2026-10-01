@@ -8,6 +8,7 @@ import {
   CircleHelp,
   Copy,
   FolderUp,
+  Layers,
   LayoutGrid,
   LibraryBig,
   Minus,
@@ -25,6 +26,7 @@ import {
 } from 'lucide-vue-next'
 import { api } from './src/sidecar-client'
 import { createWindowControls, modKeyLabel } from './src/platform'
+import { sectionIcon } from './src/section-icons'
 import AlertBanner from './components/base/AlertBanner.vue'
 import AppModal from './components/base/AppModal.vue'
 import BaseButton from './components/base/BaseButton.vue'
@@ -32,11 +34,14 @@ import { statusDotCls } from './src/utils'
 import { applyMonacoTheme } from './monaco'
 import { aiPanelOpen, aiSettingsOpen, initAIEvents, loadAISettings, openAISettings } from './src/store/ai'
 import {
+  activeSectionKey,
   activeView,
   examples,
   filtered,
   galleryExamples,
+  gallerySectionNav,
   loading,
+  selectSection,
   toolboxItems,
   toolsTotal,
   type ViewKey
@@ -96,9 +101,10 @@ refreshStatusDot()
 function applyTheme(pref: ThemePref): void {
   appliedTheme.value = pref === 'system' ? (systemDark.matches ? 'dark' : 'light') : pref
   document.documentElement.setAttribute('data-theme', appliedTheme.value)
+  // theme-color 跟随窗口底色令牌（与 main.ts 启动路径同一口径，不留字面值）
   document
     .querySelector('meta[name="theme-color"]')
-    ?.setAttribute('content', appliedTheme.value === 'light' ? '#ffffff' : '#1e1e1e')
+    ?.setAttribute('content', getComputedStyle(document.documentElement).getPropertyValue('--bg-window').trim())
   applyMonacoTheme()
 }
 
@@ -252,23 +258,62 @@ onBeforeUnmount(() => {
         </button>
       </div>
 
-      <!-- 主视图导航 -->
+      <!-- 主视图导航（「示例画廊」下挂二级分区菜单：全部示例 + 15 分区） -->
       <div class="px-2.5 shrink-0">
         <div class="px-2 pb-1 text-caption text-ink-mute">浏览</div>
         <div class="flex flex-col gap-px">
-          <button
-            v-for="item in NAV_ITEMS"
-            :key="item.key"
-            class="navitem app-no-drag"
-            :class="{ sel: activeView === item.key }"
-            :aria-current="activeView === item.key ? 'page' : undefined"
-            @click="setView(item.key)"
-          >
-            <span class="accent-bar" aria-hidden="true"></span>
-            <component :is="item.icon" :size="16" :stroke-width="1.5" class="shrink-0" />
-            <span class="truncate">{{ item.label }}</span>
-            <span v-if="navBadge[item.key]" class="badge-n">{{ navBadge[item.key] }}</span>
-          </button>
+          <template v-for="item in NAV_ITEMS" :key="item.key">
+            <button
+              class="navitem app-no-drag"
+              :class="{ sel: activeView === item.key }"
+              :aria-current="activeView === item.key ? 'page' : undefined"
+              @click="setView(item.key)"
+            >
+              <span class="accent-bar" aria-hidden="true"></span>
+              <component :is="item.icon" :size="16" :stroke-width="1.5" class="shrink-0" />
+              <span class="truncate">{{ item.label }}</span>
+              <span v-if="navBadge[item.key]" class="badge-n">{{ navBadge[item.key] }}</span>
+            </button>
+
+            <!-- 画廊二级分区菜单：仅画廊视图展开；每项 label + 计数，当前分区有激活态；
+                 全部示例置首（activeSectionKey === null）。菜单超高时内部滚动，不吃掉下方工具区 -->
+            <div
+              v-if="item.key === 'gallery' && activeView === 'gallery'"
+              class="flex flex-col gap-px mt-0.5 mb-1 pl-3 max-h-[42vh] overflow-y-auto [scrollbar-width:thin]"
+              data-testid="gallery-subnav"
+            >
+              <button
+                class="subnav app-no-drag"
+                :class="{ sel: activeSectionKey === null }"
+                :aria-current="activeSectionKey === null ? 'true' : undefined"
+                data-testid="gallery-subnav-all"
+                data-section-key="all"
+                data-section-label="全部示例"
+                :data-section-count="galleryExamples.length"
+                @click="selectSection(null)"
+              >
+                <Layers :size="14" :stroke-width="1.5" class="shrink-0" />
+                <span class="truncate">全部示例</span>
+                <span class="badge-n">{{ galleryExamples.length.toLocaleString('zh-CN') }}</span>
+              </button>
+              <button
+                v-for="sec in gallerySectionNav"
+                :key="sec.key"
+                class="subnav app-no-drag"
+                :class="{ sel: activeSectionKey === sec.key }"
+                :aria-current="activeSectionKey === sec.key ? 'true' : undefined"
+                data-testid="gallery-subnav-item"
+                :data-section-key="sec.key"
+                :data-section-label="sec.label"
+                :data-section-count="sec.count"
+                @click="selectSection(sec.key)"
+              >
+                <component :is="sectionIcon(sec.key)" :size="14" :stroke-width="1.5" class="shrink-0" />
+                <span class="truncate">{{ sec.label }}</span>
+                <span class="badge-n">{{ sec.count.toLocaleString('zh-CN') }}</span>
+              </button>
+            </div>
+          </template>
         </div>
       </div>
 
