@@ -20,11 +20,11 @@
 
 ## 产物
 
-| 平台 | 产物 | 说明 |
-|---|---|---|
-| macOS arm64 | `dist/Python示例管理器-1.0.0-arm64-mac.zip` | 免安装压缩包（推荐分发格式） |
-| macOS arm64 | `dist/Python示例管理器-1.0.0-arm64.dmg` | 安装镜像 |
-| Windows x64 | `dist/Python示例管理器 Setup 1.0.0.exe`（NSIS）与 zip | 由 CI `packaging` 矩阵产出 |
+| 平台        | 产物                                                  | 说明                         |
+| ----------- | ----------------------------------------------------- | ---------------------------- |
+| macOS arm64 | `dist/Python示例管理器-1.0.0-arm64-mac.zip`           | 免安装压缩包（推荐分发格式） |
+| macOS arm64 | `dist/Python示例管理器-1.0.0-arm64.dmg`               | 安装镜像                     |
+| Windows x64 | `dist/Python示例管理器 Setup 1.0.0.exe`（NSIS）与 zip | 由 CI `packaging` 矩阵产出   |
 
 安装形态已验证：mac 侧 zip 解包运行与 dmg 挂载运行各跑一次完整走查（本机实测）；
 Windows 侧由 CI 执行 NSIS 静默安装 → 启动安装后的 exe 跑走查 → 卸载。
@@ -48,6 +48,15 @@ git push origin main vX.Y.Z
 > （`c453de1` 等，见 redesign-plan §7 修正记录）之前。自下个版本起，Release workflow 先整体
 > 复用 ci.yml 作为发布前置门禁（`needs: ci`，经 `workflow_call`），全绿才进构建矩阵——
 > 「tag 只在验收全绿后创建」由口头纪律变成机器强制。
+>
+> **Windows runner 遗留项（v1.0.1 起）**：CI 的 win 打包 job 里，安装后的走查其余全部通过，
+> 但 6000 行洪峰探针的示例子进程**全程 0 输出**（30s 超时强杀）。该现象自 `c453de1`
+> （2026-09-30，本轮改动之前）即存在，仓库 CI 从未全绿过、无对照基线，且 Azure blob
+> 日志通道在本机网络不可达，无法进一步定位。按 CI 性能探针的既定口径（数量级回归网），
+> 洪峰探针在 Windows runner 上降级为 `[perf][win][遗留]` 诊断行不拦截（mac 与真实
+> Windows 机器仍是硬门禁）。**发布前须知**：示例运行在 Windows 的真实可用性尚未经
+> 真机验证，v1.0.1 的 Windows 包应视为「冒烟级验证」，拿到真机后重跑
+> `npm run smoke` 收紧门禁并回填本节。
 
 四条「无证书发布」的规矩（都来自实测教训）：
 
