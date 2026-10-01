@@ -17,7 +17,7 @@
 
 | 层 | 位置 | 技术 |
 |---|---|---|
-| 桌面壳 | `electron-prototype/electron/src/main/index.ts` | Electron 33 + electron-vite（mac 原生 chrome / Windows 自绘标题栏） |
+| 桌面壳 | `electron-prototype/electron/src/main/index.ts` | Electron 44 + electron-vite（mac 原生 chrome / Windows 自绘标题栏） |
 | 渲染层 | `electron-prototype/electron/src/renderer/` | Vue 3 + Tailwind 4（CSS-first token 三层）+ Monaco + Lucide（无头行为层 reka-ui + 自研皮肤，无样式化 UI 框架） |
 | 后端 | `electron-prototype/sidecar/server.py` | 纯标准库 + asyncio，stdio JSON-RPC 2.0（25 个方法，方法表见 `electron-prototype/shared/protocol.json`） |
 | 核心逻辑 | `app/` | Python 命名空间包：契约存储 / 烘焙事实 / 迁移 / 安全 / 评分 / 环境 |
