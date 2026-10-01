@@ -16,7 +16,7 @@
 | 层 | 位置 | 技术 |
 |---|---|---|
 | 桌面壳 | `electron-prototype/electron/src/main/index.ts` | Electron 33 + electron-vite（mac 原生 chrome / Windows 自绘标题栏） |
-| 渲染层 | `electron-prototype/electron/src/renderer/` | Vue 3 + Tailwind 4（CSS-first token 三层）+ Monaco + Lucide（自研组件层，无 UI 框架） |
+| 渲染层 | `electron-prototype/electron/src/renderer/` | Vue 3 + Tailwind 4（CSS-first token 三层）+ Monaco + Lucide（无头行为层 reka-ui + 自研皮肤，无样式化 UI 框架） |
 | 后端 | `electron-prototype/sidecar/server.py` | 纯标准库 + asyncio，stdio JSON-RPC 2.0（25 个方法，方法表见 `electron-prototype/shared/protocol.json`） |
 | 核心逻辑 | `app/` | Python 命名空间包：契约存储 / 烘焙事实 / 迁移 / 安全 / 评分 / 环境 |
 | 示例运行环境 | 仓库根 `.venv` | Python 3.13，依赖见 `requirements.txt` |
@@ -103,7 +103,7 @@ cd electron-prototype/electron && npm test
 ## 功能
 
 - 📥 **导入自己的示例**：侧栏一键把任意本地目录的 .py 文件导入为「我的示例集合」（三步向导：选目录 → 预览 → 导入，自动猜依赖、id 防冲突），存于本机应用数据随应用存续，与内置库并存展示、详情页可删除
-- ✨ **示例画廊**：两级浏览——落地即主题分区总览（头区统计 + 五大主题横向卡片带 + 「还有 N 个」下钻），点进任意分区进入筛选浏览态（侧栏 + 结果条 + 网格/清单双密度，触底无限加载）；筛选支持 主题 / 收藏 / 运行状态 / 可运行性 / 标签 / 质量分阈值 与全文搜索任意组合，当前生效筛选以可移除芯片汇总在结果条；工具类示例只待在工具箱，画廊各层不重复展示
+- ✨ **示例画廊**：侧栏「示例画廊」下挂二级分区菜单——「全部示例」+ 15 个分区（5 大主题 / 8 标签组 / 项目 / 其它，各带计数与选中态），点选即在右侧响应式网格中浏览该分区；筛选维度收成结果条上的工具栏下拉（主题 / 可运行性 / 质量分 / 运行状态 / 标签多选，每档带 facet 计数）+ 收藏开关，网格/清单双密度、触底无限加载；当前生效筛选以可移除芯片汇总在结果条，并与分区范围、全文搜索任意叠加；工具类示例只待在工具箱，画廊各层不重复展示
 - 🩺 **可运行性体检**：每条示例静态判定五态（可运行 / 缺依赖 / 空壳 / 语法损坏 / 高危，另有扫描异常时的「状态未知」），卡片直接标注负面状态；缺依赖判定基于共享运行环境的真实模块索引，详情页给出一键「安装依赖」并自动重跑（按派生 import 分析装包）
 - 🧰 **工具箱**：`tools` 分类工具的独立视图——按工具项目分区（依目录结构自动分组），区头 Lucide 图标 + 卡片网格，大组默认收起、一键展开；头区统计与搜索 / 收藏 / 组内排序，共用同一套筛选引擎
 - 🎨 **主题维度**：Turtle 绘图 / Pygame 游戏 / OpenCV 视觉 / PIL 图像处理 / 数据可视化作为画廊筛选维度（按代码 import 特征自动归类），不再是独立页面
@@ -127,7 +127,8 @@ cd electron-prototype/electron && npm test
 
 - **三层绑定**：`data-platform`（mac 原生几何 / Windows 自绘标题栏）× `data-theme`（深/浅/跟随系统）
   × `data-accent`（跟随系统强调色 / 品牌色），token 单一来源 `src/renderer/src/theme.css`；
-- **组件层自研**：无 UI 框架依赖（Element Plus 已移除），图标单一 Lucide，字重仅 400/500/600，
-  对比度按 AA 门禁（`scripts/check_contrast.py`）；
+- **组件层自研**：皮肤不依赖样式化 UI 框架（Element Plus 已移除），弹窗 / 下拉 / 命令面板的行为底座
+  为无头原语库 reka-ui（焦点圈定、Esc、外点关闭、aria 由它承担），图标单一 Lucide，字重仅 400/500/600，
+  对比度按 AA 门禁（`scripts/check_contrast.py`）；表面色阶为统一品牌主题（Linear 表面阶梯，深/浅两套）。
 - **走查脚本化**：`npm run smoke` 在真实窗口里量几何/令牌/交互语义（壳、画廊、详情、全局层、首启、
   资源链路、存储与失败恢复、性能段）——不是靠人眼看截图。

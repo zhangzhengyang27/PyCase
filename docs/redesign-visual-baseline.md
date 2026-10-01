@@ -1,6 +1,9 @@
 # PyCase 视觉基线 v2（A1 交付物）
 
 > 状态：A1 评审中（门禁 = 代表页稿评审）｜ 日期：2026-09-29 ｜ 基线提交：8847a16
+> **v3 修订（2026-09-30）**：主题层换装 Linear 表面阶梯并统一为深/浅两套（不再按平台取两套表面值），
+> 平台层只保留几何 / 材质 / 动效 / 焦点语义；组件层弹窗 / 下拉 / 命令面板换 reka-ui（无头）底座。
+> 详见 §9 末尾「v3 变更注记」。本节以下表述凡与 v3 冲突处，以 v3 注记为准。
 > 评审物：[代表页稿](a1-visual-baseline.html)（平台 × 外观 × 强调色实时切换，5 块审阅板）
 > 上游：D1「系统原生感」与验收标准见[重设计方案](redesign-plan.md)；问题编号 B1–B12 沿用[现状审计报告](redesign-audit.md)
 > 关系：页稿 HTML 是**可视真值**，本文件是**数值与规则真值**；两者由 `scripts/check_contrast.py` 绑定（token 一改，脚本与 §4 矩阵必须同步）。
@@ -8,7 +11,7 @@
 
 ## 1. 设计原则（可检验）
 
-1. **原生优先**：几何、材质、动效、窗口装饰按平台原生惯例分别定值，不做跨平台统一皮肤（macOS 为主平台，Windows 走 Fluent 映射，见 §6）。
+1. **原生优先**：几何、材质、动效、窗口装饰按平台原生惯例分别定值，不做跨平台统一皮肤（macOS 为主平台，Windows 走 Fluent 映射，见 §6）。**v3 修订**：表面色阶品牌化统一（Linear 表面阶梯，深/浅各一套）——「原生」收缩为几何 / 字体 / 密度 / 动效 / 材质 / 焦点 / 选中语义，不再覆盖表面颜色。
 2. **层次靠表面，不靠装饰**：卡片与面板用圆角 + 1px 细线 + 阴影分层；渐变、极光、光晕在 v2 归零。
 3. **状态 = 圆点 + 中性文字**：不用色底徽章。v1 的 14% 同色底在浅色面实测 4.4–4.5:1 贴线，且与 macOS 原生语言不符；仅 Windows 弹窗保留 Fluent 语义底色（原生 InfoBar 配对）。
 4. **单一图标语言**：Lucide 线性图标，stroke 1.5 @16px；emoji 与文本字形（▶ ↑↓ ↵）归零。
@@ -19,12 +22,12 @@
 
 | 层 | 决定 | 落点 | 取值数 |
 |---|---|---|---|
-| 平台层 | 字体栈 / 控件高度 / 行高 / 圆角 / 字阶 / 动效档 / 窗口装饰 / 焦点环 / 选中语义 | html[data-platform] | 2（mac、win） |
-| 主题层 | 表面 / 文字 / 线条 / 阴影 | html[data-theme] | 4（mac 深、mac 浅、win 深、win 浅） |
+| 平台层 | 字体栈 / 控件高度 / 行高 / 圆角 / 字阶 / 动效档 / 窗口装饰 / 焦点环 / 选中语义 / 侧栏材质 | html[data-platform] | 2（mac、win） |
+| 主题层 | 表面 / 文字 / 线条 / 阴影 / 状态 | html[data-theme] | 2（统一深、统一浅）——v3 起不再按平台拆分 |
 | 强调色层 | 填充 / hover / pressed / 文字 / 光晕 | html[data-accent] | 2（系统默认、品牌靛） |
 
-- 级联顺序：基础块（mac 深）→ 浅色块 → Windows 块 → Windows 浅色块；同层后块覆盖前块，未重定义的沿用（脚本按同一顺序解析）。
-- 主题层**不含**强调色与状态色；状态色随主题/平台取不同值（§3.4），强调色随外观取不同值（§3.3）。
+- 级联顺序：基础块（mac 平台 + 统一深色）→ 浅色块（统一浅色）→ Windows 块（平台几何 + win 深色强调家族）→ Windows 浅色块（焦点与浅色强调家族）；同层后块覆盖前块，未重定义的沿用（脚本按同一顺序解析）。**v3 起主题 token 只在主题层定义一次**，平台块不再重定义表面 / 文字 / 线 / 阴影（--accent/--on-accent 等指针也只定义一次，var() 在计算值期自动跟随各块家族值）。
+- 主题层**不含**强调色；状态色随主题取深 / 浅两套（§3.4，win InfoBar 语义底随平台保留），强调色家族随平台 × 外观取值（§3.3）。
 - 组件层颜色字面量 = 0（v2 目标，B3 落地时校验）；light 覆写只允许出现在 token 层。
 
 ## 3. Token 规格（终值）
@@ -53,39 +56,43 @@
 
 实现注记（A2）：等宽栈在实现层命名为 `--font-code`——Tailwind 的 `--font-mono` 是 `@theme` 命名空间变量，同名会构成自引用而取值失效。根字号固定 16px（rem 基准），正文 13px 只给 `body`：此前 `html, body { font-size: var(--fs-body) }` 把根字号也压到 13px，**全部 rem 计工具类尺寸缩到 81%**（h-8 实测 26px 而非 32px），A2 已修正并纳入走查（`body` 13 / `html` 16 由探针断言）。
 
-### 3.2 主题层（4 组合）
+### 3.2 主题层（v3：统一深 / 浅两套，Linear 表面阶梯）
 
-| token | mac 深 | mac 浅 | win 深 | win 浅 |
-|---|---|---|---|---|
-| --bg-window | #1E1E1E | #FFFFFF | #202020 | #F3F3F3 |
-| --bg-chrome | #2A2A2A | #F2F2F2 | #202020 | #F3F3F3 |
-| --bg-card | #2C2C2E | #FFFFFF | rgba(255,255,255,.051) | #FFFFFF |
-| --bg-card-hover | #323236 | #FAFAFC | rgba(255,255,255,.07) | #FBFBFB |
-| --bg-inset | rgba(0,0,0,.22) | rgba(0,0,0,.05) | rgba(255,255,255,.06) | rgba(0,0,0,.04) |
-| --bg-hover | rgba(255,255,255,.06) | rgba(0,0,0,.05) | rgba(255,255,255,.06) | rgba(0,0,0,.037) |
-| --bg-pressed | rgba(255,255,255,.10) | rgba(0,0,0,.09) | rgba(255,255,255,.03) | rgba(0,0,0,.024) |
-| --bg-subtle（选中底） | rgba(255,255,255,.10) | rgba(0,0,0,.08) | rgba(255,255,255,.09) | rgba(0,0,0,.06) |
-| --bg-sidebar（材质） | rgba(44,44,46,.60) | rgba(246,246,248,.62) | #242424（实色） | #EEEEEE（实色） |
-| --bg-sidebar-fallback | #2B2B2D | #F2F2F4 | #242424 | #EEEEEE |
-| --bg-console（终端/代码区） | #1A1A1A | #FFFFFF | #1A1A1A | #FFFFFF |
-| --text-primary | #F5F5F7 | #1D1D1F | #FFFFFF | #1B1B1B |
-| --text-secondary | #B6B6BD | #58585E | #C9C9C9 | #575757 |
-| --text-tertiary | #A0A0A6 | #696970 | #A2A2A2 | #696969 |
-| --text-quaternary | #71717A | #99999F | #7A7A7A | #939393 |
-| --text-console | #D6D6D6 | #1D1D1F | #D6D6D6 | #1D1D1F |
-| --text-gutter（行号，装饰） | #6E6E76 | #8E8E94 | #6E6E76 | #8E8E94 |
-| --code-kw / str / num / cmt / fn | #569CD6 / #CE9178 / #B5CEA8 / #6A9955 / #DCDCAA | #0550AE / #A31515 / #0B6A3F / #1F7A3A / #795E26 | 同 mac 深 | 同 mac 浅 |
-| --line-hairline | rgba(255,255,255,.10) | rgba(0,0,0,.10) | rgba(255,255,255,.07) | rgba(0,0,0,.06) |
-| --line-strong | rgba(255,255,255,.20) | rgba(0,0,0,.18) | rgba(255,255,255,.14) | rgba(0,0,0,.14) |
-| --shadow-card | 0 1px 2px rgba(0,0,0,.30) | 0 1px 3px rgba(0,0,0,.10) | 0 2px 4px rgba(0,0,0,.28) | 0 2px 4px rgba(0,0,0,.12) |
-| --shadow-overlay | 0 12px 40px rgba(0,0,0,.55) | 0 12px 40px rgba(0,0,0,.18) | 0 8px 16px rgba(0,0,0,.28) | 0 8px 16px rgba(0,0,0,.14) |
-| --focus-inner / outer | #0A0A0A / #FFFFFF | #0A0A0A / #FFFFFF | #0A0A0A / #FFFFFF | #FFFFFF / #0A0A0A |
+| token | 统一深 | 统一浅 |
+|---|---|---|
+| --bg-window | #08090A | #F7F8F8 |
+| --bg-chrome | #0F1011 | #F5F6F6 |
+| --bg-card | #141516 | #FFFFFF |
+| --bg-card-hover | #18191A | #F6F7F7 |
+| --bg-inset | rgba(0,0,0,.20) | rgba(0,0,0,.05) |
+| --bg-hover | rgba(255,255,255,.04) | rgba(0,0,0,.05) |
+| --bg-pressed | rgba(255,255,255,.08) | rgba(0,0,0,.09) |
+| --bg-subtle（选中底） | rgba(255,255,255,.08) | rgba(0,0,0,.08) |
+| --bg-sidebar（材质） | rgba(15,16,17,.60) | rgba(245,246,246,.62) |
+| --bg-sidebar-fallback | #0F1011 | #F5F6F6 |
+| --bg-console（终端/代码区） | #0F1011 | #FFFFFF |
+| --text-primary | #F7F8F8 | #18191B |
+| --text-secondary | #D0D6E0 | #4F545C |
+| --text-tertiary | #8A8F98 | #686D75 |
+| --text-quaternary | #62666D | #949AA1 |
+| --text-console | #D0D6E0 | #18191B |
+| --text-gutter（行号，装饰） | #62666D | #8A8F98 |
+| --code-kw / str / num / cmt / fn | VS Dark+ 家族（同 v2 深色） | #0550AE 家族（同 v2 浅色） |
+| --line-hairline | #23252A | #E6E6E6 |
+| --line-strong | #34343A | #D0D6E0 |
+| --shadow-card | none（层级靠表面阶梯 + 发丝线，Linear 深色哲学） | 0 1px 3px rgba(0,0,0,.10) |
+| --shadow-overlay | 0 0 0 1px rgba(20,21,22,.9), 0 4px 12px rgba(0,0,0,.4), 0 16px 40px rgba(0,0,0,.55) | 0 12px 40px rgba(0,0,0,.18) |
 
-材质说明：mac 侧栏毛玻璃 blur(34px) saturate(160%)；win 窗口 Mica 近似 = 基色 88% 叠桌面 + blur(64px) saturate(118%)，侧栏为实色（Fluent 侧栏本就是 Mica 上的实色层）。材质不可用时回退 --bg-sidebar-fallback；**对比度按回退实色验收**（桌面透出内容不可控）。
+值源：Linear 官方 DESIGN.md（awesome-design-md `design-md/linear.app`）——canvas #08090A / surface-1 #0F1011 / surface-2 #141516 / surface-3 #18191A 四级阶梯，hairline #23252A / strong #34343A，ink 四级 #F7F8F8 / #D0D6E0 / #8A8F98 / #62666D，success #27A644。官方未文档化浅色主题（营销站无浅色），浅色按 inverse 组（#FFFFFF / #F5F6F6 / #F6F7F7 / ink #000）与边框 #D0D6E0 / #E6E6E6 起步，**文字四级按 AA 门禁反向推导**（#18191B / #4F545C / #686D75 / #949AA1，实测见 §4）。注意这些是从公开网站提取的非官方参考，**验收真值仍是本文件 §4 与 check_contrast.py 的复算矩阵**。
 
-终端/代码区说明：**跟随主题**（浅色主题下为浅底深字），不采用"恒暗"。理由：浅色界面里嵌一块黑区在 mac/win 原生应用中都属异类（Xcode/Terminal 自身也会随外观切换），且与"跟随平台"的密度决策口径一致。语法高亮取两套：深色沿用 VS Code Dark+ 家族，浅色用 AA 达标的深色变体（见上表 code-* 行）——**不用同一组色在两个底色上硬套**。
+平台差异（保留在平台块，不属于主题层）：
 
-win 浅色组合需注意级联顺序：`html[data-platform="win"]` 块**不得**再声明 --bg-console，否则会覆盖浅色块（这是评审中实际踩到的缺陷，见 §8 判别性测试）。
+- 侧栏材质：mac 毛玻璃叠半透明主题值（blur(34px) saturate(160%)）；win 侧栏**实色**（深 #0F1011 / 浅 #F5F6F6）。材质不可用时回退 --bg-sidebar-fallback；**对比度按回退实色验收**（桌面透出内容不可控）。
+- 焦点环：mac 双环（1px accent + 4px halo）；win 双色矩形（1px 白 + 3px 黑，浅色反转）。
+
+终端/代码区说明：**跟随主题**（浅色主题下为浅底深字），不采用"恒暗"。理由不变（浅色界面里嵌黑区在原生应用中属异类）。语法高亮取两套：深色沿用 VS Code Dark+ 家族，浅色用 AA 达标的深色变体——**不用同一组色在两个底色上硬套**。深色终端底从 #1A1A1A 改为 surface-1 #0F1011（发丝线围合的抬升内嵌面）。
+
+v3 级联简化：win 平台块不再声明任何主题 token（**唯一例外：侧栏材质** `--bg-sidebar`/`--bg-sidebar-fallback`，实色是平台语义，见上；含 --bg-console 在内的其余主题值全部沿用主题层）——旧「win 块遗留 console 覆写压过浅色块」的级联缺陷类别已随结构消除（§8 判别性自查记录保留为历史）。
 
 ### 3.3 强调色层
 
@@ -102,16 +109,16 @@ win 浅色组合需注意级联顺序：`html[data-platform="win"]` 块**不得*
 
 系统默认 = 平台系统强调色（mac 蓝 / Fluent 蓝）；品牌靛 = 项目既有 #5E6AD2 家族，浅色与 win 深色下向 AA 靠拢取值。**默认值 = 系统默认**（评审已决，见 §9）；品牌靛作为用户可选项长期保留。
 
-### 3.4 状态色层
+### 3.4 状态色层（v3：随主题深 / 浅两套）
 
-| 令牌 | mac 深 | mac 浅 | win 深 | win 浅 |
-|---|---|---|---|---|
-| --status-green | #30D158 | #1F7835 | #6CCB5F | #0E700E |
-| --status-red | #FF6961 | #C80014 | #FF99A4 | #B4281A |
-| --status-amber | #FFB340 | #A94C00 | #FCE100 | #8D5400 |
-| --status-info-bg | transparent | transparent | #433519 | #FFF4CE |
+| 令牌 | 统一深 | 统一浅 |
+|---|---|---|
+| --status-green | #27A644（Linear success） | #1F7835 |
+| --status-red | #FF6961 | #C80014 |
+| --status-amber | #FFB340 | #A94C00 |
+| --status-info-bg | transparent（win：#433519） | transparent（win：#FFF4CE） |
 
-状态色只用于圆点、图标与文字（浅色主题整体加深一档以过 AA）。--status-info-bg 仅 Windows 弹窗作 InfoBar 底色；mac 用「图标 + 中性文字」平面表达。预留：错误语义底配对（win 深 #FF99A4 on #442726 = 6.61；win 浅 #B4281A on #FDF3F4 = 5.92），待错误类 InfoBar 落地时启用。
+状态色只用于圆点、图标与文字（浅色主题整体加深一档以过 AA）。深色绿取 Linear 唯一文档化语义色 #27A644；红 / 黄沿用已达 AA 的取值（Linear 未定义 error / warning）。--status-info-bg 仅 Windows 弹窗作 InfoBar 底色；mac 用「图标 + 中性文字」平面表达。预留：错误语义底配对（win 深 #FF99A4 on #442726 = 6.61；win 浅 #B4281A on #FDF3F4 = 5.92），待错误类 InfoBar 落地时启用。
 
 ### 3.5 字阶与字重
 
@@ -143,9 +150,9 @@ Lucide 单一来源（stroke 1.5，round cap/join），尺寸三档 14 / 16 / 20
 ### 4.1 口径
 
 - 信息性文字阈值 **4.5:1**（WCAG 1.4.3 AA）；装饰/禁用（圆点、禁用文字、行号、占位提示）按 **2.5:1** 记录口径，且不承载唯一信息（WCAG 1.4.3 disabled 豁免 + 1.4.11 非文本）。
-- 侧栏是材质面：按回退实色评估（mac 深 #2B2B2D / mac 浅 #F2F2F4 / win 深 #242424 / win 浅 #EEEEEE）。**规则：材质面上的信息性文字一律 ≥ tertiary**（计数徽章、kbd 提示已按此从 quaternary 提到 tertiary）。
+- 侧栏是材质面：按回退实色评估（深 #0F1011 / 浅 #F5F6F6，v3 起两平台同值；win 侧栏本就是实色）。**规则：材质面上的信息性文字一律 ≥ tertiary**（计数徽章、kbd 提示已按此从 quaternary 提到 tertiary）。
 - 强调填充上的文字按组件级 **3.0:1** 评估；未达文字 AA 的条目在下方偏差表记录，不隐瞒。
-- 终端/代码区按各主题实际底色评估（深色 #1A1A1A / 浅色 #FFFFFF），语法色与正文同阈 4.5；行号按装饰 2.5。
+- 终端/代码区按各主题实际底色评估（深色 #0F1011 / 浅色 #FFFFFF），语法色与正文同阈 4.5；行号按装饰 2.5。
 
 **偏差表（记录，非通过）**
 
@@ -153,92 +160,72 @@ Lucide 单一来源（stroke 1.5，round cap/join），尺寸三档 14 / 16 / 20
 |---|---|---|
 | mac 深 · 系统强调填充 + 白字 | 3.65 | Apple 系统蓝原值，白字未达文字 AA 4.5；评审已决「默认系统强调色」，本条作为已知偏差长期记录（品牌靛可消除，见 §9） |
 | mac 浅 · 系统强调填充 + 白字 | 4.02 | 同上（浅色系统蓝 #007AFF） |
-| 代码行号 · 深（#6E6E76 on #1A1A1A） | 3.44 | 装饰级：行号不承载唯一信息（代码本身有序），且 user-select: none |
-| 代码行号 · 浅（#8E8E94 on #FFFFFF） | 3.26 | 同上 |
+| 代码行号 · 深（#62666D on #0F1011） | 3.30 | 装饰级：行号不承载唯一信息（代码本身有序），且 user-select: none |
+| 代码行号 · 浅（#8A8F98 on #FFFFFF） | 3.25 | 同上 |
 
 品牌靛填充在四个组合均 ≥ 4.70（达文字 AA）——若未来改选品牌靛为默认，可完全消除上表前两行。
 
 ### 4.2 四组合实测
 
-脚本 `scripts/check_contrast.py` 从页稿 token 源复算，共 142 项（mac 各 35 / win 各 36，差一项为 win 独有的 InfoBar 语义底），0 失败。下表为压缩视图（文字类 4.5 阈；quaternary 与行号为 2.5 记录阈）。
+脚本 `scripts/check_contrast.py` 从 token 源复算，共 142 项（mac 各 35 / win 各 36，差一项为 win 独有的 InfoBar 语义底），0 失败。v3 起深色两平台 / 浅色两平台主题值完全一致，mac 表即完整主题矩阵，win 表只列差异项（强调色家族与 InfoBar 底）。下表为压缩视图（文字类 4.5 阈；quaternary 与行号为 2.5 记录阈）。
 
-**macOS 深色**
+**macOS 深色**（= 统一深色主题；win 深色同表，仅强调色与 InfoBar 底不同）
 
 | 检查 | 值 | 窗口 | 工具栏 | 侧栏 | 卡片 |
 |---|---|---|---|---|---|
-| text.primary | #F5F5F7 | 15.31 | 13.18 | 12.98 | 12.80 |
-| text.secondary | #B6B6BD | 8.27 | 7.12 | 7.01 | 6.91 |
-| text.tertiary | #A0A0A6 | 6.41 | 5.52 | 5.43 | 5.36 |
-| text.quaternary（装饰） | #71717A | 3.45 | 2.97 | 2.92 | 2.88 |
-| 终端正文 | #D6D6D6 on #1A1A1A | 11.97 | | | |
-| 终端行号（装饰） | #6E6E76 on #1A1A1A | 3.44 | | | |
-| 语法 kw / str / num / cmt / fn | 5.90 / 6.59 / 10.24 / 5.22 / 12.32 | | | | |
+| text.primary | #F7F8F8 | 18.73 | 17.90 | 17.90 | 17.18 |
+| text.secondary | #D0D6E0 | 13.64 | 13.04 | 13.04 | 12.52 |
+| text.tertiary | #8A8F98 | 6.13 | 5.86 | 5.86 | 5.63 |
+| text.quaternary（装饰） | #62666D | 3.45 | 3.30 | 3.30 | 3.17 |
+| 终端正文 | #D0D6E0 on #0F1011 | 13.04 | | | |
+| 终端行号（装饰） | #62666D on #0F1011 | 3.30 | | | |
+| 语法 kw / str / num / cmt / fn | 6.46 / 7.21 / 11.21 / 5.71 / 13.48 | | | | |
 | 强调填充标签 · 系统 | #FFFFFF on #0A84FF | 3.65（偏差表） | | | |
 | 强调填充标签 · 品牌 | #FFFFFF on #5E6AD2 | 4.70 | | | |
-| 强调文字 · 系统 | #4DA2FF | 6.29 | | | 5.26 |
-| 强调文字 · 品牌 | #A0A4FF | 7.34 | | | 6.14 |
-| status.green | #30D158 | 8.25 | | | 6.89 |
-| status.red | #FF6961 | 5.91 | | | 4.94 |
-| status.amber | #FFB340 | 9.35 | | | 7.81 |
+| 强调文字 · 系统 | #4DA2FF | 7.52 | | | 6.90 |
+| 强调文字 · 品牌 | #A0A4FF | 8.78 | | | 8.05 |
+| status.green | #27A644 | 6.29 | | | 5.77 |
+| status.red | #FF6961 | 7.07 | | | 6.48 |
+| status.amber | #FFB340 | 11.17 | | | 10.25 |
 
-**macOS 浅色**
+**macOS 浅色**（= 统一浅色主题；win 浅色同表，仅强调色与 InfoBar 底不同）
 
 | 检查 | 值 | 窗口 | 工具栏 | 侧栏 | 卡片 |
 |---|---|---|---|---|---|
-| text.primary | #1D1D1F | 16.83 | 15.03 | 15.05 | 16.83 |
-| text.secondary | #58585E | 7.06 | 6.31 | 6.32 | 7.06 |
-| text.tertiary | #696970 | 5.45 | 4.87 | 4.87 | 5.45 |
-| text.quaternary（装饰） | #99999F | 2.83 | 2.53 | 2.53 | 2.83 |
-| 终端正文 | #1D1D1F on #FFFFFF | 16.83 | | | |
-| 终端行号（装饰） | #8E8E94 on #FFFFFF | 3.26 | | | |
+| text.primary | #18191B | 16.53 | 16.25 | 16.25 | 17.59 |
+| text.secondary | #4F545C | 7.16 | 7.04 | 7.04 | 7.62 |
+| text.tertiary | #686D75 | 4.89 | 4.81 | 4.81 | 5.21 |
+| text.quaternary（装饰） | #949AA1 | 2.67 | 2.62 | 2.62 | 2.84 |
+| 终端正文 | #18191B on #FFFFFF | 17.59 | | | |
+| 终端行号（装饰） | #8A8F98 on #FFFFFF | 3.25 | | | |
 | 语法 kw / str / num / cmt / fn | 7.59 / 7.85 / 6.67 / 5.38 / 6.10 | | | | |
 | 强调填充标签 · 系统 | #FFFFFF on #007AFF | 4.02（偏差表） | | | |
 | 强调填充标签 · 品牌 | #FFFFFF on #4F51C0 | 6.42 | | | |
-| 强调文字 · 系统 | #0063CC | 5.74 | | | 5.74 |
-| 强调文字 · 品牌 | #4143AE | 7.96 | | | 7.96 |
-| status.green | #1F7835 | 5.53 | | | 5.53 |
-| status.red | #C80014 | 6.06 | | | 6.06 |
-| status.amber | #A94C00 | 5.64 | | | 5.64 |
+| 强调文字 · 系统 | #0063CC | 5.40 | | | 5.74 |
+| 强调文字 · 品牌 | #4143AE | 7.48 | | | 7.96 |
+| status.green | #1F7835 | 5.20 | | | 5.53 |
+| status.red | #C80014 | 5.69 | | | 6.06 |
+| status.amber | #A94C00 | 5.30 | | | 5.64 |
 
-**Windows 深色**
+**Windows 深色**（主题值 = 统一深色，上表主题行同值不再重复；此表仅列 win 差异项）
 
-| 检查 | 值 | 窗口 | 工具栏 | 侧栏 | 卡片 |
-|---|---|---|---|---|---|
-| text.primary | #FFFFFF | 16.29 | 16.29 | 15.52 | 14.09 |
-| text.secondary | #C9C9C9 | 9.84 | 9.84 | 9.37 | 8.51 |
-| text.tertiary | #A2A2A2 | 6.38 | 6.38 | 6.08 | 5.52 |
-| text.quaternary（装饰） | #7A7A7A | 3.80 | 3.80 | 3.62 | 3.28 |
-| 终端正文 | #D6D6D6 on #1A1A1A | 11.97 | | | |
-| 终端行号（装饰） | #6E6E76 on #1A1A1A | 3.44 | | | |
-| 语法 kw / str / num / cmt / fn | 5.90 / 6.59 / 10.24 / 5.22 / 12.32 | | | | |
-| 强调填充标签 · 系统 | #0A0A0A on #60CDFF | 11.01 | | | |
-| 强调填充标签 · 品牌 | #0A0A0A on #8B8DFF | 6.93 | | | |
-| 强调文字 · 系统 | #6CCBFF | 9.02 | | | 7.80 |
-| 强调文字 · 品牌 | #A7A9FF | 7.57 | | | 6.55 |
-| status.green | #6CCB5F | 8.03 | | | 6.94 |
-| status.red | #FF99A4 | 8.03 | | | 6.94 |
-| status.amber | #FCE100 | 12.34 | | | 10.67 |
-| status.amber on status-info-bg | #FCE100 on #433519 | 9.03（InfoBar） | | | |
+| 检查 | 值 | 窗口 | 卡片 |
+|---|---|---|---|
+| 强调填充标签 · 系统 | #0A0A0A on #60CDFF | 11.01 | |
+| 强调填充标签 · 品牌 | #0A0A0A on #8B8DFF | 6.93 | |
+| 强调文字 · 系统 | #6CCBFF | 11.03 | 10.12 |
+| 强调文字 · 品牌 | #A7A9FF | 9.26 | 8.50 |
+| status.amber on status-info-bg | #FFB340 on #433519 | 6.68（InfoBar） | |
 
-**Windows 浅色**
+**Windows 浅色**（主题值 = 统一浅色；此表仅列 win 差异项）
 
-| 检查 | 值 | 窗口 | 工具栏 | 侧栏 | 卡片 |
-|---|---|---|---|---|---|
-| text.primary | #1B1B1B | 15.52 | 15.52 | 14.85 | 17.22 |
-| text.secondary | #575757 | 6.51 | 6.51 | 6.23 | 7.23 |
-| text.tertiary | #696969 | 4.95 | 4.95 | 4.73 | 5.49 |
-| text.quaternary（装饰） | #939393 | 2.77 | 2.77 | 2.65 | 3.07 |
-| 终端正文 | #1D1D1F on #FFFFFF | 16.83 | | | |
-| 终端行号（装饰） | #8E8E94 on #FFFFFF | 3.26 | | | |
-| 语法 kw / str / num / cmt / fn | 7.59 / 7.85 / 6.67 / 5.38 / 6.10 | | | | |
-| 强调填充标签 · 系统 | #FFFFFF on #005FB8 | 6.31 | | | |
-| 强调填充标签 · 品牌 | #FFFFFF on #4F51C0 | 6.42 | | | |
-| 强调文字 · 系统 | #005FB8 | 5.68 | | | 6.31 |
-| 强调文字 · 品牌 | #4143AE | 7.17 | | | 7.96 |
-| status.green | #0E700E | 5.66 | | | 6.28 |
-| status.red | #B4281A | 5.81 | | | 6.44 |
-| status.amber | #8D5400 | 5.57 | | | 6.18 |
-| status.amber on status-info-bg | #8D5400 on #FFF4CE | 5.61（InfoBar） | | | |
+| 检查 | 值 | 窗口 | 卡片 |
+|---|---|---|---|
+| 强调填充标签 · 系统 | #FFFFFF on #005FB8 | 6.31 | |
+| 强调填充标签 · 品牌 | #FFFFFF on #4F51C0 | 6.42 | |
+| 强调文字 · 系统 | #005FB8 | 5.93 | 6.31 |
+| 强调文字 · 品牌 | #4143AE | 7.48 | 7.96 |
+| status.amber on status-info-bg | #A94C00 on #FFF4CE | 5.13（InfoBar） | |
 
 ## 5. 原生组件语言（平台语义）
 
@@ -253,7 +240,7 @@ Lucide 单一来源（stroke 1.5，round cap/join），尺寸三档 14 / 16 / 20
 | 焦点 | 双环：1px accent + 4px halo | 双色矩形：1px 白 + 3px 黑（高对比环境可见） |
 | 键盘提示 | ⌘K | Ctrl K |
 | 窗口装饰 | 交通灯 12px、标题栏 44px、lead 72px | 标题栏 32px、左上图标+PyCase、右上 46×32 最小化/最大化/关闭、关闭 hover #C42B1C |
-| 终端/代码 | 跟随主题（深 #1A1A1A / 浅 #FFFFFF，语法色两套） | 同左 |
+| 终端/代码 | 跟随主题（深 #0F1011 / 浅 #FFFFFF，语法色两套） | 同左 |
 
 ## 6. Windows 映射策略（D1 引申，评审点）
 
@@ -262,7 +249,7 @@ Lucide 单一来源（stroke 1.5，round cap/join），尺寸三档 14 / 16 / 20
 | 字体 | Segoe UI Variable Text + Cascadia Mono | Fluent 原生栈；中文回退 Microsoft YaHei UI |
 | 密度 | 行高 40 / 控件 24–40 / 状态栏 28 | Windows 触控友好惯例，非 mac 数值缩放 |
 | 圆角 | 4 / 8 / 8（控件/卡片/弹层） | Fluent 圆角阶梯（mac 为 6 / 10 / 12） |
-| 材质 | Mica 近似（基色 88% + blur 64 + saturate 118%），侧栏实色 | Win11 原生层次；不做亚克力堆叠 |
+| 材质 | 侧栏实色（深 #0F1011 / 浅 #F5F6F6）；v3 起表面色阶随统一品牌主题，不再做 Fluent 表面色映射 | Win11 侧栏实色惯例；不做亚克力堆叠 |
 | 选中 | 中性填充 + 强调条/下划线（不用整块强调填充） | Fluent 选中语义与 mac 相反 |
 | 焦点 | 双色矩形 | Fluent 高对比可见性要求 |
 | 信息条 | InfoBar 语义底色（#433519/#FFF4CE 警示，错误配对预留） | 唯一保留色底的状态表达，且只用原生配对色 |
@@ -357,9 +344,9 @@ Lucide 单一来源（stroke 1.5，round cap/join），尺寸三档 14 / 16 / 20
 
 ## 8. 门禁与复现
 
-- `python3 scripts/check_contrast.py`：从页稿 token 源复算 §4 全部条目（142 项），任一 FAIL 退出码 1。**判别性自查**（两次，均非恒真）：
-  - 向页稿注入坏值（mac 深 --text-primary → #3A3A3A）→ 4 项 FAIL；退回原值 → 0 项。
-  - 终端改造期间真实抓到 1 项：`html[data-platform="win"]` 块遗留 `--bg-console: #1A1A1A`，按级联顺序覆盖了浅色块 → win 浅色 6 项 FAIL（深底 + 深字）；删除该行后 0 项。此缺陷仅靠截图不易察觉（win 浅色板未在首轮截图清单内），**由门禁捕获**——这正是把矩阵做成脚本而非手抄的理由。
+- `python3 scripts/check_contrast.py`：从 token 源复算 §4 全部条目（142 项），任一 FAIL 退出码 1。**判别性自查**（两次，均非恒真）：
+  - 向 token 注入坏值（mac 深 --text-primary → #3A3A3A）→ 4 项 FAIL；退回原值 → 0 项。
+  - 终端改造期间真实抓到 1 项：`html[data-platform="win"]` 块遗留 `--bg-console: #1A1A1A`，按级联顺序覆盖了浅色块 → win 浅色 6 项 FAIL（深底 + 深字）；删除该行后 0 项。此缺陷仅靠截图不易察觉（win 浅色板未在首轮截图清单内），**由门禁捕获**——这正是把矩阵做成脚本而非手抄的理由。（v3 注：主题块重构后平台块不再声明任何主题 token，此类「平台块压过主题块」的缺陷类别已结构性消除；自查记录保留为历史。）
 - `python3 scripts/check_doc_refs.py`：本文件中的文档引用有效性。
 - 截图复核：页稿组合截图（4 组合全页 + 各板特写，2× DPR），逐板阅图确认；Board 1 的 Windows 选中指示条、mac/win 徽章与 kbd 提示已据此修正；浅色终端改动后复截 b2/b5 的 mac 浅 + win 浅并阅图确认（浅底深字、语法双套色）。
 - 复审方式：改 token → 跑脚本 → 更新 §3/§4 → 重截受影响板。
@@ -380,3 +367,14 @@ Lucide 单一来源（stroke 1.5，round cap/join），尺寸三档 14 / 16 / 20
 - 材质面可读性：mac 已实机走查（vibrancy 生效，侧栏随桌面透出，深浅两主题截图各一）；win 侧待 §8 真机渠道。
 - 语法色浅色变体（#0550AE 家族）在 5.38–7.85 区间通过 AA，但未在真实 Python 长文上复核——详情页代码区仍是 v1 结构，A4 重设计该页时目视复核。
 - win 窗口材质（Mica / `backgroundMaterial`）本批未启用：win 走不透明窗口底，避免在无法本机验证的环境里押注降级路径；真机验收渠道确定后开启并走查。
+
+**后续变更注记（画廊改造）**：§「退役项」表中「使用点 `R/components/GalleryOverview.vue:*`」与 #6 的「总览」为 **基线时点（2026-09-29，基线 8847a16）实测**，作为历史记录保留。该组件已退役：画廊改为侧栏二级分区菜单（「全部示例」+ 15 个分区）+ 右侧响应式网格，页头抽为 `GalleryHeader.vue`（统计 chips 与主操作观感不变）。
+
+**v3 变更注记（2026-09-30，Linear 主题层 + reka-ui 底座）**
+
+1. **主题层换装 Linear 并统一为深 / 浅两套**。动机：品牌强调色本就是 Linear 靛（#5E6AD2 家族），Linear 方案是唯一与该身份自洽、且为高密度工具 UI 设计的 token 体系；深色上「背景亮度阶梯 + 发丝线 + 边框即阴影」的深度哲学直接替换单层投影。Windows 表面不再做 Fluent 色映射（§6 材质行），Fluent 只保留几何 / 密度 / 动效 / 焦点 / 选中语义与 InfoBar 语义底——这是对原则 1「原生优先」的有意收紧（§1）。
+2. **级联重构**：主题 token 只在 `html` 与 `html[data-theme="light"]` 定义一次；平台块只留几何 / 材质 / 焦点 / 选中语义与强调色家族；`--accent` 等指针只定义一次（var() 计算值期解析）。theme.css 499 → 约 430 行且重复面归零。
+3. **强调色层与平台层零改动**（§3.1 / §3.3 表值不变）；状态色深 / 浅各一套（§3.4），深色绿换 Linear #27A644。
+4. **组件层引入 reka-ui 2.10.5（无头原语）**，第一批换底座：`AppModal`（Dialog：焦点圈定 / Esc / 遮罩外点 / 背景滚动锁 / focus 归还）、`TagFilterSelect`（Popover，无 Portal 锚定浮层）、`CommandPalette`（Dialog 壳；键盘导航仍在组件内 window 捕获阶段接管，Esc stopPropagation 的防穿透语义保留）。组件 API（props / emits / slots）不变，调用方零改动；测试适配：两处事件路径（Esc → document、遮罩 click → pointerdown，均为 reka/真实浏览器口径）、一处 aria 断言（DialogTitle 经 aria-labelledby 关联，content 上显式补 `aria-modal="true"` 维持原契约）、panels.spec 约 50 处挂载改走 `trackMount()`（Portal 内容一拍后挂上，mount 后统一 flush）、base.spec AppModal 块新增 describe 级 afterEach（先 unmount 再清 body，否则 reka 清理路径踩到已拔掉的节点）。行为微变记录：弹窗打开后初始焦点落在关闭按钮（reka focusFirst）而非面板容器本身，Tab 序与 SR 通告等价（smoke 通过）。
+5. **门禁**：check_contrast 142 项 0 失败（矩阵已重算同步）；tsc / vue-tsc / ESLint / stylelint / Prettier / Vitest 290 / node --test 7 份全绿。深色卡面从「白 5% 叠加」改为实色 #141516，smoke 探针按 token 自洽读取，无需改动。目视复核提醒：深色下 `--shadow-card: none` 使 AppToast 仅靠发丝线分界（符合 Linear 哲学），下次真机走查时确认浮层可辨性。
+6. **下一批候选（本批明确不动）**：`HelpSheet`（仍为手写 Teleport + scrim + window 级 Esc 监听，语义上是侧滑面板）与 `AppToast`（reka 有 Toast 原语，可顺手获得分层与暂停语义）；`BaseSelect` 保持原生 `<select>`（桌面应用里原生弹出菜单即原生语义，换 reka Select 无收益）。Linear 的组件规格（按钮内边距、8px CTA 圆角等）不采纳——组件形体走自研皮肤与平台密度，token 层只取表面 / 文字 / 线 / 深度体系。
