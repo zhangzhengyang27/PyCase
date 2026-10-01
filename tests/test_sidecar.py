@@ -6,10 +6,15 @@
 import asyncio
 import json
 import os
+import subprocess
 import sys
 import tempfile
+import threading
+import time
 from pathlib import Path
 from unittest.mock import patch
+
+import pytest
 
 # sidecar 位于 electron-prototype/sidecar/，需要加入 sys.path
 SCRIPT_DIR = Path(__file__).resolve().parent
@@ -819,3 +824,83 @@ class TestUserCollectionRpc:
             assert list(server._USER_DIR.glob("*.json")) == []
         finally:
             self._restore(orig)
+
+
+# ---------------------------------------------------------------------------
+# 运行边界：timeout 收口 / 进程组隔离 / 同步 handler 不阻塞事件循环（审计 B1/B2）
+# ---------------------------------------------------------------------------
+class TestRunTimeoutSanitize:
+    def test_valid_values_pass_through(self):
+        assert server._sanitize_timeout(45) == 45.0
+        assert server._sanitize_timeout("90") == 90.0
+        assert server._sanitize_timeout(0.5) == 0.5
+
+    @pytest.mark.parametrize("raw", ["abc", None, [], -5, 0, float("nan"), float("inf"), float("-inf")])
+    def test_invalid_or_nonpositive_falls_back_to_default(self, raw):
+        assert server._sanitize_timeout(raw) == 30.0
+
+    def test_unbounded_values_clamped_to_ceiling(self):
+        """渲染层可传 timeout=1e9：必须有上界，否则超时防线形同虚设。"""
+        assert server._sanitize_timeout(1e12) == server._MAX_RUN_TIMEOUT_SECONDS == 1800.0
+
+
+class TestSpawnIsolation:
+    def test_child_gets_own_process_group(self):
+        kwargs = server._spawn_isolation_kwargs()
+        if os.name == "posix":
+            assert kwargs.get("start_new_session") is True
+        else:
+            assert kwargs.get("creationflags", 0) & subprocess.CREATE_NEW_PROCESS_GROUP
+
+    @pytest.mark.skipif(os.name != "posix", reason="进程组语义仅 posix")
+    def test_kill_takes_down_grandchildren(self):
+        """示例自己 spawn 的孙进程也必须被终止（修复前只杀直接子进程，孙进程存活并持有管道）。"""
+        script = (
+            "import subprocess, time\n"
+            "gc = subprocess.Popen(['sleep', '30'])\n"
+            "print(gc.pid, flush=True)\n"
+            "time.sleep(30)\n"
+        )
+        # 与生产 _spawn_isolation_kwargs 同口径：子进程独立成组
+        proc = subprocess.Popen([sys.executable, "-c", script], stdout=subprocess.PIPE, start_new_session=True)
+        try:
+            gc_pid = int(proc.stdout.readline().strip())
+            server._kill(proc)
+            assert proc.wait(timeout=5) is not None
+            # 孙进程一并死亡：SIGKILL 进程组后最多留几毫秒收尸窗口
+            deadline = time.monotonic() + 5
+            while True:
+                try:
+                    os.kill(gc_pid, 0)
+                except ProcessLookupError:
+                    break
+                assert time.monotonic() < deadline, "孙进程仍存活——_kill 只杀到了直接子进程"
+                time.sleep(0.05)
+        finally:
+            if proc.poll() is None:
+                proc.kill()
+
+
+class TestSyncHandlerOffLoop:
+    def test_sync_handler_runs_off_event_loop_thread(self):
+        """同步 handler 下沉线程池执行（审计 B1）。
+
+        冷启 list_examples 首次物化实测 ≈17s——内联在事件循环里时 ping/stop_run
+        全部排队，RPC 通道整体冻结。判定口径取确定性证据：同步 handler 必须不在
+        事件循环（主）线程上执行；_send 自带 stdout 锁，线程内回包安全。
+        """
+        seen = {}
+        release = threading.Event()
+
+        def blocker(req_id, params):
+            seen["thread"] = threading.current_thread()
+            release.wait(timeout=5)
+            server._result(req_id, {"ok": True})
+
+        fake_methods = {"blocker": blocker, "ping": server.METHODS["ping"]}
+        with patch.object(server, "METHODS", fake_methods), patch.object(server, "_send", lambda obj: None):
+            # 0.2s 后放行 blocker，避免用例本身等满超时
+            threading.Timer(0.2, release.set).start()
+            asyncio.run(server._handle_request(json.dumps({"jsonrpc": "2.0", "id": 1, "method": "blocker"})))
+
+        assert seen["thread"] is not threading.main_thread(), "同步 handler 仍内联在事件循环线程上执行"

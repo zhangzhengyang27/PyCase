@@ -206,8 +206,15 @@ def test_g4_stop_before_spawn_terminates_immediately(tmp_path, monkeypatch):
 # ------------------------------------------------------------- G5 生命周期
 
 
-def test_g5_example_stays_in_sidecar_process_group(tmp_path, monkeypatch):
-    """示例进程必须留在 sidecar 进程组内——应用退出时"按组清理"才可能不漏杀。"""
+def test_g5_example_runs_in_own_process_group(tmp_path, monkeypatch):
+    """示例进程必须独立成组——stop/超时对组发信号才能连孙进程一起清（审计 B2）。
+
+    旧契约「示例留在 sidecar 组内」本意是外部按组信号顺带清场，但同一约束使
+    stop_run/超时只可能杀到直接子进程：组里有 sidecar 自己，killpg 等于自杀，
+    示例自 spawn 的孙进程必然孤儿。组隔离后运行期终止 killpg(示例组) 连树清；
+    退出清理由 SIGTERM/stdin-EOF 处理器 → _terminate_all_running 逐树兜底
+    （G5 演练用例继续覆盖，组隔离改造后实测通过）。
+    """
     _capture(monkeypatch)
     pid_file = tmp_path / "pid.txt"
     item = _fake_item(tmp_path, _pid_script(pid_file))
@@ -223,7 +230,7 @@ def test_g5_example_stays_in_sidecar_process_group(tmp_path, monkeypatch):
 
     pid, pgid = asyncio.run(scenario())
     try:
-        assert pgid == os.getpgid(0)
+        assert pgid == pid, "示例未独立成组：stop/超时的 killpg 无法连树清，孙进程必然孤儿"
     finally:
         _kill_pid(pid)
 
@@ -276,7 +283,7 @@ def test_g5_sidecar_sigterm_leaves_no_orphan(tmp_path):
     """应用退出（sidecar 收到 SIGTERM）后，运行中的示例进程必须随之消失。
 
     sidecar 的信号处理负责先终止运行中的示例再退出；B2 前无此处理，示例成孤儿。
-    （"按组清理"的应用侧路径由 test_g5_example_stays_in_sidecar_process_group 守住。）
+    （"按组清理"的应用侧路径由 test_g5_example_runs_in_own_process_group 守住。）
     """
     pid_file = tmp_path / "example.pid"
     data_dir = _drill_data_dir(tmp_path, pid_file)

@@ -18,6 +18,7 @@ import asyncio
 import base64
 import json
 import logging
+import math
 import os
 import shutil
 import signal
@@ -417,10 +418,9 @@ async def method_run_example(req_id: Any, params: dict[str, Any]) -> None:
     if not isinstance(args, list) or not all(isinstance(a, str) for a in args):
         _error(req_id, -32602, "args 必须是字符串数组")
         return
-    try:
-        timeout = float(params.get("timeout", 30))
-    except (TypeError, ValueError):
-        timeout = 30.0
+    # timeout 收口（审计 B2）：非法/非有限/非正回默认；渲染层可传 1e9，
+    # 无上界则超时防线形同虚设
+    timeout = _sanitize_timeout(params.get("timeout", 30))
 
     item = _item_of(example_id)
     if item is None:
@@ -599,6 +599,7 @@ async def _run_subprocess(
             stderr=asyncio.subprocess.STDOUT,  # 合并输出，与原 MergedChannels 一致
             # 单行输出上限 8MB：默认 64KB 会让 print 超长行（如打印大列表）崩溃运行任务
             limit=8 * 1024 * 1024,
+            **_spawn_isolation_kwargs(),
         )
     except OSError as e:
         _notify("run_output", {"run_id": run_id, "text": f"[错误] 无法启动子进程: {e}\n"})
@@ -674,8 +675,62 @@ async def _run_subprocess(
     _notify("run_finished", {"run_id": run_id, "exit_code": exit_code})
 
 
+# timeout 上界：渲染层传参不可信任（曾可传 1e9 让超时防线失效），30 分钟封顶
+_MAX_RUN_TIMEOUT_SECONDS = 1800.0
+
+
+def _sanitize_timeout(value: Any, default: float = 30.0) -> float:
+    """timeout 参数收口：非法 / 非有限 / 非正回默认，超上界截断（审计 B2）。"""
+    try:
+        t = float(value)
+    except (TypeError, ValueError):
+        return default
+    if not math.isfinite(t) or t <= 0:
+        return default
+    return min(t, _MAX_RUN_TIMEOUT_SECONDS)
+
+
+def _spawn_isolation_kwargs() -> dict[str, Any]:
+    """子进程隔离参数：让示例进程独立成组（posix setsid / Windows 独立进程组）。
+
+    终止时对组发信号——示例自己 spawn 的孙进程一并终结；不隔离时孙进程在
+    超时/停止后存活并继续持有 stdout 管道，与「不留孤儿」的目标矛盾（审计 B2）。
+    """
+    if os.name == "posix":
+        return {"start_new_session": True}
+    return {"creationflags": getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0)}
+
+
+def _signal_tree(proc: asyncio.subprocess.Process, sig: signal.Signals) -> None:
+    """向进程组发信号；组不可达（已退出/已回收）时回退直接信号，再不可达则忽略。
+
+    子进程经 _spawn_isolation_kwargs 独立成组，组 id == 子进程 pid；
+    os.getpgid 对已回收进程抛 OSError（ProcessLookupError 是其子类）——
+    与旧的直接信号语义一致，不算错误。
+    """
+    try:
+        os.killpg(os.getpgid(proc.pid), sig)
+        return
+    except OSError:
+        pass
+    try:
+        if sig == signal.SIGKILL:
+            proc.kill()
+        else:
+            proc.terminate()
+    except ProcessLookupError:
+        pass
+
+
 def _terminate(proc: asyncio.subprocess.Process) -> None:
-    """terminate 的安全封装：进程恰在收尾时可能已退出，ProcessLookupError 不算错误。"""
+    """terminate 的安全封装：进程恰在收尾时可能已退出，ProcessLookupError 不算错误。
+
+    posix 对进程组发 SIGTERM（孙进程一并体面退出）；Windows 无组信号等价物，
+    保持单进程 TerminateProcess——强杀阶段 _kill 用 taskkill /T 连树清理。
+    """
+    if os.name == "posix":
+        _signal_tree(proc, signal.SIGTERM)
+        return
     try:
         proc.terminate()
     except ProcessLookupError:
@@ -683,7 +738,19 @@ def _terminate(proc: asyncio.subprocess.Process) -> None:
 
 
 def _kill(proc: asyncio.subprocess.Process) -> None:
-    """kill 的安全封装：同 _terminate，SIGKILL 发给已 reap 的进程同样会抛错。"""
+    """kill 的安全封装：posix 对进程组发 SIGKILL；Windows 用 taskkill /F /T 清整棵树。"""
+    if os.name == "posix":
+        _signal_tree(proc, signal.SIGKILL)
+        return
+    try:
+        subprocess.run(
+            ["taskkill", "/F", "/T", "/PID", str(proc.pid)],
+            capture_output=True,
+            timeout=5,
+            check=False,
+        )
+    except (OSError, subprocess.SubprocessError):
+        pass
     try:
         proc.kill()
     except ProcessLookupError:
@@ -1467,9 +1534,15 @@ async def _handle_request(line: str) -> None:
         return
 
     try:
-        result = handler(req_id, params)
-        if asyncio.iscoroutine(result):
-            await result
+        if asyncio.iscoroutinefunction(handler):
+            await handler(req_id, params)
+        else:
+            # 同步 handler 下沉线程池（审计 B1）：冷启 list_examples 首次物化
+            # 实测 ≈17s、search_examples 按需读盘、save_example 落盘——内联在
+            # 事件循环里会让 ping/stop_run 全部排队、RPC 通道整体冻结。
+            # _send 自带 stdout 锁，线程内回包安全；_ensure_store 自带锁，
+            # 与启动 warmup 线程本就并发。
+            await asyncio.to_thread(handler, req_id, params)
     except Exception as e:  # noqa: BLE001 - sidecar 不应崩溃
         _error(req_id, -32603, f"内部错误: {e}")
 
