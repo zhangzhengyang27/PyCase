@@ -16,6 +16,7 @@
 
 import asyncio
 import json
+import re
 import sys
 import time
 from pathlib import Path
@@ -186,6 +187,20 @@ def test_g7_method_table_golden():
     """方法表冻结：与契约 §5 的点名集合逐项相等（增删都要先改契约）。"""
     assert set(server.METHODS) == GOLDEN_METHODS
     assert all(callable(h) for h in server.METHODS.values())
+
+
+def test_g7_main_forwards_notifications_from_single_source():
+    """主进程通知转发必须由 shared/protocol 的 NOTIFICATIONS 名表驱动。
+
+    漂移实锤（2026-09 审计 B3/D2）：protocol.json / protocol.ts / server.py 三处
+    都登记了 env_progress，唯独主进程的手写六项白名单漏了它——首启引导的阶段
+    推送整条链路静默失效，smoke 因轮询式断言没抓到。金标断言主进程 import
+    名表（TS↔JSON 的一致性由 protocol.spec.ts 钉），手写白名单不得回归。
+    """
+    src = (ROOT / "electron-prototype" / "electron" / "src" / "main" / "index.ts").read_text(encoding="utf-8")
+    assert "shared/protocol" in src, "主进程必须从 shared/protocol 引入协议名表（单一来源第四副本禁令）"
+    assert re.search(r"\bNOTIFICATIONS\b", src), "通知转发必须由 NOTIFICATIONS 名表驱动"
+    assert not re.search(r"msg\.method === 'run_output'", src), "不得手写通知名白名单（漂移温床）"
 
 
 # ------------------------------------------------------- 金标 2：列表只发索引

@@ -8,6 +8,12 @@ import fs from 'node:fs'
 import { StringDecoder } from 'node:string_decoder'
 import { fileURLToPath } from 'node:url'
 
+// 协议通知名表（跨语言单一来源）：sidecar → 渲染层的通知转发由它驱动。
+// 曾因主进程手写白名单漏掉 env_progress（protocol.json/ts/server 三处都对，
+// 唯独这第四份副本漂移），tests/test_guard_protocol.py 的 G7 护栏钉死接线。
+import { NOTIFICATIONS } from '../../../shared/protocol'
+import { resolveDataDir } from '../../../shared/paths'
+
 // ---------------------------------------------------------------------------
 // 路径解析
 // ---------------------------------------------------------------------------
@@ -244,15 +250,8 @@ function handleSidecarMessage(line: string): void {
         const m = readyQueue.shift() as string
         sidecarProcess?.stdin?.write(m + '\n')
       }
-    } else if (
-      msg.method === 'run_output' ||
-      msg.method === 'run_finished' ||
-      msg.method === 'run_images' ||
-      msg.method === 'ai_explain_chunk' ||
-      msg.method === 'ai_explain_done' ||
-      msg.method === 'ai_explain_error'
-    ) {
-      // 转发到渲染进程
+    } else if (msg.method && (NOTIFICATIONS as readonly string[]).includes(msg.method)) {
+      // 转发到渲染进程（env_progress 等由名表驱动，不手写白名单）
       broadcast(`sidecar:${msg.method}`, msg.params)
     }
     return
@@ -404,8 +403,10 @@ ipcMain.handle('app:info', () => ({
 }))
 
 ipcMain.handle('app:openLog', async () => {
-  // 日志由 sidecar 写在 <DATA_DIR>/logs/sidecar.log（DATA_DIR 由 DESKTOP_APP_DATA_DIR 决定）
-  const dir = process.env.DESKTOP_APP_DATA_DIR || app.getAppPath()
+  // 日志由 sidecar 写在 <DATA_DIR>/logs/sidecar.log。DATA_DIR 口径经 shared/paths
+  // 与 spawn 注入的 DESKTOP_APP_DATA_DIR 对齐（打包 = userData，开发 = 仓库根）——
+  // 不能读主进程自己的 env：该变量只注入给 sidecar 子进程，两种模式都拿不到
+  const dir = resolveDataDir({ isPackaged: IS_PACKAGED, userDataPath: app.getPath('userData'), repoRoot: APP_DIR })
   const logPath = path.join(dir, 'logs', 'sidecar.log')
   const err = await shell.openPath(logPath)
   return err ? { ok: false, error: `无法打开日志：${err}`, path: logPath } : { ok: true, path: logPath }
