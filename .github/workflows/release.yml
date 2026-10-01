@@ -155,13 +155,18 @@ jobs:
           Write-Host '[release] Windows 安装冒烟通过'
 
       # 上传到 GitHub Releases（用 runner 自带的 gh + GITHUB_TOKEN；不依赖第三方 action）
+      # working-directory 必须指到 electron 工程：assets 的 dist/* glob 相对它解析——
+      # v1.0.1 首轮曾缺这一行，glob 在仓库根解析成「no matches found」三平台齐挂
+      # （此步骤在 v1.0.0 时点从未真正执行到，属于潜伏首爆）
       - name: 创建/更新 Release 并上传产物
         shell: bash
+        working-directory: electron-prototype/electron
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG: ${{ github.ref_name }}
         run: |
           set -euo pipefail
+          ls ${{ matrix.assets }}
           gh release view "$TAG" >/dev/null 2>&1 || gh release create "$TAG" --title "$TAG" --notes-from-tag
           gh release upload "$TAG" ${{ matrix.assets }} --clobber
           echo "[release] ${{ matrix.target }} 已上传：$TAG"
