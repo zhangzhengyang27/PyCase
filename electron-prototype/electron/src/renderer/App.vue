@@ -173,6 +173,8 @@ const navBadge = computed<Record<ViewKey, string>>(() => ({
 
 // Cmd/Ctrl+K 全局命令面板
 function onGlobalKey(e: KeyboardEvent): void {
+  // 长按触发的自动重复不响应：按住 ⌘K 会闪跳开关（e.repeat 只对按住的键为真）
+  if (e.repeat) return
   if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
     e.preventDefault()
     paletteOpen.value = !paletteOpen.value

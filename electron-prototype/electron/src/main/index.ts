@@ -2016,6 +2016,21 @@ function runE2ETest(): void {
 // ---------------------------------------------------------------------------
 process.on('uncaughtException', (err: Error) => {
   console.error('[main] uncaughtException:', err)
+  // 落盘到 <DATA_DIR>/logs/main-error.log：sidecar 有 sidecar.log，主进程崩溃
+  // 前若只留 console，用户「查看日志」时没有任何可查痕迹（审计 C7）
+  try {
+    const logDir = path.join(
+      resolveDataDir({ isPackaged: IS_PACKAGED, userDataPath: app.getPath('userData'), repoRoot: APP_DIR }),
+      'logs'
+    )
+    fs.mkdirSync(logDir, { recursive: true })
+    fs.appendFileSync(
+      path.join(logDir, 'main-error.log'),
+      `[${new Date().toISOString()}] uncaughtException\n${err.stack || err.message}\n\n`
+    )
+  } catch {
+    // 日志落盘失败不能盖过异常本身
+  }
   try {
     if (mainWindow && !mainWindow.isDestroyed()) {
       mainWindow.webContents.send('main:error', { message: err.message, stack: err.stack })
