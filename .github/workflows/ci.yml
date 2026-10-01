@@ -10,9 +10,13 @@ on:
   workflow_call:
 
 # 同 ref 重复触发只保留一条：PR 新推送取消旧 run；main push 与 workflow_call
-# （Release 门禁）不取消——门禁结论必须完整落档
+# （Release 门禁）不取消——门禁结论必须完整落档。
+# group 带 event_name 后缀：workflow_call 上下文里 github.workflow/github.ref
+# 继承调用方（Release-refs/tags/…），不加后缀会与 Release 自己的组撞车死锁
+# （GitHub 检测到 "deadlock … between a top level workflow" 直接取消整个 run，
+# 实测于 v1.0.1 首轮 Release）。
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 # 说明：示例运行依赖仓库根 .venv（按 requirements.txt 装齐，含 opencv/pygame 等重包），
