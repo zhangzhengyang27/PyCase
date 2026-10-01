@@ -38,6 +38,7 @@ const ICON_BTN =
 </script>
 
 <template>
+  <!-- .self 守卫：焦点在内嵌收藏/运行按钮上时按键只归按钮（原生激活），容器不再冒泡出 open -->
   <div
     class="group flex items-center gap-2.5 h-11 px-3 cursor-pointer transition-colors dur-fast border-b border-line-subtle hover:bg-hover animate-card-in [content-visibility:auto] [contain-intrinsic-size:auto_45px]"
     :style="enterDelay"
@@ -45,8 +46,8 @@ const ICON_BTN =
     tabindex="0"
     :aria-label="`${title}（详情）`"
     @click="emit('open')"
-    @keydown.enter="emit('open')"
-    @keydown.space.prevent="emit('open')"
+    @keydown.enter.self="emit('open')"
+    @keydown.space.self.prevent="emit('open')"
   >
     <span class="chip-ic !w-6 !h-6">
       <component :is="icon" :size="13" :stroke-width="1.5" />

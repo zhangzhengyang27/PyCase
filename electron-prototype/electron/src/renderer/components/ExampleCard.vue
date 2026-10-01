@@ -42,6 +42,7 @@ const enterDelay = computed(() => ({
 </script>
 
 <template>
+  <!-- .self 守卫：焦点在内嵌收藏/运行按钮上时按键只归按钮（原生激活），容器不再冒泡出 open -->
   <div
     :class="[CARD_CLS, selected ? 'card-sel' : '']"
     :style="enterDelay"
@@ -49,8 +50,8 @@ const enterDelay = computed(() => ({
     tabindex="0"
     :aria-label="`${title}（详情）`"
     @click="emit('open')"
-    @keydown.enter="emit('open')"
-    @keydown.space.prevent="emit('open')"
+    @keydown.enter.self="emit('open')"
+    @keydown.space.self.prevent="emit('open')"
   >
     <!-- 行 1：语义图标 chip + 标题 + 收藏 -->
     <div class="flex items-center gap-2.5 px-3 pt-3 pb-0">

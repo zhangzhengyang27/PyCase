@@ -188,6 +188,20 @@ describe('ExampleCard', () => {
     expect(w.emitted('open')).toHaveLength(2)
   })
 
+  it('焦点落在内嵌按钮上：Enter/Space 只激活按钮，不再冒泡出 open（双触发回归）', async () => {
+    const w = mount(ExampleCard, { props: { ex: makeExample() } })
+
+    // 真实键盘路径：Tab 进入卡片后焦点停在 ★ / 运行按钮上，keydown 自按钮冒泡到容器——
+    // 修复前容器与按钮同时响应（按 Enter = 收藏 + 打开详情）
+    await w.get('button[title="收藏"]').trigger('keydown', { key: 'Enter' })
+    await w.get('button[title="收藏"]').trigger('keydown', { key: ' ' })
+    expect(w.emitted('open')).toBeUndefined()
+
+    // 容器自身的键盘路径不受影响
+    await w.get('[role="button"]').trigger('keydown', { key: 'Enter' })
+    expect(w.emitted('open')).toHaveLength(1)
+  })
+
   it('收藏态切换星标配色、填充与 aria-label', () => {
     const on = mount(ExampleCard, { props: { ex: makeExample({ name: 'demo.py' }), faved: true } })
     const onBtn = on.get('button[title="取消收藏"]')
@@ -334,6 +348,18 @@ describe('ExampleListItem', () => {
     expect(w.emitted('run')).toHaveLength(1)
     // .stop 生效：按钮点击没有再冒泡出 open
     expect(w.emitted('open')).toHaveLength(3)
+  })
+
+  it('焦点落在内嵌按钮上：Enter/Space 只激活按钮，不再冒泡出 open（双触发回归）', async () => {
+    const w = mount(ExampleListItem, { props: { ex: makeExample() } })
+
+    await w.get('button[title="收藏"]').trigger('keydown', { key: 'Enter' })
+    await w.get('button[title="运行"]').trigger('keydown', { key: ' ' })
+    expect(w.emitted('open')).toBeUndefined()
+
+    // 容器自身的键盘路径不受影响
+    await w.get('[role="button"]').trigger('keydown', { key: 'Enter' })
+    expect(w.emitted('open')).toHaveLength(1)
   })
 
   it('入场 stagger 与卡片同口径（前 8 项 ×20ms）', () => {
