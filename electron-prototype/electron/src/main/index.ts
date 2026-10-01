@@ -89,6 +89,9 @@ function resolveSidecarCommand(): SidecarCommand {
 interface PendingRequest {
   resolve: (value: unknown) => void
   reject: (reason?: unknown) => void
+  // 超时定时器随请求登记：响应/崩溃路径统一摘除——此前从不 clearTimeout，
+  // 高频调用下 120s 内累积大量存活定时器（审计 C4）
+  timer: NodeJS.Timeout
 }
 
 let sidecarProcess: ChildProcess | null = null
@@ -179,13 +182,17 @@ function spawnSidecar(): void {
     if (isCurrent) {
       sidecarProcess = null
       sidecarReady = false
-      // 拒绝所有挂起的请求
+      // 拒绝所有挂起的请求（定时器一并摘除），并丢弃 ready 缓存——
+      // 队列里的是发给**这个**已死进程的消息，新进程就绪后原样重放会
+      // 以 id 失配被丢弃，副作用却在重启后的进程上真实执行了一次（审计 C5）
       for (const [id, req] of pendingRequests) {
         const err = new Error('sidecar 进程已退出') as Error & { code?: number }
         err.code = -32001 // 自定义：sidecar 不可用（渲染层据此提示重启而不是重试）
+        clearTimeout(req.timer)
         req.reject(err)
         pendingRequests.delete(id)
       }
+      readyQueue.length = 0
       broadcast('sidecar:status', { ready: false, code })
     }
     // 手动停止（sidecar:restart）不触发自动重启
@@ -261,6 +268,7 @@ function handleSidecarMessage(line: string): void {
   const req = pendingRequests.get(msg.id)
   if (req) {
     pendingRequests.delete(msg.id)
+    clearTimeout(req.timer)
     if (msg.error) {
       // 错误码必须带出去：渲染层要能按类型分支（C4），只留 message 等于把协议信息丢在半路
       const err = new Error(msg.error.message || 'sidecar 错误') as Error & { code?: number }
@@ -284,23 +292,26 @@ function callSidecar(method: string, params: Record<string, unknown> = {}): Prom
       return
     }
 
-    pendingRequests.set(id, { resolve, reject })
-
-    if (sidecarReady) {
-      sidecarProcess.stdin?.write(msg + '\n')
-    } else {
-      readyQueue.push(msg)
-    }
-
-    // 超时保护
-    setTimeout(() => {
+    // 超时保护：预算按方法区分——install_example_deps 逐包分钟级（venv_manager
+    // 单包 BOOTSTRAP 就有 600s 预算），120s 必然主进程先超时而 sidecar 仍在锁内
+    // 安装，用户重试只会继续排队（审计 C4）
+    const timeoutMs = method === 'install_example_deps' ? 900000 : 120000
+    const timer = setTimeout(() => {
       if (pendingRequests.has(id)) {
         pendingRequests.delete(id)
         const err = new Error(`请求超时: ${method}`) as Error & { code?: number }
         err.code = -32002 // 自定义：请求超时
         reject(err)
       }
-    }, 120000)
+    }, timeoutMs)
+
+    pendingRequests.set(id, { resolve, reject, timer })
+
+    if (sidecarReady) {
+      sidecarProcess.stdin?.write(msg + '\n')
+    } else {
+      readyQueue.push(msg)
+    }
   })
 }
 
@@ -337,10 +348,22 @@ function createWindow(): void {
   })
 
   // 拖拽文件/链接到窗口或 window.open 都可能触发导航，导航后的页面会经
-  // preload 重新获得完整的特权 API（运行示例、写文件），必须拦截
+  // preload 重新获得完整的特权 API（运行示例、写文件），必须拦截。
+  // 白名单 = 应用自身页面：打包态把 file URL 解回路径、只放行 renderer 产物目录
+  // （直接放行整个 file:// scheme 曾让拖入窗口的任意本地 HTML 拿到全部特权 API，
+  // 审计 C2）；开发态只放行 dev server。setWindowOpenHandler 堵的是 window.open，
+  // 堵不了这条。
+  const ownPageDir = path.join(__dirname, '../renderer')
   mainWindow.webContents.on('will-navigate', (event, url) => {
     const devUrl = process.env.ELECTRON_RENDERER_URL
-    if (url.startsWith('file://') || (devUrl && url.startsWith(devUrl))) return
+    if (devUrl && url.startsWith(devUrl)) return
+    if (!devUrl && url.startsWith('file://')) {
+      try {
+        if (fileURLToPath(url).startsWith(ownPageDir + path.sep)) return
+      } catch {
+        // 不是合法 file URL（如带 host 的 file://remote/…），按拦截处理
+      }
+    }
     event.preventDefault()
   })
   mainWindow.webContents.setWindowOpenHandler(() => ({ action: 'deny' }))
@@ -2121,10 +2144,16 @@ app.on('before-quit', () => {
 })
 
 app.on('window-all-closed', () => {
+  if (process.platform === 'darwin') {
+    // darwin 关窗不退出：sidecar 保持运行——用户随时可能重开窗口，热引擎体验更好。
+    // 此前无条件 kill，close 事件 2 秒后又自动重启：无窗口状态下白拉起一个
+    // sidecar（审计 C6）。退出统一走 before-quit + 进程退出清理。
+    return
+  }
+  // 非 darwin 关窗 = 退出：sidecar 一并终止（Windows 的 TerminateProcess 不给
+  // sidecar 执行清理的机会，属已知取舍；进程组收口在 sidecar 侧 _spawn_isolation_kwargs）
   if (sidecarProcess) {
     sidecarProcess.kill()
   }
-  if (process.platform !== 'darwin') {
-    app.quit()
-  }
+  app.quit()
 })
