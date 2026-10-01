@@ -44,5 +44,4 @@ seaborn
 selenium
 sqlalchemy
 tornado
-vega
 wordcloud

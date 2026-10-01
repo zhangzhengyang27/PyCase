@@ -5,7 +5,7 @@
 electron-builder 的 extraResources 指向它——打包不可复现（审计 C1）。现在：
 
     python scripts/build_sidecar.py            # 冻结到 electron-prototype/electron/sidecar-dist/
-    python scripts/build_sidecar.py --smoke    # 冻结后跑冒烟：真启动 + list_examples == 1496
+    python scripts/build_sidecar.py --smoke    # 冻结后跑冒烟：真启动 + list_examples == 1493
 
 产物名随平台（sidecar / sidecar.exe），与 package.json 的 extraResources 约定一致。
 
@@ -35,7 +35,7 @@ ROOT = Path(__file__).resolve().parent.parent
 ELECTRON_DIR = ROOT / "electron-prototype" / "electron"
 SPEC = ELECTRON_DIR / "build-pyinstaller" / "sidecar.spec"
 OUT_DIR = ELECTRON_DIR / "sidecar-dist"
-EXPECTED_EXAMPLES = 1496
+EXPECTED_EXAMPLES = 1493
 
 
 def _binary_name() -> str:

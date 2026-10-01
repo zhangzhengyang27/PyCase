@@ -170,7 +170,7 @@ jobs:
 
   # ---------------------------------------------------------------------------
   # 打包矩阵（B3-4）：macOS + Windows 各自冻结 sidecar → 真启动冒烟 → electron-builder 出包
-  # 冒烟断言：冻结产物能启动、能加载 app 包、能读资源里的 1496 条示例（打包链最易断的三处）
+  # 冒烟断言：冻结产物能启动、能加载 app 包、能读资源里的 1493 条示例（打包链最易断的三处）
   # 产物断言：安装包/dir 产物真实存在（含 sidecar 二进制与数据目录）
   # mac 额外跑「打包产物自测」：直接启动 .app 内的可执行文件跑同一套走查探针
   # ---------------------------------------------------------------------------
@@ -202,7 +202,7 @@ jobs:
         working-directory: electron-prototype/electron
         run: npm ci
 
-      - name: 冻结 sidecar + 冒烟（真启动 / list_examples == 1496）
+      - name: 冻结 sidecar + 冒烟（真启动 / list_examples == 1493）
         run: |
           python -m pip install --upgrade pip
           python -m pip install pyinstaller

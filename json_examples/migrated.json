@@ -3091,54 +3091,6 @@
    "file": "../projects/pygame-valley-farm-sim/code/transition.py"
   },
   {
-   "id": "projects_vega-news-terminal_service_news_service.py",
-   "name": "news_service.py",
-   "category": "projects",
-   "tags": [
-    "service",
-    "vega-news-terminal"
-   ],
-   "description": "Vega 新闻管理系统",
-   "requirements": [
-    "colorama",
-    "mysql-connector-python"
-   ],
-   "title": "",
-   "file": "../projects/vega-news-terminal/service/news_service.py"
-  },
-  {
-   "id": "projects_vega-news-terminal_service_role_service.py",
-   "name": "role_service.py",
-   "category": "projects",
-   "tags": [
-    "service",
-    "vega-news-terminal"
-   ],
-   "description": "Vega 新闻管理系统",
-   "requirements": [
-    "colorama",
-    "mysql-connector-python"
-   ],
-   "title": "",
-   "file": "../projects/vega-news-terminal/service/role_service.py"
-  },
-  {
-   "id": "projects_vega-news-terminal_service_user_service.py",
-   "name": "user_service.py",
-   "category": "projects",
-   "tags": [
-    "service",
-    "vega-news-terminal"
-   ],
-   "description": "Vega 新闻管理系统",
-   "requirements": [
-    "colorama",
-    "mysql-connector-python"
-   ],
-   "title": "",
-   "file": "../projects/vega-news-terminal/service/user_service.py"
-  },
-  {
    "id": "projects_vega-news-terminal_test.py",
    "name": "test.py",
    "category": "projects",
