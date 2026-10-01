@@ -325,13 +325,17 @@ html[data-accent="brand"] {
   --color-warn-bg: var(--chip-bg);
   --color-info-bg: var(--status-info-bg);
 
-  /* 线条（v1 五档收敛为 hairline / strong 两档） */
+  /* 线条（v1 五档收敛为 hairline / strong 两档；line-hairline 是 hairline 档的显式别名） */
   --color-line: var(--line-hairline);
+  --color-line-hairline: var(--line-hairline);
   --color-line-subtle: var(--line-hairline);
   --color-line-strong: var(--line-strong);
   --color-line-mid: var(--line-hairline);
   --color-line-deep: var(--line-strong);
   --color-line-tint: var(--line-hairline);
+
+  /* 填充（进度条轨道等凹陷面；tests/test_theme_tokens.mjs 守护类名↔映射不脱节） */
+  --color-fill-subtle: var(--bg-inset);
 
   /* 阴影 */
   --shadow-elev-1: var(--shadow-card);
