@@ -75,6 +75,10 @@ IMPORT_TO_PKG = {
     "mysql": "mysql-connector-python",
     "pymongo": "pymongo",
     "redis": "redis",
+    # from dotenv import load_dotenv：PyPI 正主是 python-dotenv（`dotenv` 是劣质影子包，审计 A4）
+    "dotenv": "python-dotenv",
+    # ffmpeg-python 提供 ffmpeg 模块（PyPI `ffmpeg` 是空壳；二进制本体需系统另行安装）
+    "ffmpeg": "ffmpeg-python",
     "torch": "torch",
     "tensorflow": "tensorflow",
     "keras": "keras",
@@ -103,7 +107,8 @@ IMPORT_TO_PKG = {
     "playwright": "playwright",
     "selenium": "selenium",
     "pyautogui": "pyautogui",
-    "speechrecognition": "SpeechRecognition",
+    # import 名带下划线（import speech_recognition）：旧键 "speechrecognition" 永远命不中（审计 A4）
+    "speech_recognition": "SpeechRecognition",
     "gtts": "gTTS",
     "pydub": "pydub",
     "fpdf": "fpdf",
@@ -133,7 +138,6 @@ IMPORT_TO_PKG = {
     "aircv": "aircv",
     "aip": "baidu-aip",
     "xlwt": "xlwt",
-    "valley": "valley",
 }
 
 

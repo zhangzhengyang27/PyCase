@@ -901,9 +901,7 @@
    ],
    "title": "媒体信息探测",
    "description": "ffprobe JSON 解析：时长/分辨率/编码/码率。",
-   "requirements": [
-    "ffmpeg"
-   ],
+   "requirements": [],
    "file": "devtools_examples/media_media-probe.py"
   },
   {
@@ -916,9 +914,7 @@
    ],
    "title": "视频格式转换",
    "description": "任意输入 → mp4 (H.264+AAC)，兼容性优先。",
-   "requirements": [
-    "ffmpeg"
-   ],
+   "requirements": [],
    "file": "devtools_examples/media_media-convert.py"
   },
   {
@@ -931,9 +927,7 @@
    ],
    "title": "视频压缩",
    "description": "CRF 质量档压缩（体积直降，画质可控）。",
-   "requirements": [
-    "ffmpeg"
-   ],
+   "requirements": [],
    "file": "devtools_examples/media_media-compress.py"
   },
   {
@@ -946,9 +940,7 @@
    ],
    "title": "提取音频",
    "description": "视频 → mp3/m4a 音轨抽取。",
-   "requirements": [
-    "ffmpeg"
-   ],
+   "requirements": [],
    "file": "devtools_examples/media_media-extract-audio.py"
   },
   {
@@ -961,9 +953,7 @@
    ],
    "title": "音视频裁剪",
    "description": "-ss/-t 指定起止时间裁剪片段（流复制快速模式）。",
-   "requirements": [
-    "ffmpeg"
-   ],
+   "requirements": [],
    "file": "devtools_examples/media_media-trim.py"
   },
   {
@@ -976,9 +966,7 @@
    ],
    "title": "音量调整",
    "description": "音量倍数/归一化（loudnorm 一键拉平响度）。",
-   "requirements": [
-    "ffmpeg"
-   ],
+   "requirements": [],
    "file": "devtools_examples/media_media-volume.py"
   },
   {
@@ -991,9 +979,7 @@
    ],
    "title": "视频截图",
    "description": "指定时间取帧 / 每 N 秒批量截帧。",
-   "requirements": [
-    "ffmpeg"
-   ],
+   "requirements": [],
    "file": "devtools_examples/media_media-screenshot.py"
   },
   {
@@ -1006,9 +992,7 @@
    ],
    "title": "视频合并",
    "description": "concat 协议/解复用器顺序拼接多段视频。",
-   "requirements": [
-    "ffmpeg"
-   ],
+   "requirements": [],
    "file": "devtools_examples/media_media-concat.py"
   },
   {
@@ -1021,9 +1005,7 @@
    ],
    "title": "去除音轨",
    "description": "-an 静音视频（素材交付常用）。",
-   "requirements": [
-    "ffmpeg"
-   ],
+   "requirements": [],
    "file": "devtools_examples/media_media-strip-audio.py"
   },
   {
@@ -1036,9 +1018,7 @@
    ],
    "title": "音频压缩转码",
    "description": "mp3/m4a 码率压缩（语音 64k / 音乐 128k 建议）。",
-   "requirements": [
-    "ffmpeg"
-   ],
+   "requirements": [],
    "file": "devtools_examples/media_media-audio-compress.py"
   },
   {
@@ -1051,9 +1031,7 @@
    ],
    "title": "批量转码",
    "description": "目录内全部视频批量转 mp4（多线程进度）。",
-   "requirements": [
-    "ffmpeg"
-   ],
+   "requirements": [],
    "file": "devtools_examples/media_media-batch-convert.py"
   },
   {
@@ -1066,9 +1044,7 @@
    ],
    "title": "视频转 GIF",
    "description": "视频片段 → 表情包 GIF（fps/宽度可调）。",
-   "requirements": [
-    "ffmpeg"
-   ],
+   "requirements": [],
    "file": "devtools_examples/media_media-gif.py"
   }
  ],

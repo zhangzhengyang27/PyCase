@@ -19,6 +19,7 @@ import json
 import os
 import re
 import shutil
+import sys
 import tempfile
 import time
 from dataclasses import dataclass, field
@@ -62,18 +63,12 @@ def safe_name(raw: str) -> str:
 
 _VALID_REQ = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
 
-# 与渲染层 filter-engine.ts 的 STDLIB 逐字一致：两边口径不同会让 import 标签漂移
-_STDLIB = {
-    "abc", "argparse", "ast", "asyncio", "base64", "bisect", "calendar", "collections",
-    "concurrent", "configparser", "contextlib", "copy", "csv", "ctypes", "dataclasses",
-    "datetime", "decimal", "difflib", "email", "enum", "fnmatch", "functools", "glob",
-    "gzip", "hashlib", "heapq", "hmac", "html", "http", "importlib", "inspect", "io",
-    "itertools", "json", "logging", "math", "multiprocessing", "operator", "os", "pathlib",
-    "pickle", "pprint", "queue", "random", "re", "shutil", "signal", "socket", "sqlite3",
-    "statistics", "string", "struct", "subprocess", "sys", "tempfile", "textwrap",
-    "threading", "time", "traceback", "types", "typing", "unittest", "urllib", "uuid",
-    "warnings", "weakref", "xml", "zipfile",
-}
+# 权威口径 = sys.stdlib_module_names（与运行时缺依赖判定 run_status.third_party_imports
+# 同源）。曾是手写集合，漏了 secrets/tarfile/getpass/turtle 等——同一模块在
+# import_tags（当第三方下发）与 deps（正确排除）两处口径互相矛盾（审计 A1）。
+# 渲染层 filter-engine.ts 的 STDLIB 是展示层兜底子集，无法逐字对齐解释器全集，
+# 其覆盖面由 tests/test_filter_engine.mjs 按真相源语料守护。
+_STDLIB = frozenset(sys.stdlib_module_names)
 
 
 def _bare_pkg(spec: str) -> str:

@@ -505,3 +505,23 @@ def test_g1_requirements_aggregate_matches_repo_file():
     store = ContractStore.for_base_dir(base_dir=REPO_ROOT)
     store.load()
     assert REQUIREMENTS_OUT.read_text(encoding="utf-8") == render_requirements(collect_requirements(store))
+
+
+def test_import_tags_fallback_uses_authoritative_stdlib(tmp_path):
+    """审计 A1：import_tags 兜底推导必须与运行时缺依赖判定同口径。
+
+    手写 _STDLIB 漏了 secrets/tarfile/getpass——导入这些模块的示例，
+    import_tags 把标准库当第三方标签下发，而 deps（缺依赖判定）走
+    sys.stdlib_module_names 又正确排除：同一模块两处口径互相矛盾。
+    """
+    _make_root(tmp_path)
+    _write_v2_collection(
+        tmp_path,
+        "demo",
+        [{"id": "a", "name": "a.py", "code": "import secrets\nimport tarfile\nimport getpass\nimport requests\n"}],
+    )
+    store = ContractStore.for_base_dir(base_dir=tmp_path)
+    store.load()
+    item = next(iter(store.index.values()))
+    tags = store.import_tags(item)
+    assert tags == ["requests"], f"标准库漏成第三方标签: {tags}"

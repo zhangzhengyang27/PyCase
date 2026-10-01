@@ -1,7 +1,9 @@
 // filter-engine.ts：多维筛选纯函数引擎（无 DOM、无全局状态依赖）
 // 维度：分类 category × 收藏 favorites × 运行状态 runStatus × 标签 tags × 全文 q
 
-// 常见标准库/内置模块：不自动作为标签（避免 os/sys 之类淹没第三方库标签）
+// 常见标准库/内置模块：不自动作为标签（避免 os/sys 之类淹没第三方库标签）。
+// 展示层兜底子集——权威口径在 Python 侧（sys.stdlib_module_names，见 contract_store._STDLIB
+// 注释），覆盖面由 tests/test_filter_engine.mjs 按真相源语料守护（审计 A1）。
 const STDLIB = new Set([
   'abc',
   'argparse',
@@ -70,7 +72,18 @@ const STDLIB = new Set([
   'warnings',
   'weakref',
   'xml',
-  'zipfile'
+  'zipfile',
+  // 审计 A1 口径对齐补齐：真相源语料实际用到、但曾漏出成「第三方标签」的标准库
+  // （Python 侧权威口径 = sys.stdlib_module_names，本集合是展示层兜底子集）
+  'colorsys',
+  'getpass',
+  'linecache',
+  'platform',
+  'sched',
+  'secrets',
+  'tarfile',
+  'turtle',
+  'zoneinfo'
 ])
 
 const IMPORT_RE = /^\s*(?:from|import)\s+([\w.]+)/gm

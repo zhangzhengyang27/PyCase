@@ -29,6 +29,13 @@ test('extractImportTags: 抽取第三方库、过滤标准库与相对导入、�
   assert.deepEqual(FE.extractImportTags(null), [])
 })
 
+test('extractImportTags: 新版标准库模块不再漏成第三方标签（审计 A1 口径对齐）', () => {
+  // secrets/tarfile/getpass 曾不在前端 STDLIB 集合里——编辑器改码后的标签兜底
+  // 会把标准库当第三方展示，与烘焙事实口径漂移
+  const code = 'import secrets\nimport tarfile\nimport getpass\nimport zoneinfo\nimport numpy\n'
+  assert.deepEqual(FE.extractImportTags(code), ['numpy'])
+})
+
 test('allTagsOf: 元数据标签与 import 标签合并去重、统一小写', () => {
   const ex = { tags: ['NumPy', 'demo'], code: 'import numpy\nimport requests' }
   assert.deepEqual(FE.allTagsOf(ex).sort(), ['demo', 'numpy', 'requests'])
