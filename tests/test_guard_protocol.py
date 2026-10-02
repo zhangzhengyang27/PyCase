@@ -9,6 +9,8 @@
    - `search_examples` 服务端检索：返回 id + 命中原因（name/tag/description/code）；
    - `run_example` / `save_example` / 资源上传 / 删除：一律按 id 寻址，
      调用方夹带的 `path` 参数不生效；资源与运行产物落在工作区，真相源不被写。
+     `run_example` 唯一例外是可选 `code` 覆盖（G9：任意 id + code 在一次性
+     adhoc 工作区运行，`path` 仍然无效）。
 
 全部在 tmp 沙箱内跑：集合根 / 用户集合 / 工作区都在 tmp_path，
 不写仓库真相源（json_examples/ 与 topics/tools/projects）。
@@ -428,3 +430,47 @@ def test_g7_builtin_dataset_listing_carries_no_code():
     assert result["total"] == 1493
     assert all("code" not in ex for ex in result["examples"])
     assert all(Path(ex["path"]).exists() for ex in result["examples"])
+
+
+# ------------------------------- 金标 G9：run_example 可选 code 覆盖（adhoc 工作区）
+
+
+def test_g9_run_example_code_override_runs_in_adhoc_workspace(tmp_path):
+    """可选 code：任意 id + code 在一次性 adhoc 工作区执行；输出照常推送。"""
+    with _ProtocolEnv(tmp_path) as env:
+
+        async def scenario() -> dict:
+            await server.method_run_example(
+                1,
+                {"id": "no-such-example", "code": "print('ADHOC_OK')", "timeout": 30},
+            )
+            deadline = time.monotonic() + 60
+            while time.monotonic() < deadline:
+                if env.finished():
+                    return env.finished()[-1]
+                await asyncio.sleep(0.05)
+            raise AssertionError("run_finished 未到达")
+
+        finished = asyncio.run(scenario())
+        assert finished["exit_code"] == 0
+        assert "ADHOC_OK" in "".join(env.texts())
+
+
+def test_g9_code_override_rejects_bad_params(tmp_path):
+    """code 非字符串 / 空串 / 超长 → -32602，且不产生运行。"""
+    with _ProtocolEnv(tmp_path) as env:
+
+        def errors() -> list[dict]:
+            return [e["error"] for e in env.captured if "error" in e]
+
+        async def scenario() -> list:
+            await server.method_run_example(1, {"id": "x", "code": 123, "timeout": 30})
+            await server.method_run_example(2, {"id": "x", "code": "   ", "timeout": 30})
+            await server.method_run_example(3, {"id": "x", "code": "x" * 64_001, "timeout": 30})
+            await asyncio.sleep(0.2)
+            return errors()
+
+        errs = asyncio.run(scenario())
+        assert len(errs) == 3, f"应恰好 3 个错误响应: {errs}"
+        assert all(e["code"] == -32602 for e in errs)
+        assert env.finished() == []

@@ -65,7 +65,7 @@ export interface SidecarAPI {
     id: string,
     code: string
   ) => Promise<{ status: 'saved'; id: string; json_file: string | null; path: string }>
-  runExample: (params: { id: string; args?: string[]; timeout?: number }) => Promise<{ run_id: string }>
+  runExample: (params: { id: string; args?: string[]; timeout?: number; code?: string }) => Promise<{ run_id: string }>
   stopRun: (runId: string) => Promise<{ status: 'terminating' | 'pending_terminate'; run_id: string }>
   uploadAsset: (params: { id: string; filename: string; data: string }) => Promise<{
     status: 'uploaded'

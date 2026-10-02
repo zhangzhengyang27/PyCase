@@ -422,8 +422,17 @@ async def method_run_example(req_id: Any, params: dict[str, Any]) -> None:
     # 无上界则超时防线形同虚设
     timeout = _sanitize_timeout(params.get("timeout", 30))
 
+    # 可选 code 覆盖（交互工具抽屉「运行」）：一次性 adhoc 工作区，不触碰任何真相源
+    code = params.get("code")
+    if code is not None:
+        if not isinstance(code, str) or not code.strip():
+            _error(req_id, -32602, "code 必须是非空字符串")
+            return
+        if len(code) > 64_000:
+            _error(req_id, -32602, "code 超长（上限 64000 字符）")
+            return
     item = _item_of(example_id)
-    if item is None:
+    if item is None and code is None:
         _error(req_id, -32602, f"示例不存在: {example_id}")
         return
 
@@ -436,7 +445,7 @@ async def method_run_example(req_id: Any, params: dict[str, Any]) -> None:
 
     # 后台协程：启动子进程并流式推送输出。
     # 保存强引用：事件循环只弱引用 Task，无引用的任务可能在挂起期间被 GC
-    task = asyncio.create_task(_run_subprocess(run_id, item, args, timeout))
+    task = asyncio.create_task(_run_subprocess(run_id, item, args, timeout, adhoc_code=code))
     _bg_tasks.add(task)
     task.add_done_callback(_on_bg_task_done)
 
@@ -513,19 +522,29 @@ def _collect_images(working_dir: Path, since: float, limit: int = 12) -> list[st
 
 async def _run_subprocess(
     run_id: str,
-    item: ExampleItem,
+    item: ExampleItem | None,
     args: list[str],
     timeout: float,
+    *,
+    adhoc_code: str | None = None,
 ) -> None:
     """启动子进程运行示例，逐行读取输出并推送。"""
-    # 契约 §4.1：运行前先确保工作区（唯一落盘入口），运行目录 = 工作区
-    workspace = await asyncio.to_thread(_ensure_store().ensure_workspace, item)
-    if workspace is None:
-        _notify("run_output", {"run_id": run_id, "text": "[错误] 无法准备工作区，运行已取消\n"})
-        _notify("run_finished", {"run_id": run_id, "exit_code": -1})
-        return
-    file_path = workspace / item.name
-    working_dir = workspace
+    if adhoc_code is not None:
+        # 一次性临时工作区：不落真相源，随 cache_root 版本目录隔离
+        workspace = _ensure_store().workspace_root / "adhoc" / run_id
+        workspace.mkdir(parents=True, exist_ok=True)
+        file_path = workspace / "main.py"
+        file_path.write_text(adhoc_code, encoding="utf-8")
+        working_dir = workspace
+    else:
+        # 契约 §4.1：运行前先确保工作区（唯一落盘入口），运行目录 = 工作区
+        workspace = await asyncio.to_thread(_ensure_store().ensure_workspace, item)
+        if workspace is None:
+            _notify("run_output", {"run_id": run_id, "text": "[错误] 无法准备工作区，运行已取消\n"})
+            _notify("run_finished", {"run_id": run_id, "exit_code": -1})
+            return
+        file_path = workspace / item.name
+        working_dir = workspace
     run_started = time.time()
 
     # 通过 VenvManager 获取项目共享 venv 的解释器（首次运行时自动创建并预装常用库，
@@ -586,8 +605,11 @@ async def _run_subprocess(
 
     # 构建环境变量：使用白名单过滤，避免把用户 shell 中的敏感环境变量
     # （API Key、令牌、密码等）传递给不可信示例
-    # 运行期 sys.path：工作区（含基线兄弟文件）+ 集合树根（解析 topics/tools 包导入）
-    pythonpath_parts = list(_ensure_store().run_pythonpath(item)) + [str(REPO_ROOT)]
+    # 运行期 sys.path：工作区（含基线兄弟文件）+ 集合树根（解析 topics/tools 包导入）；
+    # adhoc 运行没有集合归属，只加仓库根
+    pythonpath_parts = (
+        [] if adhoc_code is not None else list(_ensure_store().run_pythonpath(item))
+    ) + [str(REPO_ROOT)]
     existing_pp = os.environ.get("PYTHONPATH", "")
     if existing_pp:
         pythonpath_parts.append(existing_pp)

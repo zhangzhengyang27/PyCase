@@ -201,6 +201,8 @@ export interface RunExampleParams {
   id: string
   args?: string[]
   timeout?: number
+  /** 可选代码覆盖（交互工具抽屉）：非空字符串 ≤64000 字符，在一次性 adhoc 工作区运行 */
+  code?: string
   [key: string]: unknown
 }
 
