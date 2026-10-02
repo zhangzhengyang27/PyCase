@@ -11,7 +11,7 @@ for r in range(40, 200, 24):
 for a in range(0, 360, 15):
     cv2.circle(img, (int(240 + 120 * np.cos(np.radians(a))), int(180 + 120 * np.sin(np.radians(a)))), 5, 255, -1)
 
-table = np.array([(i / 255.0) ** {{gamma}} * 255 for i in range(256)]).astype(np.uint8)
+table = np.array([(i / 255.0) ** 1.2 * 255 for i in range(256)]).astype(np.uint8)
 result = cv2.LUT(img, table)
 cv2.imwrite("cv_gamma__preview.png", result if "result" in dir() else img)
 print("已生成 cv_gamma__preview.png")

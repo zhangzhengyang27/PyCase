@@ -1,13 +1,13 @@
 """极坐标玫瑰（缓升陡降）
 数据可视化示例（matplotlib）。极坐标花瓣能量图。
-运行后在当前目录生成 {{fname}}_preview.png。
+运行后在当前目录生成 'viz_polar_d10'_preview.png。
 """
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 
-rng = np.random.default_rng({{seed}})
+rng = np.random.default_rng(16)
 fig, ax = plt.subplots(figsize=(8, 5))
 theta = np.linspace(0, 2 * np.pi, 120)
 r = np.abs(np.sin(3 * theta)) * 2 + 0.4
@@ -16,5 +16,5 @@ ax.plot(theta, r, color='tab:cyan')
 ax.fill(theta, r, alpha=0.25, color='tab:cyan')
 ax.set_title("极坐标玫瑰（缓升陡降）")
 plt.tight_layout()
-plt.savefig("{{fname}}_preview.png", dpi=110)
-print("已生成 {{fname}}_preview.png")
+plt.savefig("'viz_polar_d10'_preview.png", dpi=110)
+print("已生成 'viz_polar_d10'_preview.png")

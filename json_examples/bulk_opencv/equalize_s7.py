@@ -10,7 +10,7 @@ for x in range(0, 480, 24):
     cv2.rectangle(img, (x, 0), (x + 10, 360), 220, -1)
 cv2.circle(img, (240, 180), 70, 90, -1)
 
-clahe = cv2.createCLAHE(clipLimit={{clip}}, tileGridSize=(8, 8))
+clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
 result = clahe.apply(img)
 cv2.imwrite("cv_equalize__preview.png", result if "result" in dir() else img)
 print("已生成 cv_equalize__preview.png")

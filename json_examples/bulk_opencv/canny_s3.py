@@ -10,6 +10,6 @@ img = rng.integers(60, 200, (360, 480), dtype=np.uint8)
 cv2.circle(img, (240, 180), 110, 255, -1)
 
 blur = cv2.GaussianBlur(img, (5, 5), 0)
-result = cv2.Canny(blur, {{t1}}, {{t2}})
+result = cv2.Canny(blur, 100, 200)
 cv2.imwrite("cv_canny__preview.png", result if "result" in dir() else img)
 print("已生成 cv_canny__preview.png")

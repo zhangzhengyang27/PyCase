@@ -10,7 +10,7 @@ for x in range(0, 480, 24):
     cv2.rectangle(img, (x, 0), (x + 10, 360), 220, -1)
 cv2.circle(img, (240, 180), 70, 90, -1)
 
-kernel = np.ones(({{k}}, {{k}}), np.uint8)
+kernel = np.ones((5, 5), np.uint8)
 result = cv2.morphologyEx(img, cv2.MORPH_OPEN, kernel)
 cv2.imwrite("cv_morph-open__preview.png", result if "result" in dir() else img)
 print("已生成 cv_morph-open__preview.png")

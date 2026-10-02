@@ -11,6 +11,6 @@ cv2.circle(img, (340, 140), 80, 140, -1)
 cv2.line(img, (40, 300), (440, 320), 220, 6)
 
 blur = cv2.GaussianBlur(img, (5, 5), 0)
-result = cv2.Canny(blur, {{t1}}, {{t2}})
+result = cv2.Canny(blur, 100, 200)
 cv2.imwrite("cv_canny__preview.png", result if "result" in dir() else img)
 print("已生成 cv_canny__preview.png")

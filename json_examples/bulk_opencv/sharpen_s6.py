@@ -12,6 +12,6 @@ for a in range(0, 360, 15):
     cv2.circle(img, (int(240 + 120 * np.cos(np.radians(a))), int(180 + 120 * np.sin(np.radians(a)))), 5, 255, -1)
 
 blur = cv2.GaussianBlur(img, (0, 0), 3)
-result = cv2.addWeighted(img, {{w1}}, blur, -{{w2}}, 0)
+result = cv2.addWeighted(img, 1.5, blur, -0.5, 0)
 cv2.imwrite("cv_sharpen__preview.png", result if "result" in dir() else img)
 print("已生成 cv_sharpen__preview.png")

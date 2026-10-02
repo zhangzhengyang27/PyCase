@@ -11,9 +11,9 @@ for r in range(40, 200, 24):
 for a in range(0, 360, 15):
     cv2.circle(img, (int(240 + 120 * np.cos(np.radians(a))), int(180 + 120 * np.sin(np.radians(a)))), 5, 255, -1)
 
-a = cv2.blur(img, ({{k}}, {{k}}))
-b = cv2.GaussianBlur(img, ({{k}}, {{k}}), 0)
-c = cv2.medianBlur(img, {{k}})
+a = cv2.blur(img, (5, 5))
+b = cv2.GaussianBlur(img, (5, 5), 0)
+c = cv2.medianBlur(img, 5)
 result = np.hstack([a, b, c])
 cv2.imwrite("cv_blur-stack__preview.png", result if "result" in dir() else img)
 print("已生成 cv_blur-stack__preview.png")

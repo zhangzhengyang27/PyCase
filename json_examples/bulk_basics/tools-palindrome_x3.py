@@ -9,6 +9,6 @@ def is_palindrome(t):
         j -= 1
     return True
 
-samples = '[\'12321\', "no \'x\' in nixon", \'almostomla\']'
+samples = ['12321', "no 'x' in nixon", 'almostomla']
 for s in samples:
-    print(f"{{s!r:>30}} -> {{is_palindrome(s)}}")
+    print(f"{s!r:>30} -> {is_palindrome(s)}")

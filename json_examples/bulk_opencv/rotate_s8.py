@@ -10,7 +10,7 @@ cv2.putText(img, "OPEN CV", (40, 210), cv2.FONT_HERSHEY_SIMPLEX, 2.6, 220, 12)
 cv2.rectangle(img, (30, 30), (450, 330), 160, 5)
 
 h, w = img.shape[:2]
-M = cv2.getRotationMatrix2D((w / 2, h / 2), {{angle}}, {{scale}})
+M = cv2.getRotationMatrix2D((w / 2, h / 2), 30, 1.1)
 result = cv2.warpAffine(img, M, (w, h))
 cv2.imwrite("cv_rotate__preview.png", result if "result" in dir() else img)
 print("已生成 cv_rotate__preview.png")

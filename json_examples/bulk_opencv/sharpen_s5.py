@@ -11,6 +11,6 @@ cv2.ellipse(img, (240, 180), (180, 90), 25, 0, 360, 230, -1)
 cv2.rectangle(img, (60, 60), (160, 160), 255, 4)
 
 blur = cv2.GaussianBlur(img, (0, 0), 3)
-result = cv2.addWeighted(img, {{w1}}, blur, -{{w2}}, 0)
+result = cv2.addWeighted(img, 1.5, blur, -0.5, 0)
 cv2.imwrite("cv_sharpen__preview.png", result if "result" in dir() else img)
 print("已生成 cv_sharpen__preview.png")

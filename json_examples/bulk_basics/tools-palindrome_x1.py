@@ -9,6 +9,6 @@ def is_palindrome(t):
         j -= 1
     return True
 
-samples = "['上海自来水来自海上', 'A man, a plan, a canal: Panama', 'hello']"
+samples = ['上海自来水来自海上', 'A man, a plan, a canal: Panama', 'hello']
 for s in samples:
-    print(f"{{s!r:>30}} -> {{is_palindrome(s)}}")
+    print(f"{s!r:>30} -> {is_palindrome(s)}")

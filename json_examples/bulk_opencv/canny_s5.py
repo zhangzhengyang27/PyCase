@@ -11,6 +11,6 @@ cv2.ellipse(img, (240, 180), (180, 90), 25, 0, 360, 230, -1)
 cv2.rectangle(img, (60, 60), (160, 160), 255, 4)
 
 blur = cv2.GaussianBlur(img, (5, 5), 0)
-result = cv2.Canny(blur, {{t1}}, {{t2}})
+result = cv2.Canny(blur, 100, 200)
 cv2.imwrite("cv_canny__preview.png", result if "result" in dir() else img)
 print("已生成 cv_canny__preview.png")

@@ -12,7 +12,7 @@ cv2.circle(img, (240, 180), 70, 90, -1)
 
 h, w = img.shape[:2]
 src = np.float32([[0, 0], [w - 1, 0], [0, h - 1], [w - 1, h - 1]])
-dst = np.float32([[{{d}}, {{d}}], [w - 1 - {{d}}, {{d}} ], [{{d}}, h - 1 - {{d}}], [w - 1 - {{d}}, h - 1 - {{d}}]])
+dst = np.float32([[60, 60], [w - 1 - 60, 60 ], [60, h - 1 - 60], [w - 1 - 60, h - 1 - 60]])
 M = cv2.getPerspectiveTransform(src, dst)
 result = cv2.warpPerspective(img, M, (w, h))
 cv2.imwrite("cv_perspective__preview.png", result if "result" in dir() else img)

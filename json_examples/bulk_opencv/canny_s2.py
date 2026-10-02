@@ -9,6 +9,6 @@ img = np.tile(np.linspace(30, 220, 480, dtype=np.uint8), (360, 1))
 cv2.putText(img, "CV", (150, 240), cv2.FONT_HERSHEY_SIMPLEX, 4, 255, 12)
 
 blur = cv2.GaussianBlur(img, (5, 5), 0)
-result = cv2.Canny(blur, {{t1}}, {{t2}})
+result = cv2.Canny(blur, 100, 200)
 cv2.imwrite("cv_canny__preview.png", result if "result" in dir() else img)
 print("已生成 cv_canny__preview.png")

@@ -13,7 +13,7 @@ contours, _ = cv2.findContours(th, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 result = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
 for c in contours:
     area = cv2.contourArea(c)
-    if area < {{min_area}}:
+    if area < 120:
         continue
     M = cv2.moments(c)
     if M["m00"]:

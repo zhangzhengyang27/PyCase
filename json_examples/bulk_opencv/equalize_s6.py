@@ -11,7 +11,7 @@ for r in range(40, 200, 24):
 for a in range(0, 360, 15):
     cv2.circle(img, (int(240 + 120 * np.cos(np.radians(a))), int(180 + 120 * np.sin(np.radians(a)))), 5, 255, -1)
 
-clahe = cv2.createCLAHE(clipLimit={{clip}}, tileGridSize=(8, 8))
+clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
 result = clahe.apply(img)
 cv2.imwrite("cv_equalize__preview.png", result if "result" in dir() else img)
 print("已生成 cv_equalize__preview.png")

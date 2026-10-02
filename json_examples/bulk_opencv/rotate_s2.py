@@ -9,7 +9,7 @@ img = np.tile(np.linspace(30, 220, 480, dtype=np.uint8), (360, 1))
 cv2.putText(img, "CV", (150, 240), cv2.FONT_HERSHEY_SIMPLEX, 4, 255, 12)
 
 h, w = img.shape[:2]
-M = cv2.getRotationMatrix2D((w / 2, h / 2), {{angle}}, {{scale}})
+M = cv2.getRotationMatrix2D((w / 2, h / 2), 30, 1.1)
 result = cv2.warpAffine(img, M, (w, h))
 cv2.imwrite("cv_rotate__preview.png", result if "result" in dir() else img)
 print("已生成 cv_rotate__preview.png")

@@ -10,9 +10,9 @@ for x in range(0, 480, 24):
     cv2.rectangle(img, (x, 0), (x + 10, 360), 220, -1)
 cv2.circle(img, (240, 180), 70, 90, -1)
 
-a = cv2.blur(img, ({{k}}, {{k}}))
-b = cv2.GaussianBlur(img, ({{k}}, {{k}}), 0)
-c = cv2.medianBlur(img, {{k}})
+a = cv2.blur(img, (5, 5))
+b = cv2.GaussianBlur(img, (5, 5), 0)
+c = cv2.medianBlur(img, 5)
 result = np.hstack([a, b, c])
 cv2.imwrite("cv_blur-stack__preview.png", result if "result" in dir() else img)
 print("已生成 cv_blur-stack__preview.png")

@@ -10,7 +10,7 @@ img[::40, :] = 120; img[:, ::40] = 120
 cv2.rectangle(img, (100, 100), (380, 260), 255, -1)
 
 h, w = img.shape[:2]
-M = cv2.getRotationMatrix2D((w / 2, h / 2), {{angle}}, {{scale}})
+M = cv2.getRotationMatrix2D((w / 2, h / 2), 30, 1.1)
 result = cv2.warpAffine(img, M, (w, h))
 cv2.imwrite("cv_rotate__preview.png", result if "result" in dir() else img)
 print("已生成 cv_rotate__preview.png")

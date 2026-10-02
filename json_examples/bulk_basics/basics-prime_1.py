@@ -7,4 +7,4 @@ for n in range(2, int(limit ** 0.5) + 1):
         for m in range(n * n, limit + 1, n):
             sieve[m] = False
 primes = [i for i, ok in enumerate(sieve) if ok]
-print(f"100 以内素数 {{len(primes)}} 个：", primes[:20], "...")
+print(f"100 以内素数 {len(primes)} 个：", primes[:20], "...")

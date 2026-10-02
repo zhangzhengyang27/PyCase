@@ -8,7 +8,7 @@ import numpy as np
 img = np.tile(np.linspace(30, 220, 480, dtype=np.uint8), (360, 1))
 cv2.putText(img, "CV", (150, 240), cv2.FONT_HERSHEY_SIMPLEX, 4, 255, 12)
 
-clahe = cv2.createCLAHE(clipLimit={{clip}}, tileGridSize=(8, 8))
+clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
 result = clahe.apply(img)
 cv2.imwrite("cv_equalize__preview.png", result if "result" in dir() else img)
 print("已生成 cv_equalize__preview.png")

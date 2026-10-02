@@ -9,9 +9,9 @@ img = np.kron(np.indices((9, 12)).sum(0) % 2, np.uint8(255))[:360, :480].astype(
 img[::40, :] = 120; img[:, ::40] = 120
 cv2.rectangle(img, (100, 100), (380, 260), 255, -1)
 
-a = cv2.blur(img, ({{k}}, {{k}}))
-b = cv2.GaussianBlur(img, ({{k}}, {{k}}), 0)
-c = cv2.medianBlur(img, {{k}})
+a = cv2.blur(img, (5, 5))
+b = cv2.GaussianBlur(img, (5, 5), 0)
+c = cv2.medianBlur(img, 5)
 result = np.hstack([a, b, c])
 cv2.imwrite("cv_blur-stack__preview.png", result if "result" in dir() else img)
 print("已生成 cv_blur-stack__preview.png")

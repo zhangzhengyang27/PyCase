@@ -12,7 +12,7 @@ for a in range(0, 360, 15):
     cv2.circle(img, (int(240 + 120 * np.cos(np.radians(a))), int(180 + 120 * np.sin(np.radians(a)))), 5, 255, -1)
 
 h, w = img.shape[:2]
-M = cv2.getRotationMatrix2D((w / 2, h / 2), {{angle}}, {{scale}})
+M = cv2.getRotationMatrix2D((w / 2, h / 2), 30, 1.1)
 result = cv2.warpAffine(img, M, (w, h))
 cv2.imwrite("cv_rotate__preview.png", result if "result" in dir() else img)
 print("已生成 cv_rotate__preview.png")

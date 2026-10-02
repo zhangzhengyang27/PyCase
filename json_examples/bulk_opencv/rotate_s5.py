@@ -11,7 +11,7 @@ cv2.ellipse(img, (240, 180), (180, 90), 25, 0, 360, 230, -1)
 cv2.rectangle(img, (60, 60), (160, 160), 255, 4)
 
 h, w = img.shape[:2]
-M = cv2.getRotationMatrix2D((w / 2, h / 2), {{angle}}, {{scale}})
+M = cv2.getRotationMatrix2D((w / 2, h / 2), 30, 1.1)
 result = cv2.warpAffine(img, M, (w, h))
 cv2.imwrite("cv_rotate__preview.png", result if "result" in dir() else img)
 print("已生成 cv_rotate__preview.png")

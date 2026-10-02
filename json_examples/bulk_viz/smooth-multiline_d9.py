@@ -1,13 +1,13 @@
 """多序列对比（锯齿波）
 数据可视化示例（matplotlib）。三条平滑曲线对比。
-运行后在当前目录生成 {{fname}}_preview.png。
+运行后在当前目录生成 'viz_smooth-multiline_d9'_preview.png。
 """
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 
-rng = np.random.default_rng({{seed}})
+rng = np.random.default_rng(15)
 fig, ax = plt.subplots(figsize=(8, 5))
 x = np.linspace(0, 12, 200)
 for off, color in [(0, 'tab:blue'), (1.5, 'tab:green'), (3, 'tab:red')]:
@@ -15,5 +15,5 @@ for off, color in [(0, 'tab:blue'), (1.5, 'tab:green'), (3, 'tab:red')]:
 ax.legend()
 ax.set_title("多序列对比（锯齿波）")
 plt.tight_layout()
-plt.savefig("{{fname}}_preview.png", dpi=110)
-print("已生成 {{fname}}_preview.png")
+plt.savefig("'viz_smooth-multiline_d9'_preview.png", dpi=110)
+print("已生成 'viz_smooth-multiline_d9'_preview.png")

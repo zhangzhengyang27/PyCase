@@ -12,4 +12,4 @@ if cur:
     lines.append(cur)
 for ln in lines:
     print(ln)
-print(f"共 {{len(lines)}} 行")
+print(f"共 {len(lines)} 行")

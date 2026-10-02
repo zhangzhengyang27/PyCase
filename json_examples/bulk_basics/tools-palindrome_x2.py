@@ -9,6 +9,6 @@ def is_palindrome(t):
         j -= 1
     return True
 
-samples = "['level', 'Python', 'Was it a car or a cat I saw?']"
+samples = ['level', 'Python', 'Was it a car or a cat I saw?']
 for s in samples:
-    print(f"{{s!r:>30}} -> {{is_palindrome(s)}}")
+    print(f"{s!r:>30} -> {is_palindrome(s)}")

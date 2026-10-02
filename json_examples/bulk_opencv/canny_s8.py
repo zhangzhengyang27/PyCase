@@ -10,6 +10,6 @@ cv2.putText(img, "OPEN CV", (40, 210), cv2.FONT_HERSHEY_SIMPLEX, 2.6, 220, 12)
 cv2.rectangle(img, (30, 30), (450, 330), 160, 5)
 
 blur = cv2.GaussianBlur(img, (5, 5), 0)
-result = cv2.Canny(blur, {{t1}}, {{t2}})
+result = cv2.Canny(blur, 100, 200)
 cv2.imwrite("cv_canny__preview.png", result if "result" in dir() else img)
 print("已生成 cv_canny__preview.png")

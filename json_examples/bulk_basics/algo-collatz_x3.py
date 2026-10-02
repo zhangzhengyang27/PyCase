@@ -8,4 +8,4 @@ def collatz_len(n):
 
 print("起点 871 步数:", collatz_len(871))
 best = max(range(1, 5000), key=lambda n: (collatz_len(n), -n))
-print(f"1~5000 中链最长: {{best}} ({{collatz_len(best)}} 步)")
+print(f"1~5000 中链最长: {best} ({collatz_len(best)} 步)")

@@ -9,7 +9,7 @@ rng = np.random.default_rng(13)
 img = rng.integers(60, 200, (360, 480), dtype=np.uint8)
 cv2.circle(img, (240, 180), 110, 255, -1)
 
-kernel = np.ones(({{k}}, {{k}}), np.uint8)
+kernel = np.ones((5, 5), np.uint8)
 result = cv2.morphologyEx(img, cv2.MORPH_GRADIENT, kernel)
 cv2.imwrite("cv_gradient__preview.png", result if "result" in dir() else img)
 print("已生成 cv_gradient__preview.png")

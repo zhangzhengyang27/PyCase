@@ -9,7 +9,7 @@ img = np.kron(np.indices((9, 12)).sum(0) % 2, np.uint8(255))[:360, :480].astype(
 img[::40, :] = 120; img[:, ::40] = 120
 cv2.rectangle(img, (100, 100), (380, 260), 255, -1)
 
-clahe = cv2.createCLAHE(clipLimit={{clip}}, tileGridSize=(8, 8))
+clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
 result = clahe.apply(img)
 cv2.imwrite("cv_equalize__preview.png", result if "result" in dir() else img)
 print("已生成 cv_equalize__preview.png")

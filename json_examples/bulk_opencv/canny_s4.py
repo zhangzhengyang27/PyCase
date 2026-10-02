@@ -10,6 +10,6 @@ img[::40, :] = 120; img[:, ::40] = 120
 cv2.rectangle(img, (100, 100), (380, 260), 255, -1)
 
 blur = cv2.GaussianBlur(img, (5, 5), 0)
-result = cv2.Canny(blur, {{t1}}, {{t2}})
+result = cv2.Canny(blur, 100, 200)
 cv2.imwrite("cv_canny__preview.png", result if "result" in dir() else img)
 print("已生成 cv_canny__preview.png")
