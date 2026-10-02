@@ -2,7 +2,9 @@
 // ToolField：FieldSpec → 控件（schema 驱动表单的原子件）。
 // 控件复用现有样式语言（bg-page/border-line/rounded-control），值经 v-model 双向绑定
 // 到父层的工具输入桶（store.toolValueOf）；required 失焦校验标红。
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
+import { FileUp, X } from 'lucide-vue-next'
+import { api } from '../../src/sidecar-client'
 import type { FieldSpec, FieldValue, SelectOption } from '../../src/interactive-tools'
 
 const props = defineProps<{
@@ -28,6 +30,19 @@ function onInput(e: Event): void {
 }
 function onCheckbox(e: Event): void {
   emit('update:modelValue', (e.target as HTMLInputElement).checked)
+}
+
+// file 类型：走 pickFile 桥选真实文件，值 = 绝对路径（sidecar 侧脚本按路径读取）
+const picking = ref(false)
+async function pick(): Promise<void> {
+  if (picking.value) return
+  picking.value = true
+  try {
+    const res = await api.pickFile({ title: `选择${props.spec.label}`, extensions: props.spec.accept })
+    if (!res.canceled && res.path) emit('update:modelValue', res.path)
+  } finally {
+    picking.value = false
+  }
 }
 </script>
 
@@ -71,6 +86,34 @@ function onCheckbox(e: Event): void {
       />
       <span class="text-ink-mute">{{ spec.help || spec.placeholder }}</span>
     </label>
+
+    <div v-else-if="spec.type === 'file'" class="flex items-center gap-1.5">
+      <button
+        type="button"
+        class="shrink-0 inline-flex items-center gap-1 px-2 h-8 text-control border border-line rounded-control bg-panel text-ink-dim cursor-pointer transition-colors dur-fast hover:bg-hover hover:text-ink"
+        data-testid="tf-file-pick"
+        @click="pick()"
+      >
+        <FileUp :size="13" /> 选择文件…
+      </button>
+      <span
+        v-if="modelValue"
+        class="text-caption text-ink-mute truncate flex-1"
+        :title="String(modelValue)"
+        data-testid="tf-file-path"
+      >
+        {{ modelValue }}
+      </span>
+      <button
+        v-if="modelValue"
+        type="button"
+        class="shrink-0 border-0 bg-transparent text-ink-faint hover:text-danger cursor-pointer"
+        aria-label="清除所选文件"
+        @click="emit('update:modelValue', undefined)"
+      >
+        <X :size="13" />
+      </button>
+    </div>
 
     <input
       v-else

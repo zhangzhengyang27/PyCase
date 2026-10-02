@@ -1,6 +1,19 @@
 // ToolField / ToolResultPanel：schema 表单原子件与结果渲染（T3）。
 import { describe, expect, it, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
+
+// vi.mock 工厂引用的外部绑定必须走 vi.hoisted（提升顺序：工厂先于 const 执行会 TDZ）
+const hoisted = vi.hoisted(() => ({
+  pickFile: vi.fn(async (p: { extensions?: string[] }) => ({
+    canceled: false,
+    path: '/tmp/图 片.png',
+    name: '图 片.png'
+  }))
+}))
+vi.mock('../../src/sidecar-client', () => ({
+  api: { pickFile: (...a: unknown[]) => hoisted.pickFile(a[0] as { extensions?: string[] }) }
+}))
+
 import ToolField from '../interactive/ToolField.vue'
 import ToolResultPanel from '../interactive/ToolResultPanel.vue'
 import type { FieldSpec, ToolResult } from '../../src/interactive-tools'
@@ -52,6 +65,21 @@ describe('ToolField', () => {
     const wc = mount(ToolField, { props: { spec: checkSpec, modelValue: false } })
     await wc.find('input[type="checkbox"]').setValue(true)
     expect(wc.emitted('update:modelValue')![0]).toEqual([true])
+  })
+})
+
+describe('ToolField file 控件', () => {
+  it('点击选择文件 → 经 pickFile 桥回写路径；可清除', async () => {
+    const w = mount(ToolField, {
+      props: { spec: { key: 'f', label: '图片文件', type: 'file', accept: ['png'] }, modelValue: undefined }
+    })
+    await w.find('[data-testid="tf-file-pick"]').trigger('click')
+    expect(hoisted.pickFile).toHaveBeenCalledWith({ title: '选择图片文件', extensions: ['png'] })
+    expect(w.emitted('update:modelValue')![0]).toEqual(['/tmp/图 片.png'])
+    await w.setProps({ modelValue: '/tmp/图 片.png' })
+    expect(w.find('[data-testid="tf-file-path"]').text()).toContain('/tmp/图 片.png')
+    await w.find('[aria-label="清除所选文件"]').trigger('click')
+    expect(w.emitted('update:modelValue')![1]).toEqual([undefined])
   })
 })
 

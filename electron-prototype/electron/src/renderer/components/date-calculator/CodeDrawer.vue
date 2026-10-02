@@ -4,10 +4,11 @@
 // 绝不 import MonacoEditor.vue / detail store 的 registerEditor——那会劫持详情页的
 // 单例编辑器，这正是本组件自己 create/dispose 的理由。
 import { nextTick, onBeforeUnmount, ref, watch } from 'vue'
-import { ChevronUp, Copy, Play, Square } from 'lucide-vue-next'
+import { ChevronUp, Copy, Download, Play, Square } from 'lucide-vue-next'
 import { applyMonacoTheme, currentMonacoTheme, monaco } from '../../monaco'
 import { pushToast } from '../../toast'
-import { runBusy, runExitCode, runOutput, runSnippet, stopSnippet } from '../../src/store/date-run'
+import { api } from '../../src/sidecar-client'
+import { runBusy, runExitCode, runImages, runOutput, runSnippet, stopSnippet } from '../../src/store/date-run'
 import BaseButton from '../base/BaseButton.vue'
 
 const props = defineProps<{ code: string; runId: string }>()
@@ -50,6 +51,16 @@ onBeforeUnmount(() => {
   ed?.dispose()
   ed = null
 })
+
+async function downloadImage(url: string): Promise<void> {
+  try {
+    const r = await api.downloadResultImage(url)
+    if (r.savedTo) pushToast('success', `已保存：${r.savedTo}`)
+    else if (!r.canceled) pushToast('error', r.error || '保存失败')
+  } catch {
+    pushToast('error', '保存失败')
+  }
+}
 
 async function copyCode(): Promise<void> {
   try {
@@ -100,6 +111,24 @@ async function copyCode(): Promise<void> {
         </span>
       </div>
       <div ref="container" class="h-[240px] border border-line rounded-control overflow-hidden bg-page" />
+      <div v-if="runImages.length" class="flex flex-wrap gap-2" data-testid="run-images">
+        <figure
+          v-for="img in runImages"
+          :key="img"
+          class="m-0 border border-line rounded-control overflow-hidden bg-panel w-[160px]"
+        >
+          <img :src="img" alt="运行产物" loading="lazy" class="block w-full h-[110px] object-contain bg-page" />
+          <figcaption class="flex items-center justify-end px-1.5 py-1">
+            <button
+              class="shrink-0 inline-flex items-center gap-1 px-1.5 py-0.5 text-caption border border-line rounded-control bg-panel text-ink-dim cursor-pointer transition-colors dur-fast hover:bg-hover hover:text-ink"
+              type="button"
+              @click="downloadImage(img)"
+            >
+              <Download :size="11" /> 下载
+            </button>
+          </figcaption>
+        </figure>
+      </div>
       <pre
         v-if="runOutput"
         class="m-0 p-3 max-h-[180px] overflow-auto text-control font-mono bg-page border border-line rounded-control whitespace-pre-wrap"

@@ -8,7 +8,11 @@ JSON，再同步 TS schema，双侧测试同时转绿。
 
 import datetime as dt
 import json
+import subprocess
+import sys
 from pathlib import Path
+
+import pytest
 
 GOLDEN = (
     Path(__file__).resolve().parent.parent
@@ -514,6 +518,54 @@ def test_pwdgen_constants_present():
     assert g["min_length"] == 8 and g["max_length"] == 64
 
 
+# ---------------------------------------------------------------------------
+# W5：图片缩放试点——真实执行测试（PIL 造图 → 跑同款脚本 → 验产物）
+# 该测试钉的是 PIL 管线本身（模板与 TS pyCode 逐字同构，fragments 由 vitest 钉）
+# ---------------------------------------------------------------------------
+PIL_TEMPLATE = """\"\"\"图片缩放：长边上限 {max}px（thumbnail 等比、只缩不放）。\"\"\"
+from PIL import Image
+
+im = Image.open({src!r})
+before = im.size
+im.thumbnail(({max}, {max}))
+out = "resized.{fmt}"
+if "{fmt}" == "jpg" and im.mode in ("RGBA", "P"):
+    im = im.convert("RGB")
+if "{fmt}" == "jpg":
+    im.save(out, quality=90)
+else:
+    im.save(out)
+print(f"输出 {{out}}: {{im.size[0]}}x{{im.size[1]}}（原图 {{before[0]}}x{{before[1]}}）")
+"""
+
+
+def test_image_resize_pipeline_real_execution(tmp_path):
+    pytest.importorskip("PIL")  # 共享 venv 已装；缺失则跳过
+    from PIL import Image
+
+    src = tmp_path / "in.png"
+    Image.new("RGBA", (800, 400), (255, 0, 0, 128)).save(src)
+    script = tmp_path / "run.py"
+    script.write_text(PIL_TEMPLATE.format(src=str(src), max=200, fmt="png"), encoding="utf-8")
+    r = subprocess.run(
+        [sys.executable, str(script)], cwd=tmp_path, capture_output=True, text=True, timeout=60
+    )
+    assert r.returncode == 0, r.stderr
+    outp = tmp_path / "resized.png"
+    assert outp.is_file()
+    with Image.open(outp) as im:
+        assert im.size[0] == 200 and im.size[1] == 100  # 等比缩到长边 200
+    # jpg 白底转换路径
+    script2 = tmp_path / "run2.py"
+    script2.write_text(PIL_TEMPLATE.format(src=str(src), max=300, fmt="jpg"), encoding="utf-8")
+    r2 = subprocess.run(
+        [sys.executable, str(script2)], cwd=tmp_path, capture_output=True, text=True, timeout=60
+    )
+    assert r2.returncode == 0, r2.stderr
+    with Image.open(tmp_path / "resized.jpg") as im2:
+        assert im2.mode == "RGB"
+
+
 def test_golden_has_all_sections():
     data = _load()
     assert len(data["temp"]) == 7
@@ -522,6 +574,6 @@ def test_golden_has_all_sections():
     assert len(data["wrap"]) == 6
     assert len(data["palindrome"]) == 8
     for k in ("regex", "jsonfmt", "csvjson", "ts", "color", "unit", "pwd", "dataclass",
-              "jwt", "env", "toc", "gitignore", "normalize", "replacer", "pwdgen"):
+              "jwt", "env", "toc", "gitignore", "normalize", "replacer", "pwdgen", "image"):
         assert k in data and data[k], f"缺黄金段 {k}"
     assert "uuid" in data

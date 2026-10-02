@@ -386,3 +386,27 @@ describe('密码生成（随机型：字符集规则 + 包含性）', () => {
     expect(w4('interactive:pwd-gen').compute!({ length: 7, lower: true })!.error).toBeTruthy()
   })
 })
+
+// ---------------------------------------------------------------------------
+// W5：图片缩放试点（文件管道；compute 回显确定性，pyCode 真实执行在 pytest 侧）
+// ---------------------------------------------------------------------------
+describe('图片缩放 ↔ 黄金用例（参数回显）', () => {
+  it.each(golden.image.map((c) => [c.name, c] as const))('%s', (_name, c) => {
+    const r = dev('interactive:image-resize').compute!({ file: c.file, maxSide: c.maxSide, format: c.format })
+    if ('error' in c.expected) {
+      expect(r.error).toBe(c.expected.error)
+      return
+    }
+    const rows = Object.fromEntries((r.rows ?? []).map((x) => [x.label, x.value]))
+    expect(rows).toEqual(c.expected.rows)
+  })
+  it('pyCode：源路径常量 + thumbnail 等比 + jpg 白底转换', () => {
+    const schema = dev('interactive:image-resize')!
+    const code = schema.pyCode!({ file: '/tmp/相 机.png', maxSide: 512, format: 'jpg' })
+    expect(code).toContain('Image.open("/tmp/相 机.png")')
+    expect(code).toContain('im.thumbnail((512, 512))')
+    expect(code).toContain('im.convert("RGB")')
+    expect(code).toContain('quality=90')
+    expect(schema.pyCode!({ file: '', maxSide: 512, format: 'png' })).toContain('# 选择图片')
+  })
+})
