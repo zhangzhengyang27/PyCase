@@ -46,7 +46,8 @@ describe('toolboxItems 合并交互工具', () => {
   })
   it('toolsTotal 含交互工具，catalogToolsTotal 不含', () => {
     expect(catalogToolsTotal.value).toBe(2)
-    expect(toolsTotal.value).toBe(3)
+    // 目录池 2 + 交互注册表 15（日期计算器 + W1×3 + W2×2 + W3×9）
+    expect(toolsTotal.value).toBe(17)
   })
   it('isInteractiveId 前缀判定', () => {
     expect(isInteractiveId(DATE_CALC_ID)).toBe(true)
@@ -57,7 +58,7 @@ describe('toolboxItems 合并交互工具', () => {
     expect(toolboxIcon(INTERACTIVE_GROUP_KEY)).toBe(Sparkles)
   })
   it('注册表条目不含 run_status（不进可运行域）', () => {
-    expect(interactiveToolItems.every((t) => t.run_status === undefined)).toBe(true)
+    expect(interactiveToolItems.value.every((t) => t.run_status === undefined)).toBe(true)
   })
   it('搜索词命中交互工具（name 口径，debounce 后生效）', async () => {
     // appliedToolSearch 是模块私有 ref，由 toolSearchQuery 的 watch 防抖 120ms 写入；
@@ -70,5 +71,52 @@ describe('toolboxItems 合并交互工具', () => {
     await nextTick()
     vi.useRealTimers()
     expect(toolboxItems.value.map((t) => t.id)).toContain(DATE_CALC_ID)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// T2：schema 注册表——派生卡片、按 id 查找、工具输入值初始化
+// ---------------------------------------------------------------------------
+import { interactiveToolSchemas, getToolSchema, type InteractiveToolSchema } from '../interactive-tools'
+import { toolValues, toolValueOf } from '../store/interactive'
+
+const dummySchema: InteractiveToolSchema = {
+  id: 'interactive:dummy-tool',
+  title: '假想工具',
+  description: '仅用于注册表派生测试。',
+  tags: ['测试'],
+  fields: [
+    { key: 'a', label: '甲', type: 'text', default: 'x' },
+    { key: 'b', label: '乙', type: 'number', required: true }
+  ],
+  compute: () => ({}),
+  pyCode: () => 'print(1)\n'
+}
+
+describe('schema 注册表', () => {
+  beforeEach(() => {
+    toolValues.value = {}
+  })
+  it('注册 schema 后自动派生卡片（无 run_status，进工具池）', () => {
+    interactiveToolSchemas.push(dummySchema)
+    try {
+      const card = interactiveToolItems.value.find((t) => t.id === dummySchema.id)
+      expect(card).toBeTruthy()
+      expect(card!.title).toBe('假想工具')
+      expect(card!.category).toBe('tools')
+      expect(card!.run_status).toBeUndefined()
+      expect(getToolSchema(dummySchema.id)).toEqual(dummySchema)
+      expect(getToolSchema('interactive:none')).toBeUndefined()
+    } finally {
+      interactiveToolSchemas.pop()
+    }
+  })
+  it('toolValueOf 首次按 defaults 初始化并复用同一对象', () => {
+    const v1 = toolValueOf(dummySchema.id, dummySchema.fields)
+    expect(v1).toEqual({ a: 'x', b: undefined })
+    v1.a = 'changed'
+    const v2 = toolValueOf(dummySchema.id, dummySchema.fields)
+    expect(v2).toBe(v1)
+    expect(v2.a).toBe('changed')
   })
 })

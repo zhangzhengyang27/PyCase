@@ -33,3 +33,20 @@ export function swapDates(): void {
   dateA.value = dateB.value
   dateB.value = t
 }
+
+// ---------------------------------------------------------------------------
+// schema 驱动工具的输入值（按工具 id 分桶；会话内记忆，返回列表不清空）
+// ---------------------------------------------------------------------------
+import type { FieldSpec, FieldValue } from '../interactive-tools'
+
+export const toolValues = ref<Record<string, Record<string, FieldValue>>>({})
+
+/** 取工具输入桶：首次按字段 defaults 初始化；之后恒返回同一对象（v-model 直接改写） */
+export function toolValueOf(id: string, fields: FieldSpec[]): Record<string, FieldValue> {
+  if (!toolValues.value[id]) {
+    const init: Record<string, FieldValue> = {}
+    for (const f of fields) init[f.key] = f.default
+    toolValues.value[id] = init
+  }
+  return toolValues.value[id]
+}

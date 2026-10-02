@@ -1,0 +1,693 @@
+{
+  "comment": "交互工具双端黄金用例：expected 由 tests/test_tool_golden.py 的 Python 参考实现生成并自校验（防手改漂移），TS 侧 vitest（src/__tests__/tool-golden.spec.ts）断言 tool-schemas.ts 的 compute 输出与同一文件一致。改口径顺序：先改参考实现重算 JSON，再同步 TS。",
+  "temp": [
+    {
+      "name": "沸腾点",
+      "value": 100,
+      "from": "C",
+      "to": "F",
+      "precision": "1",
+      "expected": {
+        "primary": "212.0",
+        "rows": {
+          "摄氏 ℃": "100.0",
+          "华氏 ℉": "212.0",
+          "开尔文 K": "373.1"
+        }
+      }
+    },
+    {
+      "name": "华氏摄氏同点",
+      "value": -40,
+      "from": "C",
+      "to": "F",
+      "precision": "1",
+      "expected": {
+        "primary": "-40.0",
+        "rows": {
+          "摄氏 ℃": "-40.0",
+          "华氏 ℉": "-40.0",
+          "开尔文 K": "233.1"
+        }
+      }
+    },
+    {
+      "name": "冰点转开尔文",
+      "value": 0,
+      "from": "C",
+      "to": "K",
+      "precision": "1",
+      "expected": {
+        "primary": "273.1",
+        "rows": {
+          "摄氏 ℃": "0.0",
+          "华氏 ℉": "32.0",
+          "开尔文 K": "273.1"
+        }
+      }
+    },
+    {
+      "name": "开尔文转华氏",
+      "value": 300,
+      "from": "K",
+      "to": "F",
+      "precision": "1",
+      "expected": {
+        "primary": "80.3",
+        "rows": {
+          "摄氏 ℃": "26.9",
+          "华氏 ℉": "80.3",
+          "开尔文 K": "300.0"
+        }
+      }
+    },
+    {
+      "name": "体温两位小数",
+      "value": 36.6,
+      "from": "C",
+      "to": "F",
+      "precision": "2",
+      "expected": {
+        "primary": "97.88",
+        "rows": {
+          "摄氏 ℃": "36.60",
+          "华氏 ℉": "97.88",
+          "开尔文 K": "309.75"
+        }
+      }
+    },
+    {
+      "name": "华氏转摄氏",
+      "value": 98.6,
+      "from": "F",
+      "to": "C",
+      "precision": "1",
+      "expected": {
+        "primary": "37.0",
+        "rows": {
+          "摄氏 ℃": "37.0",
+          "华氏 ℉": "98.6",
+          "开尔文 K": "310.1"
+        }
+      }
+    },
+    {
+      "name": "低于绝对零度报错",
+      "value": -5,
+      "from": "K",
+      "to": "C",
+      "precision": "1",
+      "expected": {
+        "error": "低于绝对零度（K < 0）"
+      }
+    }
+  ],
+  "base": [
+    {
+      "name": "十进制255",
+      "value": "255",
+      "fromBase": "10",
+      "expected": {
+        "rows": {
+          "base 2": "11111111",
+          "base 8": "377",
+          "base 10": "255",
+          "base 16": "ff"
+        }
+      }
+    },
+    {
+      "name": "十进制1024",
+      "value": "1024",
+      "fromBase": "10",
+      "expected": {
+        "rows": {
+          "base 2": "10000000000",
+          "base 8": "2000",
+          "base 10": "1024",
+          "base 16": "400"
+        }
+      }
+    },
+    {
+      "name": "十六进制输入",
+      "value": "ff",
+      "fromBase": "16",
+      "expected": {
+        "rows": {
+          "base 2": "11111111",
+          "base 8": "377",
+          "base 10": "255",
+          "base 16": "ff"
+        }
+      }
+    },
+    {
+      "name": "大数2的63次方减一",
+      "value": "7fffffffffffffff",
+      "fromBase": "16",
+      "expected": {
+        "rows": {
+          "base 2": "111111111111111111111111111111111111111111111111111111111111111",
+          "base 8": "777777777777777777777",
+          "base 10": "9223372036854775807",
+          "base 16": "7fffffffffffffff"
+        }
+      }
+    },
+    {
+      "name": "三十六进制zz",
+      "value": "zz",
+      "fromBase": "36",
+      "expected": {
+        "rows": {
+          "base 2": "10100001111",
+          "base 8": "2417",
+          "base 10": "1295",
+          "base 16": "50f"
+        }
+      }
+    },
+    {
+      "name": "零",
+      "value": "0",
+      "fromBase": "10",
+      "expected": {
+        "rows": {
+          "base 2": "0",
+          "base 8": "0",
+          "base 10": "0",
+          "base 16": "0"
+        }
+      }
+    },
+    {
+      "name": "负数",
+      "value": "-255",
+      "fromBase": "10",
+      "expected": {
+        "rows": {
+          "base 2": "-11111111",
+          "base 8": "-377",
+          "base 10": "-255",
+          "base 16": "-ff"
+        }
+      }
+    },
+    {
+      "name": "非法字符报错",
+      "value": "129",
+      "fromBase": "2",
+      "expected": {
+        "error": "「2」不是 2 进制的合法字符"
+      }
+    }
+  ],
+  "caesar": [
+    {
+      "name": "基本移位",
+      "text": "abc",
+      "shift": 3,
+      "mode": "encrypt",
+      "expected": {
+        "primary": "def"
+      }
+    },
+    {
+      "name": "越界回绕与非字母跳过",
+      "text": "xyz XYZ 123!",
+      "shift": 3,
+      "mode": "encrypt",
+      "expected": {
+        "primary": "abc ABC 123!"
+      }
+    },
+    {
+      "name": "ROT13",
+      "text": "Hello, World!",
+      "shift": 13,
+      "mode": "encrypt",
+      "expected": {
+        "primary": "Uryyb, Jbeyq!"
+      }
+    },
+    {
+      "name": "移位超26归一",
+      "text": "abc",
+      "shift": 29,
+      "mode": "encrypt",
+      "expected": {
+        "primary": "def"
+      }
+    },
+    {
+      "name": "负移位",
+      "text": "b",
+      "shift": -1,
+      "mode": "encrypt",
+      "expected": {
+        "primary": "a"
+      }
+    },
+    {
+      "name": "解密模式",
+      "text": "def",
+      "shift": 3,
+      "mode": "decrypt",
+      "expected": {
+        "primary": "abc"
+      }
+    },
+    {
+      "name": "大小写保留",
+      "text": "AbC",
+      "shift": 2,
+      "mode": "encrypt",
+      "expected": {
+        "primary": "CdE"
+      }
+    }
+  ],
+  "wrap": [
+    {
+      "name": "默认英文W20",
+      "text": "the quick brown fox jumps over the lazy dog and python makes text processing delightfully simple for everyone",
+      "width": 20,
+      "expected": {
+        "primary": "6",
+        "text": "the quick brown fox\njumps over the lazy\ndog and python makes\ntext processing\ndelightfully simple\nfor everyone"
+      }
+    },
+    {
+      "name": "宽列W52",
+      "text": "the quick brown fox jumps over the lazy dog and python makes text processing delightfully simple for everyone",
+      "width": 52,
+      "expected": {
+        "primary": "3",
+        "text": "the quick brown fox jumps over the lazy dog and\npython makes text processing delightfully simple for\neveryone"
+      }
+    },
+    {
+      "name": "中文词按字符计宽",
+      "text": "上海自来水来自海上 自来水出海 水上人家",
+      "width": 10,
+      "expected": {
+        "primary": "2",
+        "text": "上海自来水来自海上\n自来水出海 水上人家"
+      }
+    },
+    {
+      "name": "超长词整词溢出不硬切",
+      "text": "aaaaaaaaaaaaaaaaaaaa bb",
+      "width": 5,
+      "expected": {
+        "primary": "2",
+        "text": "aaaaaaaaaaaaaaaaaaaa\nbb"
+      }
+    },
+    {
+      "name": "多空白归一",
+      "text": "a  b\n\tc   d",
+      "width": 10,
+      "expected": {
+        "primary": "1",
+        "text": "a b c d"
+      }
+    },
+    {
+      "name": "恰好填满",
+      "text": "aaa bbb ccc",
+      "width": 11,
+      "expected": {
+        "primary": "1",
+        "text": "aaa bbb ccc"
+      }
+    }
+  ],
+  "palindrome": [
+    {
+      "name": "英文经典",
+      "text": "A man, a plan, a canal: Panama",
+      "expected": {
+        "primary": "是回文",
+        "norm": "amanaplanacanalpanama"
+      }
+    },
+    {
+      "name": "中文",
+      "text": "上海自来水来自海上",
+      "expected": {
+        "primary": "是回文",
+        "norm": "上海自来水来自海上"
+      }
+    },
+    {
+      "name": "英文非回文",
+      "text": "hello",
+      "expected": {
+        "primary": "不是回文",
+        "norm": "hello",
+        "mismatch": [0, "h", "o"]
+      }
+    },
+    {
+      "name": "数字",
+      "text": "12321",
+      "expected": {
+        "primary": "是回文",
+        "norm": "12321"
+      }
+    },
+    {
+      "name": "nixon",
+      "text": "no 'x' in nixon",
+      "expected": {
+        "primary": "是回文",
+        "norm": "noxinnixon"
+      }
+    },
+    {
+      "name": "almost",
+      "text": "almostomla",
+      "expected": {
+        "primary": "不是回文",
+        "norm": "almostomla",
+        "mismatch": [4, "s", "t"]
+      }
+    },
+    {
+      "name": "纯符号归一为空",
+      "text": "!!! , !!!",
+      "expected": {
+        "primary": "是回文",
+        "norm": ""
+      }
+    },
+    {
+      "name": "大小写混合",
+      "text": "LeVeL",
+      "expected": {
+        "primary": "是回文",
+        "norm": "level"
+      }
+    }
+  ],
+  "regex": [
+    {
+      "name": "分组与i标志",
+      "pattern": "([a-z]+)-([a-z0-9]+)",
+      "flags": {
+        "g": true,
+        "i": true,
+        "m": false,
+        "s": false
+      },
+      "sample": "Cat-Dog bird-fish 42-99",
+      "expected": {
+        "primary": "2",
+        "list": ["[0-6] Cat-Dog → 1=Cat, 2=Dog", "[8-16] bird-fish → 1=bird, 2=fish"]
+      }
+    },
+    {
+      "name": "无g只取首个",
+      "pattern": "\\d+",
+      "flags": {
+        "g": false,
+        "i": false,
+        "m": false,
+        "s": false
+      },
+      "sample": "a1 b22 c333",
+      "expected": {
+        "primary": "1",
+        "list": ["[1-1] 1"]
+      }
+    },
+    {
+      "name": "无分组",
+      "pattern": "[aeiou]",
+      "flags": {
+        "g": true,
+        "i": false,
+        "m": false,
+        "s": false
+      },
+      "sample": "banana",
+      "expected": {
+        "primary": "3",
+        "list": ["[1-1] a", "[3-3] a", "[5-5] a"]
+      }
+    },
+    {
+      "name": "非法正则报错",
+      "pattern": "([a-z",
+      "flags": {
+        "g": true,
+        "i": false,
+        "m": false,
+        "s": false
+      },
+      "sample": "abc",
+      "expected": {
+        "error": true
+      }
+    }
+  ],
+  "jsonfmt": [
+    {
+      "name": "格式化缩进2",
+      "input": "{\"b\":true,\"a\":[1,2,{\"c\":\"中文\"}],\"n\":null}",
+      "indent": "2",
+      "expected": {
+        "text": "{\n  \"b\": true,\n  \"a\": [\n    1,\n    2,\n    {\n      \"c\": \"中文\"\n    }\n  ],\n  \"n\": null\n}"
+      }
+    },
+    {
+      "name": "格式化缩进4",
+      "input": "{\"b\":true,\"a\":[1,2,{\"c\":\"中文\"}],\"n\":null}",
+      "indent": "4",
+      "expected": {
+        "text": "{\n    \"b\": true,\n    \"a\": [\n        1,\n        2,\n        {\n            \"c\": \"中文\"\n        }\n    ],\n    \"n\": null\n}"
+      }
+    },
+    {
+      "name": "压缩",
+      "input": "{\"b\":true,\"a\":[1,2,{\"c\":\"中文\"}],\"n\":null}",
+      "indent": "compact",
+      "expected": {
+        "text": "{\"b\":true,\"a\":[1,2,{\"c\":\"中文\"}],\"n\":null}"
+      }
+    },
+    {
+      "name": "非法JSON报错",
+      "input": "{\"a\":1,}",
+      "indent": "2",
+      "expected": {
+        "error": true
+      }
+    }
+  ],
+  "csvjson": [
+    {
+      "name": "CSV转JSON",
+      "direction": "csv2json",
+      "input": "name,age,note\n张三,30,\"含,逗号\"\nlisi,,\"含\"\"引号\"",
+      "expected": {
+        "text": "[\n  {\n    \"name\": \"张三\",\n    \"age\": 30,\n    \"note\": \"含,逗号\"\n  },\n  {\n    \"name\": \"lisi\",\n    \"age\": null,\n    \"note\": \"含\\\"引号\"\n  }\n]"
+      }
+    },
+    {
+      "name": "JSON转CSV",
+      "direction": "json2csv",
+      "input": "[{\"name\": \"张三\", \"age\": 30, \"note\": \"含,逗号\"}, {\"name\": \"lisi\", \"age\": null, \"note\": \"含\\\"引号\"}]",
+      "expected": {
+        "text": "name,age,note\n张三,30,\"含,逗号\"\nlisi,,\"含\"\"引号\""
+      }
+    }
+  ],
+  "ts": [
+    {
+      "name": "秒转UTC",
+      "mode": "ts2date",
+      "unit": "s",
+      "value": "1790985600",
+      "expected": {
+        "utc": "2026-10-03 00:00:00 UTC",
+        "iso": "2026-10-03T00:00:00Z"
+      }
+    },
+    {
+      "name": "毫秒转UTC",
+      "mode": "ts2date",
+      "unit": "ms",
+      "value": "1790985600000",
+      "expected": {
+        "utc": "2026-10-03 00:00:00 UTC",
+        "iso": "2026-10-03T00:00:00Z"
+      }
+    },
+    {
+      "name": "日期转秒",
+      "mode": "date2ts",
+      "value": "2026-10-03 00:00:00",
+      "expected": {
+        "seconds": "1790985600"
+      }
+    },
+    {
+      "name": "仅日期转秒",
+      "mode": "date2ts",
+      "value": "2026-10-02",
+      "expected": {
+        "seconds": "1790899200"
+      }
+    },
+    {
+      "name": "非法报错",
+      "mode": "date2ts",
+      "value": "not-a-date",
+      "expected": {
+        "error": true
+      }
+    }
+  ],
+  "color": [
+    {
+      "name": "hex输入",
+      "value": "#ff0000",
+      "expected": {
+        "hex": "#ff0000",
+        "rgb": "rgb(255, 0, 0)",
+        "hsl": "hsl(0, 100%, 50%)"
+      }
+    },
+    {
+      "name": "rgb输入",
+      "value": "rgb(0, 128, 255)",
+      "expected": {
+        "hex": "#0080ff",
+        "rgb": "rgb(0, 128, 255)",
+        "hsl": "hsl(210, 100%, 50%)"
+      }
+    },
+    {
+      "name": "hsl输入",
+      "value": "hsl(120, 100%, 25%)",
+      "expected": {
+        "hex": "#008000",
+        "rgb": "rgb(0, 128, 0)",
+        "hsl": "hsl(120, 100%, 25%)"
+      }
+    },
+    {
+      "name": "非法报错",
+      "value": "not-a-color",
+      "expected": {
+        "error": true
+      }
+    }
+  ],
+  "unit": [
+    {
+      "name": "km转mi",
+      "dim": "长度",
+      "value": "5",
+      "from": "km",
+      "to": "mi",
+      "expected": {
+        "value": "3.106856"
+      }
+    },
+    {
+      "name": "t转lb",
+      "dim": "质量",
+      "value": "1",
+      "from": "t",
+      "to": "lb",
+      "expected": {
+        "value": "2204.622622"
+      }
+    },
+    {
+      "name": "GiB转MiB",
+      "dim": "数据",
+      "value": "2.5",
+      "from": "GiB",
+      "to": "MiB",
+      "expected": {
+        "value": "2560"
+      }
+    },
+    {
+      "name": "cm转in",
+      "dim": "长度",
+      "value": "254",
+      "from": "cm",
+      "to": "in",
+      "expected": {
+        "value": "100"
+      }
+    }
+  ],
+  "pwd": [
+    {
+      "name": "常见弱口令",
+      "value": "123456",
+      "expected": {
+        "score": "0",
+        "label": "弱",
+        "common": ["123456"]
+      }
+    },
+    {
+      "name": "中强度",
+      "value": "Abcdef1!",
+      "expected": {
+        "score": "55",
+        "label": "中",
+        "common": []
+      }
+    },
+    {
+      "name": "强口令",
+      "value": "Zh9#mK2$vQ7@",
+      "expected": {
+        "score": "75",
+        "label": "强",
+        "common": []
+      }
+    },
+    {
+      "name": "含顺序序列",
+      "value": "xabcx2026!",
+      "expected": {
+        "score": "45",
+        "label": "中",
+        "common": []
+      }
+    }
+  ],
+  "dataclass": [
+    {
+      "name": "嵌套推断",
+      "input": "{\"name\": \"张三\", \"age\": 30, \"score\": 92.5, \"tags\": [\"a\"], \"addr\": {\"city\": \"上海\", \"zip\": \"200000\"}, \"note\": null}",
+      "className": "Sample",
+      "expected": {
+        "text": "from dataclasses import dataclass\nfrom typing import Any\n\n@dataclass\nclass Addr:\n    city: str\n    zip: str\n\n@dataclass\nclass Sample:\n    name: str\n    age: int\n    score: float\n    tags: list[str]\n    addr: Addr\n    note: Any\n"
+      }
+    },
+    {
+      "name": "非法JSON报错",
+      "input": "{oops}",
+      "className": "Sample",
+      "expected": {
+        "error": true
+      }
+    }
+  ],
+  "uuid": {
+    "uuid4_pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+    "short_pattern": "^[0-9A-Za-z_-]{11}$",
+    "count_default": 5
+  }
+}
