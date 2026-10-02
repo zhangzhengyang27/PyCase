@@ -7,6 +7,7 @@ import * as FilterEngine from '../filter-engine'
 import { THEMES } from '../themes'
 import { SECTION_CATALOG, assignSections, sectionKeyOf } from '../overview'
 import { buildFilterChips, type FilterChip } from '../filter-chips'
+import { interactiveToolItems } from '../interactive-tools'
 import type { ExampleItem } from '../types'
 import { api } from '../sidecar-client'
 import { favorites, runHistory, toggleFavorite, recordHistory, toPlain } from './prefs'
@@ -187,11 +188,25 @@ export const sortedGallery = computed(
 
 export const shownGallery = computed(() => sortedGallery.value.slice(0, galleryLimit.value))
 
-export const toolboxItems = computed(
-  () => FilterEngine.filterExamples(examples.value, toolboxQuery.value, filterContext.value) as VExample[]
-)
+export const toolboxItems = computed<VExample[]>(() => {
+  const list = FilterEngine.filterExamples(examples.value, toolboxQuery.value, filterContext.value) as VExample[]
+  // 交互工具不在 examples 目录池，不走 FilterEngine：客户端匹配搜索词与收藏，恒置顶。
+  // 搜索词用 debounce 后的 appliedToolSearch，与目录池口径一致。
+  const q = appliedToolSearch.value.trim().toLowerCase()
+  const inter = interactiveToolItems.filter((t) => {
+    if (favOnly.value && !favorites.value.has(t.id)) return false
+    if (q && !`${t.title ?? ''} ${t.description ?? ''} ${(t.tags ?? []).join(' ')}`.toLowerCase().includes(q))
+      return false
+    return true
+  })
+  return [...inter, ...list]
+})
 
-export const toolsTotal = computed(() => examples.value.filter((e) => e.category === 'tools').length)
+/** 目录池内工具数：可运行率的分母口径（交互工具无 .py 文件，不计入） */
+export const catalogToolsTotal = computed(() => examples.value.filter((e) => e.category === 'tools').length)
+
+/** 工具总数：状态栏 / 导航徽章口径（目录池 + 交互工具） */
+export const toolsTotal = computed(() => interactiveToolItems.length + catalogToolsTotal.value)
 
 /** 视图内排序助手：工具箱分组、画廊等共用同一排序偏好（含最近运行索引） */
 export function sortVExamples(list: VExample[]): VExample[] {

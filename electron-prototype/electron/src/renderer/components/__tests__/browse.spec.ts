@@ -253,22 +253,31 @@ describe('ToolboxView', () => {
     expect(w.emitted('reload')).toHaveLength(1)
   })
 
-  it('没有工具时展示空态文案', () => {
-    // 只有非 tools 类目：工具箱池为空（画廊池非空，证明空态来自工具池而非示例为空）
+  it('没有工具时交互工具兜底在列，收藏过滤后仍展示空态文案', async () => {
+    // 只有非 tools 类目：目录工具池为空（画廊池非空，证明空态来自工具池而非示例为空）。
+    // 交互工具恒在列——目录池空不再等于工具池空；收藏过滤（无收藏）连交互工具一并滤掉，
+    // 工具池此时才真正为空。
     examples.value = [makeExample({ id: 't', category: 'topics' })]
     const w = mount(ToolboxView)
+    expect(w.text()).not.toContain('没有匹配的工具')
+    favOnly.value = true
+    await nextTick()
     expect(w.text()).toContain('没有匹配的工具')
   })
 
   it('工具池为空时页头仍然可见——它是退出筛选的唯一入口', () => {
+    // 交互工具恒在列：工具池为空只能由过滤造成（此处收藏过滤且无收藏）
     examples.value = [makeExample({ id: 't', category: 'topics' })]
+    favOnly.value = true
     const w = mount(ToolboxView)
 
     expect(w.text()).toContain('没有匹配的工具')
-    // 回归：空态曾整块替换页头，用户因此无法清空搜索词或关掉「只看收藏」，被永久困住
+    // 回归：空态曾整块替换页头，用户因此无法清空搜索词或关掉「只看收藏」，被永久困住。
+    // favOnly 预置为 true（空态的成因），星标处于激活态，aria-label 是「显示全部工具」——
+    // 它恰是逃生入口本身。
     expect(w.find('input[placeholder="搜索工具…"]').exists()).toBe(true)
     expect(w.find('select').exists()).toBe(true)
-    expect(w.findAll('button').some((b) => b.attributes('aria-label') === '只看收藏')).toBe(true)
+    expect(w.findAll('button').some((b) => b.attributes('aria-label') === '显示全部工具')).toBe(true)
   })
 
   it('空态归因于收藏筛选，而不是一律怪搜索词', () => {
@@ -316,7 +325,9 @@ describe('ToolboxView', () => {
   it('页头统计工具数 / 项目数 / 可静态运行百分比', () => {
     examples.value = toolFixtures()
     const w = mount(ToolboxView)
-    expect(w.text()).toContain('9 个工具 · 2 个工具项目 · 100% 可静态运行')
+    // 工具数 = 目录池 9 + 交互工具 1（toolsTotal 口径）；可静态运行率分母只数目录池
+    // （交互工具无 .py 文件不进分母，9/9 = 100%，不被交互工具稀释）
+    expect(w.text()).toContain('10 个工具 · 2 个工具项目 · 100% 可静态运行')
   })
 
   it('按 source_dir 分组：内置项目用中文区名、按声明序排列，无 source_dir 归入独立工具', () => {

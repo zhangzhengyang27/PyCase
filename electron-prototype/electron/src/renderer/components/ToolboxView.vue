@@ -8,6 +8,7 @@ import { ChevronDown, ChevronUp, SearchX, Star } from 'lucide-vue-next'
 import { buildToolboxGroups } from '../src/toolbox-groups'
 import { toolboxIcon } from '../src/section-icons'
 import {
+  catalogToolsTotal,
   examples,
   favOnly,
   loadError,
@@ -36,9 +37,11 @@ const groups = computed(() =>
   buildToolboxGroups(toolboxItems.value).map((g) => ({ ...g, items: sortVExamples(g.items) }))
 )
 const projectCount = computed(() => groups.value.filter((g) => g.key !== 'standalone').length)
-// 统计口径与画廊总览一致：库级常量，不随搜索浮动
+// 统计口径与画廊总览一致：库级常量，不随搜索浮动。
+// 分母用目录池口径 catalogToolsTotal：交互工具无 .py 文件、无 run_status，
+// 计入分母会把「可静态运行率」稀释成假数字（分子只数目录池的可运行条目）。
 const runnablePct = computed(() => {
-  const total = toolsTotal.value
+  const total = catalogToolsTotal.value
   if (!total) return 0
   const ok = examples.value.filter((e) => e.category === 'tools' && e.run_status === 'runnable').length
   return Math.round((ok / total) * 100)
