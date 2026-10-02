@@ -309,7 +309,9 @@ export const palindromeSchema: InteractiveToolSchema = {
   title: '回文判定',
   description: '双指针回文检测：忽略大小写、标点与空白（Unicode 字母数字归一），给出归一化文本与首处差异。',
   tags: ['双指针'],
-  fields: [{ key: 'text', label: '文本', type: 'textarea', required: true, placeholder: 'A man, a plan, a canal: Panama' }],
+  fields: [
+    { key: 'text', label: '文本', type: 'textarea', required: true, placeholder: 'A man, a plan, a canal: Panama' }
+  ],
   compute: (v) => {
     const raw = String(v.text ?? '')
     if (!raw.trim()) return { error: '请输入文本' }
