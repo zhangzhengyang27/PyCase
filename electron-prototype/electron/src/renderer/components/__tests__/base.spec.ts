@@ -8,6 +8,7 @@ import { markRaw } from 'vue'
 import BaseButton from '../base/BaseButton.vue'
 import BaseInput from '../base/BaseInput.vue'
 import BaseSelect from '../base/BaseSelect.vue'
+import BaseSelectMenu from '../base/BaseSelectMenu.vue'
 import AppModal from '../base/AppModal.vue'
 import AppEmpty from '../base/AppEmpty.vue'
 import AlertBanner from '../base/AlertBanner.vue'
@@ -531,5 +532,67 @@ describe('表单控件可访问性', () => {
     const w = mount(BaseSelect, { props: { modelValue: 'a', title: '排序', ariaLabel: '排序方式' } })
     expect(w.get('select').attributes('aria-label')).toBe('排序方式')
     expect(w.get('select').attributes('title')).toBe('排序')
+  })
+})
+
+// ---------------------------------------------------------------------------
+// BaseSelectMenu：工具栏单选下拉（reka-ui DropdownMenu 底座，替代原生 select——
+// 原生菜单是系统白色样式且锚定不可控，与深色工具栏冲突，2026-10-02 用户反馈）
+// ---------------------------------------------------------------------------
+describe('BaseSelectMenu', () => {
+  const OPTIONS = [
+    { value: 'quality_desc', label: '质量分优先' },
+    { value: 'name', label: '按名称', hint: ' (12)' },
+    { value: 'last_run', label: '最近运行' }
+  ]
+
+  function mountMenu(extra = {}) {
+    return mount(BaseSelectMenu, {
+      props: {
+        modelValue: 'quality_desc',
+        options: OPTIONS,
+        title: '排序',
+        ariaLabel: '排序方式',
+        testid: 'filter-sort',
+        ...extra
+      },
+      attachTo: document.body
+    })
+  }
+
+  it('触发器显示当前选中项的 label 与 title，菜单关闭时不含选项', () => {
+    const w = mountMenu()
+    const trigger = w.get('[data-testid="filter-sort"]')
+    expect(trigger.attributes('title')).toBe('排序')
+    expect(trigger.text()).toContain('质量分优先')
+    expect(document.body.textContent).not.toContain('最近运行')
+  })
+
+  it('点击打开深色菜单：选项 + 选中项勾选标记 + 计数右缀；选择后回传并关闭', async () => {
+    const w = mountMenu()
+    await w.get('[data-testid="filter-sort"]').trigger('click')
+    await flushPromises()
+
+    const menu = document.body.querySelector('[role="menu"]')
+    expect(menu).not.toBeNull()
+    const items = [...document.body.querySelectorAll('[role="menuitemradio"]')]
+    expect(items.map((i) => i.textContent?.trim())).toEqual(['质量分优先', '按名称 (12)', '最近运行'])
+    expect(items[0].getAttribute('aria-checked')).toBe('true')
+    expect(items[1].getAttribute('aria-checked')).toBe('false')
+
+    items[1].dispatchEvent(new MouseEvent('click', { bubbles: true }))
+    await flushPromises()
+    expect(w.emitted('update:modelValue')?.[0]).toEqual(['name'])
+  })
+
+  it('active=true 时触发器带强调样式（有生效筛选的视觉反馈）', () => {
+    const w = mountMenu({ modelValue: 'name', active: true })
+    expect(w.get('[data-testid="filter-sort"]').classes().join(' ')).toMatch(/accent/)
+  })
+
+  it('label 计数由调用方以 hint 传入，触发器回显不含计数（避免触发器过宽）', async () => {
+    const w = mountMenu({ modelValue: 'name' })
+    expect(w.get('[data-testid="filter-sort"]').text()).toContain('按名称')
+    expect(w.get('[data-testid="filter-sort"]').text()).not.toContain('(12)')
   })
 })

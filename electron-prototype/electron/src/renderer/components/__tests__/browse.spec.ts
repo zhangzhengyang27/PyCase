@@ -3,7 +3,7 @@
 // 调 resetViewFilters() 归零，再按用例需要直接给导出 ref 赋值（单例状态会跨用例残留）。
 // 断言优先落在渲染文本 / 类名与交互后的 store 状态上，不穿透子组件内部实现。
 import { describe, expect, it, afterEach, beforeEach, vi } from 'vitest'
-import { mount, type VueWrapper } from '@vue/test-utils'
+import { flushPromises, mount, type VueWrapper } from '@vue/test-utils'
 import { nextTick } from 'vue'
 
 import GalleryView from '../GalleryView.vue'
@@ -187,7 +187,12 @@ describe('GalleryView', () => {
     const w = mount(GalleryView)
     expect(w.findAllComponents(ExampleCard)).toHaveLength(2)
 
-    await w.get('select[data-testid="filter-theme"]').setValue('turtle')
+    await w.get('[data-testid="filter-theme"]').trigger('click')
+    await flushPromises()
+    const themeItem = w.findAll('[role="menuitemradio"]').find((i) => i.text().trim().startsWith('Turtle 绘图'))!
+    expect(themeItem, '主题菜单项不存在').toBeTruthy()
+    await themeItem.trigger('click')
+    await flushPromises()
     expect(activeTheme.value).toBe('turtle')
     expect(w.findAllComponents(ExampleCard)).toHaveLength(1)
   })
@@ -200,10 +205,10 @@ describe('GalleryView', () => {
     expect(w.find('[data-testid="gallery-filter-toggle"]').exists()).toBe(false)
     expect(document.body.querySelector('[role="dialog"]')).toBeNull()
     // 工具栏下拉齐备：主题 / 可运行性 / 质量分 / 运行状态 / 标签
-    expect(w.find('select[data-testid="filter-theme"]').exists()).toBe(true)
-    expect(w.find('select[data-testid="filter-runnable"]').exists()).toBe(true)
-    expect(w.find('select[data-testid="filter-quality"]').exists()).toBe(true)
-    expect(w.find('select[data-testid="filter-run-status"]').exists()).toBe(true)
+    expect(w.find('[data-testid="filter-theme"]').exists()).toBe(true)
+    expect(w.find('[data-testid="filter-runnable"]').exists()).toBe(true)
+    expect(w.find('[data-testid="filter-quality"]').exists()).toBe(true)
+    expect(w.find('[data-testid="filter-run-status"]').exists()).toBe(true)
     expect(w.find('[data-testid="tag-filter-select"]').exists()).toBe(true)
   })
 })
@@ -404,32 +409,47 @@ describe('画廊工具栏筛选下拉', () => {
     ]
   }
 
-  const select = (w: VueWrapper, testid: string) => w.get(`select[data-testid="${testid}"]`)
+  // BaseSelectMenu：触发器按钮 + 点开后的菜单项（无 Portal，wrapper 内查询）
+  const trigger = (w: VueWrapper, testid: string) => w.get(`[data-testid="${testid}"]`)
+  async function openMenu(w: VueWrapper, testid: string) {
+    await trigger(w, testid).trigger('click')
+    await flushPromises()
+    return w.findAll('[role="menuitemradio"]')
+  }
+  async function pick(w: VueWrapper, testid: string, label: string) {
+    // 菜单可能已被 openMenu 打开（再点触发器会把它关掉）：已开则直接复用
+    let items = w.findAll('[role="menuitemradio"]')
+    if (items.length === 0) items = await openMenu(w, testid)
+    const item = items.find((i) => i.text().replace(/\s+/g, ' ').trim().startsWith(label))
+    expect(item, `菜单项 ${label} 不存在`).toBeTruthy()
+    await item!.trigger('click')
+    await flushPromises()
+  }
 
   it('渲染 5 个筛选维度下拉 + 排序 + 标签多选，均带标题', () => {
     const w = mount(BrowseToolbar)
-    expect(select(w, 'filter-theme').attributes('title')).toBe('主题')
-    expect(select(w, 'filter-runnable').attributes('title')).toBe('可运行性')
-    expect(select(w, 'filter-quality').attributes('title')).toBe('质量分')
-    expect(select(w, 'filter-run-status').attributes('title')).toBe('运行状态')
-    expect(select(w, 'filter-sort').attributes('title')).toBe('排序')
+    expect(trigger(w, 'filter-theme').attributes('title')).toBe('主题')
+    expect(trigger(w, 'filter-runnable').attributes('title')).toBe('可运行性')
+    expect(trigger(w, 'filter-quality').attributes('title')).toBe('质量分')
+    expect(trigger(w, 'filter-run-status').attributes('title')).toBe('运行状态')
+    expect(trigger(w, 'filter-sort').attributes('title')).toBe('排序')
     expect(w.find('[data-testid="tag-filter-select"]').exists()).toBe(true)
   })
 
-  it('主题下拉：全部主题 + 5 主题，且每档带 facet 计数', () => {
+  it('主题下拉：全部主题 + 5 主题，且每档带 facet 计数', async () => {
     examples.value = facetFixtures()
     const w = mount(BrowseToolbar)
-    const opts = select(w, 'filter-theme').findAll('option')
+    const opts = await openMenu(w, 'filter-theme')
     expect(opts).toHaveLength(6)
-    expect(opts[0].text()).toBe('全部主题')
+    expect(opts[0].text().trim()).toBe('全部主题')
     // turtle 命中 a → 计数 1
-    expect(opts.find((o) => o.text().startsWith('Turtle 绘图'))!.text()).toContain('(1)')
+    expect(opts.find((o) => o.text().trim().startsWith('Turtle 绘图'))!.text()).toContain('(1)')
   })
 
   it('选择主题：写回 activeTheme、持久化 viewPrefs、结果随之收敛', async () => {
     examples.value = facetFixtures()
     const w = mount(BrowseToolbar)
-    await select(w, 'filter-theme').setValue('turtle')
+    await pick(w, 'filter-theme', 'Turtle 绘图')
     expect(activeTheme.value).toBe('turtle')
     expect(vi.mocked(window.sidecar.store.set)).toHaveBeenCalledWith(
       'viewPrefs',
@@ -440,22 +460,22 @@ describe('画廊工具栏筛选下拉', () => {
   it('可运行性下拉：6 档（全部 + 5 状态）带计数，选择写入 activeRunnable', async () => {
     examples.value = facetFixtures()
     const w = mount(BrowseToolbar)
-    const opts = select(w, 'filter-runnable').findAll('option')
+    const opts = await openMenu(w, 'filter-runnable')
     expect(opts).toHaveLength(6)
-    expect(opts.find((o) => o.text().startsWith('可运行'))!.text()).toContain('(1)')
-    expect(opts.find((o) => o.text().startsWith('缺依赖'))!.text()).toContain('(1)')
+    expect(opts.find((o) => o.text().trim().startsWith('可运行'))!.text()).toContain('(1)')
+    expect(opts.find((o) => o.text().trim().startsWith('缺依赖'))!.text()).toContain('(1)')
 
-    await select(w, 'filter-runnable').setValue('missing_deps')
+    await pick(w, 'filter-runnable', '缺依赖')
     expect(activeRunnable.value).toBe('missing_deps')
   })
 
   it('质量分下拉：≥90/≥80/≥60 带计数，选择写入 minQuality 并持久化', async () => {
     examples.value = facetFixtures()
     const w = mount(BrowseToolbar)
-    const opts = select(w, 'filter-quality').findAll('option')
-    expect(opts.map((o) => o.text())).toEqual(['全部', '≥90 (1)', '≥80 (1)', '≥60 (2)'])
+    const opts = await openMenu(w, 'filter-quality')
+    expect(opts.map((o) => o.text().replace(/\s+/g, ' ').trim())).toEqual(['全部', '≥90 (1)', '≥80 (1)', '≥60 (2)'])
 
-    await select(w, 'filter-quality').setValue('90')
+    await pick(w, 'filter-quality', '≥90')
     expect(minQuality.value).toBe(90)
     expect(vi.mocked(window.sidecar.store.set)).toHaveBeenCalledWith(
       'viewPrefs',
@@ -467,12 +487,12 @@ describe('画廊工具栏筛选下拉', () => {
     examples.value = facetFixtures()
     runHistory.value = [{ ts: '2026-01-01T00:00:00.000Z', id: 'a', ok: true, name: 'x', args: [], code: 0 } as never]
     const w = mount(BrowseToolbar)
-    const opts = select(w, 'filter-run-status').findAll('option')
+    const opts = await openMenu(w, 'filter-run-status')
     expect(opts).toHaveLength(4)
-    expect(opts.find((o) => o.text().startsWith('成功过'))!.text()).toContain('(1)')
-    expect(opts.find((o) => o.text().startsWith('未运行'))!.text()).toContain('(1)')
+    expect(opts.find((o) => o.text().trim().startsWith('成功过'))!.text()).toContain('(1)')
+    expect(opts.find((o) => o.text().trim().startsWith('未运行'))!.text()).toContain('(1)')
 
-    await select(w, 'filter-run-status').setValue('ok')
+    await pick(w, 'filter-run-status', '成功过')
     expect(activeRunStatus.value).toBe('ok')
   })
 
@@ -509,7 +529,7 @@ describe('画廊工具栏筛选下拉', () => {
     const titleEl = w.findAll('span').find((s) => s.classes().includes('font-medium') && s.attributes('title'))!
     expect(titleEl.text()).toBe('语言基础')
     // 主题下拉仍保留选中值——两维叠加，未互相清空
-    expect((select(w, 'filter-theme').element as HTMLSelectElement).value).toBe('turtle')
+    expect(trigger(w, 'filter-theme').text()).toContain('Turtle 绘图')
     expect(activeSectionKey.value).toBe('tag:basics')
   })
 

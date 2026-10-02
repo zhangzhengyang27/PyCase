@@ -465,13 +465,20 @@ describe('BrowseToolbar', () => {
     expect(w.find('.overflow-x-auto').exists()).toBe(false)
   })
 
-  it('排序下拉双向绑定 sortBy', async () => {
+  it('排序下拉双向绑定 sortBy（BaseSelectMenu：点开菜单选项）', async () => {
     const w = mount(BrowseToolbar)
-    const select = w.get('select[data-testid="filter-sort"]')
-    expect(select.attributes('title')).toBe('排序')
-    expect((select.element as HTMLSelectElement).value).toBe('quality_desc')
+    const trigger = w.get('[data-testid="filter-sort"]')
+    expect(trigger.attributes('title')).toBe('排序')
+    expect(trigger.text()).toContain('质量分优先')
 
-    await select.setValue('name')
+    await trigger.trigger('click')
+    await flushPromises()
+    // 无 Portal：菜单渲染在组件树内（游离子树），用 wrapper 查询而非 document.body
+    const items = w.findAll('[role="menuitemradio"]')
+    expect(items.map((i) => i.text().trim())).toContain('按名称')
+    const item = items.find((i) => i.text().trim() === '按名称')!
+    await item.trigger('click')
+    await flushPromises()
     expect(sortBy.value).toBe('name')
   })
 
@@ -502,11 +509,11 @@ describe('BrowseToolbar', () => {
   it('筛选维度收成工具栏下拉：5 个维度 + 排序（旧「筛选」按钮与浮层已退役）', () => {
     const w = mount(BrowseToolbar)
     expect(w.find('[data-testid="gallery-filter-toggle"]').exists()).toBe(false)
-    expect(w.find('select[data-testid="filter-theme"]').exists()).toBe(true)
-    expect(w.find('select[data-testid="filter-runnable"]').exists()).toBe(true)
-    expect(w.find('select[data-testid="filter-quality"]').exists()).toBe(true)
-    expect(w.find('select[data-testid="filter-run-status"]').exists()).toBe(true)
-    expect(w.find('select[data-testid="filter-sort"]').exists()).toBe(true)
+    expect(w.find('[data-testid="filter-theme"]').exists()).toBe(true)
+    expect(w.find('[data-testid="filter-runnable"]').exists()).toBe(true)
+    expect(w.find('[data-testid="filter-quality"]').exists()).toBe(true)
+    expect(w.find('[data-testid="filter-run-status"]').exists()).toBe(true)
+    expect(w.find('[data-testid="filter-sort"]').exists()).toBe(true)
     expect(w.find('[data-testid="tag-filter-select"]').exists()).toBe(true)
     expect(w.find('[data-testid="filter-fav-toggle"]').exists()).toBe(true)
   })

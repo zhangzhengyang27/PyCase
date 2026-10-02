@@ -34,7 +34,7 @@ import {
 } from '../src/store/catalog'
 import { favorites } from '../src/store/prefs'
 import BaseInput from './base/BaseInput.vue'
-import BaseSelect from './base/BaseSelect.vue'
+import BaseSelectMenu from './base/BaseSelectMenu.vue'
 import TagFilterSelect from './TagFilterSelect.vue'
 
 // 范围标题：分区（侧栏二级菜单）> 主题 facet > 全部示例
@@ -132,68 +132,92 @@ function facetSuffix(has: boolean, n: number | undefined): string {
       </button>
 
       <!-- 主题：全部主题 + THEMES（与侧栏分区菜单可叠加，两者语义不同，不去重） -->
-      <BaseSelect
+      <BaseSelectMenu
         :model-value="activeTheme"
         title="主题"
         aria-label="按主题筛选"
-        data-testid="filter-theme"
+        testid="filter-theme"
+        :active="activeTheme !== 'all'"
+        :options="[
+          { value: 'all', label: '全部主题' },
+          ...THEMES.map((t) => ({
+            value: t.key,
+            label: t.label,
+            hint: facetSuffix(true, facetCounts.themeCounts.get(t.key)) || undefined
+          }))
+        ]"
         @update:model-value="setTheme"
-      >
-        <option value="all">全部主题</option>
-        <option v-for="t in THEMES" :key="t.key" :value="t.key">
-          {{ t.label }}{{ facetSuffix(true, facetCounts.themeCounts.get(t.key)) }}
-        </option>
-      </BaseSelect>
+      />
 
       <!-- 可运行性 -->
-      <BaseSelect
+      <BaseSelectMenu
         :model-value="activeRunnable"
         title="可运行性"
         aria-label="按可运行性筛选"
-        data-testid="filter-runnable"
+        testid="filter-runnable"
+        :active="activeRunnable !== 'all'"
+        :options="
+          RUNNABLE_OPTIONS.map((r) => ({
+            value: r.key,
+            label: r.label,
+            hint: r.key === 'all' ? undefined : facetSuffix(true, facetCounts.runnableCounts.get(r.key)) || undefined
+          }))
+        "
         @update:model-value="setRunnable"
-      >
-        <option v-for="r in RUNNABLE_OPTIONS" :key="r.key" :value="r.key">
-          {{ r.label }}{{ r.key === 'all' ? '' : facetSuffix(true, facetCounts.runnableCounts.get(r.key)) }}
-        </option>
-      </BaseSelect>
+      />
 
       <!-- 质量分 -->
-      <BaseSelect
+      <BaseSelectMenu
         :model-value="String(minQuality)"
         title="质量分"
         aria-label="按质量分筛选"
-        data-testid="filter-quality"
+        testid="filter-quality"
+        :active="minQuality > 0"
+        :options="
+          QUALITY_OPTIONS.map((q) => ({
+            value: String(q.min),
+            label: q.label,
+            hint: q.min > 0 ? facetSuffix(true, facetCounts.qualityCounts.get(q.min)) || undefined : undefined
+          }))
+        "
         @update:model-value="setQuality"
-      >
-        <option v-for="q in QUALITY_OPTIONS" :key="q.min" :value="String(q.min)">
-          {{ q.label }}{{ q.min > 0 ? facetSuffix(true, facetCounts.qualityCounts.get(q.min)) : '' }}
-        </option>
-      </BaseSelect>
+      />
 
       <!-- 运行状态 -->
-      <BaseSelect
+      <BaseSelectMenu
         :model-value="activeRunStatus"
         title="运行状态"
         aria-label="按运行状态筛选"
-        data-testid="filter-run-status"
+        testid="filter-run-status"
+        :active="activeRunStatus !== 'all'"
+        :options="
+          RUN_STATUS_OPTIONS.map((s) => ({
+            value: s.key,
+            label: s.label,
+            hint: s.key === 'all' ? undefined : facetSuffix(true, facetCounts.runStatusCounts.get(s.key)) || undefined
+          }))
+        "
         @update:model-value="setRunStatus"
-      >
-        <option v-for="s in RUN_STATUS_OPTIONS" :key="s.key" :value="s.key">
-          {{ s.label }}{{ s.key === 'all' ? '' : facetSuffix(true, facetCounts.runStatusCounts.get(s.key)) }}
-        </option>
-      </BaseSelect>
+      />
 
       <!-- 标签（多选下拉：checkbox 列表 + 计数） -->
       <TagFilterSelect />
 
       <!-- 排序 + 密度：右推（不足则整体换行，自身恒一行高，不横向溢出） -->
-      <div class="ml-auto flex items-center gap-2 shrink-0 h-[var(--toolbar-h)]">
-        <BaseSelect v-model="sortBy" title="排序" aria-label="排序方式" data-testid="filter-sort" class="app-no-drag">
-          <option value="quality_desc">质量分优先</option>
-          <option value="name">按名称</option>
-          <option value="last_run">最近运行</option>
-        </BaseSelect>
+      <div class="ml-auto flex items-center gap-2 shrink-0">
+        <BaseSelectMenu
+          v-model="sortBy"
+          title="排序"
+          aria-label="排序方式"
+          testid="filter-sort"
+          :active="sortBy !== 'quality_desc'"
+          align="end"
+          :options="[
+            { value: 'quality_desc', label: '质量分优先' },
+            { value: 'name', label: '按名称' },
+            { value: 'last_run', label: '最近运行' }
+          ]"
+        />
 
         <div class="app-no-drag seg shrink-0" role="group" aria-label="浏览密度">
           <button title="网格视图" aria-label="网格视图" :aria-pressed="viewMode === 'grid'" @click="setMode('grid')">
