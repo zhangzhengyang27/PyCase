@@ -368,3 +368,7 @@ TOOL_SCHEMAS.push(textWrapSchema, palindromeSchema)
 // W3 追加注册：devtools 九工具（独立模块，单向导入）
 import { DEVTOOL_SCHEMAS } from './tool-schemas-devtools'
 TOOL_SCHEMAS.push(...DEVTOOL_SCHEMAS)
+
+// W4 追加注册：七个轻量工具（独立模块，单向导入）
+import { W4_SCHEMAS } from './tool-schemas-w4'
+TOOL_SCHEMAS.push(...W4_SCHEMAS)

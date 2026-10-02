@@ -689,5 +689,188 @@
     "uuid4_pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
     "short_pattern": "^[0-9A-Za-z_-]{11}$",
     "count_default": 5
+  },
+  "jwt": [
+    {
+      "name": "标准三段式",
+      "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IuW8oOS4iSIsImlhdCI6MTc1OTM2MzIwMCwiZXhwIjoxNzkwOTg1NjAwfQ.c2lnX3NpZ19zaWdfc2ln",
+      "expected": {
+        "header": "{\n  \"alg\": \"HS256\",\n  \"typ\": \"JWT\"\n}",
+        "payload": "{\n  \"sub\": \"1234567890\",\n  \"name\": \"张三\",\n  \"iat\": 1759363200,\n  \"exp\": 1790985600\n}",
+        "alg": "HS256",
+        "exp": "2026-10-03 00:00:00 UTC",
+        "iat": "2025-10-02 00:00:00 UTC",
+        "siglen": 20
+      }
+    },
+    {
+      "name": "非三段式报错",
+      "token": "abc.def",
+      "expected": {
+        "error": true
+      }
+    }
+  ],
+  "env": [
+    {
+      "name": "经典差异",
+      "env": "HOST=localhost\nPORT=5432\n# 注释行\nDEBUG=\nSECRET=abc\n",
+      "example": "HOST=\nPORT=\nDEBUG=\nDATABASE_URL=\nSECRET=\n",
+      "expected": {
+        "missing": ["DATABASE_URL"],
+        "extra": [],
+        "empty": ["DEBUG"]
+      }
+    },
+    {
+      "name": "全空报错",
+      "env": "",
+      "example": "",
+      "expected": {
+        "error": true
+      }
+    }
+  ],
+  "toc": [
+    {
+      "name": "默认范围含围栏与去重",
+      "text": "# 项目\n## 安装\n```python\n## 假标题（代码块内）\n```\n## 安装\n### 前置依赖\n## 使用说明",
+      "minLevel": "2",
+      "maxLevel": "6",
+      "expected": {
+        "text": "- [安装](#安装)\n- [安装](#安装-1)\n  - [前置依赖](#前置依赖)\n- [使用说明](#使用说明)",
+        "count": "4"
+      }
+    },
+    {
+      "name": "限定三级",
+      "text": "# 项目\n## 安装\n```python\n## 假标题（代码块内）\n```\n## 安装\n### 前置依赖\n## 使用说明",
+      "minLevel": "2",
+      "maxLevel": "3",
+      "expected": {
+        "text": "- [安装](#安装)\n- [安装](#安装-1)\n  - [前置依赖](#前置依赖)\n- [使用说明](#使用说明)",
+        "count": "4"
+      }
+    },
+    {
+      "name": "无标题",
+      "text": "正文没有标题",
+      "minLevel": "2",
+      "maxLevel": "6",
+      "expected": {
+        "text": "（未发现标题）",
+        "count": "0"
+      }
+    }
+  ],
+  "gitignore": [
+    {
+      "name": "Python+macOS",
+      "stacks": ["Python", "macOS"],
+      "expected": {
+        "text": "# Python\n__pycache__/\n*.py[cod]\n.venv/\n*.egg-info/\ndist/\nbuild/\n\n# macOS\n.DS_Store\n\n"
+      }
+    },
+    {
+      "name": "Node+Windows+VSCode",
+      "stacks": ["Node", "Windows", "VSCode"],
+      "expected": {
+        "text": "# Node\nnode_modules/\nnpm-debug.log*\n.npm/\n\n# Windows\nThumbs.db\nDesktop.ini\n\n\n# VSCode\n.vscode/\n"
+      }
+    },
+    {
+      "name": "全栈",
+      "stacks": ["Python", "Node", "Go", "macOS", "Windows", "VSCode"],
+      "expected": {
+        "text": "# Python\n__pycache__/\n*.py[cod]\n.venv/\n*.egg-info/\ndist/\nbuild/\n\n# Node\nnode_modules/\nnpm-debug.log*\n.npm/\n\n# Go\nbin/\n\n\n# macOS\n.DS_Store\n\n\n# Windows\nThumbs.db\nDesktop.ini\n\n\n# VSCode\n.vscode/\n"
+      }
+    }
+  ],
+  "normalize": [
+    {
+      "name": "CRLF转LF+Tab缩进4",
+      "text": "def f():\r\n\treturn 1\r\n    x = 2\n\r\n\tif ok:\n\t\treturn 2",
+      "lineEnding": "LF",
+      "indentMode": "tab4",
+      "expected": {
+        "text": "def f():\n    return 1\n    x = 2\n\n    if ok:\n        return 2"
+      }
+    },
+    {
+      "name": "LF转CRLF+前导空格转Tab",
+      "text": "a:\n    b\n\tc",
+      "lineEnding": "CRLF",
+      "indentMode": "space4tab",
+      "expected": {
+        "text": "a:\r\n\tb\r\n\tc"
+      }
+    },
+    {
+      "name": "仅行尾不动缩进",
+      "text": "x\r\ny",
+      "lineEnding": "LF",
+      "indentMode": "none",
+      "expected": {
+        "text": "x\ny"
+      }
+    }
+  ],
+  "replacer": [
+    {
+      "name": "字面量",
+      "text": "foo bar FOO",
+      "find": "foo",
+      "replace": "qux",
+      "regex": false,
+      "ignoreCase": false,
+      "expected": {
+        "count": "1",
+        "text": "qux bar FOO"
+      }
+    },
+    {
+      "name": "字面量忽略大小写",
+      "text": "foo bar FOO",
+      "find": "foo",
+      "replace": "qux",
+      "regex": false,
+      "ignoreCase": true,
+      "expected": {
+        "count": "2",
+        "text": "qux bar qux"
+      }
+    },
+    {
+      "name": "正则",
+      "text": "a1 b22 c333",
+      "find": "\\d+",
+      "replace": "#",
+      "regex": true,
+      "ignoreCase": false,
+      "expected": {
+        "count": "3",
+        "text": "a# b# c#"
+      }
+    },
+    {
+      "name": "非法正则报错",
+      "text": "x",
+      "find": "([",
+      "replace": "",
+      "regex": true,
+      "ignoreCase": false,
+      "expected": {
+        "error": true
+      }
+    }
+  ],
+  "pwdgen": {
+    "lower": "abcdefghijklmnopqrstuvwxyz",
+    "upper": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+    "digits": "0123456789",
+    "symbols": "!@#$%^&*-_=+?",
+    "ambiguous": "0Oo1lI",
+    "min_length": 8,
+    "max_length": 64
   }
 }
