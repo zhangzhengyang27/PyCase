@@ -11,9 +11,7 @@
 import { computed } from 'vue'
 import { LayoutGrid, List, Star, X } from 'lucide-vue-next'
 import { THEMES } from '../src/themes'
-import { QUALITY_OPTIONS, RUN_STATUS_OPTIONS, type RunStatusKey } from '../src/filter-options'
 import {
-  activeRunStatus,
   activeSectionKey,
   activeTheme,
   clearAllFilters,
@@ -21,7 +19,6 @@ import {
   favOnly,
   filtered,
   galleryChips,
-  minQuality,
   persistViewPrefs,
   removeChip,
   searchQuery,
@@ -38,17 +35,10 @@ function setMode(v: 'grid' | 'list'): void {
   persistViewPrefs()
 }
 
-// 下拉变更经函数写回 store（主题 / 质量分随 viewPrefs 持久化，与旧侧栏一致）
+// 下拉变更经函数写回 store（主题随 viewPrefs 持久化，与旧侧栏一致）
 function setTheme(v: string): void {
   activeTheme.value = v
   persistViewPrefs()
-}
-function setQuality(v: string): void {
-  minQuality.value = Number(v)
-  persistViewPrefs()
-}
-function setRunStatus(v: string): void {
-  activeRunStatus.value = v as RunStatusKey
 }
 function toggleFavOnly(): void {
   favOnly.value = !favOnly.value
@@ -121,40 +111,6 @@ function facetSuffix(has: boolean, n: number | undefined): string {
           }))
         ]"
         @update:model-value="setTheme"
-      />
-
-      <!-- 质量分 -->
-      <BaseSelectMenu
-        :model-value="String(minQuality)"
-        title="质量分"
-        aria-label="按质量分筛选"
-        testid="filter-quality"
-        :active="minQuality > 0"
-        :options="
-          QUALITY_OPTIONS.map((q) => ({
-            value: String(q.min),
-            label: q.label,
-            hint: q.min > 0 ? facetSuffix(true, facetCounts.qualityCounts.get(q.min)) || undefined : undefined
-          }))
-        "
-        @update:model-value="setQuality"
-      />
-
-      <!-- 运行状态 -->
-      <BaseSelectMenu
-        :model-value="activeRunStatus"
-        title="运行状态"
-        aria-label="按运行状态筛选"
-        testid="filter-run-status"
-        :active="activeRunStatus !== 'all'"
-        :options="
-          RUN_STATUS_OPTIONS.map((s) => ({
-            value: s.key,
-            label: s.label,
-            hint: s.key === 'all' ? undefined : facetSuffix(true, facetCounts.runStatusCounts.get(s.key)) || undefined
-          }))
-        "
-        @update:model-value="setRunStatus"
       />
 
       <!-- 标签（多选下拉：checkbox 列表 + 计数） -->

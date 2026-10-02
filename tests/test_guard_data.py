@@ -525,3 +525,25 @@ def test_import_tags_fallback_uses_authoritative_stdlib(tmp_path):
     item = next(iter(store.index.values()))
     tags = store.import_tags(item)
     assert tags == ["requests"], f"标准库漏成第三方标签: {tags}"
+
+
+def test_g1_no_template_placeholder_residue_in_sources():
+    """生成器占位符残留禁令（2026-10-02 bulk_* 事故护栏）。
+
+    三类曾真实落盘的生成器缺陷：`{{param}}` 占位符原样进源码（f-string 里
+    输出字面大括号、代码位运行时 TypeError）、`{{dict}}` 双大括号（set 套
+    dict）、`np.abs(y = EXPR)` 内嵌赋值。bake 拼接顺序修好后由本护栏钉死：
+    真相源全树不得再出现 {{ 残留。
+    """
+    import re
+    offenders = []
+    for base in ("json_examples", "topics", "tools", "projects", "examples_assets"):
+        for p in (Path(__file__).resolve().parent.parent / base).rglob("*.py"):
+            if ".backup" in p.parts:
+                continue
+            src = p.read_text(encoding="utf-8", errors="ignore")
+            if "{{" in src:
+                offenders.append(f"{p.relative_to(Path(__file__).resolve().parent.parent)} ({{ 残留)")
+            if re.search(r"np\.abs\(y\s*=", src):
+                offenders.append(f"{p.relative_to(Path(__file__).resolve().parent.parent)} (np.abs(y= 内嵌赋值)")
+    assert not offenders, f"生成器占位符残留 {len(offenders)} 处: {offenders[:8]}"

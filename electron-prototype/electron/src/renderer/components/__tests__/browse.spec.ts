@@ -12,7 +12,6 @@ import BrowseToolbar from '../BrowseToolbar.vue'
 import ExampleCard from '../ExampleCard.vue'
 import ExampleListItem from '../ExampleListItem.vue'
 import {
-  activeRunStatus,
   activeSectionKey,
   activeTags,
   activeTheme,
@@ -21,7 +20,6 @@ import {
   galleryLimit,
   loadError,
   loading,
-  minQuality,
   sortBy,
   toolSearchQuery,
   viewMode,
@@ -164,17 +162,14 @@ describe('GalleryView', () => {
   it('结果条展示筛选芯片，点「清空」调用 clearAllFilters 归零全部筛选', async () => {
     examples.value = [makeExample({ id: 'a', name: 'turtle_draw.py', code: 'import turtle\n' })]
     activeTheme.value = 'turtle'
-    minQuality.value = 80
     favOnly.value = true
     const w = mount(GalleryView)
     expect(w.text()).toContain('Turtle 绘图')
-    expect(w.text()).toContain('质量分 ≥80')
     expect(w.text()).toContain('我的收藏')
 
     const clear = w.findAll('button').find((b) => b.text().trim() === '清空')!
     await clear.trigger('click')
     expect(activeTheme.value).toBe('all')
-    expect(minQuality.value).toBe(0)
     expect(favOnly.value).toBe(false)
   })
 
@@ -206,8 +201,8 @@ describe('GalleryView', () => {
     // 工具栏下拉齐备：主题 / 可运行性 / 质量分 / 运行状态 / 标签
     expect(w.find('[data-testid="filter-theme"]').exists()).toBe(true)
     expect(w.find('[data-testid="filter-runnable"]').exists()).toBe(false)
-    expect(w.find('[data-testid="filter-quality"]').exists()).toBe(true)
-    expect(w.find('[data-testid="filter-run-status"]').exists()).toBe(true)
+    expect(w.find('[data-testid="filter-quality"]').exists()).toBe(false)
+    expect(w.find('[data-testid="filter-run-status"]').exists()).toBe(false)
     expect(w.find('[data-testid="tag-filter-select"]').exists()).toBe(true)
   })
 })
@@ -429,8 +424,8 @@ describe('画廊工具栏筛选下拉', () => {
     const w = mount(BrowseToolbar)
     expect(trigger(w, 'filter-theme').attributes('title')).toBe('主题')
     expect(w.find('[data-testid="filter-runnable"]').exists()).toBe(false)
-    expect(trigger(w, 'filter-quality').attributes('title')).toBe('质量分')
-    expect(trigger(w, 'filter-run-status').attributes('title')).toBe('运行状态')
+    expect(w.find('[data-testid="filter-quality"]').exists()).toBe(false)
+    expect(w.find('[data-testid="filter-run-status"]').exists()).toBe(false)
     expect(trigger(w, 'filter-sort').attributes('title')).toBe('排序')
     expect(w.find('[data-testid="tag-filter-select"]').exists()).toBe(true)
   })
@@ -454,33 +449,6 @@ describe('画廊工具栏筛选下拉', () => {
       'viewPrefs',
       expect.objectContaining({ activeTheme: 'turtle' })
     )
-  })
-
-  it('质量分下拉：≥90/≥80/≥60 带计数，选择写入 minQuality 并持久化', async () => {
-    examples.value = facetFixtures()
-    const w = mount(BrowseToolbar)
-    const opts = await openMenu(w, 'filter-quality')
-    expect(opts.map((o) => o.text().replace(/\s+/g, ' ').trim())).toEqual(['全部', '≥90 (1)', '≥80 (1)', '≥60 (2)'])
-
-    await pick(w, 'filter-quality', '≥90')
-    expect(minQuality.value).toBe(90)
-    expect(vi.mocked(window.sidecar.store.set)).toHaveBeenCalledWith(
-      'viewPrefs',
-      expect.objectContaining({ minQuality: 90 })
-    )
-  })
-
-  it('运行状态下拉：计数由运行历史派生，选择写入 activeRunStatus', async () => {
-    examples.value = facetFixtures()
-    runHistory.value = [{ ts: '2026-01-01T00:00:00.000Z', id: 'a', ok: true, name: 'x', args: [], code: 0 } as never]
-    const w = mount(BrowseToolbar)
-    const opts = await openMenu(w, 'filter-run-status')
-    expect(opts).toHaveLength(4)
-    expect(opts.find((o) => o.text().trim().startsWith('成功过'))!.text()).toContain('(1)')
-    expect(opts.find((o) => o.text().trim().startsWith('未运行'))!.text()).toContain('(1)')
-
-    await pick(w, 'filter-run-status', '成功过')
-    expect(activeRunStatus.value).toBe('ok')
   })
 
   it('标签多选下拉：勾选写入 activeTags（checkbox），再取消移除', async () => {
