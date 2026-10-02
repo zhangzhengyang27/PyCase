@@ -8,6 +8,7 @@
 //     由 InteractiveToolPage 统一渲染。新工具只需往 toolSchemas 里注册一个条目。
 import { computed, reactive } from 'vue'
 import type { VExample } from './store/catalog'
+import { TOOL_SCHEMAS } from './tool-schemas'
 
 export const INTERACTIVE_PREFIX = 'interactive:'
 export const DATE_CALC_ID = `${INTERACTIVE_PREFIX}date-calculator`
@@ -77,8 +78,8 @@ const DATE_CARD: VExample = {
   tags: ['日期', '交互工具']
 }
 
-/** schema 注册点：新交互工具往这里 push 一个条目（reactive——注册即反映到工具池） */
-export const interactiveToolSchemas = reactive<InteractiveToolSchema[]>([])
+/** schema 注册点（reactive——注册即反映到工具池）；内置三工具来自 tool-schemas.ts */
+export const interactiveToolSchemas = reactive<InteractiveToolSchema[]>([...TOOL_SCHEMAS])
 
 function schemaToCard(s: InteractiveToolSchema): VExample {
   return {
