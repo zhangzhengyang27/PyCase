@@ -3,9 +3,15 @@
 // 控件复用现有样式语言（bg-page/border-line/rounded-control），值经 v-model 双向绑定
 // 到父层的工具输入桶（store.toolValueOf）；required 失焦校验标红。
 import { computed } from 'vue'
-import type { FieldSpec, FieldValue } from '../../src/interactive-tools'
+import type { FieldSpec, FieldValue, SelectOption } from '../../src/interactive-tools'
 
-const props = defineProps<{ spec: FieldSpec; modelValue: FieldValue; invalid?: boolean }>()
+const props = defineProps<{
+  spec: FieldSpec
+  modelValue: FieldValue
+  invalid?: boolean
+  /** 动态选项（FieldSpec.options 为函数形态时由页面解析后传入；静态 options 直接用 spec 的） */
+  options?: SelectOption[]
+}>()
 const emit = defineEmits<{ 'update:modelValue': [value: FieldValue] }>()
 
 const INPUT_CLS =
@@ -49,7 +55,7 @@ function onCheckbox(e: Event): void {
       :value="String(modelValue ?? '')"
       @change="onInput"
     >
-      <option v-for="o in spec.options" :key="o.value" :value="o.value">{{ o.label }}</option>
+      <option v-for="o in props.options ?? spec.options" :key="o.value" :value="o.value">{{ o.label }}</option>
     </select>
 
     <label

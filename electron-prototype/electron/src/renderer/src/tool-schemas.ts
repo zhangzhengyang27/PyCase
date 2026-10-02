@@ -364,3 +364,7 @@ print("判定:", "是回文" if is_palindrome(s) else "不是回文")
 
 // W2 追加注册：追加到 TOOL_SCHEMAS 尾部
 TOOL_SCHEMAS.push(textWrapSchema, palindromeSchema)
+
+// W3 追加注册：devtools 九工具（独立模块，单向导入）
+import { DEVTOOL_SCHEMAS } from './tool-schemas-devtools'
+TOOL_SCHEMAS.push(...DEVTOOL_SCHEMAS)

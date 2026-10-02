@@ -26,12 +26,18 @@ export function isInteractiveId(id: string | undefined | null): boolean {
 export type FieldType = 'text' | 'textarea' | 'number' | 'select' | 'checkbox'
 export type FieldValue = string | number | boolean | undefined
 
+export interface SelectOption {
+  value: string
+  label: string
+}
+
 export interface FieldSpec {
   key: string
   label: string
   type: FieldType
   default?: string | number | boolean
-  options?: Array<{ value: string; label: string }> // 仅 select
+  /** select 选项；函数形态用于联动（如科学单位换算的单位表随量纲变化） */
+  options?: SelectOption[] | ((v: Record<string, FieldValue>) => SelectOption[]) // 仅 select
   placeholder?: string
   required?: boolean
   width?: 'full' | 'half'

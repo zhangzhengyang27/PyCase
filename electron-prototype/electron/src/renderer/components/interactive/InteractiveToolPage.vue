@@ -7,7 +7,7 @@ import { ArrowLeft } from 'lucide-vue-next'
 import ToolField from './ToolField.vue'
 import ToolResultPanel from './ToolResultPanel.vue'
 import CodeDrawer from '../date-calculator/CodeDrawer.vue'
-import { getToolSchema } from '../../src/interactive-tools'
+import { getToolSchema, type SelectOption } from '../../src/interactive-tools'
 import { closeInteractive, toolValueOf } from '../../src/store/interactive'
 import { selectedId } from '../../src/store/detail'
 
@@ -17,6 +17,13 @@ const result = computed(() => schema.value?.compute?.(values.value))
 const code = computed(() => (schema.value ? schema.value.pyCode(values.value) : '# 工具不存在'))
 
 /** required 且当前为空 → 传给 ToolField 标红（compute 侧同时出 error 引导） */
+/** select 联动：options 函数形态按当前输入解析（静态 options 原样透传由 ToolField 兜底） */
+function optionsOf(key: string): SelectOption[] | undefined {
+  const f = schema.value?.fields.find((x) => x.key === key)
+  if (!f || typeof f.options !== 'function') return undefined
+  return f.options(values.value)
+}
+
 function isInvalid(key: string): boolean {
   const f = schema.value?.fields.find((x) => x.key === key)
   if (!f?.required) return false
@@ -60,6 +67,7 @@ function isInvalid(key: string): boolean {
                 :spec="f"
                 :model-value="values[f.key]"
                 :invalid="isInvalid(f.key)"
+                :options="optionsOf(f.key)"
                 @update:model-value="values[f.key] = $event"
               />
             </template>

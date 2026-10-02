@@ -131,3 +131,121 @@ describe('W2 pyCode 关键片段', () => {
     expect(pal.pyCode!({ text: '  ' })).toContain('# 补全输入')
   })
 })
+
+// ---------------------------------------------------------------------------
+// W3：devtools 九工具（确定性八段走黄金对拍；uuid 随机型只钉格式与唯一性）
+// ---------------------------------------------------------------------------
+const dev = (id: string) => getToolSchema(id)!
+
+describe('正则测试器 ↔ 黄金用例', () => {
+  it.each(golden.regex.map((c) => [c.name, c] as const))('%s', (_name, c) => {
+    const r = dev('interactive:regex-tester').compute!({ pattern: c.pattern, sample: c.sample, ...c.flags })
+    if ('error' in c.expected) {
+      expect(r.error).toBeTruthy()
+      return
+    }
+    expect(r.error).toBeUndefined()
+    expect(r.primary?.value).toBe(c.expected.primary)
+    expect(r.list).toEqual(c.expected.list)
+  })
+})
+
+describe('JSON 格式化 ↔ 黄金用例', () => {
+  it.each(golden.jsonfmt.map((c) => [c.name, c] as const))('%s', (_name, c) => {
+    const r = dev('interactive:json-format').compute!({ input: c.input, indent: c.indent })
+    if ('error' in c.expected) {
+      expect(r.error).toBeTruthy()
+      return
+    }
+    expect(r.text).toBe(c.expected.text)
+  })
+})
+
+describe('CSV ↔ JSON ↔ 黄金用例', () => {
+  it.each(golden.csvjson.map((c) => [c.name, c] as const))('%s', (_name, c) => {
+    const r = dev('interactive:csv-json').compute!({ direction: c.direction, input: c.input })
+    expect(r.text).toBe(c.expected.text)
+  })
+})
+
+describe('时间戳转换 ↔ 黄金用例（UTC 口径）', () => {
+  it.each(golden.ts.map((c) => [c.name, c] as const))('%s', (_name, c) => {
+    const r = dev('interactive:timestamp').compute!({ mode: c.mode, unit: c.unit ?? 's', value: c.value })
+    if ('error' in c.expected) {
+      expect(r.error).toBeTruthy()
+      return
+    }
+    const rows = Object.fromEntries((r.rows ?? []).map((x) => [x.label, x.value]))
+    expect(rows['UTC']).toBe(c.expected.utc)
+    expect(rows['ISO 8601']).toBe(c.expected.iso)
+    if (c.expected.seconds) expect(rows['秒']).toBe(c.expected.seconds)
+  })
+})
+
+describe('颜色转换器 ↔ 黄金用例', () => {
+  it.each(golden.color.map((c) => [c.name, c] as const))('%s', (_name, c) => {
+    const r = dev('interactive:color').compute!({ value: c.value })
+    if ('error' in c.expected) {
+      expect(r.error).toBeTruthy()
+      return
+    }
+    const rows = Object.fromEntries((r.rows ?? []).map((x) => [x.label, x.value]))
+    expect(rows['HEX']).toBe(c.expected.hex)
+    expect(rows['RGB']).toBe(c.expected.rgb)
+    expect(rows['HSL']).toBe(c.expected.hsl)
+  })
+})
+
+describe('科学单位换算 ↔ 黄金用例', () => {
+  it.each(golden.unit.map((c) => [c.name, c] as const))('%s', (_name, c) => {
+    const r = dev('interactive:unit-convert').compute!({ dim: c.dim, value: c.value, from: c.from, to: c.to })
+    expect(r.primary?.value).toBe(c.expected.value)
+  })
+  it('单位选项随量纲联动（options 函数形态）', () => {
+    const schema = dev('interactive:unit-convert')!
+    const fromField = schema.fields.find((f) => f.key === 'from')!
+    expect(typeof fromField.options).toBe('function')
+    const opts = (fromField.options as (v: Record<string, unknown>) => { value: string }[])({ dim: '质量' })
+    expect(opts.map((o) => o.value)).toContain('lb')
+    expect(opts.map((o) => o.value)).not.toContain('km')
+  })
+})
+
+describe('密码强度检查 ↔ 黄金用例', () => {
+  it.each(golden.pwd.map((c) => [c.name, c] as const))('%s', (_name, c) => {
+    const r = dev('interactive:pwd-strength').compute!({ value: c.value })
+    expect(r.primary?.value).toBe(c.expected.score)
+    const rows = Object.fromEntries((r.rows ?? []).map((x) => [x.label, x.value]))
+    expect(rows['强度']).toBe(c.expected.label)
+    expect(rows['常见弱口令']).toBe(c.expected.common.length ? c.expected.common.join(', ') : '未命中')
+  })
+})
+
+describe('JSON → dataclass ↔ 黄金用例', () => {
+  it.each(golden.dataclass.map((c) => [c.name, c] as const))('%s', (_name, c) => {
+    const r = dev('interactive:json-dataclass').compute!({ input: c.input, className: c.className })
+    if ('error' in c.expected) {
+      expect(r.error).toBeTruthy()
+      return
+    }
+    expect(r.text).toBe(c.expected.text)
+  })
+})
+
+describe('UUID 生成（随机型：格式 + 唯一性）', () => {
+  const spec = golden.uuid
+  it.each([
+    ['uuid4', 'uuid4', spec.uuid4_pattern],
+    ['short', 'short', spec.short_pattern]
+  ] as const)('%s 格式与唯一性', (_name, mode, pattern) => {
+    const schema = dev('interactive:uuid')!
+    const r = schema.compute!({ mode, count: 20 })
+    const list = r.list ?? []
+    expect(list).toHaveLength(20)
+    for (const id_ of list) expect(id_).toMatch(new RegExp(pattern))
+    expect(new Set(list).size).toBe(20)
+  })
+  it('数量越界 → 引导文案', () => {
+    expect(dev('interactive:uuid').compute!({ mode: 'uuid4', count: 51 })!.error).toBeTruthy()
+  })
+})
