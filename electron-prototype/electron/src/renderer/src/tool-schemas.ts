@@ -380,3 +380,10 @@ TOOL_SCHEMAS.push(...MEDIA_SCHEMAS)
 // W6 收尾批：B 档批量图片 10 + Office 4（独立模块，单向导入）
 import { FILE_TOOL_SCHEMAS } from './tool-schemas-files'
 TOOL_SCHEMAS.push(...FILE_TOOL_SCHEMAS)
+
+// W8-W11 多形态页面化：速查 10 / 结果浏览 13 / 向导 6 / ffmpeg 构建器 11（sidecar 计算型）
+import { QUICK_SCHEMAS } from './tool-schemas-quick'
+import { RESULTS_SCHEMAS } from './tool-schemas-results'
+import { WIZARD_SCHEMAS } from './tool-schemas-wizard'
+import { FFMPEG_SCHEMAS } from './tool-schemas-ffmpeg'
+TOOL_SCHEMAS.push(...QUICK_SCHEMAS, ...RESULTS_SCHEMAS, ...WIZARD_SCHEMAS, ...FFMPEG_SCHEMAS)

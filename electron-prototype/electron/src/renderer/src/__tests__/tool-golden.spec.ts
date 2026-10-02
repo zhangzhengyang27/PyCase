@@ -2,7 +2,7 @@
 // （Python 参考实现自校验在 tests/test_tool_golden.py——同一份 JSON，双端唯一事实）。
 // pyCode 是 TS 模板，Python 无法执行——片段断言钉关键行 + 落地时的真实产物抽查。
 import { describe, expect, it } from 'vitest'
-import { getToolSchema } from '../interactive-tools'
+import { getToolSchema, type FieldValue } from '../interactive-tools'
 import golden from '../tool-golden.json'
 
 const temp = getToolSchema('interactive:temp-convert')!
@@ -497,5 +497,71 @@ describe('缩略图拼贴', () => {
     expect(code).toContain('CELL, COLS = 200, 4')
     expect(code).toContain('sheet.save("contact_sheet.png")')
     expect(dev('interactive:contact-sheet').pyCode!({ dir: '', cols: 4, cell: 200, bg: '#111111' })).toContain('# 选择')
+  })
+})
+
+// ---------------------------------------------------------------------------
+// W8-W11：速查/结果浏览/向导/ffmpeg 构建器（sidecar 计算型：pyCode 关键片段全量钉）
+// ---------------------------------------------------------------------------
+const FRAGMENTS: Array<[string, Record<string, FieldValue>, string[]]> = [
+  ['ip-lookup', {}, ['ipify', 'ipinfo', '<<<JSON>>>']],
+  ['dns-lookup', { domain: 'example.com' }, ['getaddrinfo', '"example.com"']],
+  ['port-check', { host: '127.0.0.1', port: 80 }, ['connect_ex', '"127.0.0.1:80"']],
+  ['http-headers', { url: 'https://example.com' }, ['requests.get', 'status_code']],
+  ['speed-test', {}, ['httpbin.org/bytes', 'MB/s 均值']],
+  ['battery', {}, ['sensors_battery', 'power_plugged']],
+  ['disk-usage', {}, ['disk_usage', '/Volumes/Data']],
+  ['system-info', {}, ['platform.release()', 'os.cpu_count()']],
+  ['process-top', {}, ['process_iter', 'memory_info']],
+  ['media-info', { file: '/m.mp4' }, ['ffprobe', '"-show_streams"']],
+  ['bigfile-topn', { dir: '/data', top: 5 }, ['rglob("*")', 'files[:5]']],
+  ['dup-finder', { dir: '/data' }, ['md5', 'len(paths) > 1']],
+  ['empty-dir', { dir: '/data' }, ['空目录', 'not any(p.iterdir())']],
+  ['dir-size', { dir: '/data' }, ['tree_size', 'entries.sort']],
+  ['quick-find', { dir: '/data', pattern: 'report.*xlsx' }, ["re.compile(r'''report.*xlsx'''", 'pat.search']],
+  ['tree-print', { dir: '/data', depth: 2 }, ['IGNORE', 'walk(']],
+  ['todo-scan', { dir: '/code' }, ['TODO|FIXME|HACK', 'exts']],
+  ['secret-scan', { dir: '/code' }, ['api[_-]?key', '***']],
+  ['loc-stats', { dir: '/code' }, ['startswith', '代码行']],
+  ['csv-column-stats', { file: '/t.csv', column: 'age' }, ['DictReader', '均值']],
+  ['log-level-stats', { file: '/a.log' }, ['TRACE|DEBUG|INFO', 'most_common']],
+  ['git-branches', { dir: '/repo' }, ['rev-parse', '--abbrev-ref']],
+  ['git-commits', { dir: '/repo' }, ['--numstat', '%an']],
+  ['table-diff', { oldFile: '/o.xlsx', newFile: '/n.xlsx', keyCol: '工号' }, ['sheet_rows', '"工号"', 'added']],
+  ['sheet-split', { file: '/w.xlsx' }, ['sheetnames', 'max_row']],
+  ['dedup-merge', { fileA: '/a.xlsx', fileB: '/b.xlsx', keyCol: '工号' }, ['A 覆盖 B', '唯一记录']],
+  ['batch-rename', { dir: '/f', prefix: 'pic', apply: false }, ['预览模式', 'plan =']],
+  ['file-classify', { dir: '/f', apply: true }, ['shutil.move', '已归类']],
+  ['sqlite-export', { db: '/d.sqlite', table: 'orders' }, ['sqlite3.connect', 'SELECT * FROM']],
+  ['video-compress', { file: '/v.mp4', crf: 24, preset: 'slow' }, ['libx264', '"-crf", "24"', '"slow"']],
+  ['video-convert', { file: '/v.mp4', format: 'webm' }, ['libvpx-vp9', 'converted.webm']],
+  ['video-merge', { dir: '/vids' }, ['concat', 'parts.txt']],
+  ['video-to-gif', { file: '/v.mp4', start: 1, dur: 4, fps: 10, width: 320 }, ['palettegen', 'fps=10']],
+  ['video-shot', { file: '/v.mp4', at: 5 }, ['-frames:v', '1', 'shot.png']],
+  ['remove-audio', { file: '/v.mp4' }, ['-an', 'muted.mp4']],
+  ['av-trim', { file: '/v.mp4', start: 2, dur: 15 }, ['-ss', '-c', 'copy']],
+  ['volume-adjust', { file: '/v.mp4', vol: 2 }, ['volume=', 'adjusted.mp4']],
+  ['extract-audio', { file: '/v.mp4' }, ['-vn', 'libmp3lame']],
+  ['audio-compress', { file: '/a.wav', format: 'mp3', bitrate: 192 }, ['libmp3lame', '"192k"']],
+  ['batch-transcode', { dir: '/vids', crf: 28 }, ['transcoded_', '成功/总数', '<<<JSON>>>']]
+]
+
+describe('W8-W11 四十工具 pyCode ↔ 关键片段', () => {
+  it.each(FRAGMENTS.map(([id, values, frags]) => [id, values, frags] as const))('%s', (id, values, frags) => {
+    const schema = dev(`interactive:${id}`)!
+    expect(schema, id).toBeTruthy()
+    expect(schema.computeVia, id).toBe('sidecar')
+    const code = schema.pyCode!(values)
+    for (const f of frags) expect(code, `${id} 应含 ${f}`).toContain(f)
+    // 统一契约：结果 JSON 标记
+    expect(code, `${id} 应含结果标记`).toContain('<<<JSON>>>')
+    expect(code, `${id} 应含结束标记`).toContain('<<<END>>>')
+  })
+  it('向导六件都声明 steps；速查本地件声明 quickRun', () => {
+    expect(dev('interactive:table-diff')!.steps).toHaveLength(2)
+    expect(dev('interactive:sqlite-export')!.steps).toHaveLength(2)
+    expect(dev('interactive:battery')!.quickRun).toBe(true)
+    expect(dev('interactive:speed-test')!.quickRun).toBeUndefined()
+    expect(dev('interactive:video-compress')!.quickRun).toBeUndefined()
   })
 })

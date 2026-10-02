@@ -790,6 +790,167 @@ def test_contact_sheet_real_execution(tmp_path):
         assert im.size == (2 * 120, 3 * 120)  # 5 张 / 2 列 → 3 行
 
 
+# ---------------------------------------------------------------------------
+# W8-W11：sidecar 计算型真实执行测试（代表五件；脚本与 TS pyCode 逐字同构）
+# ---------------------------------------------------------------------------
+BIGFILE_TPL = """import json
+from pathlib import Path
+
+def human(n):
+    for unit in ("B", "KB", "MB", "GB", "TB"):
+        if n < 1024:
+            return f"{{n:.1f}}{{unit}}"
+        n /= 1024
+    return f"{{n:.1f}}PB"
+
+files = [(f.stat().st_size, f) for f in Path({src!r}).rglob("*") if f.is_file()]
+files.sort(reverse=True)
+print("<<<JSON>>>")
+print(json.dumps({{"table": {{"columns": ["体积", "路径"], "rows": [[human(s), str(p)] for s, p in files[:{top}]]}}}}, ensure_ascii=False))
+print("<<<END>>>")
+"""
+
+LOC_TPL = """import json
+from pathlib import Path
+
+stats = {{}}
+for f in Path({src!r}).rglob("*"):
+    if not f.is_file() or f.suffix not in {{".py", ".ts", ".js", ".vue", ".md", ".go"}}:
+        continue
+    code = comment = blank = 0
+    for ln in f.read_text(encoding="utf-8", errors="ignore").splitlines():
+        s = ln.strip()
+        if not s:
+            blank += 1
+        elif s.startswith(("#", "//")):
+            comment += 1
+        else:
+            code += 1
+    acc = stats.setdefault(f.suffix, [0, 0, 0, 0])
+    acc[0], acc[1], acc[2] = acc[0] + code, acc[1] + comment, acc[2] + blank
+    acc[3] += 1
+rows = [[ext, str(v[3]), str(v[0]), str(v[1]), str(v[2])] for ext, v in sorted(stats.items(), key=lambda kv: -kv[1][0])]
+print("<<<JSON>>>")
+print(json.dumps({{"table": {{"columns": ["扩展名", "文件数", "代码行", "注释行", "空行"], "rows": rows}}}}, ensure_ascii=False))
+print("<<<END>>>")
+"""
+
+CSV_STATS_TPL = """import csv
+import json
+
+vals = []
+with open({src!r}, newline="", encoding="utf-8-sig") as f:
+    reader = csv.DictReader(f)
+    for row in reader:
+        try:
+            vals.append(float(row[{col!r}]))
+        except (KeyError, TypeError, ValueError):
+            continue
+vals.sort()
+mean = sum(vals) / len(vals)
+_r = {{
+    "primary": {{"value": f"{{mean:.4g}}", "unit": "均值"}},
+    "rows": [
+        {{"label": "计数", "value": str(len(vals))}},
+        {{"label": "最小 / 最大", "value": f"{{vals[0]:.4g}} / {{vals[-1]:.4g}}"}},
+    ],
+}}
+print("<<<JSON>>>")
+print(json.dumps(_r, ensure_ascii=False))
+print("<<<END>>>")
+"""
+
+TABLE_DIFF_TPL = """import json
+
+from openpyxl import load_workbook
+
+def sheet_rows(path, sheet=None):
+    wb = load_workbook(path, read_only=True, data_only=True)
+    ws = wb[sheet] if sheet else wb.active
+    rows = [[("" if c is None else c) for c in row] for row in ws.iter_rows(values_only=True)]
+    wb.close()
+    return rows
+
+def to_dict(rows):
+    head = rows[0]
+    ki = head.index({key!r})
+    return {{r[ki]: r for r in rows[1:]}}
+
+old = to_dict(sheet_rows({old!r}))
+new = to_dict(sheet_rows({new!r}))
+added = [new[k] for k in new if k not in old]
+removed = [old[k] for k in old if k not in new]
+print("<<<JSON>>>")
+print(json.dumps({{"primary": {{"value": str(len(added)), "unit": "新增 / " + str(len(removed)) + " 移除"}}}}, ensure_ascii=False))
+print("<<<END>>>")
+"""
+
+
+def _parse_sidecar(stdout: str) -> dict:
+    start = stdout.index("<<<JSON>>>") + len("<<<JSON>>>")
+    end = stdout.index("<<<END>>>")
+    return json.loads(stdout[start:end].strip())
+
+
+def test_bigfile_topn_real_execution(tmp_path):
+    d = tmp_path / "data"
+    d.mkdir()
+    (d / "big.bin").write_bytes(b"x" * 50000)
+    (d / "small.bin").write_bytes(b"y" * 500)
+    script = tmp_path / "run.py"
+    script.write_text(BIGFILE_TPL.format(src=str(d), top=5), encoding="utf-8")
+    r = subprocess.run([sys.executable, str(script)], capture_output=True, text=True, timeout=60)
+    assert r.returncode == 0, r.stderr
+    parsed = _parse_sidecar(r.stdout)
+    rows = parsed["table"]["rows"]
+    assert rows[0][0].startswith("48.8K") and rows[0][1].endswith("big.bin")
+
+
+def test_loc_stats_real_execution(tmp_path):
+    d = tmp_path / "code"
+    d.mkdir()
+    (d / "a.py").write_text("# 注释\nprint(1)\n\nprint(2)\n", encoding="utf-8")
+    script = tmp_path / "run.py"
+    script.write_text(LOC_TPL.format(src=str(d)), encoding="utf-8")
+    r = subprocess.run([sys.executable, str(script)], capture_output=True, text=True, timeout=60)
+    assert r.returncode == 0, r.stderr
+    rows = _parse_sidecar(r.stdout)["table"]["rows"]
+    assert rows[0] == [".py", "1", "2", "1", "1"]
+
+
+def test_csv_column_stats_real_execution(tmp_path):
+    src = tmp_path / "t.csv"
+    src.write_text("name,age\n张三,30\nlisi,20\n", encoding="utf-8")
+    script = tmp_path / "run.py"
+    script.write_text(CSV_STATS_TPL.format(src=str(src), col="age"), encoding="utf-8")
+    r = subprocess.run([sys.executable, str(script)], capture_output=True, text=True, timeout=60)
+    assert r.returncode == 0, r.stderr
+    parsed = _parse_sidecar(r.stdout)
+    assert parsed["primary"]["value"] == "25"
+    assert parsed["rows"][0] == {"label": "计数", "value": "2"}
+
+
+def test_table_diff_wizard_real_execution(tmp_path):
+    openpyxl = pytest.importorskip("openpyxl")
+    from openpyxl import Workbook
+
+    old = tmp_path / "old.xlsx"
+    new = tmp_path / "new.xlsx"
+    wb = Workbook()
+    wb.active.append(["工号", "姓名"])
+    wb.active.append(["E001", "张三"])
+    wb.save(old)
+    wb2 = Workbook()
+    wb2.active.append(["工号", "姓名"])
+    wb2.active.append(["E002", "李四"])
+    wb2.save(new)
+    script = tmp_path / "run.py"
+    script.write_text(TABLE_DIFF_TPL.format(old=str(old), new=str(new), key="工号"), encoding="utf-8")
+    r = subprocess.run([sys.executable, str(script)], capture_output=True, text=True, timeout=60)
+    assert r.returncode == 0, r.stderr
+    assert _parse_sidecar(r.stdout)["primary"]["value"] == "1"
+
+
 def test_golden_has_all_sections():
     data = _load()
     assert len(data["temp"]) == 7
