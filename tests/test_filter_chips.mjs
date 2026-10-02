@@ -60,24 +60,15 @@ console.log('buildFilterChips')
   )
 }
 
-// 3b. 分区（侧栏二级菜单范围）→ 单个置首芯片
+// 3b. 分区（侧栏二级菜单范围）不再生成芯片——分区是导航语境，
+// 页头标题/侧栏高亮已表达，再以可移除芯片复述是同一信息第三遍（2026-10-02 去冗）
 {
-  const chips = buildFilterChips({ sections: ['tag:basics'] })
-  check('section → 分区展示名', labels(chips).join() === '语言基础')
-  check('section 芯片 value = 分区 key', chips[0].key === 'section' && chips[0].value === 'tag:basics')
+  check('sections 不产生芯片', buildFilterChips({ sections: ['tag:basics'] }).length === 0)
+  check('others / 未知分区同样不产生芯片', buildFilterChips({ sections: ['others', 'no-such-key'] }).length === 0)
 
-  const others = buildFilterChips({ sections: ['others'] })
-  check('others 分区同样可成芯片（只能用该维度表达）', labels(others).join() === '其他示例')
-
-  // 未知分区 key 回退中性文案，不露空白
-  const unknown = buildFilterChips({ sections: ['no-such-key'] })
-  check('未知分区 key 回退「分区」', labels(unknown).join() === '分区')
-
-  check('空 sections 数组不产生芯片', buildFilterChips({ sections: [] }).length === 0)
-
-  // 分区芯片置首、其余维度叠加在后
+  // 其余维度照常叠加
   const combined = buildFilterChips({ sections: ['projects'], favOnly: true, theme: 'viz' })
-  check('分区芯片置首且与其它维度共存', labels(combined).join() === '综合项目,我的收藏,数据可视化')
+  check('分区语境下其余维度芯片照常', labels(combined).join() === '我的收藏,数据可视化')
 }
 
 // 4. 组合查询 → 顺序稳定（fav → runStatus → runnable → theme → quality → tags → q）

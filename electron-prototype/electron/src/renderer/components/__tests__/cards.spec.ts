@@ -393,45 +393,20 @@ describe('ExampleListItem', () => {
 // BrowseToolbar
 // ---------------------------------------------------------------------------
 describe('BrowseToolbar', () => {
-  // 范围标题 span 是唯一「有 title 属性且带 font-medium 的 span」，
-  // 用类名数组精确匹配（不写 CSS 转义）比按结构取 nth-child 稳。
-  function scopeTitle(): string {
-    const w = mount(BrowseToolbar)
-    const el = w
-      .findAll('span')
-      .find((s) => s.classes().includes('font-medium') && s.attributes('title') !== undefined)!
-    return el.text()
-  }
-
-  it('范围标题优先级：分区 > 主题 > 全部示例', () => {
-    expect(scopeTitle()).toBe('全部示例')
-
-    activeTheme.value = 'turtle'
-    expect(scopeTitle()).toBe('Turtle 绘图')
-
-    // 分区（侧栏二级菜单）标题优先于主题 facet
-    activeTheme.value = 'all'
-    activeSectionKey.value = 'tag:basics'
-    expect(scopeTitle()).toBe('语言基础')
-
-    activeTheme.value = 'viz'
-    activeSectionKey.value = 'projects'
-    expect(scopeTitle()).toBe('综合项目')
-
-    // 分区 key 认不出来时回退到主题 / 全部示例，不露空白标题
-    activeSectionKey.value = 'no-such-key'
-    activeTheme.value = 'all'
-    expect(scopeTitle()).toBe('全部示例')
-  })
-
-  it('结果计数取 filtered.length（tools 不进画廊池）并带 aria-live', () => {
+  it('结果计数只在有筛选/搜索时出现（纯分区浏览与页头统计重复），取 filtered.length（tools 不进画廊池）', async () => {
     examples.value = [makeExample({ id: 'a' }), makeExample({ id: 'b', category: 'tools' })]
+    favorites.value = new Set(['a'])
     const w = mount(BrowseToolbar)
+    // 无任何筛选：无芯片行、无计数（页头已表达范围与数量）
+    expect(w.find('[aria-live="polite"]').exists()).toBe(false)
+
+    favOnly.value = true
+    await nextTick()
     const count = w.get('[aria-live="polite"]')
     expect(count.text()).toBe('1 个结果')
   })
 
-  it('无筛选时渲染占位区，不渲染芯片区与「清空」', () => {
+  it('无筛选时不渲染芯片区与「清空」', () => {
     const w = mount(BrowseToolbar)
     expect(w.find('.overflow-x-auto').exists()).toBe(false)
     expect(w.text()).not.toContain('清空')
@@ -453,15 +428,17 @@ describe('BrowseToolbar', () => {
     expect(activeTheme.value).toBe('all')
   })
 
-  it('「清空」复位全部筛选（含收藏开关）', async () => {
+  it('「清空」复位全部筛选（含收藏开关），但保留分区——分区是导航不是筛选', async () => {
     favOnly.value = true
     activeTheme.value = 'turtle'
+    activeSectionKey.value = 'pygame'
     const w = mount(BrowseToolbar)
 
     const clear = w.findAll('button').find((b) => b.text() === '清空')!
     await clear.trigger('click')
     expect(favOnly.value).toBe(false)
     expect(activeTheme.value).toBe('all')
+    expect(activeSectionKey.value).toBe('pygame')
     expect(w.find('.overflow-x-auto').exists()).toBe(false)
   })
 
@@ -497,13 +474,6 @@ describe('BrowseToolbar', () => {
       'viewPrefs',
       expect.objectContaining({ viewMode: 'list' })
     )
-  })
-
-  it('面包屑「示例库」把分区范围归零（回到全部示例）', async () => {
-    activeSectionKey.value = 'projects'
-    const w = mount(BrowseToolbar)
-    await w.get('button[title="全部示例"]').trigger('click')
-    expect(activeSectionKey.value).toBeNull()
   })
 
   it('筛选维度收成工具栏下拉：5 个维度 + 排序（旧「筛选」按钮与浮层已退役）', () => {
@@ -564,9 +534,13 @@ describe('GalleryHeader', () => {
     expect(w.findAll('.stat-chip')[3].text()).toBe('1 收藏')
   })
 
-  it('页头入口：浏览全部范围归零；我的收藏额外打开 favOnly（并清掉分区范围）', async () => {
+  it('页头入口：全局态只有「我的收藏」（浏览全是死按钮不渲染）；分区态经浏览全部退出', async () => {
+    const global = mount(GalleryHeader)
+    expect(global.findAll('button').some((b) => b.text() === '浏览全部')).toBe(false)
+
     activeSectionKey.value = 'projects'
     const w = mount(GalleryHeader)
+    expect(w.findAll('button').some((b) => b.text() === '浏览全部')).toBe(true)
 
     await w
       .findAll('button')

@@ -525,9 +525,7 @@ describe('画廊工具栏筛选下拉', () => {
     activeTheme.value = 'turtle'
     activeSectionKey.value = 'tag:basics'
     const w = mount(BrowseToolbar)
-    // 结果条标题取分区（范围）优先
-    const titleEl = w.findAll('span').find((s) => s.classes().includes('font-medium') && s.attributes('title'))!
-    expect(titleEl.text()).toBe('语言基础')
+    // 范围语义由页头标题表达（GalleryHeader），工具栏只管筛选维度
     // 主题下拉仍保留选中值——两维叠加，未互相清空
     expect(trigger(w, 'filter-theme').text()).toContain('Turtle 绘图')
     expect(activeSectionKey.value).toBe('tag:basics')

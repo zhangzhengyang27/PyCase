@@ -292,7 +292,6 @@ export function clearFilters(): void {
   activeTags.value = new Set()
   activeTheme.value = 'all'
   minQuality.value = 0
-  activeSectionKey.value = null
   persistViewPrefs()
 }
 
@@ -302,9 +301,6 @@ export const galleryChips = computed<FilterChip[]>(() => buildFilterChips(galler
 /** 移除单个芯片 = 反向应用该维度的默认值（搜索词清输入框，防抖后 applied 随之清空） */
 export function removeChip(chip: FilterChip): void {
   switch (chip.key) {
-    case 'section':
-      activeSectionKey.value = null
-      break
     case 'fav':
       favOnly.value = false
       break
@@ -334,7 +330,8 @@ export function removeChip(chip: FilterChip): void {
   }
 }
 
-/** 清空全部筛选（含收藏开关与两个搜索框）；芯片区「清空」与侧栏共用语义超集 */
+/** 清空全部筛选（含收藏开关与两个搜索框）。「清空」不清分区：分区是导航语境
+ *  （侧栏/页头已表达），退出分区走侧栏「全部示例」或页头「浏览全部」 */
 export function clearAllFilters(): void {
   clearFilters()
   favOnly.value = false

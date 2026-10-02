@@ -55,7 +55,8 @@ const favCount = computed(() => pool.value.filter((e) => favorites.value.has(e.i
         </div>
       </div>
       <div class="app-no-drag flex items-center gap-2 shrink-0">
-        <BaseButton @click="openGallery()">浏览全部</BaseButton>
+        <!-- 浏览全部只在分区语境出现（退出分区入口）；全局态再放「浏览全部」是死按钮 -->
+        <BaseButton v-if="scoped" @click="openGallery()">浏览全部</BaseButton>
         <BaseButton variant="primary" @click="openGallery({ favOnly: true })">我的收藏</BaseButton>
       </div>
     </div>

@@ -9,9 +9,8 @@
 // 契约 §5：列表不带 code，代码命中由 sidecar 按需读文件）。它是画廊唯一的文本检索入口，
 // 筛选下拉只承担维度收窄，不能顶替它。
 import { computed } from 'vue'
-import { ArrowLeft, LayoutGrid, List, Star, X } from 'lucide-vue-next'
+import { LayoutGrid, List, Star, X } from 'lucide-vue-next'
 import { THEMES } from '../src/themes'
-import { sectionLabelOf } from '../src/overview'
 import { QUALITY_OPTIONS, RUN_STATUS_OPTIONS, RUNNABLE_OPTIONS, type RunStatusKey } from '../src/filter-options'
 import type { RunnableFilter } from '../src/filter-engine'
 import {
@@ -28,7 +27,6 @@ import {
   persistViewPrefs,
   removeChip,
   searchQuery,
-  selectSection,
   sortBy,
   viewMode
 } from '../src/store/catalog'
@@ -36,19 +34,6 @@ import { favorites } from '../src/store/prefs'
 import BaseInput from './base/BaseInput.vue'
 import BaseSelectMenu from './base/BaseSelectMenu.vue'
 import TagFilterSelect from './TagFilterSelect.vue'
-
-// 范围标题：分区（侧栏二级菜单）> 主题 facet > 全部示例
-const title = computed(() => {
-  const sec = sectionLabelOf(activeSectionKey.value)
-  if (sec) return sec
-  const theme = THEMES.find((t) => t.key === activeTheme.value)
-  if (theme) return theme.label
-  return '全部示例'
-})
-
-function showAll(): void {
-  selectSection(null)
-}
 
 function setMode(v: 'grid' | 'list'): void {
   viewMode.value = v
@@ -82,21 +67,8 @@ function facetSuffix(has: boolean, n: number | undefined): string {
 
 <template>
   <div class="app-drag select-none shrink-0 bg-panel border-b border-line-subtle">
-    <!-- 行 1：面包屑结果条（specs §4.2） -->
-    <div class="flex items-center gap-1.5 px-4 h-[var(--statusbar-h)] border-b border-line-hairline text-caption">
-      <button
-        class="app-no-drag flex items-center gap-1 h-5 px-1.5 rounded-control border-0 bg-transparent text-caption text-ink-mute hover:text-ink hover:bg-hover cursor-pointer shrink-0 transition-colors dur-fast"
-        title="全部示例"
-        @click="showAll()"
-      >
-        <ArrowLeft :size="12" /> 示例库
-      </button>
-      <span class="text-ink-faint" aria-hidden="true">/</span>
-      <span class="app-no-drag font-medium text-ink-dim truncate" :title="title">{{ title }}</span>
-      <span class="ml-auto text-ink-mute font-mono shrink-0" aria-live="polite">{{ filtered.length }} 个结果</span>
-    </div>
-
-    <!-- 行 2：搜索 + 筛选下拉 + 排序 + 密度（flex-wrap：窄窗换行，不横向溢出） -->
+    <!-- 工具行：搜索 + 筛选下拉 + 排序 + 密度（flex-wrap：窄窗换行，不横向溢出）。
+         不再有面包屑行：分区名由页头标题表达、计数由芯片行承担——同一信息不出现第二遍 -->
     <div
       class="flex flex-wrap items-center gap-x-2 gap-y-1.5 px-4 py-1 min-h-[var(--toolbar-h)]"
       data-testid="browse-toolbar-row"
@@ -230,11 +202,13 @@ function facetSuffix(has: boolean, n: number | undefined): string {
       </div>
     </div>
 
-    <!-- 行 3：生效筛选芯片（可移除 + 清空）；无筛选时整行不渲染 -->
+    <!-- 结果行：计数 + 生效筛选芯片（可移除 + 清空）。仅在有筛选/搜索时渲染——
+         纯分区浏览时计数与页头统计重复，整行退场 -->
     <div
       v-if="galleryChips.length"
       class="app-no-drag flex items-center gap-1.5 px-4 pb-2 overflow-x-auto [scrollbar-width:none]"
     >
+      <span class="shrink-0 text-caption text-ink-mute font-mono" aria-live="polite">{{ filtered.length }} 个结果</span>
       <span
         v-for="chip in galleryChips"
         :key="chip.key + ':' + chip.value"
@@ -252,6 +226,7 @@ function facetSuffix(has: boolean, n: number | undefined): string {
       </span>
       <button
         class="shrink-0 border-0 bg-transparent text-caption text-ink-mute hover:text-ink cursor-pointer whitespace-nowrap"
+        title="清空筛选（不退出当前分区）"
         @click="clearAllFilters()"
       >
         清空
