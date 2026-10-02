@@ -164,8 +164,8 @@ for base in (2, 8, 10, 16):
 // ---------------------------------------------------------------------------
 function shiftText(text: string, k: number): string {
   const sh = (ch: string): string => {
-    if (ch >= 'a' && ch <= 'z') return String.fromCharCode((((ch.charCodeAt(0) - 97 + k) % 26) + 26) % 26 + 97)
-    if (ch >= 'A' && ch <= 'Z') return String.fromCharCode((((ch.charCodeAt(0) - 65 + k) % 26) + 26) % 26 + 65)
+    if (ch >= 'a' && ch <= 'z') return String.fromCharCode(((((ch.charCodeAt(0) - 97 + k) % 26) + 26) % 26) + 97)
+    if (ch >= 'A' && ch <= 'Z') return String.fromCharCode(((((ch.charCodeAt(0) - 65 + k) % 26) + 26) % 26) + 65)
     return ch
   }
   return [...text].map(sh).join('')

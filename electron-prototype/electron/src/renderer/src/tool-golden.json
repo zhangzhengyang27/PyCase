@@ -1,46 +1,134 @@
 {
- "comment": "交互工具双端黄金用例：expected 由 tests/test_tool_golden.py 的 Python 参考实现生成并自校验（防手改漂移），TS 侧 vitest（src/__tests__/tool-golden.spec.ts）断言 tool-schemas.ts 的 compute 输出与同一文件一致。改口径顺序：先改参考实现重算 JSON，再同步 TS。",
- "temp": [
-  {"name": "沸腾点", "value": 100, "from": "C", "to": "F", "precision": "1",
-   "expected": {"primary": "212.0", "rows": {"摄氏 ℃": "100.0", "华氏 ℉": "212.0", "开尔文 K": "373.1"}}},
-  {"name": "华氏摄氏同点", "value": -40, "from": "C", "to": "F", "precision": "1",
-   "expected": {"primary": "-40.0", "rows": {"摄氏 ℃": "-40.0", "华氏 ℉": "-40.0", "开尔文 K": "233.1"}}},
-  {"name": "冰点转开尔文", "value": 0, "from": "C", "to": "K", "precision": "1",
-   "expected": {"primary": "273.1", "rows": {"摄氏 ℃": "0.0", "华氏 ℉": "32.0", "开尔文 K": "273.1"}}},
-  {"name": "开尔文转华氏", "value": 300, "from": "K", "to": "F", "precision": "1",
-   "expected": {"primary": "80.3", "rows": {"摄氏 ℃": "26.9", "华氏 ℉": "80.3", "开尔文 K": "300.0"}}},
-  {"name": "体温两位小数", "value": 36.6, "from": "C", "to": "F", "precision": "2",
-   "expected": {"primary": "97.88", "rows": {"摄氏 ℃": "36.60", "华氏 ℉": "97.88", "开尔文 K": "309.75"}}},
-  {"name": "华氏转摄氏", "value": 98.6, "from": "F", "to": "C", "precision": "1",
-   "expected": {"primary": "37.0", "rows": {"摄氏 ℃": "37.0", "华氏 ℉": "98.6", "开尔文 K": "310.1"}}},
-  {"name": "低于绝对零度报错", "value": -5, "from": "K", "to": "C", "precision": "1",
-   "expected": {"error": "低于绝对零度（K < 0）"}}
- ],
- "base": [
-  {"name": "十进制255", "value": "255", "fromBase": "10",
-   "expected": {"rows": {"base 2": "11111111", "base 8": "377", "base 10": "255", "base 16": "ff"}}},
-  {"name": "十进制1024", "value": "1024", "fromBase": "10",
-   "expected": {"rows": {"base 2": "10000000000", "base 8": "2000", "base 10": "1024", "base 16": "400"}}},
-  {"name": "十六进制输入", "value": "ff", "fromBase": "16",
-   "expected": {"rows": {"base 2": "11111111", "base 8": "377", "base 10": "255", "base 16": "ff"}}},
-  {"name": "大数2的63次方减一", "value": "7fffffffffffffff", "fromBase": "16",
-   "expected": {"rows": {"base 2": "111111111111111111111111111111111111111111111111111111111111111", "base 8": "777777777777777777777", "base 10": "9223372036854775807", "base 16": "7fffffffffffffff"}}},
-  {"name": "三十六进制zz", "value": "zz", "fromBase": "36",
-   "expected": {"rows": {"base 2": "10100001111", "base 8": "2417", "base 10": "1295", "base 16": "50f"}}},
-  {"name": "零", "value": "0", "fromBase": "10",
-   "expected": {"rows": {"base 2": "0", "base 8": "0", "base 10": "0", "base 16": "0"}}},
-  {"name": "负数", "value": "-255", "fromBase": "10",
-   "expected": {"rows": {"base 2": "-11111111", "base 8": "-377", "base 10": "-255", "base 16": "-ff"}}},
-  {"name": "非法字符报错", "value": "129", "fromBase": "2",
-   "expected": {"error": "「2」不是 2 进制的合法字符"}}
- ],
- "caesar": [
-  {"name": "基本移位", "text": "abc", "shift": 3, "mode": "encrypt", "expected": {"primary": "def"}},
-  {"name": "越界回绕与非字母跳过", "text": "xyz XYZ 123!", "shift": 3, "mode": "encrypt", "expected": {"primary": "abc ABC 123!"}},
-  {"name": "ROT13", "text": "Hello, World!", "shift": 13, "mode": "encrypt", "expected": {"primary": "Uryyb, Jbeyq!"}},
-  {"name": "移位超26归一", "text": "abc", "shift": 29, "mode": "encrypt", "expected": {"primary": "def"}},
-  {"name": "负移位", "text": "b", "shift": -1, "mode": "encrypt", "expected": {"primary": "a"}},
-  {"name": "解密模式", "text": "def", "shift": 3, "mode": "decrypt", "expected": {"primary": "abc"}},
-  {"name": "大小写保留", "text": "AbC", "shift": 2, "mode": "encrypt", "expected": {"primary": "CdE"}}
- ]
+  "comment": "交互工具双端黄金用例：expected 由 tests/test_tool_golden.py 的 Python 参考实现生成并自校验（防手改漂移），TS 侧 vitest（src/__tests__/tool-golden.spec.ts）断言 tool-schemas.ts 的 compute 输出与同一文件一致。改口径顺序：先改参考实现重算 JSON，再同步 TS。",
+  "temp": [
+    {
+      "name": "沸腾点",
+      "value": 100,
+      "from": "C",
+      "to": "F",
+      "precision": "1",
+      "expected": { "primary": "212.0", "rows": { "摄氏 ℃": "100.0", "华氏 ℉": "212.0", "开尔文 K": "373.1" } }
+    },
+    {
+      "name": "华氏摄氏同点",
+      "value": -40,
+      "from": "C",
+      "to": "F",
+      "precision": "1",
+      "expected": { "primary": "-40.0", "rows": { "摄氏 ℃": "-40.0", "华氏 ℉": "-40.0", "开尔文 K": "233.1" } }
+    },
+    {
+      "name": "冰点转开尔文",
+      "value": 0,
+      "from": "C",
+      "to": "K",
+      "precision": "1",
+      "expected": { "primary": "273.1", "rows": { "摄氏 ℃": "0.0", "华氏 ℉": "32.0", "开尔文 K": "273.1" } }
+    },
+    {
+      "name": "开尔文转华氏",
+      "value": 300,
+      "from": "K",
+      "to": "F",
+      "precision": "1",
+      "expected": { "primary": "80.3", "rows": { "摄氏 ℃": "26.9", "华氏 ℉": "80.3", "开尔文 K": "300.0" } }
+    },
+    {
+      "name": "体温两位小数",
+      "value": 36.6,
+      "from": "C",
+      "to": "F",
+      "precision": "2",
+      "expected": { "primary": "97.88", "rows": { "摄氏 ℃": "36.60", "华氏 ℉": "97.88", "开尔文 K": "309.75" } }
+    },
+    {
+      "name": "华氏转摄氏",
+      "value": 98.6,
+      "from": "F",
+      "to": "C",
+      "precision": "1",
+      "expected": { "primary": "37.0", "rows": { "摄氏 ℃": "37.0", "华氏 ℉": "98.6", "开尔文 K": "310.1" } }
+    },
+    {
+      "name": "低于绝对零度报错",
+      "value": -5,
+      "from": "K",
+      "to": "C",
+      "precision": "1",
+      "expected": { "error": "低于绝对零度（K < 0）" }
+    }
+  ],
+  "base": [
+    {
+      "name": "十进制255",
+      "value": "255",
+      "fromBase": "10",
+      "expected": { "rows": { "base 2": "11111111", "base 8": "377", "base 10": "255", "base 16": "ff" } }
+    },
+    {
+      "name": "十进制1024",
+      "value": "1024",
+      "fromBase": "10",
+      "expected": { "rows": { "base 2": "10000000000", "base 8": "2000", "base 10": "1024", "base 16": "400" } }
+    },
+    {
+      "name": "十六进制输入",
+      "value": "ff",
+      "fromBase": "16",
+      "expected": { "rows": { "base 2": "11111111", "base 8": "377", "base 10": "255", "base 16": "ff" } }
+    },
+    {
+      "name": "大数2的63次方减一",
+      "value": "7fffffffffffffff",
+      "fromBase": "16",
+      "expected": {
+        "rows": {
+          "base 2": "111111111111111111111111111111111111111111111111111111111111111",
+          "base 8": "777777777777777777777",
+          "base 10": "9223372036854775807",
+          "base 16": "7fffffffffffffff"
+        }
+      }
+    },
+    {
+      "name": "三十六进制zz",
+      "value": "zz",
+      "fromBase": "36",
+      "expected": { "rows": { "base 2": "10100001111", "base 8": "2417", "base 10": "1295", "base 16": "50f" } }
+    },
+    {
+      "name": "零",
+      "value": "0",
+      "fromBase": "10",
+      "expected": { "rows": { "base 2": "0", "base 8": "0", "base 10": "0", "base 16": "0" } }
+    },
+    {
+      "name": "负数",
+      "value": "-255",
+      "fromBase": "10",
+      "expected": { "rows": { "base 2": "-11111111", "base 8": "-377", "base 10": "-255", "base 16": "-ff" } }
+    },
+    { "name": "非法字符报错", "value": "129", "fromBase": "2", "expected": { "error": "「2」不是 2 进制的合法字符" } }
+  ],
+  "caesar": [
+    { "name": "基本移位", "text": "abc", "shift": 3, "mode": "encrypt", "expected": { "primary": "def" } },
+    {
+      "name": "越界回绕与非字母跳过",
+      "text": "xyz XYZ 123!",
+      "shift": 3,
+      "mode": "encrypt",
+      "expected": { "primary": "abc ABC 123!" }
+    },
+    {
+      "name": "ROT13",
+      "text": "Hello, World!",
+      "shift": 13,
+      "mode": "encrypt",
+      "expected": { "primary": "Uryyb, Jbeyq!" }
+    },
+    { "name": "移位超26归一", "text": "abc", "shift": 29, "mode": "encrypt", "expected": { "primary": "def" } },
+    { "name": "负移位", "text": "b", "shift": -1, "mode": "encrypt", "expected": { "primary": "a" } },
+    { "name": "解密模式", "text": "def", "shift": 3, "mode": "decrypt", "expected": { "primary": "abc" } },
+    { "name": "大小写保留", "text": "AbC", "shift": 2, "mode": "encrypt", "expected": { "primary": "CdE" } }
+  ]
 }

@@ -10,7 +10,8 @@ const emit = defineEmits<{ 'update:modelValue': [value: FieldValue] }>()
 
 const INPUT_CLS =
   'px-2 h-8 bg-page border rounded-control text-ink text-control font-mono outline-none transition-[border-color] dur-fast hover:border-line-strong focus:border-accent'
-const SELECT_CLS = 'px-2 h-8 bg-page border border-line rounded-control text-control text-ink outline-none focus:border-accent'
+const SELECT_CLS =
+  'px-2 h-8 bg-page border border-line rounded-control text-control text-ink outline-none focus:border-accent'
 
 const borderCls = computed(() => (props.invalid ? 'border-danger' : 'border-line'))
 const widthCls = computed(() => (props.spec.width === 'half' ? 'min-w-[160px] flex-1' : 'w-full'))
@@ -51,7 +52,10 @@ function onCheckbox(e: Event): void {
       <option v-for="o in spec.options" :key="o.value" :value="o.value">{{ o.label }}</option>
     </select>
 
-    <label v-else-if="spec.type === 'checkbox'" class="flex flex-row items-center gap-2 text-control text-ink cursor-pointer select-none">
+    <label
+      v-else-if="spec.type === 'checkbox'"
+      class="flex flex-row items-center gap-2 text-control text-ink cursor-pointer select-none"
+    >
       <input
         :id="`tf-${spec.key}`"
         type="checkbox"

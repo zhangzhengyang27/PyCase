@@ -12,9 +12,7 @@ import { closeInteractive, toolValueOf } from '../../src/store/interactive'
 import { selectedId } from '../../src/store/detail'
 
 const schema = computed(() => (selectedId.value ? getToolSchema(selectedId.value) : undefined))
-const values = computed(() =>
-  schema.value ? toolValueOf(schema.value.id, schema.value.fields) : {}
-)
+const values = computed(() => (schema.value ? toolValueOf(schema.value.id, schema.value.fields) : {}))
 const result = computed(() => schema.value?.compute?.(values.value))
 const code = computed(() => (schema.value ? schema.value.pyCode(values.value) : '# 工具不存在'))
 
@@ -44,7 +42,11 @@ function isInvalid(key: string): boolean {
       <span class="text-caption text-ink-mute border border-line rounded-control px-2 py-0.5">交互工具</span>
     </div>
 
-    <div v-if="!schema" class="flex-1 flex items-center justify-center text-control text-ink-mute" data-testid="it-ghost">
+    <div
+      v-if="!schema"
+      class="flex-1 flex items-center justify-center text-control text-ink-mute"
+      data-testid="it-ghost"
+    >
       工具不存在或已下线
     </div>
 

@@ -94,10 +94,7 @@ function schemaToCard(s: InteractiveToolSchema): VExample {
 }
 
 /** 工具池门面（响应式）：专属卡 + schema 派生卡；catalog 合并时以 .value 消费 */
-export const interactiveToolItems = computed<VExample[]>(() => [
-  DATE_CARD,
-  ...interactiveToolSchemas.map(schemaToCard)
-])
+export const interactiveToolItems = computed<VExample[]>(() => [DATE_CARD, ...interactiveToolSchemas.map(schemaToCard)])
 
 export function getToolSchema(id: string): InteractiveToolSchema | undefined {
   return interactiveToolSchemas.find((s) => s.id === id)

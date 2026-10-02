@@ -35,7 +35,11 @@ async function copyText(key: string, text: string): Promise<void> {
         <span v-if="result.primary.unit" class="text-control text-ink-mute ml-1.5">{{ result.primary.unit }}</span>
       </div>
 
-      <div v-if="result.rows?.length" class="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-2" data-testid="tool-rows">
+      <div
+        v-if="result.rows?.length"
+        class="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-2"
+        data-testid="tool-rows"
+      >
         <div
           v-for="r in result.rows"
           :key="r.label"
@@ -59,11 +63,14 @@ async function copyText(key: string, text: string): Promise<void> {
         v-if="result.text"
         class="m-0 p-3 surface-card text-control font-mono whitespace-pre-wrap overflow-auto max-h-[320px]"
         data-testid="tool-text"
-        >{{ result.text }}</pre
-      >
+        >{{ result.text }}</pre>
 
       <ul v-if="result.list?.length" class="m-0 pl-0 list-none flex flex-col gap-1" data-testid="tool-list">
-        <li v-for="(item, i) in result.list" :key="`${i}-${item}`" class="flex items-center gap-2 surface-card px-3 py-1.5">
+        <li
+          v-for="(item, i) in result.list"
+          :key="`${i}-${item}`"
+          class="flex items-center gap-2 surface-card px-3 py-1.5"
+        >
           <span class="text-control font-mono text-ink flex-1 truncate">{{ item }}</span>
           <button
             class="border-0 bg-transparent text-ink-faint hover:text-accent cursor-pointer shrink-0"
