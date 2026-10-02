@@ -1171,7 +1171,8 @@ print("连通分量数:", len({find(i) for i in range({{n}})}))''',
          for p in range(3)])
 
     # ---------------- 工具 ----------------
-    # tools-temp-converter / tools-base-convert / tools-caesar 已退役（2026-10-02，W1）：
+    # tools-temp-converter / tools-base-convert / tools-caesar（W1）与
+    # tools-text-wrap / tools-palindrome / tools-date-calendar（W2）已退役（2026-10-02）：
     # 12 个静态变体升级为工具箱 schema 驱动交互工具（renderer/src/tool-schemas.ts）。
 
     add("tools-qr-matrix", "字符方阵", "按规则生成字符方阵（可视图案）。",
@@ -1275,58 +1276,6 @@ def build_basics_extra():
             code = bake(body_fn(pv), **pv)
             ex_id = f"{category}_{pid}-x{i + 1}"
             coll.add(ex_id, f"{pid}_x{i + 1}.py", title, f"{desc}本变体：{pname}。", list(tags), reqs or [], code, category)
-
-    add("tools-text-wrap", "文本折行", "按宽度折行文本（greedy 填充）。",
-        ["工具", "文本"], category="tools",
-        body_fn=lambda p: '''"""文本折行：宽度 {{width}} 列。"""
-text = "{{text}}"
-width = {{width}}
-lines, cur = [], ""
-for word in text.split():
-    if len(cur) + len(word) + 1 > width and cur:
-        lines.append(cur)
-        cur = word
-    else:
-        cur = (cur + " " + word).strip()
-if cur:
-    lines.append(cur)
-for ln in lines:
-    print(ln)
-print(f"共 {len(lines)} 行")''',
-        variants=[dict(vname=f"W{w}", width=w, text="the quick brown fox jumps over the lazy dog "
-                       "and python makes text processing delightfully simple for everyone")
-                  for w in (20, 28, 36, 44, 52)])
-
-    add("tools-palindrome", "回文判定", "双指针回文检测（忽略大小写与标点）。",
-        ["工具", "双指针"], category="tools",
-        body_fn=lambda p: '''"""回文判定：'{s}'。"""
-def is_palindrome(t):
-    t = "".join(ch.lower() for ch in t if ch.isalnum())
-    i, j = 0, len(t) - 1
-    while i < j:
-        if t[i] != t[j]:
-            return False
-        i += 1
-        j -= 1
-    return True
-
-samples = {{samples}}
-for s in samples:
-    print(f"{s!r:>30} -> {is_palindrome(s)}")''',
-        variants=[dict(vname=f"组{g}", samples=samples) for g, samples in enumerate([
-            ["上海自来水来自海上", "A man, a plan, a canal: Panama", "hello"],
-            ["level", "Python", "Was it a car or a cat I saw?"],
-            ["12321", "no 'x' in nixon", "almostomla"],
-        ])])
-
-    add("tools-date-calendar", "月历打印", "calendar 模块打印指定月份。",
-        ["工具", "日期"], category="tools",
-        body_fn=lambda p: '''"""月历：{{y}} 年 {{m}} 月。"""
-import calendar
-print(calendar.month({{y}}, {{m}}))
-print("该月天数:", calendar.monthrange({{y}}, {{m}})[1])''',
-        variants=[dict(vname=f"{y}-{m:02d}", y=y, m=m) for y, m in
-                  [(2026, 1), (2026, 6), (2026, 9), (2026, 12), (2027, 2), (2028, 2)]])
 
     add("algo-collatz", "考拉兹猜想", "3n+1 序列步数统计。",
         ["算法", "数学"],
