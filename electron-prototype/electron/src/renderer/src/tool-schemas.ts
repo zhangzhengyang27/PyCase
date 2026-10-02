@@ -235,3 +235,130 @@ print("回验:", caesar(result, ${-k}))
 }
 
 export const TOOL_SCHEMAS: InteractiveToolSchema[] = [tempConvertSchema, baseConvertSchema, caesarCipherSchema]
+
+// ---------------------------------------------------------------------------
+// 文本折行（吸收 bulk_basics 文本折行 ×5 变体；greedy 按词填充口径 = 变体代码同款）
+// 口径：任意空白切词、单词内长度按 Unicode 码点计、超长词整词溢出不硬切、
+//       词间以单空格连接。与 tests/test_tool_golden.py 的 ref_wrap 同构。
+// ---------------------------------------------------------------------------
+function greedyWrap(text: string, width: number): string[] {
+  const lines: string[] = []
+  let cur = ''
+  for (const word of text.split(/\s+/).filter(Boolean)) {
+    if ([...cur].length + [...word].length + 1 > width && cur) {
+      lines.push(cur)
+      cur = word
+    } else {
+      cur = (cur + ' ' + word).trim()
+    }
+  }
+  if (cur) lines.push(cur)
+  return lines
+}
+
+export const textWrapSchema: InteractiveToolSchema = {
+  id: 'interactive:text-wrap',
+  title: '文本折行',
+  description: '按列宽 greedy 填充折行：任意空白切词、按 Unicode 码点计宽、超长词整词溢出不硬切。',
+  tags: ['文本'],
+  fields: [
+    { key: 'text', label: '文本', type: 'textarea', required: true, placeholder: '粘贴要折行的文本…' },
+    { key: 'width', label: '列宽', type: 'number', default: 28, width: 'half', help: '按字符数计（非显示宽度）' }
+  ],
+  compute: (v) => {
+    const text = String(v.text ?? '')
+    if (!text.trim()) return { error: '请输入文本' }
+    const raw = Math.trunc(Number(v.width))
+    if (!Number.isFinite(raw) || raw < 1) return { error: '列宽需为 ≥1 的整数' }
+    const lines = greedyWrap(text, raw)
+    return { primary: { value: String(lines.length), unit: '行' }, text: lines.join('\n') }
+  },
+  pyCode: (v) => {
+    const text = String(v.text ?? '')
+    const width = Math.trunc(Number(v.width))
+    if (!text.trim() || !Number.isFinite(width) || width < 1) return INVALID_CODE
+    return `"""文本折行：宽度 ${width} 列。"""
+text = ${JSON.stringify(text)}
+width = ${width}
+lines, cur = [], ""
+for word in text.split():
+    if len(cur) + len(word) + 1 > width and cur:
+        lines.append(cur)
+        cur = word
+    else:
+        cur = (cur + " " + word).strip()
+if cur:
+    lines.append(cur)
+for ln in lines:
+    print(ln)
+print(f"共 {len(lines)} 行")
+`
+  }
+}
+
+// ---------------------------------------------------------------------------
+// 回文判定（吸收 bulk_basics 回文判定 ×3 变体；口径 = Python isalnum 归一 + 双指针）
+// isalnum 的 Unicode 语义：汉字/全角数字都算「字母数字」，与 \p{L}\p{N} 对齐。
+// ---------------------------------------------------------------------------
+function normalizePalindrome(s: string): string[] {
+  return [...s.toLowerCase()].filter((ch) => /[\p{L}\p{N}]/u.test(ch))
+}
+
+export const palindromeSchema: InteractiveToolSchema = {
+  id: 'interactive:palindrome',
+  title: '回文判定',
+  description: '双指针回文检测：忽略大小写、标点与空白（Unicode 字母数字归一），给出归一化文本与首处差异。',
+  tags: ['双指针'],
+  fields: [{ key: 'text', label: '文本', type: 'textarea', required: true, placeholder: 'A man, a plan, a canal: Panama' }],
+  compute: (v) => {
+    const raw = String(v.text ?? '')
+    if (!raw.trim()) return { error: '请输入文本' }
+    const t = normalizePalindrome(raw)
+    let i = 0
+    let j = t.length - 1
+    while (i < j) {
+      if (t[i] !== t[j]) {
+        return {
+          primary: { value: '不是回文' },
+          rows: [
+            { label: '归一化后', value: t.join(''), copy: true },
+            { label: '有效字符', value: String(t.length) },
+            { label: '首处差异', value: `第 ${i} 位 '${t[i]}' ≠ '${t[j]}'` }
+          ]
+        }
+      }
+      i += 1
+      j -= 1
+    }
+    return {
+      primary: { value: '是回文' },
+      rows: [
+        { label: '归一化后', value: t.join('') || '（空）', copy: true },
+        { label: '有效字符', value: String(t.length) }
+      ]
+    }
+  },
+  pyCode: (v) => {
+    const raw = String(v.text ?? '')
+    if (!raw.trim()) return INVALID_CODE
+    return `"""回文判定（isalnum 归一 + 双指针）。"""
+def is_palindrome(t):
+    t = "".join(ch.lower() for ch in t if ch.isalnum())
+    i, j = 0, len(t) - 1
+    while i < j:
+        if t[i] != t[j]:
+            return False
+        i += 1
+        j -= 1
+    return True
+
+s = ${JSON.stringify(raw)}
+norm = "".join(ch.lower() for ch in s if ch.isalnum())
+print("归一化:", norm or "（空）")
+print("判定:", "是回文" if is_palindrome(s) else "不是回文")
+`
+  }
+}
+
+// W2 追加注册：追加到 TOOL_SCHEMAS 尾部
+TOOL_SCHEMAS.push(textWrapSchema, palindromeSchema)

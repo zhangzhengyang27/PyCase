@@ -93,8 +93,47 @@ def test_caesar_cases_match_reference():
         assert got == c["expected"], f"{c['name']}: {got} != {c['expected']}"
 
 
+def ref_wrap(text: str, width: int) -> dict:
+    # greedy 按词填充（与变体生成代码同款口径；len 按 Unicode 码点）
+    lines, cur = [], ""
+    for word in text.split():
+        if len(cur) + len(word) + 1 > width and cur:
+            lines.append(cur)
+            cur = word
+        else:
+            cur = (cur + " " + word).strip()
+    if cur:
+        lines.append(cur)
+    return {"primary": str(len(lines)), "text": "\n".join(lines)}
+
+
+def ref_pal(s: str) -> dict:
+    t = "".join(ch.lower() for ch in s if ch.isalnum())
+    i, j = 0, len(t) - 1
+    while i < j:
+        if t[i] != t[j]:
+            return {"primary": "不是回文", "norm": t, "mismatch": [i, t[i], t[j]]}
+        i += 1
+        j -= 1
+    return {"primary": "是回文", "norm": t}
+
+
+def test_wrap_cases_match_reference():
+    for c in _load()["wrap"]:
+        got = ref_wrap(c["text"], int(c["width"]))
+        assert got == c["expected"], f"{c['name']}: {got} != {c['expected']}"
+
+
+def test_palindrome_cases_match_reference():
+    for c in _load()["palindrome"]:
+        got = ref_pal(c["text"])
+        assert got == c["expected"], f"{c['name']}: {got} != {c['expected']}"
+
+
 def test_golden_has_all_sections():
     data = _load()
     assert len(data["temp"]) == 7
     assert len(data["base"]) == 8
     assert len(data["caesar"]) == 7
+    assert len(data["wrap"]) == 6
+    assert len(data["palindrome"]) == 8
