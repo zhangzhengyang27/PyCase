@@ -347,6 +347,173 @@ def test_uuid_format_specs_present():
     assert "uuid4_pattern" in u and "short_pattern" in u
 
 
+# ---------------------------------------------------------------------------
+# W4：JWT / .env / TOC / gitignore / 规范化 / 查找替换（随机型 pwdgen 只验常量在位）
+# ---------------------------------------------------------------------------
+import base64 as _b64
+
+
+def ref_jwt(tok: str) -> dict:
+    h, p, sig = tok.split(".")
+    pad = lambda s: s + "=" * (-len(s) % 4)
+    hh = json.loads(_b64.urlsafe_b64decode(pad(h)))
+    pp = json.loads(_b64.urlsafe_b64decode(pad(p)))
+    exp_s = (
+        dt.datetime.fromtimestamp(pp["exp"], tz=dt.timezone.utc).strftime("%Y-%m-%d %H:%M:%S") + " UTC"
+        if "exp" in pp
+        else None
+    )
+    iat_s = (
+        dt.datetime.fromtimestamp(pp["iat"], tz=dt.timezone.utc).strftime("%Y-%m-%d %H:%M:%S") + " UTC"
+        if "iat" in pp
+        else None
+    )
+    return {
+        "header": json.dumps(hh, ensure_ascii=False, indent=2),
+        "payload": json.dumps(pp, ensure_ascii=False, indent=2),
+        "alg": hh.get("alg"),
+        "exp": exp_s,
+        "iat": iat_s,
+        "siglen": len(sig),
+    }
+
+
+def ref_env(env_t: str, ex_t: str) -> dict:
+    def parse(t):
+        keys, empty = [], []
+        for ln in t.splitlines():
+            s = ln.strip()
+            if not s or s.startswith("#") or "=" not in s:
+                continue
+            k, _, v = s.partition("=")
+            k = k.strip()
+            if not k:
+                continue
+            keys.append(k)
+            if not v.strip():
+                empty.append(k)
+        return keys, empty
+
+    ek, ee = parse(env_t)
+    xk, _ = parse(ex_t)
+    return {
+        "missing": [k for k in xk if k not in ek],
+        "extra": [k for k in ek if k not in xk],
+        "empty": ee,
+    }
+
+
+def ref_toc(text: str, lo: int, hi: int) -> dict:
+    def anchor(t):
+        t = t.strip().lower()
+        keep = [ch for ch in t if ch.isalnum() or ch in " -_"]
+        return "".join(keep).replace(" ", "-")
+
+    items, fence, counts = [], False, {}
+    for ln in text.splitlines():
+        if ln.strip().startswith("```"):
+            fence = not fence
+            continue
+        if fence:
+            continue
+        m = _re.match(r"^(#{1,6})\s+(.+?)\s*$", ln)
+        if not m:
+            continue
+        lvl, title = len(m.group(1)), m.group(2).strip()
+        if lvl < lo or lvl > hi:
+            continue
+        a = anchor(title)
+        n = counts.get(a, 0)
+        counts[a] = n + 1
+        if n:
+            a = f"{a}-{n}"
+        items.append("  " * (lvl - lo) + f"- [{title}](#{a})")
+    return {"text": "\n".join(items) or "（未发现标题）", "count": str(len(items))}
+
+
+def ref_norm(text: str, ending: str, mode: str) -> dict:
+    t = _re.sub(r"\r\n?", "\n", text)
+    res = []
+    for ln in t.split("\n"):
+        if mode in ("tab2", "tab4"):
+            m = _re.match(r"^(\t+)", ln)
+            if m:
+                w = "  " if mode == "tab2" else "    "
+                ln = m.group(1).replace("\t", w) + ln[len(m.group(1)):]
+        elif mode == "space4tab":
+            m = _re.match(r"^( +)", ln)
+            if m:
+                n = len(m.group(1))
+                ln = "\t" * (n // 4) + " " * (n % 4) + ln[n:]
+        res.append(ln)
+    eol = {"LF": "\n", "CRLF": "\r\n", "CR": "\r"}[ending]
+    return {"text": eol.join(res)}
+
+
+def ref_replace(text: str, find: str, repl: str, is_regex: bool, ignore_case: bool) -> dict:
+    if is_regex:
+        try:
+            new, n = _re.subn(find, repl.replace("\\", "\\\\"), text, flags=_re.I if ignore_case else 0)
+        except _re.error:
+            return {"error": True}
+        return {"count": str(n), "text": new}
+    pat = _re.escape(find)
+    n = len(_re.findall(pat, text, _re.I if ignore_case else 0))
+    if ignore_case:
+        new = _re.sub(pat, repl.replace("\\", "\\\\"), text, flags=_re.I)
+    else:
+        new = text.replace(find, repl)
+    return {"count": str(n), "text": new}
+
+
+def test_jwt_cases_match_reference():
+    for c in _load()["jwt"]:
+        if "error" in c["expected"]:
+            continue
+        got = ref_jwt(c["token"])
+        for k, v in got.items():
+            assert c["expected"][k] == v, f"{c['name']}[{k}]: {v} != {c['expected'][k]}"
+
+
+def test_env_cases_match_reference():
+    for c in _load()["env"]:
+        if "error" in c["expected"]:
+            continue
+        assert ref_env(c["env"], c["example"]) == c["expected"], c["name"]
+
+
+def test_toc_cases_match_reference():
+    for c in _load()["toc"]:
+        got = ref_toc(c["text"], int(c["minLevel"]), int(c["maxLevel"]))
+        assert got == c["expected"], f"{c['name']}: {got} != {c['expected']}"
+
+
+def test_gitignore_sections_cover_selection():
+    # gitignore 的模板常量在 TS 侧由 vitest 精确对拍；此处弱校验：expected 覆盖所选段头
+    for c in _load()["gitignore"]:
+        for s in c["stacks"]:
+            assert f"# {s}" in c["expected"]["text"], c["name"]
+
+
+def test_normalize_cases_match_reference():
+    for c in _load()["normalize"]:
+        got = ref_norm(c["text"], c["lineEnding"], c["indentMode"])
+        assert got == c["expected"], f"{c['name']}: {got} != {c['expected']}"
+
+
+def test_replacer_cases_match_reference():
+    for c in _load()["replacer"]:
+        got = ref_replace(c["text"], c["find"], c["replace"], c["regex"], c["ignoreCase"])
+        assert got == c["expected"], f"{c['name']}: {got} != {c['expected']}"
+
+
+def test_pwdgen_constants_present():
+    g = _load()["pwdgen"]
+    for k in ("lower", "upper", "digits", "symbols", "ambiguous"):
+        assert g[k]
+    assert g["min_length"] == 8 and g["max_length"] == 64
+
+
 def test_golden_has_all_sections():
     data = _load()
     assert len(data["temp"]) == 7
@@ -354,6 +521,7 @@ def test_golden_has_all_sections():
     assert len(data["caesar"]) == 7
     assert len(data["wrap"]) == 6
     assert len(data["palindrome"]) == 8
-    for k in ("regex", "jsonfmt", "csvjson", "ts", "color", "unit", "pwd", "dataclass"):
+    for k in ("regex", "jsonfmt", "csvjson", "ts", "color", "unit", "pwd", "dataclass",
+              "jwt", "env", "toc", "gitignore", "normalize", "replacer", "pwdgen"):
         assert k in data and data[k], f"缺黄金段 {k}"
     assert "uuid" in data

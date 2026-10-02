@@ -249,3 +249,140 @@ describe('UUID 生成（随机型：格式 + 唯一性）', () => {
     expect(dev('interactive:uuid').compute!({ mode: 'uuid4', count: 51 })!.error).toBeTruthy()
   })
 })
+
+// ---------------------------------------------------------------------------
+// W4：JWT / .env / Markdown TOC / gitignore / 文本规范化 / 批量查找替换 / 密码生成
+// ---------------------------------------------------------------------------
+const w4 = (id: string) => getToolSchema(id)!
+
+describe('JWT 解码 ↔ 黄金用例（不验签）', () => {
+  it.each(golden.jwt.map((c) => [c.name, c] as const))('%s', (_name, c) => {
+    const r = w4('interactive:jwt').compute!({ token: c.token })
+    if ('error' in c.expected) {
+      expect(r.error).toBeTruthy()
+      return
+    }
+    const rows = Object.fromEntries((r.rows ?? []).map((x) => [x.label, x.value]))
+    expect(rows['alg']).toBe(c.expected.alg)
+    expect(rows['exp（UTC）']).toBe(c.expected.exp)
+    expect(rows['iat（UTC）']).toBe(c.expected.iat)
+    expect(r.text).toBe(`${c.expected.header}\n\n${c.expected.payload}`)
+  })
+})
+
+describe('.env 校验 ↔ 黄金用例', () => {
+  it.each(golden.env.map((c) => [c.name, c] as const))('%s', (_name, c) => {
+    const r = w4('interactive:env-check').compute!({ env: c.env, example: c.example })
+    if ('error' in c.expected) {
+      expect(r.error).toBeTruthy()
+      return
+    }
+    const rows = Object.fromEntries((r.rows ?? []).map((x) => [x.label, x.value]))
+    expect(rows['缺失于 .env']).toBe(c.expected.missing.join(', ') || '无')
+    expect(rows['多余于 .env']).toBe(c.expected.extra.join(', ') || '无')
+    expect(rows['.env 空值键']).toBe(c.expected.empty.join(', ') || '无')
+  })
+})
+
+describe('Markdown TOC ↔ 黄金用例', () => {
+  it.each(golden.toc.map((c) => [c.name, c] as const))('%s', (_name, c) => {
+    const r = w4('interactive:md-toc').compute!({ text: c.text, minLevel: c.minLevel, maxLevel: c.maxLevel })
+    expect(r.primary?.value).toBe(c.expected.count)
+    expect(r.text).toBe(c.expected.text)
+  })
+})
+
+describe('gitignore 生成 ↔ 黄金用例', () => {
+  const KEY_OF: Record<string, string> = {
+    Python: 'py',
+    Node: 'node',
+    Go: 'go',
+    macOS: 'mac',
+    Windows: 'win',
+    VSCode: 'vscode'
+  }
+  it.each(golden.gitignore.map((c) => [c.name, c] as const))('%s', (_name, c) => {
+    const values = Object.fromEntries(c.stacks.map((s) => [KEY_OF[s]!, true]))
+    const r = w4('interactive:gitignore').compute!(values)
+    expect(r.text).toBe(c.expected.text)
+  })
+  it('全不选 → 引导文案', () => {
+    expect(w4('interactive:gitignore').compute!({})!.error).toBeTruthy()
+  })
+})
+
+describe('文本规范化 ↔ 黄金用例', () => {
+  it.each(golden.normalize.map((c) => [c.name, c] as const))('%s', (_name, c) => {
+    const r = w4('interactive:normalize').compute!({ text: c.text, lineEnding: c.lineEnding, indentMode: c.indentMode })
+    expect(r.text).toBe(c.expected.text)
+  })
+})
+
+describe('批量查找替换 ↔ 黄金用例', () => {
+  it.each(golden.replacer.map((c) => [c.name, c] as const))('%s', (_name, c) => {
+    const r = w4('interactive:find-replace').compute!({
+      text: c.text,
+      find: c.find,
+      replace: c.replace,
+      regex: c.regex,
+      ignoreCase: c.ignoreCase
+    })
+    if ('error' in c.expected) {
+      expect(r.error).toBeTruthy()
+      return
+    }
+    expect(r.primary?.value).toBe(c.expected.count)
+    expect(r.text).toBe(c.expected.text)
+  })
+})
+
+describe('密码生成（随机型：字符集规则 + 包含性）', () => {
+  const spec = golden.pwdgen
+  it('长度与字符集符合所选范围', () => {
+    const r = w4('interactive:pwd-gen').compute!({
+      length: 24,
+      lower: true,
+      upper: true,
+      digits: true,
+      symbols: true,
+      noAmbiguous: true
+    })!
+    const pwd = r.primary!.value
+    expect(pwd).toHaveLength(24)
+    expect(pwd.split('').every((c) => !spec.ambiguous.includes(c))).toBe(true)
+    const allowed = [spec.lower, spec.upper, spec.digits, spec.symbols]
+      .map((s) => s.split(''))
+      .flat()
+      .filter((c) => !spec.ambiguous.includes(c))
+    expect(pwd.split('').every((c) => allowed.includes(c))).toBe(true)
+  })
+  it('每个所选字符集至少出现一个（构造保证）', () => {
+    const r = w4('interactive:pwd-gen').compute!({
+      length: 32,
+      lower: true,
+      upper: true,
+      digits: true,
+      symbols: true,
+      noAmbiguous: false
+    })!
+    const pwd = r.primary!.value
+    for (const pool of [spec.lower, spec.upper, spec.digits, spec.symbols]) {
+      expect(pwd.split('').some((c) => pool.includes(c))).toBe(true)
+    }
+  })
+  it('全不选字符集 → 引导文案', () => {
+    expect(
+      w4('interactive:pwd-gen').compute!({
+        length: 16,
+        lower: false,
+        upper: false,
+        digits: false,
+        symbols: false,
+        noAmbiguous: false
+      })!.error
+    ).toBeTruthy()
+  })
+  it('长度越界 → 引导文案', () => {
+    expect(w4('interactive:pwd-gen').compute!({ length: 7, lower: true })!.error).toBeTruthy()
+  })
+})
