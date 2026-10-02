@@ -1,7 +1,7 @@
 # 交互工具化规划：独立工具 → 页面工具（2026-10-02 调研）
 
-> 状态：调研结论 + 框架设计 + 波次计划。首个实例「日期计算器」已交付（2026-10-02，
-> 规格/计划见 `docs/superpowers/`），本文档是该模式的推广规划。
+> 状态：**已全部落地（2026-10-02）**。A 档 23 + B 档 14 = **37 个交互工具**交付；
+> 三跟进项（adhoc GC / 抽屉 a11y / wordcount 磁盘差异）同步解决。落地明细见 §7。
 > 数据基线：工具箱全量 163 个独立工具（`category: tools`，全部无 `source_dir` 项目归属）。
 
 ## 1. 结论摘要
@@ -65,15 +65,20 @@
 | 批量查找替换（文本） | 批量查找替换 | 前端 | 文本、查找(支持正则开关)、替换、选项(大小写/整词) | 结果+命中计数；正则方言同正则测试器声明 |
 | 密码生成器 | showcase 密码生成器 | 前端 | 长度、字符集多选、排除易混淆 | 生成+强度联动（复用强度检查的评分函数） |
 
-### 3.3 B 档：文件管道型（~20，基建后启动）
+### 3.3 B 档：文件管道型（✅ 已落地，见 §7）
 
-图片类 10：批量缩放/格式转换/裁剪比例/缩略图拼贴/水印/主色调/亮度对比度/圆角边框/图片信息/GIF 系(2)。
-Office 类 10：Excel 读取/样式/公式/排序/数据校验/两表对比/透视/跨表关联、PDF 拆分/文本提取、图片转 PDF、CSV↔Excel、SQLite↔Excel。
+**前置基建**（W5 已交付）：桥 `pickFile(filters)`、FieldSpec `file`/`dir` 字段类型、
+ToolField 文件控件、date-run 捕获 `runImages`、CodeDrawer 产物图预览 + `downloadResultImage` 下载。
+（设计上未另立 FilePipelinePanel 组件——产物预览直接进 CodeDrawer，少一层抽象。）
 
-**前置基建**（估 1 个特性周期）：
-- 桥新增 `pickFile(filters)`（现缺；`pickDirectory`/`saveTextFile`/`downloadResultImage` 已有）
-- `FilePipelinePanel.vue`：选文件 → sidecar 运行（adhoc 或上传资产到示例工作区）→ stdout/产物预览 → 下载
-- 产物落盘走示例工作区（`ensure_workspace`），下载走 `downloadResultImage` 泛化版
+落地：图片批量 4（缩放/格式转换/裁剪/水印）+ 单文件 5（主色调/GIF 帧提取/GIF 合成/圆角边框/
+图片信息）+ Office 4（Excel→CSV/JSON、CSV→Excel、PDF 文本提取、图片转 PDF）。
+**缩略图拼贴并入批量工具族后续可选**（未做：使用频率低，管道已通，加一个 schema 即可）。
+
+**复杂 Excel 系 8 个（样式/公式/排序/数据校验/两表对比/透视/跨表关联/SQLite↔Excel）归 C 档**：
+它们的本质是多文件/多参数的交互式编辑会话（选两张表选关联键、透视拖拽字段等），
+单页 schema 表单装不下，强做会把框架撑爆；且原 CLI 示例的教学价值就在参数化脚本本身。
+未来若做，应走专属页路线（如日期计算器），不走 schema 框架。
 
 ### 3.4 C 档：不做（~92，保持现有运行卡片）
 
@@ -175,13 +180,17 @@ src/store/interactive.ts      # 扩展：currentToolId + 各工具输入值的�
 
 ## 5. 波次计划
 
-| 波 | 内容 | 退役联动 | 验收 |
+| 波 | 内容 | 退役联动 | 状态 |
 |---|---|---|---|
-| W1 | 框架落地（schema 类型 + 3 组件 + 路由分派）+ A-1 六组归并中先做 3 组（温度/进制/凯撒） | bulk_basics −12（1488→1476） | 框架含温度参考实例；golden 对拍双端绿；变体退役流程复刻 date-diff |
-| W2 | A-1 剩余 3 组（折行/回文/月历并入日期计算器） | −21（→1455，bulk_basics 工具清零） | 同上 |
-| W3 | A-2 前 9 个（正则/JSON 系/时间戳/UUID/颜色/单位） | 无（devtools 条目保留，运行卡与交互页并存） | 每工具 schema+对拍 |
-| W4 | A-2 后 8 个 + 框架体验回看 | — | — |
-| W5+ | B 档基建（pickFile/FilePipelinePanel）→ 图片类试点 | — | 单独立项 brainstorm |
+| W1 | 框架 + 温度/进制/凯撒 | −12（→1476） | ✅ 已合入 main |
+| W2 | 折行/回文 + 月历并入日期计算器 | −14（→1462） | ✅ 已合入 main |
+| W3 | devtools 九工具（A-2 前段） | 并存 | ✅ 已合入 main |
+| W4 | A-2 后段七工具（JWT/env/TOC/gitignore/规范化/替换/密码生成） | 并存 | ✅ 已合入 main |
+| W5 | B 档基建（pickFile/file 字段/runImages 预览）+ 图片缩放试点 | — | ✅ 已合入 main |
+| W6 | B 档铺开 14 工具 + 三跟进项（adhoc GC/a11y/wordcount 补齐 → 1464） | 并存 | ✅ feat/interactive-tools-final |
+
+**实际与计划的偏差**：W2 退役后 bulk_basics 工具未清零（字符方阵×4/文本表格×3 留存，
+属 C 档形态——字符画/对齐表格无独立交互价值）；wordcount 差异以「补齐」而非「忽略」收口（1464）。
 
 **A-2 不退役原条目**：devtools 工具的 CLI/参数化形态仍有运行教学价值，交互页是「新增一个更好的入口」，两者并存（卡片徽章可加「也有交互页」联动）。
 
@@ -191,3 +200,13 @@ src/store/interactive.ts      # 扩展：currentToolId + 各工具输入值的�
 - **对拍成本失控**：sidecar 对拍用例每工具 ≤10 条，只钉核心口径
 - **YAGNI 不做**：工具间联动/组合管道、用户自定义 schema、结果持久化、i18n、主题化结果导出
 - **安全**：交互工具不触碰真实文件系统与网络（B 档的文件读写全部走 sidecar 工作区沙箱）
+
+
+## 7. 落地记录（2026-10-02 收口）
+
+- **37 个交互工具**：日期计算器（专属页）+ 21 个纯文本 schema 工具（A-1 六组 + A-2 全部）+ 15 个文件管道工具（图片 11 + Office 4，含 W5 试点）。
+- **框架**：`InteractiveToolSchema`（fields/compute/pyCode，options 支持函数形态联动）；响应式注册表；统一页 InteractiveToolPage；CodeDrawer 通用化（props 化 + runImages 预览 + a11y）。
+- **对拍**：`tool-golden.json` 16 段，vitest 116 + pytest 28 双侧；文件管线另配真实执行测试（PIL 造图/造表 → 跑脚本 → 验产物）。
+- **数据**：退役 31 条静态变体 + 补齐 wordcount×2（1493→1464）。
+- **跟进项清零**：adhoc TTL 24h 回收（collect_garbage + 3 单测）；抽屉 aria-controls/aria-live；wordcount 磁盘差异。
+- **门禁**：vitest 502 / pytest 272 / lint / format / typecheck / smoke 全绿。
