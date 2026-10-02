@@ -69,6 +69,8 @@ import ToolboxView from './components/ToolboxView.vue'
 import DetailPage from './components/DetailPage.vue'
 import DateCalculatorPage from './components/date-calculator/DateCalculatorPage.vue'
 import { DATE_CALC_ID, isInteractiveId } from './src/interactive-tools'
+import { isManualId } from './src/tool-manuals'
+import ToolManualPage from './components/interactive/ToolManualPage.vue'
 import InteractiveToolPage from './components/interactive/InteractiveToolPage.vue'
 import RunnerView from './components/RunnerView.vue'
 import AIExplainPanel from './components/AIExplainPanel.vue'
@@ -420,7 +422,8 @@ onBeforeUnmount(() => {
         <GalleryView v-show="!selectedId && activeView === 'gallery'" class="animate-view-in" @reload="loadAll()" />
         <ToolboxView v-show="!selectedId && activeView === 'toolbox'" class="animate-view-in" @reload="loadAll()" />
         <RunnerView v-show="!selectedId && activeView === 'runner'" class="animate-view-in" />
-        <DetailPage v-if="selectedId && !isInteractiveId(selectedId)" class="animate-view-in" />
+        <ToolManualPage v-if="selectedId && isManualId(selectedId)" class="animate-view-in" />
+        <DetailPage v-else-if="selectedId && !isInteractiveId(selectedId)" class="animate-view-in" />
         <DateCalculatorPage v-else-if="selectedId === DATE_CALC_ID" class="animate-view-in" />
         <InteractiveToolPage v-else-if="selectedId" class="animate-view-in" />
       </main>

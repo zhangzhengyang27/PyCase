@@ -5,7 +5,18 @@
 // <980px 窄屏由 flex 布局自然挤压（右栏 min-width 约束）。快捷键不变：
 // Cmd+S 保存 / Cmd+Enter 运行 / Cmd+. 停止。
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
-import { ArrowLeft, ChevronRight, PackagePlus, Play, Save, Sparkles, Square, Star, Trash2 } from 'lucide-vue-next'
+import {
+  BookOpen,
+  ArrowLeft,
+  ChevronRight,
+  PackagePlus,
+  Play,
+  Save,
+  Sparkles,
+  Square,
+  Star,
+  Trash2
+} from 'lucide-vue-next'
 import {
   qualityTextCls,
   runStatusDotCls,
@@ -40,6 +51,7 @@ import {
 import { deleteUserExample } from '../src/store/import'
 import { isFavorite, toggleFavorite } from '../src/store/prefs'
 import { stopRun } from '../src/store/detail'
+import { hasManual, openManual } from '../src/tool-manuals'
 import ArgsForm from './ArgsForm.vue'
 import MonacoEditor from './MonacoEditor.vue'
 import OutputPanel from './OutputPanel.vue'
@@ -215,6 +227,9 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
           @click="confirmDelete = true"
         >
           <Trash2 :size="15" />
+        </BaseButton>
+        <BaseButton v-if="hasManual(selectedId)" title="查看工具手册（用途/参数/用法）" @click="openManual(selectedId)">
+          <BookOpen :size="13" /> 手册
         </BaseButton>
         <BaseButton title="AI 解释选中或全部代码（DeepSeek）" @click="explainSelectedCode()">
           <Sparkles :size="13" /> AI 解释
