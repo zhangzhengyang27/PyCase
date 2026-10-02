@@ -910,3 +910,30 @@ describe('GalleryHeader 跟随二级分区（用户语义：选了分区，右�
     expect(w.findAll('.stat-chip').map((c) => c.text())).toEqual(['1 个示例', '100% 可运行', '1 收藏'])
   })
 })
+
+// ---------------------------------------------------------------------------
+describe('主题下拉的语境退场', () => {
+  it('主题型分区激活时主题下拉退场——分区即主题，再给主题维度只会叠出空集', async () => {
+    const w = mount(BrowseToolbar)
+    expect(w.find('[data-testid="filter-theme"]').exists()).toBe(true)
+
+    activeSectionKey.value = 'turtle'
+    await nextTick()
+    expect(w.find('[data-testid="filter-theme"]').exists()).toBe(false)
+
+    activeSectionKey.value = 'games'
+    await nextTick()
+    expect(w.find('[data-testid="filter-theme"]').exists()).toBe(false)
+  })
+
+  it('非主题分区（标签组/项目/其他）保留主题下拉——跨维度收窄仍有意义', async () => {
+    const w = mount(BrowseToolbar)
+    activeSectionKey.value = 'tag:basics'
+    await nextTick()
+    expect(w.find('[data-testid="filter-theme"]').exists()).toBe(true)
+
+    activeSectionKey.value = 'projects'
+    await nextTick()
+    expect(w.find('[data-testid="filter-theme"]').exists()).toBe(true)
+  })
+})

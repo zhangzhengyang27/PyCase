@@ -59,6 +59,11 @@ function toggleFavOnly(): void {
   favOnly.value = !favOnly.value
 }
 
+// 主题型分区（Turtle/Pygame/OpenCV/PIL/数据可视化）激活时，分区即主题——
+// 主题维度被完全决定，下拉退场；再选主题只会叠出空集（selectSection 切换时也会清主题）
+const THEME_KEYS = new Set(THEMES.map((t) => t.key))
+const themeDropdownVisible = computed(() => !THEME_KEYS.has(activeSectionKey.value ?? ''))
+
 // 档位计数后缀：'all' 不显示计数（facet 只对具体档位有意义）
 function facetSuffix(has: boolean, n: number | undefined): string {
   return has && n ? ` (${n})` : ''
@@ -103,8 +108,10 @@ function facetSuffix(has: boolean, n: number | undefined): string {
         <span v-if="favorites.size" class="text-caption text-ink-mute font-mono">{{ favorites.size }}</span>
       </button>
 
-      <!-- 主题：全部主题 + THEMES（与侧栏分区菜单可叠加，两者语义不同，不去重） -->
+      <!-- 主题：全部主题 + THEMES。主题型分区激活时退场（分区即主题）；
+           非主题分区（标签组/项目/其他）保留——跨维度收窄仍有意义 -->
       <BaseSelectMenu
+        v-if="themeDropdownVisible"
         :model-value="activeTheme"
         title="主题"
         aria-label="按主题筛选"
