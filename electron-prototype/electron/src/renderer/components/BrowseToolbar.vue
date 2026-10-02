@@ -11,10 +11,8 @@
 import { computed } from 'vue'
 import { LayoutGrid, List, Star, X } from 'lucide-vue-next'
 import { THEMES } from '../src/themes'
-import { QUALITY_OPTIONS, RUN_STATUS_OPTIONS, RUNNABLE_OPTIONS, type RunStatusKey } from '../src/filter-options'
-import type { RunnableFilter } from '../src/filter-engine'
+import { QUALITY_OPTIONS, RUN_STATUS_OPTIONS, type RunStatusKey } from '../src/filter-options'
 import {
-  activeRunnable,
   activeRunStatus,
   activeSectionKey,
   activeTheme,
@@ -44,9 +42,6 @@ function setMode(v: 'grid' | 'list'): void {
 function setTheme(v: string): void {
   activeTheme.value = v
   persistViewPrefs()
-}
-function setRunnable(v: string): void {
-  activeRunnable.value = v as RunnableFilter
 }
 function setQuality(v: string): void {
   minQuality.value = Number(v)
@@ -126,23 +121,6 @@ function facetSuffix(has: boolean, n: number | undefined): string {
           }))
         ]"
         @update:model-value="setTheme"
-      />
-
-      <!-- 可运行性 -->
-      <BaseSelectMenu
-        :model-value="activeRunnable"
-        title="可运行性"
-        aria-label="按可运行性筛选"
-        testid="filter-runnable"
-        :active="activeRunnable !== 'all'"
-        :options="
-          RUNNABLE_OPTIONS.map((r) => ({
-            value: r.key,
-            label: r.label,
-            hint: r.key === 'all' ? undefined : facetSuffix(true, facetCounts.runnableCounts.get(r.key)) || undefined
-          }))
-        "
-        @update:model-value="setRunnable"
       />
 
       <!-- 质量分 -->

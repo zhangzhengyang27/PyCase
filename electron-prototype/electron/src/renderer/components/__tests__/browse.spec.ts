@@ -12,7 +12,6 @@ import BrowseToolbar from '../BrowseToolbar.vue'
 import ExampleCard from '../ExampleCard.vue'
 import ExampleListItem from '../ExampleListItem.vue'
 import {
-  activeRunnable,
   activeRunStatus,
   activeSectionKey,
   activeTags,
@@ -206,7 +205,7 @@ describe('GalleryView', () => {
     expect(document.body.querySelector('[role="dialog"]')).toBeNull()
     // 工具栏下拉齐备：主题 / 可运行性 / 质量分 / 运行状态 / 标签
     expect(w.find('[data-testid="filter-theme"]').exists()).toBe(true)
-    expect(w.find('[data-testid="filter-runnable"]').exists()).toBe(true)
+    expect(w.find('[data-testid="filter-runnable"]').exists()).toBe(false)
     expect(w.find('[data-testid="filter-quality"]').exists()).toBe(true)
     expect(w.find('[data-testid="filter-run-status"]').exists()).toBe(true)
     expect(w.find('[data-testid="tag-filter-select"]').exists()).toBe(true)
@@ -426,10 +425,10 @@ describe('画廊工具栏筛选下拉', () => {
     await flushPromises()
   }
 
-  it('渲染 5 个筛选维度下拉 + 排序 + 标签多选，均带标题', () => {
+  it('渲染筛选维度下拉 + 排序 + 标签多选，均带标题（可运行性已退役：负面状态由卡片徽章表达）', () => {
     const w = mount(BrowseToolbar)
     expect(trigger(w, 'filter-theme').attributes('title')).toBe('主题')
-    expect(trigger(w, 'filter-runnable').attributes('title')).toBe('可运行性')
+    expect(w.find('[data-testid="filter-runnable"]').exists()).toBe(false)
     expect(trigger(w, 'filter-quality').attributes('title')).toBe('质量分')
     expect(trigger(w, 'filter-run-status').attributes('title')).toBe('运行状态')
     expect(trigger(w, 'filter-sort').attributes('title')).toBe('排序')
@@ -455,18 +454,6 @@ describe('画廊工具栏筛选下拉', () => {
       'viewPrefs',
       expect.objectContaining({ activeTheme: 'turtle' })
     )
-  })
-
-  it('可运行性下拉：6 档（全部 + 5 状态）带计数，选择写入 activeRunnable', async () => {
-    examples.value = facetFixtures()
-    const w = mount(BrowseToolbar)
-    const opts = await openMenu(w, 'filter-runnable')
-    expect(opts).toHaveLength(6)
-    expect(opts.find((o) => o.text().trim().startsWith('可运行'))!.text()).toContain('(1)')
-    expect(opts.find((o) => o.text().trim().startsWith('缺依赖'))!.text()).toContain('(1)')
-
-    await pick(w, 'filter-runnable', '缺依赖')
-    expect(activeRunnable.value).toBe('missing_deps')
   })
 
   it('质量分下拉：≥90/≥80/≥60 带计数，选择写入 minQuality 并持久化', async () => {
