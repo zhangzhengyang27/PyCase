@@ -195,7 +195,7 @@ export const toolboxItems = computed<VExample[]>(() => {
   const q = appliedToolSearch.value.trim().toLowerCase()
   const inter = interactiveToolItems.filter((t) => {
     if (favOnly.value && !favorites.value.has(t.id)) return false
-    if (q && !`${t.title ?? ''} ${t.description ?? ''} ${(t.tags ?? []).join(' ')}`.toLowerCase().includes(q))
+    if (q && !`${t.name} ${t.title ?? ''} ${t.description ?? ''} ${(t.tags ?? []).join(' ')}`.toLowerCase().includes(q))
       return false
     return true
   })

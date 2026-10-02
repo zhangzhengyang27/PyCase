@@ -54,8 +54,7 @@ export function sectionIcon(key: string | undefined): LucideIcon | undefined {
 const TOOLBOX_ICONS: Record<string, LucideIcon> = {
   'db-table-dictionary-generator': Database,
   'excel-row-to-in-clause': FileSpreadsheet,
-  // 交互工具分组（interactive-tools 注册表；非 .py 目录池条目）
-  interactive: Sparkles,
+  interactive: Sparkles, // Task 6 的「交互工具」分组启用
   'python-black-magic': Wand2,
   'remote-sftp-downloader': Download,
   'tkinter-work-countdown': Timer,
