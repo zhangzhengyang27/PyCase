@@ -326,14 +326,20 @@ describe('ToolboxView', () => {
     examples.value = toolFixtures()
     const w = mount(ToolboxView)
     // 工具数 = 目录池 9 + 交互工具 1（toolsTotal 口径）；可静态运行率分母只数目录池
-    // （交互工具无 .py 文件不进分母，9/9 = 100%，不被交互工具稀释）
-    expect(w.text()).toContain('10 个工具 · 2 个工具项目 · 100% 可静态运行')
+    // （交互工具无 .py 文件不进分母，9/9 = 100%，不被交互工具稀释）。
+    // 项目数 = 交互工具组 + 2 个目录项目：交互工具置顶成独立首组后计入组数。
+    expect(w.text()).toContain('10 个工具 · 3 个工具项目 · 100% 可静态运行')
   })
 
-  it('按 source_dir 分组：内置项目用中文区名、按声明序排列，无 source_dir 归入独立工具', () => {
+  it('按 source_dir 分组：交互工具组恒置顶，内置项目用中文区名、按声明序排列，无 source_dir 归入独立工具', () => {
     examples.value = toolFixtures()
     const w = mount(ToolboxView)
-    expect(w.findAll('section.mb-9 h2').map((h) => h.text())).toEqual(['Python 黑魔法', '实用爬虫合集', '独立工具'])
+    expect(w.findAll('section.mb-9 h2').map((h) => h.text())).toEqual([
+      '交互工具',
+      'Python 黑魔法',
+      '实用爬虫合集',
+      '独立工具'
+    ])
   })
 
   it('大项目默认只露前 6 张卡，可「展开全部」再「收起」', async () => {
@@ -360,11 +366,16 @@ describe('ToolboxView', () => {
     expect(big.text()).toContain('收起')
   })
 
-  it('点击工具卡片经 openDetail 打开详情', async () => {
+  it('点击普通工具卡片经 openDetail 打开详情；点击交互工具卡片走 openInteractive（selectedId 置交互 id）', async () => {
     examples.value = [makeExample({ id: 'only', name: 'only_tool.py', category: 'tools' })]
     const w = mount(ToolboxView)
-    await w.find('.surface-card').trigger('click')
+    // 交互组置顶后第一张卡是交互工具，普通工具卡按 aria-label 精确命中
+    await w.find('[aria-label="only tool（详情）"]').trigger('click')
     expect(selectedId.value).toBe('only')
+
+    await w.find('[aria-label="日期计算器（详情）"]').trigger('click')
+    // 交互工具不经 openDetail（无详情页），直接置交互 id，App.vue 按前缀渲染专属页
+    expect(selectedId.value).toBe('interactive:date-calculator')
   })
 
   it('收藏按钮切换 favOnly，并反映到 title 与 aria-pressed', async () => {
