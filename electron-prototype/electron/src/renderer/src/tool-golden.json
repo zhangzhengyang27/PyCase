@@ -905,5 +905,95 @@
         "error": "长边上限需为 16~20000 的整数"
       }
     }
+  ],
+  "filetools": [
+    {
+      "name": "批量缩放回显",
+      "id": "batch-resize",
+      "values": {
+        "dir": "/pics",
+        "maxSide": 512,
+        "format": "jpg"
+      },
+      "expected": {
+        "rows": {
+          "源目录": "/pics",
+          "长边上限": "512 px",
+          "输出格式": "JPG"
+        }
+      }
+    },
+    {
+      "name": "批量水印回显",
+      "id": "batch-watermark",
+      "values": {
+        "dir": "/pics",
+        "text": "@ 我的作品",
+        "position": "tile",
+        "fontSize": 48
+      },
+      "expected": {
+        "rows": {
+          "源目录": "/pics",
+          "水印": "@ 我的作品（平铺）"
+        }
+      }
+    },
+    {
+      "name": "圆角回显",
+      "id": "rounded-frame",
+      "values": {
+        "file": "/p/x.png",
+        "radius": 24,
+        "border": 8,
+        "borderColor": "#333333"
+      },
+      "expected": {
+        "rows": {
+          "源文件": "/p/x.png",
+          "参数": "圆角 24px · 描边 8px #333333"
+        }
+      }
+    },
+    {
+      "name": "圆角参数越界报错",
+      "id": "rounded-frame",
+      "values": {
+        "file": "/p/x.png",
+        "radius": 999,
+        "border": 8,
+        "borderColor": "#333333"
+      },
+      "expected": {
+        "error": "圆角半径需为 0~500 的整数"
+      }
+    },
+    {
+      "name": "Excel 导出回显",
+      "id": "excel-export",
+      "values": {
+        "file": "/d/t.xlsx",
+        "sheet": "",
+        "format": "json"
+      },
+      "expected": {
+        "rows": {
+          "源文件": "/d/t.xlsx",
+          "工作表": "（第一个）",
+          "导出格式": "JSON"
+        }
+      }
+    },
+    {
+      "name": "PDF 提取页数越界报错",
+      "id": "pdf-extract",
+      "values": {
+        "file": "/d/t.pdf",
+        "pages": 99
+      },
+      "expected": {
+        "error": "页数上限需为 1~50 的整数"
+      }
+    }
   ]
 }

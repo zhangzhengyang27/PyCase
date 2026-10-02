@@ -849,6 +849,36 @@ class ContractStore:
             get_logger(__name__).info("孤儿工作区回收 %d 个", removed)
         if kept:
             get_logger(__name__).warning("孤儿工作区含用户资产，保留待人工清理: %d 个", kept)
+        removed += self._collect_adhoc_workspaces()
+        return removed
+
+    ADHOC_TTL_HOURS = 24
+
+    def _collect_adhoc_workspaces(self) -> int:
+        """adhoc 工作区回收（交互工具抽屉的一次性运行目录，无账本）。
+
+        按 mtime 淘汰超过 TTL 的 run_id 目录：文件管道工具让 adhoc 目录增长显著，
+        而 _has_user_assets 会把 main.py 当用户资产保守保留（默认 clean 按钮永不回收），
+        所以这里按时间显式回收——图片预览的 file:// URL 只在运行会话内有效，
+        跨会话后目录已无展示价值，可安全删除。
+        """
+        adhoc_root = self.workspace_root / "adhoc"
+        if not adhoc_root.is_dir():
+            return 0
+        cutoff = time.time() - self.ADHOC_TTL_HOURS * 3600
+        removed = 0
+        for run_dir in adhoc_root.iterdir():
+            if not run_dir.is_dir():
+                continue
+            try:
+                if run_dir.stat().st_mtime >= cutoff:
+                    continue
+            except OSError:
+                continue
+            shutil.rmtree(run_dir, ignore_errors=True)
+            removed += 1
+        if removed:
+            get_logger(__name__).info("adhoc 工作区按 TTL 回收 %d 个（> %d 小时）", removed, self.ADHOC_TTL_HOURS)
         return removed
 
     @staticmethod

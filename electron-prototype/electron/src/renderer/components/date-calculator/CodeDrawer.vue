@@ -79,12 +79,13 @@ async function copyCode(): Promise<void> {
       data-testid="drawer-toggle"
       aria-label="切换 Python 代码抽屉"
       :aria-expanded="open"
+      aria-controls="code-drawer-panel"
       @click="toggle()"
     >
       <ChevronUp :size="14" :style="open ? '' : 'transform: rotate(180deg)'" />
       Python 代码<span class="text-caption text-ink-faint">随当前输入实时生成</span>
     </button>
-    <div v-if="open" class="px-8 pb-4 flex flex-col gap-2">
+    <div v-if="open" id="code-drawer-panel" class="px-8 pb-4 flex flex-col gap-2">
       <div class="flex items-center gap-2">
         <BaseButton data-testid="drawer-copy" title="复制代码" @click="copyCode()">
           <Copy :size="14" />
@@ -103,6 +104,7 @@ async function copyCode(): Promise<void> {
         </BaseButton>
         <span
           v-if="runExitCode !== null"
+          aria-live="polite"
           class="text-caption"
           :class="runExitCode === 0 ? 'text-ink-mute' : 'text-danger'"
           data-testid="run-exit"
@@ -131,6 +133,7 @@ async function copyCode(): Promise<void> {
       </div>
       <pre
         v-if="runOutput"
+        aria-live="polite"
         class="m-0 p-3 max-h-[180px] overflow-auto text-control font-mono bg-page border border-line rounded-control whitespace-pre-wrap"
         data-testid="run-output"
         >{{ runOutput }}</pre>

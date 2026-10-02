@@ -23,7 +23,7 @@ export function isInteractiveId(id: string | undefined | null): boolean {
 // schema 驱动工具的类型（设计见 docs/interactive-tools-plan.md §4.1；
 // color 字段类型按 YAGNI 暂不实现，首个需要它的工具落地时再补）
 // ---------------------------------------------------------------------------
-export type FieldType = 'text' | 'textarea' | 'number' | 'select' | 'checkbox' | 'file'
+export type FieldType = 'text' | 'textarea' | 'number' | 'select' | 'checkbox' | 'file' | 'dir'
 export type FieldValue = string | number | boolean | undefined
 
 export interface SelectOption {
@@ -42,7 +42,7 @@ export interface FieldSpec {
   required?: boolean
   width?: 'full' | 'half'
   help?: string
-  /** 仅 file 类型：扩展名白名单（传给 pickFile 的 dialog 过滤器） */
+  /** 仅 file 类型：扩展名白名单（传给 pickFile 的 dialog 过滤器）；dir 类型无过滤 */
   accept?: string[]
 }
 
