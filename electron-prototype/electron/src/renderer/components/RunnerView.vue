@@ -108,7 +108,7 @@ function onArgsEnter(): void {
           <span class="truncate lowercase tracking-[0.02em]">{{ selected.name }}</span>
         </div>
         <pre
-          class="flex-1 min-h-0 overflow-auto m-0 px-4 py-3 font-mono text-control leading-[1.55] text-console whitespace-pre"
+          class="flex-1 min-h-0 overflow-auto m-0 px-4 py-3 font-mono text-control leading-[1.55] text-ink-console whitespace-pre"
           >{{
             selected
               ? runnerCode || '正在读取源码…'

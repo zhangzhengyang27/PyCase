@@ -11,8 +11,9 @@ const props = defineProps<{ surface: OutputSurface }>()
 const viewer = ref<HTMLDivElement | null>(null)
 const state = computed(() => surfaceState(props.surface))
 // 终端行：底/正文用 --text-console（跟随主题），系统提示降到 gutter 级，错误/成功保留语义色
+// （text-ink-console → --text-console；不能用 text-console——那是 --color-console 终端背景色）
 const LINE_CLS: Record<string, string> = {
-  base: 'text-console',
+  base: 'text-ink-console',
   system: 'text-gutter italic text-caption',
   error: 'text-danger',
   success: 'text-ok'

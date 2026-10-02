@@ -15,6 +15,7 @@ import AISettingsModal from '../AISettingsModal.vue'
 import ImportWizardModal from '../ImportWizardModal.vue'
 import HighRiskConfirmModal from '../HighRiskConfirmModal.vue'
 import AssetsPanel from '../AssetsPanel.vue'
+import OutputPanel from '../OutputPanel.vue'
 
 import {
   aiSettings,
@@ -28,7 +29,14 @@ import {
 } from '../../src/store/ai'
 import { assets, assetsLoading, type AssetInfo } from '../../src/store/assets'
 import { examples, type VExample } from '../../src/store/catalog'
-import { selectedId, pendingHighRiskRun, isRunning, currentRunId, currentRunMeta } from '../../src/store/detail'
+import {
+  selectedId,
+  pendingHighRiskRun,
+  isRunning,
+  currentRunId,
+  currentRunMeta,
+  surfaceState
+} from '../../src/store/detail'
 import { importWizardOpen } from '../../src/store/import'
 import { getTestApi } from '../../src/store/index'
 import { runTimeout, skipHighRiskConfirm } from '../../src/store/prefs'
@@ -1009,5 +1017,19 @@ describe('AIExplainPanel 可访问性（审计 P2）', () => {
     expect(log.attributes('aria-live')).toBe('polite')
     expect(log.text()).toContain(aiOutputText.value)
     expect(w.get('[role="status"]').text()).toContain('正在生成解释…')
+  })
+})
+
+// ---------------------------------------------------------------------------
+describe('OutputPanel 行配色（隐形墨水回归，2026-10-02）', () => {
+  it('base 行必须是可读的终端正文类（text-console 是背景色，曾让 print 输出整体隐形）', () => {
+    surfaceState('detail').lines = [
+      { text: '普通输出', cls: 'base' },
+      { text: '系统行', cls: 'system' }
+    ]
+    const w = track(mount(OutputPanel, { props: { surface: 'detail' } }))
+    const lines = w.findAll('.whitespace-pre-wrap')
+    expect(lines[0].classes()).toContain('text-ink-console')
+    expect(lines[0].classes()).not.toContain('text-console')
   })
 })

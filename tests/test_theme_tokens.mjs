@@ -96,3 +96,21 @@ if (failed) {
   process.exit(1)
 }
 console.log('\n全部通过')
+
+// ---------------------------------------------------------------------------
+// 隐形墨水禁令（2026-10-02 事故）：--color-console 映射的是终端**背景**色
+// （--bg-console），把 text-console 当文字类用 = 输出与背景同色、肉眼不可见——
+// 示例 print 输出在 theme.css v3 后整体隐形（smoke 只断言 textContent 故未拦截）。
+// 终端正文请用 text-ink-console（→ --text-console，跟随主题的可读色）。
+check('禁令：text-console（背景色当文字色，隐形墨水）不得再出现', (() => {
+  const banned = /(^|[^a-z-])text-console(?![a-z-])/
+  let used = []
+  for (const file of walk(RENDERER)) {
+    const src = readFileSync(file, 'utf8')
+    if (banned.test(src)) used.push(file.replace(RENDERER + '/', ''))
+  }
+  if (used.length) console.error('    text-console 出现在: ' + used.join(', '))
+  return used.length === 0
+})())
+check('终端正文类 text-ink-console 已有 @theme 映射', definedColors.has('ink-console'))
+check('系统行 text-gutter 已有 @theme 映射（曾漏映射继承容器色）', definedColors.has('gutter'))

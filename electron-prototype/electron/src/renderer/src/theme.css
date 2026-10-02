@@ -305,6 +305,10 @@ html[data-accent="brand"] {
   --color-ink-dim: var(--text-secondary);
   --color-ink-mute: var(--text-tertiary);
   --color-ink-faint: var(--text-quaternary);
+  /* 终端正文（--text-console 跟随主题；勿用 text-console——那是 --color-console =
+     终端背景色，当文字类用即隐形墨水，2026-10-02 事故） */
+  --color-ink-console: var(--text-console);
+  --color-gutter: var(--text-gutter);
 
   /* 强调（accent-* 旧名保留为过渡别名，指向 v2 的 text 档） */
   --color-accent: var(--accent);
