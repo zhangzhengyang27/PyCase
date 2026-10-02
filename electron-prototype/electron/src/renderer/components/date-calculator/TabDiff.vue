@@ -37,7 +37,8 @@ const result = computed(() => {
     </div>
     <div class="w-full surface-card p-3">
       <div class="flex justify-between text-caption text-ink-faint mb-1.5">
-        <span>{{ result.span }}</span><span>{{ result.spanEnd }}</span>
+        <span>{{ result.span }}</span
+        ><span>{{ result.spanEnd }}</span>
       </div>
       <div class="h-3 rounded-full overflow-hidden bg-accent/15">
         <div class="h-full w-full rounded-full bg-gradient-to-r from-accent/30 to-accent" />

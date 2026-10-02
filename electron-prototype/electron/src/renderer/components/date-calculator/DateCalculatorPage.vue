@@ -47,7 +47,10 @@ const TAB_CLS = 'border-0 bg-transparent px-3 py-2 text-control cursor-pointer t
           <button
             v-for="t in TABS"
             :key="t.key"
-            :class="[TAB_CLS, activeTab === t.key ? 'text-ink border-b-2 border-accent font-medium' : 'text-ink-mute hover:text-ink']"
+            :class="[
+              TAB_CLS,
+              activeTab === t.key ? 'text-ink border-b-2 border-accent font-medium' : 'text-ink-mute hover:text-ink'
+            ]"
             :data-testid="`tab-${t.key}`"
             @click="activeTab = t.key"
           >

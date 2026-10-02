@@ -77,11 +77,23 @@ function cellCls(c: Cell): string {
 <template>
   <div class="pt-4 pb-2">
     <div class="flex items-center gap-2 mb-3">
-      <button class="border-0 bg-transparent text-ink-mute hover:text-accent cursor-pointer" aria-label="前翻一月" data-testid="cal-prev" @click="cursor = monthAdd(left, -1)">
+      <button
+        class="border-0 bg-transparent text-ink-mute hover:text-accent cursor-pointer"
+        aria-label="前翻一月"
+        data-testid="cal-prev"
+        @click="cursor = monthAdd(left, -1)"
+      >
         <ChevronLeft :size="16" />
       </button>
-      <div class="text-caption text-ink-mute">点击日期格：第一次设起点，第二次设终点（当前：{{ pickStage === 0 ? '设起点' : '设终点' }}）</div>
-      <button class="ml-auto border-0 bg-transparent text-ink-mute hover:text-accent cursor-pointer" aria-label="后翻一月" data-testid="cal-next" @click="cursor = monthAdd(left, 1)">
+      <div class="text-caption text-ink-mute">
+        点击日期格：第一次设起点，第二次设终点（当前：{{ pickStage === 0 ? '设起点' : '设终点' }}）
+      </div>
+      <button
+        class="ml-auto border-0 bg-transparent text-ink-mute hover:text-accent cursor-pointer"
+        aria-label="后翻一月"
+        data-testid="cal-next"
+        @click="cursor = monthAdd(left, 1)"
+      >
         <ChevronRight :size="16" />
       </button>
     </div>

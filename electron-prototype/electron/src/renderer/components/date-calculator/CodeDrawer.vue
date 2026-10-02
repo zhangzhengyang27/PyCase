@@ -113,8 +113,7 @@ async function copyCode(): Promise<void> {
         v-if="runOutput"
         class="m-0 p-3 max-h-[180px] overflow-auto text-control font-mono bg-page border border-line rounded-control whitespace-pre-wrap"
         data-testid="run-output"
-        >{{ runOutput }}</pre
-      >
+        >{{ runOutput }}</pre>
     </div>
   </div>
 </template>

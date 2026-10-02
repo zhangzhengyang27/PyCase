@@ -40,11 +40,19 @@ function removeRow(i: number): void {
       class="flex items-center gap-2 surface-card px-3 py-2"
       :data-testid="`arith-row-${i}`"
     >
-      <select v-model="r.target" class="px-2 h-7 bg-page border border-line rounded-control text-control text-ink" :aria-label="`第 ${i + 1} 行目标日期`">
+      <select
+        v-model="r.target"
+        class="px-2 h-7 bg-page border border-line rounded-control text-control text-ink"
+        :aria-label="`第 ${i + 1} 行目标日期`"
+      >
         <option value="d1">起点</option>
         <option value="d2">终点</option>
       </select>
-      <select v-model="r.op" class="px-2 h-7 bg-page border border-line rounded-control text-control text-ink" :aria-label="`第 ${i + 1} 行运算`">
+      <select
+        v-model="r.op"
+        class="px-2 h-7 bg-page border border-line rounded-control text-control text-ink"
+        :aria-label="`第 ${i + 1} 行运算`"
+      >
         <option value="+">＋</option>
         <option value="-">－</option>
       </select>
@@ -56,7 +64,11 @@ function removeRow(i: number): void {
         aria-label="数值"
         @change="r.n = Math.trunc(Number(r.n) || 0)"
       />
-      <select v-model="r.unit" class="px-2 h-7 bg-page border border-line rounded-control text-control text-ink" :aria-label="`第 ${i + 1} 行单位`">
+      <select
+        v-model="r.unit"
+        class="px-2 h-7 bg-page border border-line rounded-control text-control text-ink"
+        :aria-label="`第 ${i + 1} 行单位`"
+      >
         <option v-for="u in UNITS" :key="u.v" :value="u.v">{{ u.label }}</option>
       </select>
       <span class="text-ink-mute">→</span>

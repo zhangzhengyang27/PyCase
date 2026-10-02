@@ -76,12 +76,11 @@ export function genArithCode(a: DateYMD, b: DateYMD, rows: ArithRowLike[]): stri
     return `print("${label} →", (${r.target} ${op} timedelta(${arg}=${Math.abs(signed)})).isoformat())`
   })
   // PEP8：两个 stdlib import 归同一组（组内不空行）；顶层 def 之间、def 与正文之间空两行。
-  const helpers = [needsMonths ? HELP_ADD_MONTHS : '', needsYears ? HELP_ADD_YEARS : '']
-    .filter(Boolean)
-    .join('\n\n\n')
-  const imports = needsMonths || needsYears
-    ? `from datetime import date, timedelta\nimport calendar\n\n\n${helpers}\n\n\n`
-    : `from datetime import date, timedelta\n\n`
+  const helpers = [needsMonths ? HELP_ADD_MONTHS : '', needsYears ? HELP_ADD_YEARS : ''].filter(Boolean).join('\n\n\n')
+  const imports =
+    needsMonths || needsYears
+      ? `from datetime import date, timedelta\nimport calendar\n\n\n${helpers}\n\n\n`
+      : `from datetime import date, timedelta\n\n`
   return `"""日期加减：对 ${formatYMD(a)} / ${formatYMD(b)} 做增减。"""
 ${imports}d1 = ${dq(a)}
 d2 = ${dq(b)}

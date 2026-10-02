@@ -189,8 +189,7 @@ export function upcomingAnniversaries(d: DateYMD, today: DateYMD, count = 3): An
   // daysBetween(a, b) = b - a，升序须传 (z, x) 让更早者排前
   cands.sort(
     (x, z) =>
-      daysBetween(z.date, x.date) ||
-      (x.yearly === z.yearly ? x.label.localeCompare(z.label) : x.yearly ? 1 : -1)
+      daysBetween(z.date, x.date) || (x.yearly === z.yearly ? x.label.localeCompare(z.label) : x.yearly ? 1 : -1)
   )
   const out: Anniversary[] = []
   const seen = new Set<string>()

@@ -43,7 +43,9 @@ function deltaText(n: number): string {
     <div v-for="r in rows" :key="r.key" class="surface-card p-4" :data-testid="`cd-${r.key}`">
       <div class="text-caption text-ink-mute mb-2">{{ r.label }} · {{ r.raw }}</div>
       <template v-if="r.date">
-        <div class="font-semibold text-ink" style="font-size: 30px" data-testid="cd-delta">{{ deltaText(r.delta) }}</div>
+        <div class="font-semibold text-ink" style="font-size: 30px" data-testid="cd-delta">
+          {{ deltaText(r.delta) }}
+        </div>
         <ul class="mt-3 mb-0 pl-4 list-disc text-control text-ink-dim flex flex-col gap-1">
           <li v-for="m in r.list" :key="m.label">{{ m.date }} · {{ m.label }}</li>
         </ul>
