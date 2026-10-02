@@ -67,6 +67,8 @@ import HelpSheet from './components/HelpSheet.vue'
 import OnboardingView from './components/OnboardingView.vue'
 import ToolboxView from './components/ToolboxView.vue'
 import DetailPage from './components/DetailPage.vue'
+import DateCalculatorPage from './components/date-calculator/DateCalculatorPage.vue'
+import { isInteractiveId } from './src/interactive-tools'
 import RunnerView from './components/RunnerView.vue'
 import AIExplainPanel from './components/AIExplainPanel.vue'
 import AISettingsModal from './components/AISettingsModal.vue'
@@ -417,7 +419,8 @@ onBeforeUnmount(() => {
         <GalleryView v-show="!selectedId && activeView === 'gallery'" class="animate-view-in" @reload="loadAll()" />
         <ToolboxView v-show="!selectedId && activeView === 'toolbox'" class="animate-view-in" @reload="loadAll()" />
         <RunnerView v-show="!selectedId && activeView === 'runner'" class="animate-view-in" />
-        <DetailPage v-if="selectedId" class="animate-view-in" />
+        <DetailPage v-if="selectedId && !isInteractiveId(selectedId)" class="animate-view-in" />
+        <DateCalculatorPage v-else-if="selectedId" class="animate-view-in" />
       </main>
 
       <!-- 底部状态栏（空区兼作拖拽面） -->
