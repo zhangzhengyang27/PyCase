@@ -753,6 +753,43 @@ def test_excel_csv_roundtrip_real_execution(tmp_path):
     assert wb2.active.cell(row=2, column=1).value == "苹果"
 
 
+
+
+CONTACT_SHEET_TPL = IMG_COLLECT + """from PIL import Image, ImageDraw
+
+CELL, COLS = {cell}, {cols}
+BG = ({bg_r}, {bg_g}, {bg_b})
+rows = (len(files) + COLS - 1) // COLS
+sheet = Image.new("RGB", (COLS * CELL, rows * CELL), BG)
+d = ImageDraw.Draw(sheet)
+for i, f in enumerate(files):
+    im = Image.open(f).convert("RGB")
+    im.thumbnail((CELL - 8, CELL - 8))
+    r, c = divmod(i, COLS)
+    x = c * CELL + (CELL - im.size[0]) // 2
+    y = r * CELL + (CELL - im.size[1]) // 2
+    sheet.paste(im, (x, y))
+    d.rectangle([c * CELL, r * CELL, c * CELL + CELL - 1, r * CELL + CELL - 1], outline=(70, 70, 70))
+sheet.save("contact_sheet.png")
+print(f"已输出 contact_sheet.png：{{len(files)}} 张 / {{COLS}} 列 / {{rows}} 行")
+"""
+
+
+def test_contact_sheet_real_execution(tmp_path):
+    pytest.importorskip("PIL")
+    d = _make_images(tmp_path, 5)
+    script = tmp_path / "run.py"
+    script.write_text(
+        CONTACT_SHEET_TPL.format(src=str(d), cell=120, cols=2, bg_r=17, bg_g=17, bg_b=17), encoding="utf-8"
+    )
+    r = subprocess.run([sys.executable, str(script)], cwd=tmp_path, capture_output=True, text=True, timeout=60)
+    assert r.returncode == 0, r.stderr
+    from PIL import Image
+
+    with Image.open(tmp_path / "contact_sheet.png") as im:
+        assert im.size == (2 * 120, 3 * 120)  # 5 张 / 2 列 → 3 行
+
+
 def test_golden_has_all_sections():
     data = _load()
     assert len(data["temp"]) == 7

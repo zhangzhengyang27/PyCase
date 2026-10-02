@@ -73,7 +73,7 @@ ToolField 文件控件、date-run 捕获 `runImages`、CodeDrawer 产物图预�
 
 落地：图片批量 4（缩放/格式转换/裁剪/水印）+ 单文件 5（主色调/GIF 帧提取/GIF 合成/圆角边框/
 图片信息）+ Office 4（Excel→CSV/JSON、CSV→Excel、PDF 文本提取、图片转 PDF）。
-**缩略图拼贴并入批量工具族后续可选**（未做：使用频率低，管道已通，加一个 schema 即可）。
+缩略图拼贴已随收尾批补齐（B 档至此无留白）。
 
 **复杂 Excel 系 8 个（样式/公式/排序/数据校验/两表对比/透视/跨表关联/SQLite↔Excel）归 C 档**：
 它们的本质是多文件/多参数的交互式编辑会话（选两张表选关联键、透视拖拽字段等），
@@ -204,9 +204,9 @@ src/store/interactive.ts      # 扩展：currentToolId + 各工具输入值的�
 
 ## 7. 落地记录（2026-10-02 收口）
 
-- **37 个交互工具**：日期计算器（专属页）+ 21 个纯文本 schema 工具（A-1 六组 + A-2 全部）+ 15 个文件管道工具（图片 11 + Office 4，含 W5 试点）。
+- **38 个交互工具**：日期计算器（专属页）+ 21 个纯文本 schema 工具（A-1 六组 + A-2 全部）+ 16 个文件管道工具（图片 12 + Office 4，含 W5 试点与缩略图拼贴）。
 - **框架**：`InteractiveToolSchema`（fields/compute/pyCode，options 支持函数形态联动）；响应式注册表；统一页 InteractiveToolPage；CodeDrawer 通用化（props 化 + runImages 预览 + a11y）。
-- **对拍**：`tool-golden.json` 16 段，vitest 116 + pytest 28 双侧；文件管线另配真实执行测试（PIL 造图/造表 → 跑脚本 → 验产物）。
+- **对拍**：`tool-golden.json` 16 段，vitest 119 + pytest 29 双侧；文件管线另配真实执行测试（PIL 造图/造表 → 跑脚本 → 验产物）。
 - **数据**：退役 31 条静态变体 + 补齐 wordcount×2（1493→1464）。
 - **跟进项清零**：adhoc TTL 24h 回收（collect_garbage + 3 单测）；抽屉 aria-controls/aria-live；wordcount 磁盘差异。
-- **门禁**：vitest 502 / pytest 272 / lint / format / typecheck / smoke 全绿。
+- **门禁**：vitest 505 / pytest 272 / lint / format / typecheck / smoke 全绿。

@@ -994,6 +994,35 @@
       "expected": {
         "error": "页数上限需为 1~50 的整数"
       }
+    },
+    {
+      "name": "拼贴回显",
+      "id": "contact-sheet",
+      "values": {
+        "dir": "/pics",
+        "cols": 5,
+        "cell": 180,
+        "bg": "#222222"
+      },
+      "expected": {
+        "rows": {
+          "源目录": "/pics",
+          "网格": "5 列 × 180px 格 · 底色 #222222"
+        }
+      }
+    },
+    {
+      "name": "拼贴列数越界报错",
+      "id": "contact-sheet",
+      "values": {
+        "dir": "/pics",
+        "cols": 9,
+        "cell": 200,
+        "bg": "#111111"
+      },
+      "expected": {
+        "error": "列数需为 2~8 的整数"
+      }
     }
   ]
 }

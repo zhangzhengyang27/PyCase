@@ -490,3 +490,12 @@ describe('B 档 pyCode 关键片段（PIL/openpyxl/pypdf 管线）', () => {
     }
   })
 })
+
+describe('缩略图拼贴', () => {
+  it('pyCode：网格计算与格线', () => {
+    const code = dev('interactive:contact-sheet').pyCode!({ dir: '/pics', cols: 4, cell: 200, bg: '#111111' })
+    expect(code).toContain('CELL, COLS = 200, 4')
+    expect(code).toContain('sheet.save("contact_sheet.png")')
+    expect(dev('interactive:contact-sheet').pyCode!({ dir: '', cols: 4, cell: 200, bg: '#111111' })).toContain('# 选择')
+  })
+})

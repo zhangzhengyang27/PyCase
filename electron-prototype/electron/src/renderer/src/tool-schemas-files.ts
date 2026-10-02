@@ -724,6 +724,65 @@ print(f"已输出 out.pdf：{len(pages)} 页")
   }
 }
 
+// ---------------------------------------------------------------------------
+// 15. 缩略图拼贴（contact sheet：目录图片网格拼成一张预览墙）
+// ---------------------------------------------------------------------------
+export const contactSheetSchema: InteractiveToolSchema = {
+  id: 'interactive:contact-sheet',
+  title: '缩略图拼贴',
+  description: '目录内全部图片按网格拼成一张 contact sheet（等比缩进格、居中放置、格线描边）。',
+  tags: ['图片', '批量'],
+  fields: [
+    { key: 'dir', label: '图片目录', type: 'dir', required: true },
+    { key: 'cols', label: '列数', type: 'number', default: 4, width: 'half', help: '2~8' },
+    { key: 'cell', label: '单格边长(px)', type: 'number', default: 200, width: 'half', help: '64~800' },
+    { key: 'bg', label: '背景色', type: 'text', default: '#111111', width: 'half', placeholder: '#111111' }
+  ],
+  compute: (v) => {
+    const dir = str(v.dir)
+    if (!dir) return { error: '请选择图片目录' }
+    const cols = Math.trunc(Number(v.cols ?? 4))
+    if (!Number.isFinite(cols) || cols < 2 || cols > 8) return { error: '列数需为 2~8 的整数' }
+    const cell = Math.trunc(Number(v.cell ?? 200))
+    if (!Number.isFinite(cell) || cell < 64 || cell > 800) return { error: '单格边长需为 64~800 的整数' }
+    const bg = str(v.bg ?? '#111111')
+    if (!/^#[0-9a-fA-F]{6}$/.test(bg)) return { error: '背景色需为 #RRGGBB' }
+    return {
+      rows: [
+        { label: '源目录', value: dir, copy: true },
+        { label: '网格', value: `${cols} 列 × ${cell}px 格 · 底色 ${bg}` }
+      ]
+    }
+  },
+  pyCode: (v) => {
+    const dir = str(v.dir)
+    const cols = Math.trunc(Number(v.cols ?? 4))
+    const cell = Math.trunc(Number(v.cell ?? 200))
+    const bg = str(v.bg ?? '#111111')
+    if (!dir || !/^#[0-9a-fA-F]{6}$/.test(bg)) return INVALID_CODE
+    return `"""缩略图拼贴：${Number.isFinite(cols) && cols >= 2 ? cols : 4} 列 contact sheet。"""
+from PIL import Image, ImageDraw
+
+${COLLECT(dir)}
+CELL, COLS = ${Number.isFinite(cell) && cell >= 64 ? cell : 200}, ${Number.isFinite(cols) && cols >= 2 ? cols : 4}
+BG = tuple(int("${bg.replace('#', '')}"[i:i + 2], 16) for i in (0, 2, 4))
+rows = (len(files) + COLS - 1) // COLS
+sheet = Image.new("RGB", (COLS * CELL, rows * CELL), BG)
+d = ImageDraw.Draw(sheet)
+for i, f in enumerate(files):
+    im = Image.open(f).convert("RGB")
+    im.thumbnail((CELL - 8, CELL - 8))
+    r, c = divmod(i, COLS)
+    x = c * CELL + (CELL - im.size[0]) // 2
+    y = r * CELL + (CELL - im.size[1]) // 2
+    sheet.paste(im, (x, y))
+    d.rectangle([c * CELL, r * CELL, c * CELL + CELL - 1, r * CELL + CELL - 1], outline=(70, 70, 70))
+sheet.save("contact_sheet.png")
+print(f"已输出 contact_sheet.png：{len(files)} 张 / {COLS} 列 / {rows} 行")
+`
+  }
+}
+
 export const FILE_TOOL_SCHEMAS: InteractiveToolSchema[] = [
   batchResizeSchema,
   batchConvertSchema,
@@ -738,5 +797,6 @@ export const FILE_TOOL_SCHEMAS: InteractiveToolSchema[] = [
   excelExportSchema,
   csvToExcelSchema,
   pdfExtractSchema,
-  imgToPdfSchema
+  imgToPdfSchema,
+  contactSheetSchema
 ]
