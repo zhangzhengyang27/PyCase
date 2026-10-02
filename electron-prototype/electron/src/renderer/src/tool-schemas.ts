@@ -376,3 +376,7 @@ TOOL_SCHEMAS.push(...W4_SCHEMAS)
 // W5 追加注册：B 档文件管道试点（图片类）
 import { MEDIA_SCHEMAS } from './tool-schemas-media'
 TOOL_SCHEMAS.push(...MEDIA_SCHEMAS)
+
+// W6 收尾批：B 档批量图片 10 + Office 4（独立模块，单向导入）
+import { FILE_TOOL_SCHEMAS } from './tool-schemas-files'
+TOOL_SCHEMAS.push(...FILE_TOOL_SCHEMAS)

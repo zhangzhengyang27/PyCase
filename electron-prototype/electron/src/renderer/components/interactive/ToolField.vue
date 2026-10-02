@@ -32,14 +32,19 @@ function onCheckbox(e: Event): void {
   emit('update:modelValue', (e.target as HTMLInputElement).checked)
 }
 
-// file 类型：走 pickFile 桥选真实文件，值 = 绝对路径（sidecar 侧脚本按路径读取）
+// file/dir 类型：走 pickFile/pickDirectory 桥选真实路径，值 = 绝对路径（sidecar 侧脚本按路径读取）
 const picking = ref(false)
 async function pick(): Promise<void> {
   if (picking.value) return
   picking.value = true
   try {
-    const res = await api.pickFile({ title: `选择${props.spec.label}`, extensions: props.spec.accept })
-    if (!res.canceled && res.path) emit('update:modelValue', res.path)
+    if (props.spec.type === 'dir') {
+      const res = await api.pickDirectory()
+      if (!res.canceled && res.path) emit('update:modelValue', res.path)
+    } else {
+      const res = await api.pickFile({ title: `选择${props.spec.label}`, extensions: props.spec.accept })
+      if (!res.canceled && res.path) emit('update:modelValue', res.path)
+    }
   } finally {
     picking.value = false
   }
@@ -87,14 +92,14 @@ async function pick(): Promise<void> {
       <span class="text-ink-mute">{{ spec.help || spec.placeholder }}</span>
     </label>
 
-    <div v-else-if="spec.type === 'file'" class="flex items-center gap-1.5">
+    <div v-else-if="spec.type === 'file' || spec.type === 'dir'" class="flex items-center gap-1.5">
       <button
         type="button"
         class="shrink-0 inline-flex items-center gap-1 px-2 h-8 text-control border border-line rounded-control bg-panel text-ink-dim cursor-pointer transition-colors dur-fast hover:bg-hover hover:text-ink"
         data-testid="tf-file-pick"
         @click="pick()"
       >
-        <FileUp :size="13" /> 选择文件…
+        <FileUp :size="13" /> {{ spec.type === 'dir' ? '选择目录…' : '选择文件…' }}
       </button>
       <span
         v-if="modelValue"

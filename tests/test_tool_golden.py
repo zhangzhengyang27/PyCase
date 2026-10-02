@@ -566,6 +566,230 @@ def test_image_resize_pipeline_real_execution(tmp_path):
         assert im2.mode == "RGB"
 
 
+# ---------------------------------------------------------------------------
+# W6：B 档真实执行测试（PIL/openpyxl/pypdf 管线；模板与 TS pyCode 逐字同构）
+# ---------------------------------------------------------------------------
+IMG_COLLECT = """import glob, os
+
+SRC = {src!r}
+files = sorted(
+    f for ext in ("*.png", "*.jpg", "*.jpeg", "*.webp", "*.bmp")
+    for f in glob.glob(os.path.join(SRC, ext))
+)
+if not files:
+    raise SystemExit("目录里没有图片")
+print(f"共 {{len(files)}} 张图片待处理")
+"""
+
+BATCH_RESIZE_TPL = IMG_COLLECT + """from PIL import Image
+
+for i, f in enumerate(files, 1):
+    im = Image.open(f)
+    im.thumbnail(({max_side}, {max_side}))
+    if im.mode in ("RGBA", "P"):
+        im = im.convert("RGB")
+    out = f"resized_{{i:03d}}.{fmt}"
+    im.save(out)
+    print(f"{{os.path.basename(f)}} -> {{out}} {{im.size[0]}}x{{im.size[1]}}")
+"""
+
+WATERMARK_TPL = IMG_COLLECT + """from PIL import Image, ImageDraw, ImageFont
+
+font = ImageFont.load_default(size=48)
+WM = {wm!r}
+for i, f in enumerate(files, 1):
+    im = Image.open(f).convert("RGBA")
+    layer = Image.new("RGBA", im.size, (0, 0, 0, 0))
+    d = ImageDraw.Draw(layer)
+    bbox = d.textbbox((0, 0), WM, font=font)
+    tw, th = bbox[2] - bbox[0], bbox[3] - bbox[1]
+    d.text((im.size[0] - tw - 24, im.size[1] - th - 24), WM, font=font, fill=(255, 255, 255, 160))
+    out = f"wm_{{i:03d}}.png"
+    Image.alpha_composite(im, layer).convert("RGB").save(out, quality=92)
+    print(f"{{os.path.basename(f)}} -> {{out}}")
+"""
+
+GIF_COMPOSE_TPL = IMG_COLLECT + """from PIL import Image
+
+frames = []
+for f in files:
+    im = Image.open(f).convert("RGB")
+    if frames and im.size != frames[0].size:
+        im = im.resize(frames[0].size)
+    frames.append(im)
+frames[0].save("out.gif", save_all=True, append_images=frames[1:], duration=200, loop=0)
+print(f"已合成 out.gif：{{len(frames)}} 帧")
+"""
+
+IMG_TO_PDF_TPL = IMG_COLLECT + """from PIL import Image
+
+pages = []
+for f in files:
+    im = Image.open(f)
+    if im.mode in ("RGBA", "P"):
+        im = im.convert("RGB")
+    pages.append(im)
+pages[0].save("out.pdf", save_all=True, append_images=pages[1:])
+print(f"已输出 out.pdf：{{len(pages)}} 页")
+"""
+
+EXCEL_EXPORT_TPL = """import csv as _csv
+import io
+import json
+
+from openpyxl import load_workbook
+
+wb = load_workbook({src!r}, read_only=True, data_only=True)
+ws = wb.active
+rows = [[("" if c is None else c) for c in row] for row in ws.iter_rows(values_only=True)]
+head, body = rows[0], rows[1:]
+buf = io.StringIO()
+w = _csv.writer(buf)
+w.writerows(rows)
+print(buf.getvalue())
+"""
+
+CSV_TO_XLSX_TPL = """import csv
+
+from openpyxl import Workbook
+
+wb = Workbook()
+ws = wb.active
+ws.title = {sheet!r}
+with open({src!r}, newline="", encoding="utf-8-sig") as f:
+    for row in csv.reader(f):
+        ws.append(row)
+wb.save("converted.xlsx")
+print("已输出 converted.xlsx")
+"""
+
+
+def _make_images(tmp_path, n=3):
+    from PIL import Image
+
+    d = tmp_path / "pics"
+    d.mkdir(exist_ok=True)
+    for i in range(n):
+        Image.new("RGB", (200 + i * 40, 100), (i * 60 % 255, 120, 200)).save(d / f"img{i}.png")
+    return d
+
+
+def test_batch_resize_dir_real_execution(tmp_path):
+    pytest.importorskip("PIL")
+    d = _make_images(tmp_path)
+    script = tmp_path / "run.py"
+    script.write_text(BATCH_RESIZE_TPL.format(src=str(d), max_side=50, fmt="png"), encoding="utf-8")
+    r = subprocess.run([sys.executable, str(script)], cwd=tmp_path, capture_output=True, text=True, timeout=60)
+    assert r.returncode == 0, r.stderr
+    outs = sorted(tmp_path.glob("resized_*.png"))
+    assert len(outs) == 3
+    from PIL import Image
+
+    with Image.open(outs[0]) as im:
+        assert max(im.size) <= 50
+
+
+def test_watermark_default_font_real_execution(tmp_path):
+    pytest.importorskip("PIL")
+    d = _make_images(tmp_path, 2)
+    script = tmp_path / "run.py"
+    script.write_text(WATERMARK_TPL.format(src=str(d), wm="@ 我的作品"), encoding="utf-8")
+    r = subprocess.run([sys.executable, str(script)], cwd=tmp_path, capture_output=True, text=True, timeout=60)
+    assert r.returncode == 0, r.stderr
+    assert len(list(tmp_path.glob("wm_*.png"))) == 2
+
+
+def test_gif_compose_real_execution(tmp_path):
+    pytest.importorskip("PIL")
+    d = _make_images(tmp_path)
+    script = tmp_path / "run.py"
+    script.write_text(GIF_COMPOSE_TPL.format(src=str(d)), encoding="utf-8")
+    r = subprocess.run([sys.executable, str(script)], cwd=tmp_path, capture_output=True, text=True, timeout=60)
+    assert r.returncode == 0, r.stderr
+    from PIL import Image
+
+    with Image.open(tmp_path / "out.gif") as im:
+        assert getattr(im, "n_frames", 1) == 3
+
+
+def test_img_to_pdf_real_execution(tmp_path):
+    pytest.importorskip("PIL")
+    d = _make_images(tmp_path)
+    script = tmp_path / "run.py"
+    script.write_text(IMG_TO_PDF_TPL.format(src=str(d)), encoding="utf-8")
+    r = subprocess.run([sys.executable, str(script)], cwd=tmp_path, capture_output=True, text=True, timeout=60)
+    assert r.returncode == 0, r.stderr
+    pypdf = pytest.importorskip("pypdf")
+    r2 = PdfReader = pypdf.PdfReader(tmp_path / "out.pdf")
+    assert len(r2.pages) == 3
+
+
+def test_excel_csv_roundtrip_real_execution(tmp_path):
+    openpyxl = pytest.importorskip("openpyxl")
+    from openpyxl import Workbook
+
+    src = tmp_path / "t.xlsx"
+    wb = Workbook()
+    ws = wb.active
+    ws.append(["名称", "数量"])
+    ws.append(["苹果", 12])
+    ws.append([None, 3])
+    wb.save(src)
+    script = tmp_path / "run.py"
+    script.write_text(EXCEL_EXPORT_TPL.format(src=str(src)), encoding="utf-8")
+    r = subprocess.run([sys.executable, str(script)], cwd=tmp_path, capture_output=True, text=True, timeout=60)
+    assert r.returncode == 0, r.stderr
+    assert "名称,数量" in r.stdout and "苹果,12" in r.stdout
+
+    # CSV → Excel 反向
+    csvp = tmp_path / "t.csv"
+    csvp.write_text("名称,数量\n苹果,12\n", encoding="utf-8")
+    script2 = tmp_path / "run2.py"
+    script2.write_text(CSV_TO_XLSX_TPL.format(src=str(csvp), sheet="数据"), encoding="utf-8")
+    r2 = subprocess.run([sys.executable, str(script2)], cwd=tmp_path, capture_output=True, text=True, timeout=60)
+    assert r2.returncode == 0, r2.stderr
+    wb2 = openpyxl.load_workbook(tmp_path / "converted.xlsx")
+    assert wb2.active.title == "数据"
+    assert wb2.active.cell(row=2, column=1).value == "苹果"
+
+
+
+
+CONTACT_SHEET_TPL = IMG_COLLECT + """from PIL import Image, ImageDraw
+
+CELL, COLS = {cell}, {cols}
+BG = ({bg_r}, {bg_g}, {bg_b})
+rows = (len(files) + COLS - 1) // COLS
+sheet = Image.new("RGB", (COLS * CELL, rows * CELL), BG)
+d = ImageDraw.Draw(sheet)
+for i, f in enumerate(files):
+    im = Image.open(f).convert("RGB")
+    im.thumbnail((CELL - 8, CELL - 8))
+    r, c = divmod(i, COLS)
+    x = c * CELL + (CELL - im.size[0]) // 2
+    y = r * CELL + (CELL - im.size[1]) // 2
+    sheet.paste(im, (x, y))
+    d.rectangle([c * CELL, r * CELL, c * CELL + CELL - 1, r * CELL + CELL - 1], outline=(70, 70, 70))
+sheet.save("contact_sheet.png")
+print(f"已输出 contact_sheet.png：{{len(files)}} 张 / {{COLS}} 列 / {{rows}} 行")
+"""
+
+
+def test_contact_sheet_real_execution(tmp_path):
+    pytest.importorskip("PIL")
+    d = _make_images(tmp_path, 5)
+    script = tmp_path / "run.py"
+    script.write_text(
+        CONTACT_SHEET_TPL.format(src=str(d), cell=120, cols=2, bg_r=17, bg_g=17, bg_b=17), encoding="utf-8"
+    )
+    r = subprocess.run([sys.executable, str(script)], cwd=tmp_path, capture_output=True, text=True, timeout=60)
+    assert r.returncode == 0, r.stderr
+    from PIL import Image
+
+    with Image.open(tmp_path / "contact_sheet.png") as im:
+        assert im.size == (2 * 120, 3 * 120)  # 5 张 / 2 列 → 3 行
+
+
 def test_golden_has_all_sections():
     data = _load()
     assert len(data["temp"]) == 7

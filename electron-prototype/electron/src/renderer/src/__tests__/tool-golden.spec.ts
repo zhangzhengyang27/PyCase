@@ -410,3 +410,92 @@ describe('图片缩放 ↔ 黄金用例（参数回显）', () => {
     expect(schema.pyCode!({ file: '', maxSide: 512, format: 'png' })).toContain('# 选择图片')
   })
 })
+
+// ---------------------------------------------------------------------------
+// W6：B 档批量图片/Office（compute 回显抽测 + pyCode 关键片段全量）
+// ---------------------------------------------------------------------------
+describe('B 档工具 compute 回显 ↔ 黄金用例', () => {
+  it.each(golden.filetools.map((c) => [c.name, c] as const))('%s', (_name, c) => {
+    const r = dev(`interactive:${c.id}`).compute!(c.values)
+    if ('error' in c.expected) {
+      expect(r.error).toBe(c.expected.error)
+      return
+    }
+    const rows = Object.fromEntries((r.rows ?? []).map((x) => [x.label, x.value]))
+    expect(rows).toEqual(c.expected.rows)
+  })
+})
+
+describe('B 档 pyCode 关键片段（PIL/openpyxl/pypdf 管线）', () => {
+  const files: Record<string, string> = {
+    'batch-resize': 'interactive:batch-resize',
+    'batch-convert': 'interactive:batch-convert',
+    'batch-crop': 'interactive:batch-crop',
+    'batch-watermark': 'interactive:batch-watermark',
+    palette: 'interactive:palette',
+    'gif-extract': 'interactive:gif-extract',
+    'gif-compose': 'interactive:gif-compose',
+    'batch-enhance': 'interactive:batch-enhance',
+    'rounded-frame': 'interactive:rounded-frame',
+    'image-info': 'interactive:image-info',
+    'excel-export': 'interactive:excel-export',
+    'csv-excel': 'interactive:csv-excel',
+    'pdf-extract': 'interactive:pdf-extract',
+    'img-to-pdf': 'interactive:img-to-pdf'
+  }
+  const DIR = '/pics 空格'
+  const FILE = '/单 词.png'
+
+  it('批量四件套共享收集序章 + 逐图循环', () => {
+    for (const id of ['batch-resize', 'batch-convert', 'batch-crop', 'batch-enhance']) {
+      // 真实 UI 经 toolValueOf 注入字段默认值；这里带默认参数直调（水印记片段已单独覆盖 text 缺省路径）
+      const code = dev(`interactive:${id}`).pyCode!({
+        dir: DIR,
+        maxSide: 1024,
+        format: 'png',
+        ratio: '1:1',
+        brightness: 110,
+        contrast: 110
+      })
+      expect(code, id).toContain('files = sorted(')
+      expect(code, id).toContain(JSON.stringify(DIR))
+      expect(code, id).toContain('for i, f in enumerate(files, 1):')
+    }
+  })
+  it('水印：内置可缩放字体 + 平铺/右下角', () => {
+    const code = dev('interactive:batch-watermark').pyCode!({ dir: DIR, text: '@ 我', position: 'tile', fontSize: 48 })
+    expect(code).toContain('load_default(size=48)')
+    expect(code).toContain('Image.alpha_composite')
+    expect(code).toContain('"@ 我"')
+  })
+  it('GIF 系：帧计数与 save_all', () => {
+    expect(dev('interactive:gif-extract').pyCode!({ file: FILE })).toContain('n_frames')
+    const compose = dev('interactive:gif-compose').pyCode!({ dir: DIR, duration: 200, loop: 0 })
+    expect(compose).toContain('save_all=True')
+  })
+  it('Office 系：openpyxl 读写与 pypdf 提取', () => {
+    expect(dev('interactive:excel-export').pyCode!({ file: '/t.xlsx', sheet: '', format: 'json' })).toContain(
+      'load_workbook'
+    )
+    expect(dev('interactive:csv-excel').pyCode!({ file: '/t.csv', sheet: 'S1' })).toContain('wb.save("converted.xlsx")')
+    expect(dev('interactive:pdf-extract').pyCode!({ file: '/t.pdf', pages: 5 })).toContain(
+      'from pypdf import PdfReader'
+    )
+    expect(dev('interactive:img-to-pdf').pyCode!({ dir: DIR })).toContain('save("out.pdf", save_all=True')
+  })
+  it('输入缺失 → 引导注释', () => {
+    for (const id of Object.values(files)) {
+      const code = dev(id).pyCode!({ dir: '', file: '', text: '' })
+      expect(code, id).toContain('# 选择')
+    }
+  })
+})
+
+describe('缩略图拼贴', () => {
+  it('pyCode：网格计算与格线', () => {
+    const code = dev('interactive:contact-sheet').pyCode!({ dir: '/pics', cols: 4, cell: 200, bg: '#111111' })
+    expect(code).toContain('CELL, COLS = 200, 4')
+    expect(code).toContain('sheet.save("contact_sheet.png")')
+    expect(dev('interactive:contact-sheet').pyCode!({ dir: '', cols: 4, cell: 200, bg: '#111111' })).toContain('# 选择')
+  })
+})

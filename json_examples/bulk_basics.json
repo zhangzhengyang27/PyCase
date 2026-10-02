@@ -316,6 +316,34 @@
    "file": "bulk_basics/basics-wordcount_1.py"
   },
   {
+   "id": "topics_basics-wordcount-2",
+   "name": "basics-wordcount_2.py",
+   "category": "topics",
+   "tags": [
+    "基础",
+    "文本",
+    "统计"
+   ],
+   "title": "词频统计·Top5",
+   "description": "Counter 统计文本词频并输出 TopN。本变体：Top5。",
+   "requirements": [],
+   "file": "bulk_basics/basics-wordcount_2.py"
+  },
+  {
+   "id": "topics_basics-wordcount-3",
+   "name": "basics-wordcount_3.py",
+   "category": "topics",
+   "tags": [
+    "基础",
+    "文本",
+    "统计"
+   ],
+   "title": "词频统计·Top8",
+   "description": "Counter 统计文本词频并输出 TopN。本变体：Top8。",
+   "requirements": [],
+   "file": "bulk_basics/basics-wordcount_3.py"
+  },
+  {
    "id": "topics_basics-matrix-mul-1",
    "name": "basics-matrix-mul_1.py",
    "category": "topics",
