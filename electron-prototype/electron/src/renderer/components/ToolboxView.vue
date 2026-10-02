@@ -89,7 +89,7 @@ const emptyHint = computed(() => {
       <div class="app-drag select-none px-8 pt-7 pb-3">
         <div class="max-w-[1200px] mx-auto flex items-end justify-between gap-4">
           <div>
-            <h1 class="text-page font-semibold text-ink m-0 tracking-[-0.02em]">工具箱</h1>
+            <h1 class="text-[length:--text-page] font-semibold text-ink m-0 tracking-[-0.02em]">工具箱</h1>
             <p class="text-control text-ink-mute mt-1.5 mb-0">
               {{ toolsTotal }} 个工具 · {{ projectCount }} 个工具项目 · {{ runnablePct }}% 可静态运行
             </p>

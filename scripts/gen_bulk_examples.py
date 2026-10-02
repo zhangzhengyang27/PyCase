@@ -492,18 +492,18 @@ plt.savefig("{{fname}}_preview.png", dpi=110)
 print("已生成 {{fname}}_preview.png")
 '''
     datasets = [
-        ("正弦加噪", "y = np.sin(np.linspace(0, 12, 60)) + rng.normal(0, 0.15, 60)"),
-        ("线性趋势", "y = np.linspace(2, 9, 60) + rng.normal(0, 0.4, 60)"),
-        ("指数衰减", "y = 8 * np.exp(-np.linspace(0, 4, 60)) + rng.normal(0, 0.12, 60)"),
-        ("均匀随机", "y = rng.uniform(0, 10, 60)"),
-        ("聚簇正态", "y = np.concatenate([rng.normal(3, 0.5, 30), rng.normal(7, 0.5, 30)])"),
-        ("周期脉冲", "y = np.where(np.arange(60) % 12 < 3, rng.normal(8, 0.3, 60), rng.normal(2, 0.3, 60))"),
-        ("阶梯平台", "y = np.repeat(rng.uniform(1, 9, 10), 6) + rng.normal(0, 0.2, 60)"),
-        ("双峰分布", "y = np.concatenate([rng.normal(2.5, 0.4, 30), rng.normal(7.5, 0.6, 30)])"),
-        ("锯齿波", "y = np.tile(np.linspace(0, 8, 8), 8)[:60] + rng.normal(0, 0.15, 60)"),
-        ("缓升陡降", "y = np.where(np.arange(60) < 40, np.linspace(1, 9, 60)[:40], np.linspace(9, 1, 20)) + rng.normal(0, 0.2, 60)"),
-        ("稀疏脉冲", "y = np.where(np.arange(60) % 17 == 0, 9.0, 1.0) + rng.normal(0, 0.25, 60)"),
-        ("平方增长", "y = (np.arange(60) / 8.0) ** 2 + rng.normal(0, 0.8, 60)"),
+        ("正弦加噪", "np.sin(np.linspace(0, 12, 60)) + rng.normal(0, 0.15, 60)"),
+        ("线性趋势", "np.linspace(2, 9, 60) + rng.normal(0, 0.4, 60)"),
+        ("指数衰减", "8 * np.exp(-np.linspace(0, 4, 60)) + rng.normal(0, 0.12, 60)"),
+        ("均匀随机", "rng.uniform(0, 10, 60)"),
+        ("聚簇正态", "np.concatenate([rng.normal(3, 0.5, 30), rng.normal(7, 0.5, 30)])"),
+        ("周期脉冲", "np.where(np.arange(60) % 12 < 3, rng.normal(8, 0.3, 60), rng.normal(2, 0.3, 60))"),
+        ("阶梯平台", "np.repeat(rng.uniform(1, 9, 10), 6) + rng.normal(0, 0.2, 60)"),
+        ("双峰分布", "np.concatenate([rng.normal(2.5, 0.4, 30), rng.normal(7.5, 0.6, 30)])"),
+        ("锯齿波", "np.tile(np.linspace(0, 8, 8), 8)[:60] + rng.normal(0, 0.15, 60)"),
+        ("缓升陡降", "np.where(np.arange(60) < 40, np.linspace(1, 9, 60)[:40], np.linspace(9, 1, 20)) + rng.normal(0, 0.2, 60)"),
+        ("稀疏脉冲", "np.where(np.arange(60) % 17 == 0, 9.0, 1.0) + rng.normal(0, 0.25, 60)"),
+        ("平方增长", "(np.arange(60) / 8.0) ** 2 + rng.normal(0, 0.8, 60)"),
     ]
 
     def chart(pid, base_title, desc, body, variants):
@@ -511,17 +511,19 @@ print("已生成 {{fname}}_preview.png")
             title = f"{base_title}（{dname}）"
             fname = f"viz_{pid}_d{i + 1}"
             code = body.replace("{{DATA}}", dexpr)
-            code = bake(code, seed=7 + i, fname=fname)
             head_r = head.replace("{title}", title).replace("{desc}", desc)
             foot_r = foot.replace("{title}", title)
-            code = head_r + code + "\n" + foot_r
+            # bake 必须在 head/code/foot 拼接**之后**：head 的 docstring 与 rng 行
+            # 也带 {{seed}}/{{fname}}——先 bake 后拼接曾让它们原样落盘（bulk_viz
+            # 619 文件「print 隐形/原样输出」事故的生成器侧根因）
+            code = bake(head_r + code + "\n" + foot_r, seed=7 + i, fname=fname)
             coll.add(f"topics_viz-{pid}-d{i + 1}", f"{pid}_d{i + 1}.py", title,
                      f"{desc}数据形态：{dname}。", ["数据可视化", "matplotlib"], ["matplotlib", "numpy"], code)
 
     chart("line", "折线图", "单序列折线与标记点。",
           "x = np.arange(len({{DATA}}))\ny = {{DATA}}\nax.plot(x, y, marker='o', markersize=3, linewidth=1.6, color='tab:blue')\nax.grid(alpha=0.3)", 6)
     chart("bar", "柱状图", "分箱统计柱状图。",
-          "data = {{DATA}}\nlabels = [f'第{{i}}组' for i in range(0, len(data), 10)]\nvals = [data[i:i+10].mean() for i in range(0, len(data), 10)]\nax.bar(labels, vals, color='tab:orange')", 6)
+          "data = {{DATA}}\nlabels = [f'第{i}组' for i in range(0, len(data), 10)]\nvals = [data[i:i+10].mean() for i in range(0, len(data), 10)]\nax.bar(labels, vals, color='tab:orange')", 6)
     chart("scatter", "散点图", "两变量相关性散点。",
           "x = np.linspace(0, 10, 60)\ny = {{DATA}}\nax.scatter(x, y, s=18, c=y, cmap='viridis', alpha=0.85)", 6)
     chart("hist", "直方图", "分布直方图与密度核。",
@@ -541,7 +543,7 @@ print("已生成 {{fname}}_preview.png")
     chart("polar", "极坐标玫瑰", "极坐标花瓣能量图。",
           "theta = np.linspace(0, 2 * np.pi, 120)\nr = np.abs(np.sin(3 * theta)) * 2 + 0.4\nax = fig.add_subplot(111, projection='polar')\nax.plot(theta, r, color='tab:cyan')\nax.fill(theta, r, alpha=0.25, color='tab:cyan')", 6)
     chart("radar", "雷达图", "多维能力雷达（5 维度）。",
-          "labels = ['速度', '稳定', '覆盖', '成本', '扩展']\nvals = np.abs({{DATA}})[:5] / max(1e-9, np.abs({{DATA}})[:5]).max()\nangles = np.linspace(0, 2 * np.pi, len(labels), endpoint=False)\nvals = np.concatenate([vals, vals[:1]]); angles2 = np.concatenate([angles, angles[:1]])\nax = fig.add_subplot(111, projection='polar')\nax.plot(angles2, vals); ax.fill(angles2, vals, alpha=0.3)\nax.set_xticks(angles); ax.set_xticklabels(labels)", 6)
+          "labels = ['速度', '稳定', '覆盖', '成本', '扩展']\ny = {{DATA}}\nvals = np.abs(y)[:5] / max(1e-9, np.abs(y)[:5].max())\nangles = np.linspace(0, 2 * np.pi, len(labels), endpoint=False)\nvals = np.concatenate([vals, vals[:1]]); angles2 = np.concatenate([angles, angles[:1]])\nax = fig.add_subplot(111, projection='polar')\nax.plot(angles2, vals); ax.fill(angles2, vals, alpha=0.3)\nax.set_xticks(angles); ax.set_xticklabels(labels)", 6)
     chart("heatmap", "热力图", "矩阵热力图（imshow + 色标）。",
           "data = np.array({{DATA}})\nmat = np.outer(data, data)[:20, :]\nim = ax.imshow(mat, aspect='auto', cmap='magma')\nfig.colorbar(im, ax=ax)", 6)
     chart("contour", "等高线", "二维高斯等高线。",
@@ -563,7 +565,7 @@ print("已生成 {{fname}}_preview.png")
     chart("log-scale", "对数坐标", "指数增长对数轴。",
           "x = np.arange(1, 61)\ny = np.exp(0.07 * x) * (1 + np.array({{DATA}}) / 20)\nax.semilogy(x, y, color='tab:gray')\nax.grid(alpha=0.3, which='both')", 6)
     chart("annotation", "标注图", "峰值检测与箭头标注。",
-          "data = np.array({{DATA}})\nx = np.arange(len(data))\nax.plot(x, data)\npeak = data.argmax()\nax.annotate(f'峰值 {{data[peak]:.2f}}', xy=(peak, data[peak]), xytext=(peak - 14, data.max() * 1.05),\n            arrowprops=dict(arrowstyle='->', color='red'))", 6)
+          "data = np.array({{DATA}})\nx = np.arange(len(data))\nax.plot(x, data)\npeak = data.argmax()\nax.annotate(f'峰值 {data[peak]:.2f}', xy=(peak, data[peak]), xytext=(peak - 14, data.max() * 1.05),\n            arrowprops=dict(arrowstyle='->', color='red'))", 6)
     chart("inset", "局部放大", "主图 + 局部放大插图。",
           "data = np.array({{DATA}})\nax.plot(data, linewidth=1.2)\naxi = ax.inset_axes([0.55, 0.55, 0.4, 0.38])\nseg = data[20:32]\naxi.plot(seg, color='tomato'); axi.tick_params(labelsize=6)\nax.indicate_inset_zoom(axi)", 6)
     chart("style-grid", "网格密底图", "密网格 + 参考线风格化折线。",
@@ -631,7 +633,8 @@ cv2.rectangle(img, (30, 30), (450, 330), 160, 5)'''),
             title = f"{base_title}（{sname}）"
             fname = f"cv_{pid}_{slug(sname)}"
             code = scene.replace("{{seed}}", str(11 + i)) + "\n\n" + body
-            code = bake(code, fname=fname)
+            code = bake(code, fname=fname, k=5, t1=100, t2=200, w1=1.5, w2=0.5,
+                        clip=2.0, gamma=1.2, angle=30, scale=1.1, d=60, min_area=120)
             full = head.replace("{title}", title).replace("{desc}", desc).replace("{{fname}}", fname) + code + f'''
 cv2.imwrite("{fname}_preview.png", result if "result" in dir() else img)
 print("已生成 {fname}_preview.png")
@@ -961,7 +964,7 @@ for n in range(2, int(limit ** 0.5) + 1):
         for m in range(n * n, limit + 1, n):
             sieve[m] = False
 primes = [i for i, ok in enumerate(sieve) if ok]
-print(f"{{limit}} 以内素数 {{len(primes)}} 个：", primes[:20], "...")''',
+print(f"{{limit}} 以内素数 {len(primes)} 个：", primes[:20], "...")''',
         [dict(vname=f"N={n}", limit=n) for n in (100, 200, 500, 1000, 2000, 5000)])
 
     add("basics-fibonacci", "斐波那契三解", "递归/迭代/矩阵快速幂对比。",
@@ -1005,14 +1008,14 @@ print("迭代:", fib_iter(n), "| 递归:", fib_rec(n), "| 快速幂:", fib_fast(
 
     add("basics-wordcount", "词频统计", "Counter 统计文本词频并输出 TopN。",
         ["基础", "文本", "统计"],
-        lambda p: ('''"""词频统计：Top {topn}。"""
+        lambda p: ('''"""词频统计：Top {{topn}}。"""
 from collections import Counter
 
 text = """''' + p["text"] + '''"""
 words = [w.strip(".,!?;:()").lower() for w in text.split()]
 words = [w for w in words if w]
 counter = Counter(words)
-for word, cnt in counter.most_common({topn}):
+for word, cnt in counter.most_common({{topn}}):
     print(f"{word:>12}  {cnt}")
 print("去重词数:", len(counter))'''),
         [dict(vname=f"Top{t}", topn=t,
@@ -1022,13 +1025,13 @@ print("去重词数:", len(counter))'''),
 
     add("basics-date-diff", "日期计算", "datetime 计算日期差与星期。",
         ["基础", "日期"],
-        lambda p: '''"""日期计算：{{d1}} 与 {{d2}} 之间隔多少天。"""
+        lambda p: '''"""日期计算：{{y1}}-{{m1}}-{{dd1}} 与 {{y2}}-{{m2}}-{{dd2}} 之间隔多少天。"""
 from datetime import date
 
 d1 = date({{y1}}, {{m1}}, {{dd1}})
 d2 = date({{y2}}, {{m2}}, {{dd2}})
 diff = abs((d2 - d1).days)
-print(f"间隔 {{diff}} 天（约 {{diff / 7:.1f}} 周）")
+print(f"间隔 {diff} 天（约 {diff / 7:.1f} 周）")
 print("各自星期:", d1.strftime("%A"), "/", d2.strftime("%A"))''',
         [dict(vname=f"{y1}{m1:02d}-{y2}{m2:02d}", y1=y1, m1=m1, dd1=dd1, y2=y2, m2=m2, dd2=dd2)
          for y1, m1, dd1, y2, m2, dd2 in
@@ -1116,7 +1119,7 @@ print("LCS 长度:", dp[-1][-1], "| 序列:", "".join(reversed(out)))''',
         lambda p: '''"""Dijkstra：从 0 号点到各点的最短距离（{{n}} 个顶点）。"""
 import heapq
 
-graph = {{{edges}}}
+graph = {{edges}}
 dist = {0: 0}
 heap = [(0, 0)]
 while heap:
@@ -1145,7 +1148,7 @@ for w, v in zip(weights, values):
     for c in range(cap, w - 1, -1):
         dp[c] = max(dp[c], dp[c - w] + v)
 print("最大价值:", dp[cap])''',
-        [dict(vname=f"容量{cap}", cap=cap, weights=w, values=v) for cap, w, v in
+        [dict(vname=f"容量{cap}", cap=cap, n=len(w), weights=w, values=v) for cap, w, v in
          [(10, [2, 3, 5, 7], [3, 4, 5, 9]), (15, [4, 5, 6, 2, 3], [7, 8, 9, 2, 4]),
           (20, [5, 6, 8, 3, 4, 7], [10, 12, 15, 4, 6, 11]), (30, list(range(3, 18, 2)), [v * 3 for v in range(2, 18, 2)])]])
 
@@ -1183,7 +1186,7 @@ print("连通分量数:", len({find(i) for i in range({{n}})}))''',
     add("tools-temp-converter", "温度换算器", "摄氏/华氏/开氏互转。",
         ["工具", "换算"], category="tools",
         body_fn=lambda p: '''"""温度换算：{{vals}}。"""
-for c in [{{vals}}]:
+for c in {{vals}}:
     f = c * 9 / 5 + 32
     k = c + 273.15
     print(f"{c:>6}°C = {f:>6}°F = {k:>6}K")''',
@@ -1204,30 +1207,30 @@ for r in range(size):
         ["工具", "数学"], category="tools",
         body_fn=lambda p: '''"""进制转换：十进制 {{num}} 的各进制表示。"""
 num = {{num}}
-for base in [{{bases}}]:
+for base in {{bases}}:
     digits = "0123456789abcdefghijklmnopqrstuvwxyz"
     out = ""
     n = num
     while n:
         out = digits[n % base] + out
         n //= base
-    print(f"base-{{base:>2}}: {{out or '0'}}")''',
-        variants=[dict(vname=f"n{n}", num=n, bases="2, 8, 16, 32") for n in (255, 1024, 4095, 65535, 123456)])
+    print(f"base-{base:>2}: {out or '0'}")''',
+        variants=[dict(vname=f"n{n}", num=n, bases=[2, 8, 16, 32]) for n in (255, 1024, 4095, 65535, 123456)])
 
     add("tools-text-table", "文本表格", "格式化对齐输出 Markdown 表格。",
         ["工具", "文本"], category="tools",
         body_fn=lambda p: '''"""文本表格：{{rows}} 行对齐输出。"""
 headers = ["名称", "数量", "单价"]
-data = [{{data}}]
+data = {{data}}
 widths = [max(len(str(headers[i])), max(len(str(r[i])) for r in data)) for i in range(3)]
 line = "| " + " | ".join(h.ljust(w) for h, w in zip(headers, widths)) + " |"
 print(line)
 print("|" + "|".join("-" * (w + 2) for w in widths) + "|")
 for r in data:
     print("| " + " | ".join(str(c).ljust(w) for c, w in zip(r, widths)) + " |")''',
-        variants=[dict(vname="商品", rows=4, data=str([["苹果", 12, 5.5], ["香蕉", 30, 3.2], ["橙子", 8, 6.0], ["葡萄", 15, 9.9]])),
-                  dict(vname="库存", rows=3, data=str([["螺丝", 400, 0.2], ["螺母", 350, 0.3], ["垫片", 500, 0.1]])),
-                  dict(vname="成绩", rows=5, data=str([["小明", 92, 1], ["小红", 88, 2], ["小刚", 95, 1], ["小丽", 79, 3], ["小军", 85, 2]]))])
+        variants=[dict(vname="商品", rows=4, data=[["苹果", 12, 5.5], ["香蕉", 30, 3.2], ["橙子", 8, 6.0], ["葡萄", 15, 9.9]]),
+                  dict(vname="库存", rows=3, data=[["螺丝", 400, 0.2], ["螺母", 350, 0.3], ["垫片", 500, 0.1]]),
+                  dict(vname="成绩", rows=5, data=[["小明", 92, 1], ["小红", 88, 2], ["小刚", 95, 1], ["小丽", 79, 3], ["小军", 85, 2]])])
 
     add("tools-caesar", "凯撒密码", "移位加密与解密（保留大小写）。",
         ["工具", "密码学"], category="tools",
@@ -1344,7 +1347,7 @@ if cur:
     lines.append(cur)
 for ln in lines:
     print(ln)
-print(f"共 {{len(lines)}} 行")''',
+print(f"共 {len(lines)} 行")''',
         variants=[dict(vname=f"W{w}", width=w, text="the quick brown fox jumps over the lazy dog "
                        "and python makes text processing delightfully simple for everyone")
                   for w in (20, 28, 36, 44, 52)])
@@ -1364,8 +1367,8 @@ def is_palindrome(t):
 
 samples = {{samples}}
 for s in samples:
-    print(f"{{s!r:>30}} -> {{is_palindrome(s)}}")''',
-        variants=[dict(vname=f"组{g}", samples=str(samples)) for g, samples in enumerate([
+    print(f"{s!r:>30} -> {is_palindrome(s)}")''',
+        variants=[dict(vname=f"组{g}", samples=samples) for g, samples in enumerate([
             ["上海自来水来自海上", "A man, a plan, a canal: Panama", "hello"],
             ["level", "Python", "Was it a car or a cat I saw?"],
             ["12321", "no 'x' in nixon", "almostomla"],
@@ -1392,7 +1395,7 @@ def collatz_len(n):
 
 print("起点 {{start}} 步数:", collatz_len({{start}}))
 best = max(range(1, {{limit}}), key=lambda n: (collatz_len(n), -n))
-print(f"1~{{limit}} 中链最长: {{best}} ({{collatz_len(best)}} 步)")''',
+print(f"1~{{limit}} 中链最长: {best} ({collatz_len(best)} 步)")''',
         variants=[dict(vname=f"L{lim}", start=s, limit=lim) for s, lim in
                   [(27, 1000), (97, 2000), (871, 5000), (6171, 10000)]])
 
@@ -1406,8 +1409,8 @@ def lcm(a, b):
 
 pairs = {{pairs}}
 for a, b in pairs:
-    print(f"gcd({{a}}, {{b}}) = {{gcd(a, b)}},  lcm = {{lcm(a, b)}}")''',
-        variants=[dict(vname=f"组{g}", pairs=str(pairs)) for g, pairs in enumerate([
+    print(f"gcd({a}, {b}) = {gcd(a, b)},  lcm = {lcm(a, b)}")''',
+        variants=[dict(vname=f"组{g}", pairs=pairs) for g, pairs in enumerate([
             [(12, 18), (24, 36), (48, 60)], [(100, 75), (81, 27), (97, 89)],
             [(270, 192), (1071, 462), (2026, 922)]])])
 

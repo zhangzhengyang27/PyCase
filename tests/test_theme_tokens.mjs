@@ -114,3 +114,13 @@ check('禁令：text-console（背景色当文字色，隐形墨水）不得再�
 })())
 check('终端正文类 text-ink-console 已有 @theme 映射', definedColors.has('ink-console'))
 check('系统行 text-gutter 已有 @theme 映射（曾漏映射继承容器色）', definedColors.has('gutter'))
+check('禁令：text-page / text-panel 等「页头字号名」与背景色同名，用作文字类即隐形（用 text-[length:--text-page] 显式取字号）', (() => {
+  const banned = /(^|[^a-z-])text-(page|panel|card|surface|inset|sidebar|console)(?![a-z-])/
+  let used = []
+  for (const file of walk(RENDERER)) {
+    const src = readFileSync(file, 'utf8')
+    if (banned.test(src)) used.push(file.replace(RENDERER + '/', ''))
+  }
+  if (used.length) console.error('    命中文件: ' + used.join(', '))
+  return used.length === 0
+})())

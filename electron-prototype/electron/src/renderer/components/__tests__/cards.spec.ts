@@ -901,3 +901,38 @@ describe('OutputPanel', () => {
     expect(w.find('img').exists()).toBe(false)
   })
 })
+
+// ---------------------------------------------------------------------------
+describe('GalleryHeader 跟随二级分区（用户语义：选了分区，右侧就是分区的示例）', () => {
+  it('分区激活时：标题=分区名，统计=分区内口径（示例数/可运行/收藏），主题 chip 退场', async () => {
+    examples.value = [
+      makeExample({ id: 't1', name: 'a.py', theme_key: 'turtle', run_status: 'runnable' }),
+      makeExample({ id: 't2', name: 'b.py', theme_key: 'turtle', run_status: 'runnable' }),
+      makeExample({ id: 't3', name: 'c.py', theme_key: 'turtle', run_status: 'missing_deps' }),
+      makeExample({ id: 'g1', name: 'd.py', theme_key: 'games', run_status: 'runnable' })
+    ]
+    favorites.value = new Set(['t1', 'g1'])
+    activeSectionKey.value = 'turtle'
+    await nextTick()
+    const w = mount(GalleryHeader)
+
+    expect(w.get('h1').text()).toBe('Turtle 绘图')
+    const chips = w.findAll('.stat-chip')
+    // 分区池 = 3 条 turtle（games 不算）；可运行 2/3=67%；收藏只数分区内（g1 不算）
+    expect(chips.map((c) => c.text())).toEqual(['3 个示例', '67% 可运行', '1 收藏'])
+    // 浏览全部仍是退出分区的入口
+    expect(w.findAll('button').some((b) => b.text() === '浏览全部')).toBe(true)
+  })
+
+  it('分区激活时收藏 chip 统计分区内收藏，不是全局收藏数', async () => {
+    examples.value = [
+      makeExample({ id: 't1', name: 'a.py', theme_key: 'turtle', run_status: 'runnable' }),
+      makeExample({ id: 'g1', name: 'd.py', theme_key: 'games', run_status: 'runnable' })
+    ]
+    favorites.value = new Set(['t1', 'g1'])
+    activeSectionKey.value = 'turtle'
+    await nextTick()
+    const w = mount(GalleryHeader)
+    expect(w.findAll('.stat-chip').map((c) => c.text())).toEqual(['1 个示例', '100% 可运行', '1 收藏'])
+  })
+})
