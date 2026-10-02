@@ -13,6 +13,8 @@ import type {
   ListExamplesResult,
   OpenLogResult,
   PickDirectoryResult,
+  PickFileParams,
+  PickFileResult,
   SaveTextResult,
   SearchHit,
   StorageReport,
@@ -89,6 +91,7 @@ export interface SidecarAPI {
 
   // 用户示例集合（导入向导 / 删除管理）
   pickDirectory: () => Promise<PickDirectoryResult>
+  pickFile: (params: PickFileParams) => Promise<PickFileResult>
   scanImportSource: (sourcePath: string) => Promise<{
     total: number
     files: ImportPreviewFile[]
@@ -190,6 +193,7 @@ const sidecarAPI: SidecarAPI = {
 
   // 用户示例集合（导入向导 / 删除管理）
   pickDirectory: () => ipcRenderer.invoke('file:pickDirectory'),
+  pickFile: (params: PickFileParams) => ipcRenderer.invoke('file:pickFile', params),
   scanImportSource: (sourcePath: string) => ipcRenderer.invoke('sidecar:scanExamples', { source_path: sourcePath }),
   importExamples: (params: { source_path: string; name?: string }) =>
     ipcRenderer.invoke('sidecar:importExamples', params),

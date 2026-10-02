@@ -872,5 +872,38 @@
     "ambiguous": "0Oo1lI",
     "min_length": 8,
     "max_length": 64
-  }
+  },
+  "image": [
+    {
+      "name": "参数回显",
+      "file": "/tmp/demo.png",
+      "maxSide": 512,
+      "format": "png",
+      "expected": {
+        "rows": {
+          "源文件": "/tmp/demo.png",
+          "长边上限": "512 px",
+          "输出格式": "PNG"
+        }
+      }
+    },
+    {
+      "name": "缺文件报错",
+      "file": "",
+      "maxSide": 512,
+      "format": "png",
+      "expected": {
+        "error": "请选择图片文件"
+      }
+    },
+    {
+      "name": "尺寸越界报错",
+      "file": "/tmp/demo.png",
+      "maxSide": 5,
+      "format": "jpg",
+      "expected": {
+        "error": "长边上限需为 16~20000 的整数"
+      }
+    }
+  ]
 }

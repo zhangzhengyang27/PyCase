@@ -476,6 +476,20 @@ ipcMain.handle('file:pickDirectory', async (event) => {
   })
   return canceled || filePaths.length === 0 ? { canceled: true } : { canceled: false, path: filePaths[0] }
 })
+ipcMain.handle('file:pickFile', async (event, params?: { title?: string; extensions?: string[] }) => {
+  const win = BrowserWindow.fromWebContents(event.sender)
+  // 扩展名白名单收紧为字符串数组：非字符串元素会让 dialog 过滤器行为不可预期
+  const exts = Array.isArray(params?.extensions)
+    ? params!.extensions.filter((e): e is string => typeof e === 'string' && e.length > 0).map((e) => e.toLowerCase())
+    : []
+  const { canceled, filePaths } = await dialog.showOpenDialog(win!, {
+    title: params?.title || '选择文件',
+    properties: ['openFile'],
+    ...(exts.length ? { filters: [{ name: exts.join(' / ').toUpperCase(), extensions: exts }] } : {})
+  })
+  if (canceled || filePaths.length === 0) return { canceled: true }
+  return { canceled: false, path: filePaths[0], name: filePaths[0].split(/[\\/]/).pop() }
+})
 ipcMain.handle('sidecar:scanExamples', (_e, params: { source_path?: string }) => {
   if (!params || typeof params.source_path !== 'string' || !params.source_path) {
     throw new Error('scanExamples: 缺少 source_path')

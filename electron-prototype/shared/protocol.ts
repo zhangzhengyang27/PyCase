@@ -61,7 +61,7 @@ export const NAMESPACES = {
   env: ['status', 'setRunEnv', 'onProgress'],
   win: ['minimize', 'toggleMaximize', 'close', 'isMaximized', 'onMaximizedChange'],
   ai: ['getSettings', 'setSettings', 'explain', 'stop'],
-  file: ['pickDirectory', 'saveTextFile', 'downloadResultImage']
+  file: ['pickDirectory', 'pickFile', 'saveTextFile', 'downloadResultImage']
 } as const
 
 // ---------------------------------------------------------------------------
@@ -348,6 +348,16 @@ export interface DownloadResult {
 export interface PickDirectoryResult {
   canceled: boolean
   path?: string
+}
+export interface PickFileParams {
+  title?: string
+  /** 扩展名白名单（如 ['png', 'jpg']），空则不过滤 */
+  extensions?: string[]
+}
+export interface PickFileResult {
+  canceled: boolean
+  path?: string
+  name?: string
 }
 export interface MaximizedEvent {
   maximized: boolean

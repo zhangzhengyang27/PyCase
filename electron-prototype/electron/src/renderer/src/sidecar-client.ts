@@ -246,6 +246,11 @@ export const api = {
 
   // 用户示例集合（导入向导 / 删除管理）
   pickDirectory: (): Promise<PickDirectoryResult> => request('file:pickDirectory', () => bridge.pickDirectory()),
+  pickFile: (params: {
+    title?: string
+    extensions?: string[]
+  }): Promise<{ canceled: boolean; path?: string; name?: string }> =>
+    request('file:pickFile', () => bridge.pickFile(params)),
   scanImportSource: (
     sourcePath: string
   ): Promise<{ total: number; files: ImportPreviewFile[]; skipped: { file: string; reason: string }[] }> =>

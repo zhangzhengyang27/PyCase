@@ -8,6 +8,8 @@ import { api, on } from '../sidecar-client'
 export const runOutput = ref('')
 export const runExitCode = ref<number | null>(null)
 export const runBusy = ref(false)
+/** 本次运行在工作区生成的图片（file:// URL，sidecar 扫描产出）——文件管道工具的产物预览源 */
+export const runImages = ref<string[]>([])
 
 let currentRunId: string | null = null
 
@@ -16,6 +18,7 @@ export function runSnippet(id: string, code: string): void {
   runBusy.value = true
   runOutput.value = ''
   runExitCode.value = null
+  runImages.value = []
   api
     .runExample({ id, code })
     .then(({ run_id }) => {

@@ -45,6 +45,6 @@
     "env": ["status", "setRunEnv", "onProgress"],
     "win": ["minimize", "toggleMaximize", "close", "isMaximized", "onMaximizedChange"],
     "ai": ["getSettings", "setSettings", "explain", "stop"],
-    "file": ["pickDirectory", "saveTextFile", "downloadResultImage"]
+    "file": ["pickDirectory", "pickFile", "saveTextFile", "downloadResultImage"]
   }
 }
