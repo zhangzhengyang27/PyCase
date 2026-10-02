@@ -182,8 +182,9 @@ function facetSuffix(has: boolean, n: number | undefined): string {
       <!-- 标签（多选下拉：checkbox 列表 + 计数） -->
       <TagFilterSelect />
 
-      <!-- 排序 + 密度：右推（不足则整体换行，自身恒一行高，不横向溢出） -->
-      <div class="ml-auto flex items-center gap-2 shrink-0">
+      <!-- 排序 + 密度：右推（不足则整体换行，自身恒一行高，不横向溢出）。
+           组高恒等于 --toolbar-h（走查探针量这里）：控件 28px 居中，行几何不随内容漂 -->
+      <div class="ml-auto flex items-center gap-2 shrink-0 h-[var(--toolbar-h)]">
         <BaseSelectMenu
           v-model="sortBy"
           title="排序"
