@@ -1,8 +1,10 @@
 // 注册表与工具池合并：交互工具恒置顶、参与收藏过滤；不计入可运行率分母口径。
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { nextTick } from 'vue'
+import { Sparkles } from 'lucide-vue-next'
 import { catalogToolsTotal, examples, favOnly, toolboxItems, toolsTotal, toolSearchQuery } from '../store/catalog'
-import { DATE_CALC_ID, interactiveToolItems, isInteractiveId } from '../interactive-tools'
+import { DATE_CALC_ID, INTERACTIVE_GROUP_KEY, interactiveToolItems, isInteractiveId } from '../interactive-tools'
+import { toolboxIcon } from '../section-icons'
 import { favorites } from '../store/prefs'
 
 function seedTools(): void {
@@ -50,6 +52,9 @@ describe('toolboxItems 合并交互工具', () => {
     expect(isInteractiveId(DATE_CALC_ID)).toBe(true)
     expect(isInteractiveId('topics_x')).toBe(false)
     expect(isInteractiveId(undefined)).toBe(false)
+  })
+  it('INTERACTIVE_GROUP_KEY 钉住工具箱分组图标映射（键漂移会静默退化成 Wrench 且无报错）', () => {
+    expect(toolboxIcon(INTERACTIVE_GROUP_KEY)).toBe(Sparkles)
   })
   it('注册表条目不含 run_status（不进可运行域）', () => {
     expect(interactiveToolItems.every((t) => t.run_status === undefined)).toBe(true)

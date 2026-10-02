@@ -4,7 +4,7 @@
 // 行 3 = 质量分 + 主标签 + 高危 + 运行（安静按钮）+ 状态（圆点 + 中性文字）。
 // interactive 形态（应用内交互工具）：行 3 的质量分与运行按钮退场，换成「交互」
 // 徽章——交互工具没有可运行的 .py，运行/评分语义都不成立，卡片安静标记即可。
-// 卡片可键盘到达（role=button + Enter 打开详情）。
+// 卡片可键盘到达（role=button + Enter 打开；aria-label 后缀随形态切换：普通卡=详情，interactive 卡=打开）。
 import { computed } from 'vue'
 import { MousePointerClick, Play, Star } from 'lucide-vue-next'
 import { exampleIcon } from '../src/icons'
@@ -58,7 +58,7 @@ const enterDelay = computed(() => ({
     :style="enterDelay"
     role="button"
     tabindex="0"
-    :aria-label="`${title}（详情）`"
+    :aria-label="`${title}（${interactive ? '打开' : '详情'}）`"
     @click="emit('open')"
     @keydown.enter.self="emit('open')"
     @keydown.space.self.prevent="emit('open')"

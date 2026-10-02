@@ -5,6 +5,8 @@ import type { VExample } from './store/catalog'
 
 export const INTERACTIVE_PREFIX = 'interactive:'
 export const DATE_CALC_ID = `${INTERACTIVE_PREFIX}date-calculator`
+/** 工具箱「交互工具」分组 key（ToolboxView 分组与 section-icons 图标映射共用，防字符串漂移） */
+export const INTERACTIVE_GROUP_KEY = 'interactive'
 
 export function isInteractiveId(id: string | undefined | null): boolean {
   return !!id && id.startsWith(INTERACTIVE_PREFIX)

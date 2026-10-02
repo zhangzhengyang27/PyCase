@@ -7,7 +7,7 @@
 import { computed, reactive } from 'vue'
 import { ChevronDown, ChevronUp, SearchX, Star } from 'lucide-vue-next'
 import { buildToolboxGroups } from '../src/toolbox-groups'
-import { isInteractiveId } from '../src/interactive-tools'
+import { INTERACTIVE_GROUP_KEY, isInteractiveId } from '../src/interactive-tools'
 import { openInteractive } from '../src/store/interactive'
 import { toolboxIcon } from '../src/section-icons'
 import {
@@ -46,9 +46,13 @@ const groups = computed(() => {
     ...g,
     items: sortVExamples(g.items)
   }))
-  return inter.length ? [{ key: 'interactive', label: '交互工具', items: sortVExamples(inter) }, ...rest] : rest
+  return inter.length ? [{ key: INTERACTIVE_GROUP_KEY, label: '交互工具', items: sortVExamples(inter) }, ...rest] : rest
 })
-const projectCount = computed(() => groups.value.filter((g) => g.key !== 'standalone').length)
+// 产品裁决：工具项目 = source_dir 工具项目。「交互工具」是应用内页面门面、不是工具项目，
+// 置顶成组只是展示形态，不计入项目数（否则页头会把 1 个交互页吹成 1 个项目）。
+const projectCount = computed(
+  () => groups.value.filter((g) => g.key !== 'standalone' && g.key !== INTERACTIVE_GROUP_KEY).length
+)
 // 统计口径与画廊总览一致：库级常量，不随搜索浮动。
 // 分母用目录池口径 catalogToolsTotal：交互工具无 .py 文件、无 run_status，
 // 计入分母会把「可静态运行率」稀释成假数字（分子只数目录池的可运行条目）。
@@ -72,6 +76,7 @@ function onRun(id: string): void {
   void runFromCard(id)
 }
 // 卡片打开路由：交互工具进应用内专属页（App.vue 按 selectedId 前缀分支），其余开详情。
+// 专属页路由在 Task 11 接入 App.vue 前为中间态：仅切换 selectedId
 function onOpen(id: string): void {
   if (isInteractiveId(id)) openInteractive(id)
   else void openDetail(id)

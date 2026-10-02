@@ -327,8 +327,8 @@ describe('ToolboxView', () => {
     const w = mount(ToolboxView)
     // 工具数 = 目录池 9 + 交互工具 1（toolsTotal 口径）；可静态运行率分母只数目录池
     // （交互工具无 .py 文件不进分母，9/9 = 100%，不被交互工具稀释）。
-    // 项目数 = 交互工具组 + 2 个目录项目：交互工具置顶成独立首组后计入组数。
-    expect(w.text()).toContain('10 个工具 · 3 个工具项目 · 100% 可静态运行')
+    // 项目数 = 2 个 source_dir 项目；「交互工具」组有意排除——它是应用内页面门面，不是工具项目。
+    expect(w.text()).toContain('10 个工具 · 2 个工具项目 · 100% 可静态运行')
   })
 
   it('按 source_dir 分组：交互工具组恒置顶，内置项目用中文区名、按声明序排列，无 source_dir 归入独立工具', () => {
@@ -373,8 +373,9 @@ describe('ToolboxView', () => {
     await w.find('[aria-label="only tool（详情）"]').trigger('click')
     expect(selectedId.value).toBe('only')
 
-    await w.find('[aria-label="日期计算器（详情）"]').trigger('click')
     // 交互工具不经 openDetail（无详情页），直接置交互 id，App.vue 按前缀渲染专属页
+    // （aria-label 后缀随卡片形态切换：普通卡=详情，interactive 卡=打开）
+    await w.find('[aria-label="日期计算器（打开）"]').trigger('click')
     expect(selectedId.value).toBe('interactive:date-calculator')
   })
 
