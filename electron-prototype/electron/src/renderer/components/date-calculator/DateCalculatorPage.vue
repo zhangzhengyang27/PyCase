@@ -11,7 +11,9 @@ import TabArithmetic from './TabArithmetic.vue'
 import TabCalendar from './TabCalendar.vue'
 import CodeDrawer from './CodeDrawer.vue'
 import { parseDate } from '../../src/date-core'
-import { activeTab, closeInteractive, dateA, dateB, type TabKey } from '../../src/store/interactive'
+import { genArithCode, genCalendarCode, genCountdownCode, genDiffCode } from '../../src/py-codegen'
+import { DATE_CALC_ID } from '../../src/interactive-tools'
+import { activeTab, arithRows, closeInteractive, dateA, dateB, type TabKey } from '../../src/store/interactive'
 
 const TABS: Array<{ key: TabKey; label: string }> = [
   { key: 'diff', label: '日期差' },
@@ -21,6 +23,16 @@ const TABS: Array<{ key: TabKey; label: string }> = [
 ]
 
 const valid = computed(() => !!parseDate(dateA.value) && !!parseDate(dateB.value))
+// 抽屉代码在本页生成（CodeDrawer 已通用化：只接收 code/runId props）
+const code = computed(() => {
+  const a = parseDate(dateA.value)
+  const b = parseDate(dateB.value)
+  if (!a || !b) return '# 补全两个有效日期后自动生成代码'
+  if (activeTab.value === 'diff') return genDiffCode(a, b)
+  if (activeTab.value === 'countdown') return genCountdownCode(a, b)
+  if (activeTab.value === 'calendar') return genCalendarCode(a, b)
+  return genArithCode(a, b, arithRows.value)
+})
 const TAB_CLS = 'border-0 bg-transparent px-3 py-2 text-control cursor-pointer transition-colors dur-fast'
 </script>
 
@@ -69,7 +81,7 @@ const TAB_CLS = 'border-0 bg-transparent px-3 py-2 text-control cursor-pointer t
       </div>
     </div>
     <div class="app-no-drag border-t border-line shrink-0">
-      <CodeDrawer />
+      <CodeDrawer :code="code" :run-id="DATE_CALC_ID" />
     </div>
   </section>
 </template>
