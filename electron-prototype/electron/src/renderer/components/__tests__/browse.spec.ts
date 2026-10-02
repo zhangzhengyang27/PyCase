@@ -12,7 +12,6 @@ import BrowseToolbar from '../BrowseToolbar.vue'
 import ExampleCard from '../ExampleCard.vue'
 import ExampleListItem from '../ExampleListItem.vue'
 import {
-  activeRunStatus,
   activeSectionKey,
   activeTags,
   activeTheme,
@@ -21,7 +20,6 @@ import {
   galleryLimit,
   loadError,
   loading,
-  minQuality,
   sortBy,
   toolSearchQuery,
   viewMode,
@@ -164,17 +162,14 @@ describe('GalleryView', () => {
   it('结果条展示筛选芯片，点「清空」调用 clearAllFilters 归零全部筛选', async () => {
     examples.value = [makeExample({ id: 'a', name: 'turtle_draw.py', code: 'import turtle\n' })]
     activeTheme.value = 'turtle'
-    minQuality.value = 80
     favOnly.value = true
     const w = mount(GalleryView)
     expect(w.text()).toContain('Turtle 绘图')
-    expect(w.text()).toContain('质量分 ≥80')
     expect(w.text()).toContain('我的收藏')
 
     const clear = w.findAll('button').find((b) => b.text().trim() === '清空')!
     await clear.trigger('click')
     expect(activeTheme.value).toBe('all')
-    expect(minQuality.value).toBe(0)
     expect(favOnly.value).toBe(false)
   })
 
@@ -206,8 +201,8 @@ describe('GalleryView', () => {
     // 工具栏下拉齐备：主题 / 可运行性 / 质量分 / 运行状态 / 标签
     expect(w.find('[data-testid="filter-theme"]').exists()).toBe(true)
     expect(w.find('[data-testid="filter-runnable"]').exists()).toBe(false)
-    expect(w.find('[data-testid="filter-quality"]').exists()).toBe(true)
-    expect(w.find('[data-testid="filter-run-status"]').exists()).toBe(true)
+    expect(w.find('[data-testid="filter-quality"]').exists()).toBe(false)
+    expect(w.find('[data-testid="filter-run-status"]').exists()).toBe(false)
     expect(w.find('[data-testid="tag-filter-select"]').exists()).toBe(true)
   })
 })
@@ -258,22 +253,31 @@ describe('ToolboxView', () => {
     expect(w.emitted('reload')).toHaveLength(1)
   })
 
-  it('没有工具时展示空态文案', () => {
-    // 只有非 tools 类目：工具箱池为空（画廊池非空，证明空态来自工具池而非示例为空）
+  it('没有工具时交互工具兜底在列，收藏过滤后仍展示空态文案', async () => {
+    // 只有非 tools 类目：目录工具池为空（画廊池非空，证明空态来自工具池而非示例为空）。
+    // 交互工具恒在列——目录池空不再等于工具池空；收藏过滤（无收藏）连交互工具一并滤掉，
+    // 工具池此时才真正为空。
     examples.value = [makeExample({ id: 't', category: 'topics' })]
     const w = mount(ToolboxView)
+    expect(w.text()).not.toContain('没有匹配的工具')
+    favOnly.value = true
+    await nextTick()
     expect(w.text()).toContain('没有匹配的工具')
   })
 
   it('工具池为空时页头仍然可见——它是退出筛选的唯一入口', () => {
+    // 交互工具恒在列：工具池为空只能由过滤造成（此处收藏过滤且无收藏）
     examples.value = [makeExample({ id: 't', category: 'topics' })]
+    favOnly.value = true
     const w = mount(ToolboxView)
 
     expect(w.text()).toContain('没有匹配的工具')
-    // 回归：空态曾整块替换页头，用户因此无法清空搜索词或关掉「只看收藏」，被永久困住
+    // 回归：空态曾整块替换页头，用户因此无法清空搜索词或关掉「只看收藏」，被永久困住。
+    // favOnly 预置为 true（空态的成因），星标处于激活态，aria-label 是「显示全部工具」——
+    // 它恰是逃生入口本身。
     expect(w.find('input[placeholder="搜索工具…"]').exists()).toBe(true)
     expect(w.find('select').exists()).toBe(true)
-    expect(w.findAll('button').some((b) => b.attributes('aria-label') === '只看收藏')).toBe(true)
+    expect(w.findAll('button').some((b) => b.attributes('aria-label') === '显示全部工具')).toBe(true)
   })
 
   it('空态归因于收藏筛选，而不是一律怪搜索词', () => {
@@ -321,13 +325,21 @@ describe('ToolboxView', () => {
   it('页头统计工具数 / 项目数 / 可静态运行百分比', () => {
     examples.value = toolFixtures()
     const w = mount(ToolboxView)
-    expect(w.text()).toContain('9 个工具 · 2 个工具项目 · 100% 可静态运行')
+    // 工具数 = 目录池 9 + 交互工具 1（toolsTotal 口径）；可静态运行率分母只数目录池
+    // （交互工具无 .py 文件不进分母，9/9 = 100%，不被交互工具稀释）。
+    // 项目数 = 2 个 source_dir 项目；「交互工具」组有意排除——它是应用内页面门面，不是工具项目。
+    expect(w.text()).toContain('10 个工具 · 2 个工具项目 · 100% 可静态运行')
   })
 
-  it('按 source_dir 分组：内置项目用中文区名、按声明序排列，无 source_dir 归入独立工具', () => {
+  it('按 source_dir 分组：交互工具组恒置顶，内置项目用中文区名、按声明序排列，无 source_dir 归入独立工具', () => {
     examples.value = toolFixtures()
     const w = mount(ToolboxView)
-    expect(w.findAll('section.mb-9 h2').map((h) => h.text())).toEqual(['Python 黑魔法', '实用爬虫合集', '独立工具'])
+    expect(w.findAll('section.mb-9 h2').map((h) => h.text())).toEqual([
+      '交互工具',
+      'Python 黑魔法',
+      '实用爬虫合集',
+      '独立工具'
+    ])
   })
 
   it('大项目默认只露前 6 张卡，可「展开全部」再「收起」', async () => {
@@ -354,11 +366,17 @@ describe('ToolboxView', () => {
     expect(big.text()).toContain('收起')
   })
 
-  it('点击工具卡片经 openDetail 打开详情', async () => {
+  it('点击普通工具卡片经 openDetail 打开详情；点击交互工具卡片走 openInteractive（selectedId 置交互 id）', async () => {
     examples.value = [makeExample({ id: 'only', name: 'only_tool.py', category: 'tools' })]
     const w = mount(ToolboxView)
-    await w.find('.surface-card').trigger('click')
+    // 交互组置顶后第一张卡是交互工具，普通工具卡按 aria-label 精确命中
+    await w.find('[aria-label="only tool（详情）"]').trigger('click')
     expect(selectedId.value).toBe('only')
+
+    // 交互工具不经 openDetail（无详情页），直接置交互 id，App.vue 按前缀渲染专属页
+    // （aria-label 后缀随卡片形态切换：普通卡=详情，interactive 卡=打开）
+    await w.find('[aria-label="日期计算器（打开）"]').trigger('click')
+    expect(selectedId.value).toBe('interactive:date-calculator')
   })
 
   it('收藏按钮切换 favOnly，并反映到 title 与 aria-pressed', async () => {
@@ -429,8 +447,8 @@ describe('画廊工具栏筛选下拉', () => {
     const w = mount(BrowseToolbar)
     expect(trigger(w, 'filter-theme').attributes('title')).toBe('主题')
     expect(w.find('[data-testid="filter-runnable"]').exists()).toBe(false)
-    expect(trigger(w, 'filter-quality').attributes('title')).toBe('质量分')
-    expect(trigger(w, 'filter-run-status').attributes('title')).toBe('运行状态')
+    expect(w.find('[data-testid="filter-quality"]').exists()).toBe(false)
+    expect(w.find('[data-testid="filter-run-status"]').exists()).toBe(false)
     expect(trigger(w, 'filter-sort').attributes('title')).toBe('排序')
     expect(w.find('[data-testid="tag-filter-select"]').exists()).toBe(true)
   })
@@ -454,33 +472,6 @@ describe('画廊工具栏筛选下拉', () => {
       'viewPrefs',
       expect.objectContaining({ activeTheme: 'turtle' })
     )
-  })
-
-  it('质量分下拉：≥90/≥80/≥60 带计数，选择写入 minQuality 并持久化', async () => {
-    examples.value = facetFixtures()
-    const w = mount(BrowseToolbar)
-    const opts = await openMenu(w, 'filter-quality')
-    expect(opts.map((o) => o.text().replace(/\s+/g, ' ').trim())).toEqual(['全部', '≥90 (1)', '≥80 (1)', '≥60 (2)'])
-
-    await pick(w, 'filter-quality', '≥90')
-    expect(minQuality.value).toBe(90)
-    expect(vi.mocked(window.sidecar.store.set)).toHaveBeenCalledWith(
-      'viewPrefs',
-      expect.objectContaining({ minQuality: 90 })
-    )
-  })
-
-  it('运行状态下拉：计数由运行历史派生，选择写入 activeRunStatus', async () => {
-    examples.value = facetFixtures()
-    runHistory.value = [{ ts: '2026-01-01T00:00:00.000Z', id: 'a', ok: true, name: 'x', args: [], code: 0 } as never]
-    const w = mount(BrowseToolbar)
-    const opts = await openMenu(w, 'filter-run-status')
-    expect(opts).toHaveLength(4)
-    expect(opts.find((o) => o.text().trim().startsWith('成功过'))!.text()).toContain('(1)')
-    expect(opts.find((o) => o.text().trim().startsWith('未运行'))!.text()).toContain('(1)')
-
-    await pick(w, 'filter-run-status', '成功过')
-    expect(activeRunStatus.value).toBe('ok')
   })
 
   it('标签多选下拉：勾选写入 activeTags（checkbox），再取消移除', async () => {

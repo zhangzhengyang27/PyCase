@@ -476,13 +476,13 @@ describe('BrowseToolbar', () => {
     )
   })
 
-  it('筛选维度收成工具栏下拉：主题/质量/状态 + 排序 + 标签；可运行性退场（负面状态卡片徽章已表达，缺依赖清零后无可选档）', () => {
+  it('筛选维度收成工具栏下拉：主题 + 排序 + 标签；可运行性/质量分/运行状态退场（用户裁剪：低价值维度不再占工具栏）', () => {
     const w = mount(BrowseToolbar)
     expect(w.find('[data-testid="gallery-filter-toggle"]').exists()).toBe(false)
     expect(w.find('[data-testid="filter-theme"]').exists()).toBe(true)
     expect(w.find('[data-testid="filter-runnable"]').exists()).toBe(false)
-    expect(w.find('[data-testid="filter-quality"]').exists()).toBe(true)
-    expect(w.find('[data-testid="filter-run-status"]').exists()).toBe(true)
+    expect(w.find('[data-testid="filter-quality"]').exists()).toBe(false)
+    expect(w.find('[data-testid="filter-run-status"]').exists()).toBe(false)
     expect(w.find('[data-testid="filter-sort"]').exists()).toBe(true)
     expect(w.find('[data-testid="tag-filter-select"]').exists()).toBe(true)
     expect(w.find('[data-testid="filter-fav-toggle"]').exists()).toBe(true)

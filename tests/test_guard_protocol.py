@@ -9,6 +9,8 @@
    - `search_examples` 服务端检索：返回 id + 命中原因（name/tag/description/code）；
    - `run_example` / `save_example` / 资源上传 / 删除：一律按 id 寻址，
      调用方夹带的 `path` 参数不生效；资源与运行产物落在工作区，真相源不被写。
+     `run_example` 唯一例外是可选 `code` 覆盖（G9：任意 id + code 在一次性
+     adhoc 工作区运行，`path` 仍然无效）。
 
 全部在 tmp 沙箱内跑：集合根 / 用户集合 / 工作区都在 tmp_path，
 不写仓库真相源（json_examples/ 与 topics/tools/projects）。
@@ -425,6 +427,100 @@ def test_g7_builtin_dataset_listing_carries_no_code():
         server._index.update(saved_index)
 
     result = next(obj["result"] for obj in captured if "result" in obj)
-    assert result["total"] == 1493
+    assert result["total"] == 1488
     assert all("code" not in ex for ex in result["examples"])
     assert all(Path(ex["path"]).exists() for ex in result["examples"])
+
+
+# ------------------------------- 金标 G9：run_example 可选 code 覆盖（adhoc 工作区）
+
+
+def test_g9_run_example_code_override_runs_in_adhoc_workspace(tmp_path):
+    """可选 code：任意 id + code 在一次性 adhoc 工作区执行；path 夹带无效；输出照常推送。"""
+    with _ProtocolEnv(tmp_path) as env:
+
+        async def scenario() -> dict:
+            await server.method_run_example(
+                1,
+                {
+                    "id": "no-such-example",
+                    "code": "print('ADHOC_OK')",
+                    "timeout": 30,
+                    "path": "/tmp/evil.py",
+                },
+            )
+            deadline = time.monotonic() + 60
+            while time.monotonic() < deadline:
+                if env.finished():
+                    return env.finished()[-1]
+                await asyncio.sleep(0.05)
+            raise AssertionError("run_finished 未到达")
+
+        finished = asyncio.run(scenario())
+        assert finished["exit_code"] == 0
+        assert "ADHOC_OK" in "".join(env.texts()), "运行目标必须是 code 而非夹带的 path"
+
+        # 布局：main.py 落在一次性 adhoc 工作区（workspace_root/adhoc/<run_id>/）
+        run_id = finished["run_id"]
+        adhoc_dir = server._ensure_store().workspace_root / "adhoc" / run_id
+        assert (adhoc_dir / "main.py").is_file(), "code 必须写成 adhoc 工作区的 main.py"
+
+        # 隔离：集合真相源目录无新增 .py（path 与 code 都不写真相源）
+        builtin_scripts = {p.name for p in (env.builtin_dir / "demo").glob("*.py")}
+        user_scripts = {p.name for p in (env.user_dir / "mine").glob("*.py")}
+        assert builtin_scripts == {"hello.py", "other.py"}
+        assert user_scripts == {"mine_one.py"}
+
+
+def test_g9_adhoc_write_failure_still_finishes(tmp_path):
+    """故障注入：adhoc 写盘 OSError 也必须送达 run_finished(-1)，并清理 _running。"""
+    with _ProtocolEnv(tmp_path) as env:
+        orig_write_text = Path.write_text
+        seen_run_id: list[str] = []
+
+        def failing_write(self, data, *args, **kwargs):
+            if self.name == "main.py":
+                raise OSError("磁盘已满（故障注入）")
+            return orig_write_text(self, data, *args, **kwargs)
+
+        async def scenario() -> dict:
+            await server.method_run_example(
+                1,
+                {"id": "whatever", "code": "print('NOPE')", "timeout": 30},
+            )
+            run_id = env.last_result()["run_id"]
+            seen_run_id.append(run_id)
+            deadline = time.monotonic() + 30
+            while time.monotonic() < deadline:
+                fins = [f for f in env.finished() if f["run_id"] == run_id]
+                if fins:
+                    return fins[-1]
+                await asyncio.sleep(0.05)
+            raise AssertionError("run_finished 未到达（写盘失败被吞）")
+
+        with patch.object(Path, "write_text", failing_write):
+            finished = asyncio.run(scenario())
+
+        assert finished["exit_code"] == -1
+        assert "磁盘已满" in "".join(env.texts()), "失败原因必须推送给前端"
+        assert seen_run_id and seen_run_id[0] not in server._running, "_running 条目泄漏"
+
+
+def test_g9_code_override_rejects_bad_params(tmp_path):
+    """code 非字符串 / 空串 / 超长 → -32602，且不产生运行。"""
+    with _ProtocolEnv(tmp_path) as env:
+
+        def errors() -> list[dict]:
+            return [e["error"] for e in env.captured if "error" in e]
+
+        async def scenario() -> list:
+            await server.method_run_example(1, {"id": "x", "code": 123, "timeout": 30})
+            await server.method_run_example(2, {"id": "x", "code": "   ", "timeout": 30})
+            await server.method_run_example(3, {"id": "x", "code": "x" * 64_001, "timeout": 30})
+            await asyncio.sleep(0.2)
+            return errors()
+
+        errs = asyncio.run(scenario())
+        assert len(errs) == 3, f"应恰好 3 个错误响应: {errs}"
+        assert all(e["code"] == -32602 for e in errs)
+        assert env.finished() == []

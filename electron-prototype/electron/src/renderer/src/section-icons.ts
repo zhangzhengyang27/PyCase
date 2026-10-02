@@ -18,6 +18,7 @@ import {
   Network,
   Package,
   Rocket,
+  Sparkles,
   Timer,
   Turtle,
   Wand2,
@@ -25,6 +26,7 @@ import {
   Zap,
   type LucideIcon
 } from 'lucide-vue-next'
+import { INTERACTIVE_GROUP_KEY } from './interactive-tools'
 
 /** 画廊分区（五大主题 + 标签分区 + 综合项目 / 其他） */
 const SECTION_ICONS: Record<string, LucideIcon> = {
@@ -53,6 +55,7 @@ export function sectionIcon(key: string | undefined): LucideIcon | undefined {
 const TOOLBOX_ICONS: Record<string, LucideIcon> = {
   'db-table-dictionary-generator': Database,
   'excel-row-to-in-clause': FileSpreadsheet,
+  [INTERACTIVE_GROUP_KEY]: Sparkles, // 「交互工具」分组：键与 ToolboxView 分组对象同源，漂移会静默退化成 Wrench
   'python-black-magic': Wand2,
   'remote-sftp-downloader': Download,
   'tkinter-work-countdown': Timer,

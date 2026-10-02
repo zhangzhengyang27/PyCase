@@ -102,7 +102,7 @@ def _workspace_snapshot(store: ContractStore) -> tuple[bool, frozenset[str]]:
 
 
 def test_g1_dataset_index_golden():
-    """全量真相源金标（基线 2026-09-29，迁移后）：14 个集合 / 1493 条示例（2026-10-01 下架 vega-news-terminal 三个孤儿 service 片段后）。
+    """全量真相源金标（基线 2026-09-29，迁移后）：14 个集合 / 1488 条示例（2026-10-02 日期计算静态变体 ×5 退役为工具箱交互工具；此前 2026-10-01 下架 vega-news-terminal 三个孤儿 service 片段）。
 
     数字是刻意写死的：重构期间真相源规模不得漂移；确需增删示例时连同本基线一起更新。
     v2 观测点：load = 只读清单 + 真实树建索引（**零写盘**，契约 §3.1）；
@@ -115,7 +115,7 @@ def test_g1_dataset_index_golden():
     items = _flat(store.load())
     assert store.facts_source == "shipped", "内置数据的派生事实应命中随包烘焙索引"
     assert _workspace_snapshot(store) == before, "load 必须零写盘（契约 §3.1）"
-    assert len(items) == 1493
+    assert len(items) == 1488
     # 内容等价：全部条目的源码都能按需取到（取不到即真相源内容缺失）
     missing = [i.json_id for i in items.values() if not store.get_code(i).strip()]
     assert missing == []
@@ -525,3 +525,25 @@ def test_import_tags_fallback_uses_authoritative_stdlib(tmp_path):
     item = next(iter(store.index.values()))
     tags = store.import_tags(item)
     assert tags == ["requests"], f"标准库漏成第三方标签: {tags}"
+
+
+def test_g1_no_template_placeholder_residue_in_sources():
+    """生成器占位符残留禁令（2026-10-02 bulk_* 事故护栏）。
+
+    三类曾真实落盘的生成器缺陷：`{{param}}` 占位符原样进源码（f-string 里
+    输出字面大括号、代码位运行时 TypeError）、`{{dict}}` 双大括号（set 套
+    dict）、`np.abs(y = EXPR)` 内嵌赋值。bake 拼接顺序修好后由本护栏钉死：
+    真相源全树不得再出现 {{ 残留。
+    """
+    import re
+    offenders = []
+    for base in ("json_examples", "topics", "tools", "projects", "examples_assets"):
+        for p in (Path(__file__).resolve().parent.parent / base).rglob("*.py"):
+            if ".backup" in p.parts:
+                continue
+            src = p.read_text(encoding="utf-8", errors="ignore")
+            if "{{" in src:
+                offenders.append(f"{p.relative_to(Path(__file__).resolve().parent.parent)} ({{ 残留)")
+            if re.search(r"np\.abs\(y\s*=", src):
+                offenders.append(f"{p.relative_to(Path(__file__).resolve().parent.parent)} (np.abs(y= 内嵌赋值)")
+    assert not offenders, f"生成器占位符残留 {len(offenders)} 处: {offenders[:8]}"

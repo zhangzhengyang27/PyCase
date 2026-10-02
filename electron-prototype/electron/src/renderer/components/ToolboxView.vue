@@ -1,13 +1,17 @@
 <script setup lang="ts">
 // ToolboxView：工具箱——与画廊总览同语法的分区落地页
 // 头区：定位统计 + 搜索/收藏/排序（右侧对齐，几何与画廊总览一致）；
-// 主体：按 source_dir 工具项目分区，卡片网格呈现；大项目默认露前 6 张，
+// 主体：「交互工具」组恒置顶（应用内交互页门面，渲染交互形态卡片），
+// 其余按 source_dir 工具项目分区，卡片网格呈现；大项目默认露前 6 张，
 // 区头右侧「展开全部」收放；搜索时自动全展开（避免匹配项被折叠藏住）。
 import { computed, reactive } from 'vue'
 import { ChevronDown, ChevronUp, SearchX, Star } from 'lucide-vue-next'
 import { buildToolboxGroups } from '../src/toolbox-groups'
+import { INTERACTIVE_GROUP_KEY, isInteractiveId } from '../src/interactive-tools'
+import { openInteractive } from '../src/store/interactive'
 import { toolboxIcon } from '../src/section-icons'
 import {
+  catalogToolsTotal,
   examples,
   favOnly,
   loadError,
@@ -32,13 +36,28 @@ const emit = defineEmits<{ reload: [] }>()
 
 const PREVIEW_COUNT = 6
 
-const groups = computed(() =>
-  buildToolboxGroups(toolboxItems.value).map((g) => ({ ...g, items: sortVExamples(g.items) }))
+// 分组：交互工具（应用内页面，非 .py 示例）恒置顶成首组，其余按 source_dir 项目分组。
+// 交互工具不进 buildToolboxGroups——它没有 source_dir，混进去会被归到「独立工具」，
+// 与目录池的独立 .py 工具混淆；且它渲染的是交互形态卡片（无运行/质量分）。
+const groups = computed(() => {
+  const all = toolboxItems.value
+  const inter = all.filter((t) => isInteractiveId(t.id))
+  const rest = buildToolboxGroups(all.filter((t) => !isInteractiveId(t.id))).map((g) => ({
+    ...g,
+    items: sortVExamples(g.items)
+  }))
+  return inter.length ? [{ key: INTERACTIVE_GROUP_KEY, label: '交互工具', items: sortVExamples(inter) }, ...rest] : rest
+})
+// 产品裁决：工具项目 = source_dir 工具项目。「交互工具」是应用内页面门面、不是工具项目，
+// 置顶成组只是展示形态，不计入项目数（否则页头会把 1 个交互页吹成 1 个项目）。
+const projectCount = computed(
+  () => groups.value.filter((g) => g.key !== 'standalone' && g.key !== INTERACTIVE_GROUP_KEY).length
 )
-const projectCount = computed(() => groups.value.filter((g) => g.key !== 'standalone').length)
-// 统计口径与画廊总览一致：库级常量，不随搜索浮动
+// 统计口径与画廊总览一致：库级常量，不随搜索浮动。
+// 分母用目录池口径 catalogToolsTotal：交互工具无 .py 文件、无 run_status，
+// 计入分母会把「可静态运行率」稀释成假数字（分子只数目录池的可运行条目）。
 const runnablePct = computed(() => {
-  const total = toolsTotal.value
+  const total = catalogToolsTotal.value
   if (!total) return 0
   const ok = examples.value.filter((e) => e.category === 'tools' && e.run_status === 'runnable').length
   return Math.round((ok / total) * 100)
@@ -55,6 +74,12 @@ function overflowCount(total: number): number {
 
 function onRun(id: string): void {
   void runFromCard(id)
+}
+// 卡片打开路由：交互工具进应用内专属页（App.vue 按 selectedId 前缀分支），其余开详情。
+// 专属页路由在 Task 11 接入 App.vue 前为中间态：仅切换 selectedId
+function onOpen(id: string): void {
+  if (isInteractiveId(id)) openInteractive(id)
+  else void openDetail(id)
 }
 function toggleFavOnly(): void {
   favOnly.value = !favOnly.value
@@ -143,7 +168,8 @@ const emptyHint = computed(() => {
                 :ex="ex"
                 :enter-index="i"
                 :faved="isFavorite(ex.id)"
-                @open="openDetail(ex.id)"
+                :interactive="isInteractiveId(ex.id)"
+                @open="onOpen(ex.id)"
                 @fav="toggleFavorite(ex.id)"
                 @run="onRun(ex.id)"
               />
