@@ -1,6 +1,7 @@
 <script setup lang="ts">
 // TabCalendar：双月并排日历——起止高亮 + 区间淡染 + 点击格反向设定（第一次点=起点，
-// 第二次点=终点，再点重新开始）。左月游标会话内跟随首次进入时的起点月。
+// 第二次点=终点，再点重新开始）。左月：未手动翻月时实时跟随起点所在月（cursor=null），
+// 手动翻月后固定为游标月。
 import { computed, ref } from 'vue'
 import { ChevronLeft, ChevronRight } from 'lucide-vue-next'
 import { daysBetween, formatYMD, parseDate } from '../../src/date-core'
@@ -87,13 +88,24 @@ function cellCls(c: Cell): string {
     <div class="grid grid-cols-2 gap-4">
       <div v-for="mc in [left, right]" :key="`${mc.y}-${mc.m}`" class="surface-card p-3">
         <div class="text-control text-ink font-medium text-center mb-2">{{ mc.y }} 年 {{ mc.m }} 月</div>
-        <div class="grid text-center text-caption text-ink-faint mb-1" style="grid-template-columns: repeat(7, 1fr)">
+        <div class="grid grid-cols-7 text-center text-caption text-ink-faint mb-1">
           <span v-for="w in WD_HEAD" :key="w">{{ w }}</span>
         </div>
-        <div class="grid text-center text-control" style="grid-template-columns: repeat(7, 1fr); gap: 2px">
-          <span v-for="c in monthCells(mc)" :key="c.ymd" class="py-0.5 text-caption rounded" :class="cellCls(c)" :data-testid="c.blank ? undefined : `cal-${c.ymd}`" @click="!c.blank && onPick(c.ymd)">
-            {{ c.blank ? '' : c.d }}
-          </span>
+        <div class="grid grid-cols-7 gap-0.5 text-center text-control">
+          <template v-for="c in monthCells(mc)" :key="c.ymd">
+            <button
+              v-if="!c.blank"
+              type="button"
+              class="border-0 bg-transparent py-0.5 text-caption rounded cursor-pointer"
+              :class="cellCls(c)"
+              :data-testid="`cal-${c.ymd}`"
+              :aria-label="`选定 ${c.ymd}`"
+              @click="onPick(c.ymd)"
+            >
+              {{ c.d }}
+            </button>
+            <span v-else class="py-0.5 text-caption" aria-hidden="true"></span>
+          </template>
         </div>
       </div>
     </div>

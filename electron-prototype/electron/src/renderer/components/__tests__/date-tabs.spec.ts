@@ -4,7 +4,9 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import { mount } from '@vue/test-utils'
 import DateRangeInputs from '../date-calculator/DateRangeInputs.vue'
 import TabCalendar from '../date-calculator/TabCalendar.vue'
+import TabCountdown from '../date-calculator/TabCountdown.vue'
 import TabArithmetic from '../date-calculator/TabArithmetic.vue'
+import { formatYMD, todayYMD } from '../../src/date-core'
 import { arithRows, dateA, dateB } from '../../src/store/interactive'
 
 beforeEach(() => {
@@ -26,8 +28,15 @@ describe('DateRangeInputs', () => {
     await w.find('[data-testid="date-b"]').setValue('2026-03-01')
     await w.find('[data-testid="date-b"]').trigger('focus')
     await w.findAll('[data-testid="dc-preset"]')[0]!.trigger('click')
-    // 「今天」是动态值，但必然是合法 YYYY-MM-DD 且落在 d2 框
-    expect(dateB.value).toMatch(/^\d{4}-\d{2}-\d{2}$/)
+    // 「今天」写入聚焦的 d2，d1 不被污染
+    expect(dateA.value).toBe('2024-01-01')
+    expect(dateB.value).toBe(formatYMD(todayYMD()))
+  })
+  it('交换按钮互换起止', async () => {
+    const w = mount(DateRangeInputs)
+    await w.find('button[title="交换起止日期"]').trigger('click')
+    expect(dateA.value).toBe('2025-01-01')
+    expect(dateB.value).toBe('2024-01-01')
   })
   it('非法日期标红（border-danger）', async () => {
     const w = mount(DateRangeInputs)
@@ -52,6 +61,22 @@ describe('TabCalendar 点格两段式', () => {
     expect(w.text()).toContain('2024 年 2 月')
     await w.find('[data-testid="cal-prev"]').trigger('click')
     expect(w.text()).toContain('2024 年 1 月')
+  })
+})
+
+describe('TabCountdown', () => {
+  it('过去日期：显示「已过」+ 纪念日前瞻（满/周年）', () => {
+    const w = mount(TabCountdown)
+    const text = w.find('[data-testid="cd-a"]').text()
+    expect(text).toContain('已过')
+    expect(text).toMatch(/周年|满/)
+  })
+  it('无效日期：cd-a 显示「无效日期」', () => {
+    dateA.value = ''
+    const w = mount(TabCountdown)
+    expect(w.find('[data-testid="cd-a"]').text()).toContain('无效日期')
+    // d2 仍有效，正常渲染
+    expect(w.find('[data-testid="cd-b"]').text()).toContain('2025-01-01')
   })
 })
 
