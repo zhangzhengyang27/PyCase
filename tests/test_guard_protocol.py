@@ -436,13 +436,18 @@ def test_g7_builtin_dataset_listing_carries_no_code():
 
 
 def test_g9_run_example_code_override_runs_in_adhoc_workspace(tmp_path):
-    """可选 code：任意 id + code 在一次性 adhoc 工作区执行；输出照常推送。"""
+    """可选 code：任意 id + code 在一次性 adhoc 工作区执行；path 夹带无效；输出照常推送。"""
     with _ProtocolEnv(tmp_path) as env:
 
         async def scenario() -> dict:
             await server.method_run_example(
                 1,
-                {"id": "no-such-example", "code": "print('ADHOC_OK')", "timeout": 30},
+                {
+                    "id": "no-such-example",
+                    "code": "print('ADHOC_OK')",
+                    "timeout": 30,
+                    "path": "/tmp/evil.py",
+                },
             )
             deadline = time.monotonic() + 60
             while time.monotonic() < deadline:
@@ -453,7 +458,52 @@ def test_g9_run_example_code_override_runs_in_adhoc_workspace(tmp_path):
 
         finished = asyncio.run(scenario())
         assert finished["exit_code"] == 0
-        assert "ADHOC_OK" in "".join(env.texts())
+        assert "ADHOC_OK" in "".join(env.texts()), "运行目标必须是 code 而非夹带的 path"
+
+        # 布局：main.py 落在一次性 adhoc 工作区（workspace_root/adhoc/<run_id>/）
+        run_id = finished["run_id"]
+        adhoc_dir = server._ensure_store().workspace_root / "adhoc" / run_id
+        assert (adhoc_dir / "main.py").is_file(), "code 必须写成 adhoc 工作区的 main.py"
+
+        # 隔离：集合真相源目录无新增 .py（path 与 code 都不写真相源）
+        builtin_scripts = {p.name for p in (env.builtin_dir / "demo").glob("*.py")}
+        user_scripts = {p.name for p in (env.user_dir / "mine").glob("*.py")}
+        assert builtin_scripts == {"hello.py", "other.py"}
+        assert user_scripts == {"mine_one.py"}
+
+
+def test_g9_adhoc_write_failure_still_finishes(tmp_path):
+    """故障注入：adhoc 写盘 OSError 也必须送达 run_finished(-1)，并清理 _running。"""
+    with _ProtocolEnv(tmp_path) as env:
+        orig_write_text = Path.write_text
+        seen_run_id: list[str] = []
+
+        def failing_write(self, data, *args, **kwargs):
+            if self.name == "main.py":
+                raise OSError("磁盘已满（故障注入）")
+            return orig_write_text(self, data, *args, **kwargs)
+
+        async def scenario() -> dict:
+            await server.method_run_example(
+                1,
+                {"id": "whatever", "code": "print('NOPE')", "timeout": 30},
+            )
+            run_id = env.last_result()["run_id"]
+            seen_run_id.append(run_id)
+            deadline = time.monotonic() + 30
+            while time.monotonic() < deadline:
+                fins = [f for f in env.finished() if f["run_id"] == run_id]
+                if fins:
+                    return fins[-1]
+                await asyncio.sleep(0.05)
+            raise AssertionError("run_finished 未到达（写盘失败被吞）")
+
+        with patch.object(Path, "write_text", failing_write):
+            finished = asyncio.run(scenario())
+
+        assert finished["exit_code"] == -1
+        assert "磁盘已满" in "".join(env.texts()), "失败原因必须推送给前端"
+        assert seen_run_id and seen_run_id[0] not in server._running, "_running 条目泄漏"
 
 
 def test_g9_code_override_rejects_bad_params(tmp_path):

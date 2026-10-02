@@ -530,11 +530,22 @@ async def _run_subprocess(
 ) -> None:
     """启动子进程运行示例，逐行读取输出并推送。"""
     if adhoc_code is not None:
-        # 一次性临时工作区：不落真相源，随 cache_root 版本目录隔离
+        # 一次性临时工作区：不落真相源，随 cache_root 版本目录隔离。
+        # 写盘失败（磁盘满/权限）也必须以 run_finished 收尾并清理 _running——
+        # 异常逃出后台协程后前端永远显示"运行中"，stop_run 对该条目永远 pending
         workspace = _ensure_store().workspace_root / "adhoc" / run_id
-        workspace.mkdir(parents=True, exist_ok=True)
         file_path = workspace / "main.py"
-        file_path.write_text(adhoc_code, encoding="utf-8")
+        try:
+            workspace.mkdir(parents=True, exist_ok=True)
+            file_path.write_text(adhoc_code, encoding="utf-8")
+        except OSError as e:
+            _notify(
+                "run_output",
+                {"run_id": run_id, "text": f"[错误] 无法写入 adhoc 工作区，运行已取消: {e}\n"},
+            )
+            _notify("run_finished", {"run_id": run_id, "exit_code": -1})
+            _running.pop(run_id, None)
+            return
         working_dir = workspace
     else:
         # 契约 §4.1：运行前先确保工作区（唯一落盘入口），运行目录 = 工作区
