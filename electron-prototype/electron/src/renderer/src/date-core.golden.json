@@ -91,6 +91,19 @@
         "weekday_a": "星期二",
         "weekday_b": "星期五"
       }
+    },
+    {
+      "name": "世纪非闰年2100",
+      "a": "2099-06-01",
+      "b": "2101-06-01",
+      "expected": {
+        "days": 730,
+        "weeks": "104.3",
+        "norm": [2, 0, 0],
+        "leap_days": 0,
+        "weekday_a": "星期一",
+        "weekday_b": "星期三"
+      }
     }
   ],
   "add_cases": [
@@ -98,7 +111,8 @@
     { "name": "闰日加年clamp", "date": "2024-02-29", "n": 1, "unit": "year", "expected": "2025-02-28" },
     { "name": "减一周", "date": "2026-01-08", "n": -1, "unit": "week", "expected": "2026-01-01" },
     { "name": "加一天", "date": "2024-12-31", "n": 1, "unit": "day", "expected": "2025-01-01" },
-    { "name": "负数月clamp", "date": "2024-03-31", "n": -1, "unit": "month", "expected": "2024-02-29" }
+    { "name": "负数月clamp", "date": "2024-03-31", "n": -1, "unit": "month", "expected": "2024-02-29" },
+    { "name": "跨年负数月", "date": "2024-01-31", "n": -1, "unit": "month", "expected": "2023-12-31" }
   ],
   "anniversary_cases": [
     {

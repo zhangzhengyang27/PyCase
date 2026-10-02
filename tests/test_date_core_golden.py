@@ -26,6 +26,7 @@ def _p(s: str) -> date:
 
 def _add_months(d: date, k: int) -> date:
     total = d.year * 12 + (d.month - 1) + k
+    # divmod 对负 total 也做向下取整（floor），与 TS 侧 Math.floor(total / 12) 语义一致
     y, m0 = divmod(total, 12)
     return date(y, m0 + 1, min(d.day, _cal.monthrange(y, m0 + 1)[1]))
 
@@ -74,6 +75,7 @@ def ref_add(s: str, n: int, unit: str) -> str:
 def ref_anniv(s: str, today: str, count: int = 3) -> list:
     d, t = _p(s), _p(today)
     cands = []
+    # (t - d) < 0 时 ceil 可能算出 0 甚至负数，max(1, ·) 兜底保证从满 100 天起步
     k0 = max(1, math.ceil((t - d).days / 100))
     cands += [(d + timedelta(days=100 * k), f"满 {100 * k} 天") for k in range(k0, k0 + 8)]
     y0 = max(1, t.year - d.year - 1)
@@ -85,6 +87,7 @@ def ref_anniv(s: str, today: str, count: int = 3) -> list:
         if a >= t:
             cands.append((a, f"{k} 周年"))
             got += 1
+    # tie-break：同日非周年在前（False < True），等价 TS 侧 yearly 标志；两侧标签都是自产的，等价成立
     cands.sort(key=lambda pair: (pair[0], "周" in pair[1]))
     out, used = [], set()
     for dt, label in cands:
@@ -121,6 +124,7 @@ def test_anniversary_cases_match_reference():
 
 def test_golden_has_all_sections():
     data = _load()
-    assert len(data["diff_cases"]) >= 5
-    assert len(data["add_cases"]) >= 4
-    assert len(data["anniversary_cases"]) >= 3
+    # 精确计数：删用例要在结构上红，防止静默缩水
+    assert len(data["diff_cases"]) == 8
+    assert len(data["add_cases"]) == 6
+    assert len(data["anniversary_cases"]) == 3
