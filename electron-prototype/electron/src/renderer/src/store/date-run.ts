@@ -30,7 +30,9 @@ export function runSnippet(id: string, code: string): void {
 
 export function stopSnippet(): void {
   if (!currentRunId) return
-  void api.stopRun(currentRunId).catch(() => {})
+  api.stopRun(currentRunId).catch((err) => {
+    runOutput.value += `[错误] 停止失败: ${(err as Error).message}\n`
+  })
 }
 
 on('runOutput', (e) => {
@@ -40,4 +42,7 @@ on('runFinished', (e) => {
   if (e.run_id !== currentRunId) return
   runExitCode.value = e.exit_code
   runBusy.value = false
+  // 镜像 detail store：过滤在前、置空在后。清掉 run_id 意味着「无活动运行」——
+  // 完成后再点停止不会误发 stopRun，迟到的 runOutput 也不会污染下一次运行的输出。
+  currentRunId = null
 })
