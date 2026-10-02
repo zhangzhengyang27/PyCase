@@ -219,4 +219,4 @@ class TestRealData:
             assert all(e.file for e in m.entries), f"{path.name} 有条目缺 file"
             assert all(not e.code for e in m.entries), f"{path.name} 仍带内联 code"
             total += len(m.entries)
-        assert total == 1488
+        assert total == 1476

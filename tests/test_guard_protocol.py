@@ -427,7 +427,7 @@ def test_g7_builtin_dataset_listing_carries_no_code():
         server._index.update(saved_index)
 
     result = next(obj["result"] for obj in captured if "result" in obj)
-    assert result["total"] == 1488
+    assert result["total"] == 1476
     assert all("code" not in ex for ex in result["examples"])
     assert all(Path(ex["path"]).exists() for ex in result["examples"])
 

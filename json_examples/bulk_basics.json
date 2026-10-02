@@ -654,45 +654,6 @@
    "file": "bulk_basics/algo-union-find_3.py"
   },
   {
-   "id": "tools_tools-temp-converter-1",
-   "name": "tools-temp-converter_1.py",
-   "category": "tools",
-   "tags": [
-    "工具",
-    "换算"
-   ],
-   "title": "温度换算器·日常",
-   "description": "摄氏/华氏/开氏互转。本变体：日常。",
-   "requirements": [],
-   "file": "bulk_basics/tools-temp-converter_1.py"
-  },
-  {
-   "id": "tools_tools-temp-converter-2",
-   "name": "tools-temp-converter_2.py",
-   "category": "tools",
-   "tags": [
-    "工具",
-    "换算"
-   ],
-   "title": "温度换算器·极端",
-   "description": "摄氏/华氏/开氏互转。本变体：极端。",
-   "requirements": [],
-   "file": "bulk_basics/tools-temp-converter_2.py"
-  },
-  {
-   "id": "tools_tools-temp-converter-3",
-   "name": "tools-temp-converter_3.py",
-   "category": "tools",
-   "tags": [
-    "工具",
-    "换算"
-   ],
-   "title": "温度换算器·精密",
-   "description": "摄氏/华氏/开氏互转。本变体：精密。",
-   "requirements": [],
-   "file": "bulk_basics/tools-temp-converter_3.py"
-  },
-  {
    "id": "tools_tools-qr-matrix-1",
    "name": "tools-qr-matrix_1.py",
    "category": "tools",
@@ -745,71 +706,6 @@
    "file": "bulk_basics/tools-qr-matrix_4.py"
   },
   {
-   "id": "tools_tools-base-convert-1",
-   "name": "tools-base-convert_1.py",
-   "category": "tools",
-   "tags": [
-    "工具",
-    "数学"
-   ],
-   "title": "进制转换器·n255",
-   "description": "任意 2~36 进制互转。本变体：n255。",
-   "requirements": [],
-   "file": "bulk_basics/tools-base-convert_1.py"
-  },
-  {
-   "id": "tools_tools-base-convert-2",
-   "name": "tools-base-convert_2.py",
-   "category": "tools",
-   "tags": [
-    "工具",
-    "数学"
-   ],
-   "title": "进制转换器·n1024",
-   "description": "任意 2~36 进制互转。本变体：n1024。",
-   "requirements": [],
-   "file": "bulk_basics/tools-base-convert_2.py"
-  },
-  {
-   "id": "tools_tools-base-convert-3",
-   "name": "tools-base-convert_3.py",
-   "category": "tools",
-   "tags": [
-    "工具",
-    "数学"
-   ],
-   "title": "进制转换器·n4095",
-   "description": "任意 2~36 进制互转。本变体：n4095。",
-   "requirements": [],
-   "file": "bulk_basics/tools-base-convert_3.py"
-  },
-  {
-   "id": "tools_tools-base-convert-4",
-   "name": "tools-base-convert_4.py",
-   "category": "tools",
-   "tags": [
-    "工具",
-    "数学"
-   ],
-   "title": "进制转换器·n65535",
-   "description": "任意 2~36 进制互转。本变体：n65535。",
-   "requirements": [],
-   "file": "bulk_basics/tools-base-convert_4.py"
-  },
-  {
-   "id": "tools_tools-base-convert-5",
-   "name": "tools-base-convert_5.py",
-   "category": "tools",
-   "tags": [
-    "工具",
-    "数学"
-   ],
-   "title": "进制转换器·n123456",
-   "description": "任意 2~36 进制互转。本变体：n123456。",
-   "requirements": [],
-   "file": "bulk_basics/tools-base-convert_5.py"
-  },
-  {
    "id": "tools_tools-text-table-1",
    "name": "tools-text-table_1.py",
    "category": "tools",
@@ -847,58 +743,6 @@
    "description": "格式化对齐输出 Markdown 表格。本变体：成绩。",
    "requirements": [],
    "file": "bulk_basics/tools-text-table_3.py"
-  },
-  {
-   "id": "tools_tools-caesar-1",
-   "name": "tools-caesar_1.py",
-   "category": "tools",
-   "tags": [
-    "工具",
-    "密码学"
-   ],
-   "title": "凯撒密码·移位3",
-   "description": "移位加密与解密（保留大小写）。本变体：移位3。",
-   "requirements": [],
-   "file": "bulk_basics/tools-caesar_1.py"
-  },
-  {
-   "id": "tools_tools-caesar-2",
-   "name": "tools-caesar_2.py",
-   "category": "tools",
-   "tags": [
-    "工具",
-    "密码学"
-   ],
-   "title": "凯撒密码·移位7",
-   "description": "移位加密与解密（保留大小写）。本变体：移位7。",
-   "requirements": [],
-   "file": "bulk_basics/tools-caesar_2.py"
-  },
-  {
-   "id": "tools_tools-caesar-3",
-   "name": "tools-caesar_3.py",
-   "category": "tools",
-   "tags": [
-    "工具",
-    "密码学"
-   ],
-   "title": "凯撒密码·移位13",
-   "description": "移位加密与解密（保留大小写）。本变体：移位13。",
-   "requirements": [],
-   "file": "bulk_basics/tools-caesar_3.py"
-  },
-  {
-   "id": "tools_tools-caesar-4",
-   "name": "tools-caesar_4.py",
-   "category": "tools",
-   "tags": [
-    "工具",
-    "密码学"
-   ],
-   "title": "凯撒密码·移位21",
-   "description": "移位加密与解密（保留大小写）。本变体：移位21。",
-   "requirements": [],
-   "file": "bulk_basics/tools-caesar_4.py"
   },
   {
    "id": "tools_tools-text-wrap-x1",

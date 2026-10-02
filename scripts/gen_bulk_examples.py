@@ -1171,15 +1171,8 @@ print("连通分量数:", len({find(i) for i in range({{n}})}))''',
          for p in range(3)])
 
     # ---------------- 工具 ----------------
-    add("tools-temp-converter", "温度换算器", "摄氏/华氏/开氏互转。",
-        ["工具", "换算"], category="tools",
-        body_fn=lambda p: '''"""温度换算：{{vals}}。"""
-for c in {{vals}}:
-    f = c * 9 / 5 + 32
-    k = c + 273.15
-    print(f"{c:>6}°C = {f:>6}°F = {k:>6}K")''',
-        variants=[dict(vname="日常", vals=[0, 25, 37, 100]), dict(vname="极端", vals=[-40, -10, 55, 80]),
-                  dict(vname="精密", vals=[12.5, 18.8, 23.3, 31.7])])
+    # tools-temp-converter / tools-base-convert / tools-caesar 已退役（2026-10-02，W1）：
+    # 12 个静态变体升级为工具箱 schema 驱动交互工具（renderer/src/tool-schemas.ts）。
 
     add("tools-qr-matrix", "字符方阵", "按规则生成字符方阵（可视图案）。",
         ["工具", "图案"], category="tools",
@@ -1190,20 +1183,6 @@ for r in range(size):
     print(row)''',
         variants=[dict(vname=f"s{s}{c}", size=s, chars=c) for s, c in
                   [(9, "◆◇"), (11, "░▒▓"), (13, "·:*#"), (10, "AB123")]])
-
-    add("tools-base-convert", "进制转换器", "任意 2~36 进制互转。",
-        ["工具", "数学"], category="tools",
-        body_fn=lambda p: '''"""进制转换：十进制 {{num}} 的各进制表示。"""
-num = {{num}}
-for base in {{bases}}:
-    digits = "0123456789abcdefghijklmnopqrstuvwxyz"
-    out = ""
-    n = num
-    while n:
-        out = digits[n % base] + out
-        n //= base
-    print(f"base-{base:>2}: {out or '0'}")''',
-        variants=[dict(vname=f"n{n}", num=n, bases=[2, 8, 16, 32]) for n in (255, 1024, 4095, 65535, 123456)])
 
     add("tools-text-table", "文本表格", "格式化对齐输出 Markdown 表格。",
         ["工具", "文本"], category="tools",
@@ -1219,28 +1198,6 @@ for r in data:
         variants=[dict(vname="商品", rows=4, data=[["苹果", 12, 5.5], ["香蕉", 30, 3.2], ["橙子", 8, 6.0], ["葡萄", 15, 9.9]]),
                   dict(vname="库存", rows=3, data=[["螺丝", 400, 0.2], ["螺母", 350, 0.3], ["垫片", 500, 0.1]]),
                   dict(vname="成绩", rows=5, data=[["小明", 92, 1], ["小红", 88, 2], ["小刚", 95, 1], ["小丽", 79, 3], ["小军", 85, 2]])])
-
-    add("tools-caesar", "凯撒密码", "移位加密与解密（保留大小写）。",
-        ["工具", "密码学"], category="tools",
-        body_fn=lambda p: '''"""凯撒密码：移位 {{shift}}。"""
-def caesar(text, k):
-    out = []
-    for ch in text:
-        if "a" <= ch <= "z":
-            out.append(chr((ord(ch) - 97 + k) % 26 + 97))
-        elif "A" <= ch <= "Z":
-            out.append(chr((ord(ch) - 65 + k) % 26 + 65))
-        else:
-            out.append(ch)
-    return "".join(out)
-
-msg = "{{msg}}"
-enc = caesar(msg, {{shift}})
-print("原文:", msg)
-print("加密:", enc)
-print("解密:", caesar(enc, -{{shift}}))''',
-        variants=[dict(vname=f"移位{s}", shift=s, msg="The quick brown fox jumps over the lazy dog 2026")
-                  for s in (3, 7, 13, 21)])
 
     return coll.save()
 
