@@ -12,7 +12,9 @@ describe('生成代码包含当前输入', () => {
     expect(code).toContain('d1 = date(2024, 1, 1)')
     expect(code).toContain('d2 = date(2025, 1, 1)')
     expect(code).toContain('(d2 - d1).days')
-    expect(code).toContain('strftime')
+    // 星期断言走 WD 元组（locale 无关的中文输出），不再用 strftime("%A")
+    expect(code).toContain('WD[d1.weekday()]')
+    expect(code).not.toContain('strftime')
   })
   it('正倒计时', () => {
     const code = genCountdownCode(a, b)
@@ -34,5 +36,19 @@ describe('生成代码包含当前输入', () => {
     expect(clamped).toContain('timedelta(weeks=2)')
     expect(clamped).toContain('add_months(d1, 1)')
     expect(clamped).toContain('def add_months')
+    // helper 按需输出：只用 month 的脚本不带 add_years
+    expect(clamped).not.toContain('def add_years')
+  })
+  it('负数 n：标签与实参方向一致', () => {
+    const code = genArithCode(a, b, [{ target: 'd1', op: '+', n: -5, unit: 'day' }])
+    expect(code).toContain('"d1 -5 day →"')
+    expect(code).toContain('(d1 - timedelta(days=5))')
+  })
+  it('空行数组：无 helper，仍是完整脚本', () => {
+    const code = genArithCode(a, b, [])
+    expect(code).not.toContain('def add_months')
+    expect(code).not.toContain('def add_years')
+    expect(code).toContain('d1 = date')
+    expect(code).toContain('d2 = date')
   })
 })
