@@ -179,9 +179,10 @@ export function upcomingAnniversaries(d: DateYMD, today: DateYMD, count = 3): An
   const y0 = Math.max(1, today.y - d.y - 1)
   let taken = 0
   for (let k = y0; taken < 8 && k < y0 + 20; k++) {
-    const a = addYears(d, k)
-    if (daysBetween(a, today) <= 0) {
-      cands.push({ date: a, label: `${k} 周年`, yearly: true })
+    const anniv = addYears(d, k)
+    // anniv >= today 才保留（daysBetween(a,b)=b-a，故 <=0 即成立）
+    if (daysBetween(anniv, today) <= 0) {
+      cands.push({ date: anniv, label: `${k} 周年`, yearly: true })
       taken++
     }
   }
@@ -193,6 +194,7 @@ export function upcomingAnniversaries(d: DateYMD, today: DateYMD, count = 3): An
   )
   const out: Anniversary[] = []
   const seen = new Set<string>()
+  // 防御性去重：两类候选日期理论不相交，仅为口径健壮
   for (const c of cands) {
     const key = formatYMD(c.date)
     if (seen.has(key)) continue
