@@ -172,3 +172,9 @@ def test_guess_requirements_maps_dotenv_to_python_dotenv():
     is_avail = lambda m: False  # noqa: E731
     code = "from dotenv import load_dotenv\n"
     assert guess_requirements(code, set(), is_available=is_avail) == ["python-dotenv"]
+
+
+def test_import_to_pkg_maps_ternary_to_python_ternary():
+    # 三元相图：生成器曾写 import ternary_new（PyPI 无此包）；正主 python-ternary 模块名 ternary
+    assert IMPORT_TO_PKG["ternary"] == "python-ternary"
+    assert "ternary_new" not in IMPORT_TO_PKG

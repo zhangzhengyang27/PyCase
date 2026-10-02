@@ -17,8 +17,8 @@ except Exception:
     pass
 
 # 新增
-import ternary_new as ternary
-from ternary_new.helpers import project_point,project_sequence
+import ternary as ternary
+from ternary.helpers import project_point,project_sequence
 import os
 
 

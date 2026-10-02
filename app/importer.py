@@ -77,6 +77,8 @@ IMPORT_TO_PKG = {
     "redis": "redis",
     # from dotenv import load_dotenv：PyPI 正主是 python-dotenv（`dotenv` 是劣质影子包，审计 A4）
     "dotenv": "python-dotenv",
+    # 三元相图库：PyPI 正主 python-ternary，模块名 ternary（生成器曾写 ternary_new，坏包名）
+    "ternary": "python-ternary",
     # ffmpeg-python 提供 ffmpeg 模块（PyPI `ffmpeg` 是空壳；二进制本体需系统另行安装）
     "ffmpeg": "ffmpeg-python",
     "torch": "torch",

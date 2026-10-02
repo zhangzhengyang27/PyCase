@@ -71,7 +71,12 @@ def compute_item(store: Any, item: Any) -> dict[str, Any] | None:
         return None
     code = store.get_code(item)
     tree = parse_code(code)
+    # 本地模块判定域：文件兄弟目录 + 项目根（source_dir）。课程项目的子目录文件
+    # （controllers/x.py）import 项目顶层包（application/common/config）是正常结构——
+    # 只看兄弟目录会把它们误判为第三方、打出永远装不上的缺依赖徽章
     local_dirs = [item.path.parent]
+    if item.source_dir:
+        local_dirs.append(Path(item.source_dir))
     deps = sorted(third_party_imports(code, tree, local_dirs)) if tree is not None else []
     checker = store._checker
     try:
