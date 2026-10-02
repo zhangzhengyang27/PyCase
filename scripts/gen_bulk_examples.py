@@ -1023,20 +1023,8 @@ print("去重词数:", len(counter))'''),
                     "simple tools with powerful ideas make python everywhere python"))
          for t in (3, 5, 8)])
 
-    add("basics-date-diff", "日期计算", "datetime 计算日期差与星期。",
-        ["基础", "日期"],
-        lambda p: '''"""日期计算：{{y1}}-{{m1}}-{{dd1}} 与 {{y2}}-{{m2}}-{{dd2}} 之间隔多少天。"""
-from datetime import date
-
-d1 = date({{y1}}, {{m1}}, {{dd1}})
-d2 = date({{y2}}, {{m2}}, {{dd2}})
-diff = abs((d2 - d1).days)
-print(f"间隔 {diff} 天（约 {diff / 7:.1f} 周）")
-print("各自星期:", d1.strftime("%A"), "/", d2.strftime("%A"))''',
-        [dict(vname=f"{y1}{m1:02d}-{y2}{m2:02d}", y1=y1, m1=m1, dd1=dd1, y2=y2, m2=m2, dd2=dd2)
-         for y1, m1, dd1, y2, m2, dd2 in
-         [(2024, 1, 1, 2025, 1, 1), (2024, 6, 15, 2026, 9, 22), (2020, 2, 29, 2026, 2, 28),
-          (2026, 9, 22, 2027, 3, 8), (2023, 12, 31, 2026, 1, 1)]])
+    # basics-date-diff 已退役（2026-10-02）：5 个静态变体升级为工具箱「日期计算器」
+    # 交互工具（renderer/src/interactive-tools.ts），日期主题不再在语料里重复占位。
 
     add("basics-matrix-mul", "矩阵乘法", "纯 Python 三重循环矩阵乘法。",
         ["基础", "线性代数"],
