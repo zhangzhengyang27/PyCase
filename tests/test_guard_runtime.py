@@ -63,11 +63,17 @@ class _Capture:
 class _StubVenv:
     """运行链路替身：直接用当前解释器跑示例，不创建也不查询共享 venv。"""
 
+    def __init__(self, requirements: Path | None = None) -> None:
+        self._requirements = requirements
+
     def needs_prepare(self) -> bool:
         return False
 
     def ensure_python(self, file_path: Path) -> tuple[bool, str]:
         return True, sys.executable
+
+    def find_requirements(self, file_path: Path) -> Path | None:
+        return self._requirements
 
 
 def _capture(monkeypatch) -> _Capture:
@@ -142,6 +148,21 @@ def test_g4_streams_output_and_reports_success(tmp_path, monkeypatch):
     assert len(finished) == 1 and finished[0]["exit_code"] == 0
     finished_at = cap.events[-1][0]
     assert cap.time_of("one") < finished_at - 0.5, "首行输出晚于进程结束，说明输出被缓冲而非流式"
+
+
+def test_g4_notifies_when_example_declares_requirements(tmp_path, monkeypatch):
+    """示例声明了依赖（目录带 requirements.txt）时，装依赖期间必须有系统行反馈——
+    否则 run_id 之后到首行输出之间是一段无解释的静默（2026-10-02「运行没有输出」观感的主因之一）。"""
+    req = tmp_path / "requirements.txt"
+    req.write_text("requests\n", encoding="utf-8")
+    cap = _capture(monkeypatch)
+    monkeypatch.setattr(server, "_get_venv_manager", lambda: _StubVenv(requirements=req))
+    item = _fake_item(tmp_path, "print('hi')\n")
+
+    asyncio.run(server._run_subprocess("g4-req", item, [], 30))
+
+    assert any("依赖" in t for t in cap.texts()), f"缺少装依赖反馈行: {cap.texts()[:3]}"
+    assert cap.finished() and cap.finished()[0]["exit_code"] == 0
 
 
 def test_g4_timeout_kills_process_hard(tmp_path, monkeypatch):

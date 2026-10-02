@@ -596,3 +596,45 @@ def test_bootstrap_prefers_lock_file_over_manifest(tmp_path, monkeypatch):
     assert "requests==2.32.3" in installed
     assert "requests" not in installed  # 未钉版条目不得混入
     assert "fallback-pkg" not in installed
+
+
+def test_example_requirements_falls_back_to_per_line_and_caches_attempt(tmp_path, monkeypatch):
+    """-r 整体安装失败（课程 requirements.txt 常含 PyPI 上不存在的名字，如 ternary-new）
+    必须降级为逐行安装：坏名字跳过、好名字装上；且尝试过后记录 hash——
+    否则每次运行都重试注定失败的解析，示例在 run_id 之后长时间无输出（2026-10-02 用户实测）。"""
+    installed: list[str] = []
+    calls: list[list[str]] = []
+    mgr = VenvManager(repo_root=tmp_path, bootstrap_packages=())
+
+    def fake_pip_install(args, timeout):
+        calls.append(list(args))
+        if args and args[0] == "-r":
+            return False  # 整体解析失败（uv: No solution found）
+        if args and args[0] == "ternary-new":
+            return False  # PyPI 上不存在，逐行安装时也失败
+        installed.extend(a for a in args if not a.startswith("-"))
+        return True
+
+    def fake_create_venv():
+        mgr.get_python_executable().parent.mkdir(parents=True, exist_ok=True)
+        return True
+
+    monkeypatch.setattr(mgr, "_pip_install", fake_pip_install)
+    monkeypatch.setattr(mgr, "_create_venv", fake_create_venv)
+
+    ws = tmp_path / "ws"
+    ws.mkdir()
+    (ws / "requirements.txt").write_text(
+        "requests\nternary-new\n# comment\n\nflask\n-e .\n", encoding="utf-8"
+    )
+    mgr._install_example_requirements(ws / "app.py")
+
+    # 整体安装尝试了一次，随后逐行兜底：requests/flask 装上，ternary-new/-e 跳过
+    assert calls[0][0] == "-r"
+    assert "requests" in installed and "flask" in installed
+    assert "ternary-new" not in installed
+    # 尝试过就记 hash：下次运行不再重试
+    import hashlib
+
+    digest = hashlib.sha256((ws / "requirements.txt").read_bytes()).hexdigest()
+    assert mgr._load_marker().get("requirements", {}).get(digest) is True

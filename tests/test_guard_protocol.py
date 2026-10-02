@@ -52,6 +52,9 @@ class _StubVenv:
     def ensure_python(self, file_path: Path) -> tuple[bool, str]:
         return True, sys.executable
 
+    def find_requirements(self, file_path: Path) -> Path | None:
+        return None
+
 
 class _ProtocolEnv:
     """把 sidecar 的集合根/用户集合/工作区全部换到 tmp_path。

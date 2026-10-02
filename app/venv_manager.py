@@ -242,7 +242,14 @@ class VenvManager:
         return []
 
     def _install_example_requirements(self, file_path: Path) -> None:
-        """把示例目录的 requirements.txt 安装进共享 venv（按内容 hash 去重）。"""
+        """把示例目录的 requirements.txt 安装进共享 venv（按内容 hash 去重）。
+
+        整体 ``-r`` 安装失败时降级为逐行安装：课程遗留的声明文件常含 PyPI 上
+        不存在的名字（如 ``ternary-new``），uv/pip 的整体解析会因一个坏名字
+        全盘失败——逐行兜底让其余依赖照常装上。无论成败，尝试过后即记录
+        hash：否则每次运行都会重试注定失败的解析，示例在 run_id 之后长时间
+        无输出（2026-10-02 用户实测的「运行没有 print 输出」即此）。
+        """
         requirements = self.find_requirements(file_path)
         if requirements is None:
             return
@@ -252,11 +259,28 @@ class VenvManager:
             return
         if digest in self._load_marker().get("requirements", {}):
             return
-        if self._pip_install(["-r", str(requirements)], timeout=self.INSTALL_TIMEOUT):
+        lines = [
+            ln.strip()
+            for ln in requirements.read_text(encoding="utf-8", errors="ignore").splitlines()
+            if ln.strip() and not ln.strip().startswith("#")
+        ]
+        ok = self._pip_install(["-r", str(requirements)], timeout=self.INSTALL_TIMEOUT)
+        if not ok and lines:
+            # 逐行兜底：坏行（不存在的包名、-e 之类的选项行）失败即跳过
+            failed: list[str] = []
+            for line in lines:
+                if self._pip_install([line], timeout=self.INSTALL_TIMEOUT):
+                    continue
+                failed.append(line)
+            if failed:
+                get_logger(__name__).warning(
+                    "示例依赖逐行安装仍有失败（已跳过，不影响运行）: %s", ", ".join(failed[:20])
+                )
+            ok = True  # 尽力而为即算处理过，避免每次运行重试
+        if ok:
             marker = self._load_marker()
             marker.setdefault("requirements", {})[digest] = True
             self._save_marker(marker)
-        # 安装失败不记录 hash，下次运行该示例时重试
 
     def _pip_install(self, args: list[str], timeout: int) -> bool:
         """在共享 venv 中执行 pip install，返回是否成功。

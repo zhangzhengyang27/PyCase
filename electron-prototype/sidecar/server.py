@@ -551,6 +551,16 @@ async def _run_subprocess(
                 },
             )
             _set_env_phase("preparing")
+        elif venv_mgr.find_requirements(file_path) is not None:
+            # 示例声明了依赖：装依赖期间给一行反馈，别让 run_id 之后静默几十秒
+            # （2026-10-02「运行没有 print 输出」的观感主因——首启装依赖是分钟级）
+            _notify(
+                "run_output",
+                {
+                    "run_id": run_id,
+                    "text": "[系统] 检测到示例依赖声明（requirements.txt），正在检查/安装，首次可能较慢…\n",
+                },
+            )
         try:
             ok, python_exe = await asyncio.to_thread(venv_mgr.ensure_python, file_path)
             # 成功路径不输出环境噪音日志，仅在异常时提示回退
