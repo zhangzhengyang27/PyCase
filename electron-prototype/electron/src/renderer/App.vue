@@ -68,7 +68,8 @@ import OnboardingView from './components/OnboardingView.vue'
 import ToolboxView from './components/ToolboxView.vue'
 import DetailPage from './components/DetailPage.vue'
 import DateCalculatorPage from './components/date-calculator/DateCalculatorPage.vue'
-import { DATE_CALC_ID, isInteractiveId } from './src/interactive-tools'
+import { DATE_CALC_ID, POMODORO_ID, isInteractiveId } from './src/interactive-tools'
+import PomodoroPage from './components/interactive/PomodoroPage.vue'
 import { isManualId } from './src/tool-manuals'
 import ToolManualPage from './components/interactive/ToolManualPage.vue'
 import InteractiveToolPage from './components/interactive/InteractiveToolPage.vue'
@@ -425,6 +426,7 @@ onBeforeUnmount(() => {
         <ToolManualPage v-if="selectedId && isManualId(selectedId)" class="animate-view-in" />
         <DetailPage v-else-if="selectedId && !isInteractiveId(selectedId)" class="animate-view-in" />
         <DateCalculatorPage v-else-if="selectedId === DATE_CALC_ID" class="animate-view-in" />
+        <PomodoroPage v-else-if="selectedId === POMODORO_ID" class="animate-view-in" />
         <InteractiveToolPage v-else-if="selectedId" class="animate-view-in" />
       </main>
 

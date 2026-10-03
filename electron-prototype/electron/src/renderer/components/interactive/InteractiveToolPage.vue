@@ -16,6 +16,52 @@ const values = computed(() => (schema.value ? toolValueOf(schema.value.id, schem
 const result = computed(() => schema.value?.compute?.(values.value))
 const code = computed(() => (schema.value ? schema.value.pyCode(values.value) : '# 工具不存在'))
 
+// --- W8-W11 框架：sidecar 计算型 + 向导步骤 + quickRun ---
+import { onMounted, ref, watch } from 'vue'
+import { ChevronLeft, ChevronRight } from 'lucide-vue-next'
+import type { ToolResult } from '../../src/interactive-tools'
+import { runBusy, runOutput, runSnippet } from '../../src/store/date-run'
+import { parseSidecarOutput } from '../../src/sidecar-result'
+
+const isSidecar = computed(() => schema.value?.computeVia === 'sidecar')
+// sidecar 计算型：结果 = 运行输出 <<<JSON>>> 段的解析（标记外文本仍在抽屉日志区可见）
+const sidecarResult = computed<ToolResult | null>(() =>
+  isSidecar.value ? parseSidecarOutput(runOutput.value).result : null
+)
+const sidecarRest = computed(() => (isSidecar.value ? parseSidecarOutput(runOutput.value).rest : ''))
+
+const stepIndex = ref(0)
+const steps = computed(() => schema.value?.steps ?? [])
+const stepFields = computed(() => {
+  if (!steps.value.length || !schema.value) return schema.value?.fields ?? []
+  const keys = steps.value[stepIndex.value]?.keys ?? []
+  const set = new Set(keys)
+  return schema.value.fields.filter((f) => set.has(f.key))
+})
+const isLastStep = computed(() => !steps.value.length || stepIndex.value >= steps.value.length - 1)
+function nextStep(): void {
+  if (!isLastStep.value) stepIndex.value++
+}
+function prevStep(): void {
+  if (stepIndex.value > 0) stepIndex.value--
+}
+
+// quickRun：速查工具进页自动运行一次（切工具时重置）
+const quickRan = ref(false)
+function autoRun(): void {
+  if (!schema.value || quickRan.value || runBusy.value) return
+  quickRan.value = true
+  runSnippet(schema.value.id, code.value)
+}
+onMounted(() => {
+  if (schema.value?.quickRun) autoRun()
+})
+watch(schema, (sc) => {
+  stepIndex.value = 0
+  quickRan.value = false
+  if (sc?.quickRun) autoRun()
+})
+
 /** required 且当前为空 → 传给 ToolField 标红（compute 侧同时出 error 引导） */
 /** select 联动：options 函数形态按当前输入解析（静态 options 原样透传由 ToolField 兜底） */
 function optionsOf(key: string): SelectOption[] | undefined {
@@ -61,8 +107,21 @@ function isInvalid(key: string): boolean {
       <div class="flex-1 min-h-0 overflow-y-auto app-no-drag">
         <div class="max-w-[900px] mx-auto px-8 pb-6 flex flex-col gap-5">
           <p class="text-control text-ink-mute m-0">{{ schema.description }}</p>
+          <div v-if="steps.length" class="flex items-center gap-2 mb-3">
+            <template v-for="(st, i) in steps" :key="st.title">
+              <span
+                class="text-caption px-2 py-0.5 rounded-control"
+                :class="
+                  i === stepIndex ? 'bg-accent text-page font-medium' : i < stepIndex ? 'text-accent' : 'text-ink-faint'
+                "
+              >
+                {{ i + 1 }}. {{ st.title }}
+              </span>
+              <ChevronRight v-if="i < steps.length - 1" :size="12" class="text-ink-faint" />
+            </template>
+          </div>
           <div class="grid grid-cols-2 gap-x-4 gap-y-3 items-start">
-            <template v-for="f in schema.fields" :key="f.key">
+            <template v-for="f in stepFields" :key="f.key">
               <ToolField
                 :spec="f"
                 :model-value="values[f.key]"
@@ -73,6 +132,48 @@ function isInvalid(key: string): boolean {
             </template>
           </div>
           <ToolResultPanel v-if="result" :result="result" />
+          <template v-if="isSidecar">
+            <ToolResultPanel v-if="sidecarResult" :result="sidecarResult" data-testid="sidecar-result" />
+            <div v-else-if="runBusy" class="text-control text-ink-mute pt-4 text-center" data-testid="sidecar-running">
+              正在运行…
+            </div>
+            <div v-else-if="!runOutput" class="text-control text-ink-mute pt-4 text-center">
+              点击下方「运行」获取结果
+            </div>
+            <pre
+              v-if="sidecarRest"
+              class="m-0 p-3 surface-card text-caption font-mono text-ink-mute whitespace-pre-wrap"
+              data-testid="sidecar-rest"
+              >{{ sidecarRest }}</pre>
+          </template>
+          <div v-if="steps.length && !isLastStep" class="flex justify-end">
+            <button
+              class="inline-flex items-center gap-1 px-3 h-8 border border-line rounded-control bg-panel text-control text-ink cursor-pointer hover:border-accent transition-colors dur-fast"
+              data-testid="wizard-next"
+              @click="nextStep()"
+            >
+              下一步 <ChevronRight :size="13" />
+            </button>
+          </div>
+          <div v-if="steps.length && stepIndex > 0" class="flex justify-start -mt-8">
+            <button
+              class="inline-flex items-center gap-1 px-3 h-8 border-0 bg-transparent text-control text-ink-mute hover:text-accent cursor-pointer"
+              data-testid="wizard-prev"
+              @click="prevStep()"
+            >
+              <ChevronLeft :size="13" /> 上一步
+            </button>
+          </div>
+          <div v-if="isSidecar && steps.length && isLastStep" class="flex justify-end" data-testid="wizard-run">
+            <button
+              class="inline-flex items-center gap-1.5 px-4 h-9 rounded-control border-0 text-control font-medium cursor-pointer transition-colors dur-fast disabled:opacity-50"
+              style="background: var(--color-accent, #3b82f6); color: #fff"
+              :disabled="runBusy"
+              @click="runSnippet(schema.id, code)"
+            >
+              ▶ 运行
+            </button>
+          </div>
         </div>
       </div>
       <div class="app-no-drag border-t border-line shrink-0">

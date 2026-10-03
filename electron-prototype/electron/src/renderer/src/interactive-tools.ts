@@ -55,6 +55,8 @@ export interface ToolResult {
   text?: string
   /** 批量生成结果（逐行可复制） */
   list?: string[]
+  /** 结构化表格（W9 结果浏览；sidecar 工具由脚本输出 JSON 映射而来） */
+  table?: { columns: string[]; rows: string[][] }
   /** 输入不合法的引导文案（出现时不渲染其他结果） */
   error?: string
 }
@@ -67,8 +69,13 @@ export interface InteractiveToolSchema {
   fields: FieldSpec[]
   /** 前端计算型必填：输入 → 结构化结果（纯函数，输入缺失时返回 error 引导） */
   compute?: (v: Record<string, FieldValue>) => ToolResult
-  /** 计算位置：frontend（默认，compute 必填）| sidecar（页面只采集，结果由运行输出承担） */
+  /** 计算位置：frontend（默认，compute 必填）| sidecar（结果由运行输出的 JSON 承担，
+   *  脚本以 <<<JSON>>>…<<<END>>> 标记包裹结果，其余输出进日志区） */
   computeVia?: 'frontend' | 'sidecar'
+  /** 进页自动运行一次（速查型零参/默认参工具；仅 computeVia='sidecar' 时有意义） */
+  quickRun?: boolean
+  /** 向导步骤：字段按 keys 分组逐步呈现（W10；不声明 = 单步平铺） */
+  steps?: Array<{ title: string; keys: string[] }>
   /** 代码抽屉模板（纯函数拼接，产物可直接 python3 运行，输出与页面结果互证） */
   pyCode: (v: Record<string, FieldValue>) => string
 }
@@ -76,6 +83,18 @@ export interface InteractiveToolSchema {
 // ---------------------------------------------------------------------------
 // 注册表：专属卡片 + schema 派生卡片
 // ---------------------------------------------------------------------------
+export const POMODORO_ID = `${INTERACTIVE_PREFIX}pomodoro`
+
+const POMODORO_CARD: VExample = {
+  id: POMODORO_ID,
+  name: 'pomodoro',
+  category: 'tools',
+  path: '',
+  title: '番茄钟',
+  description: '专注计时器：25 分钟工作 / 5 分钟休息循环，会话计数与暂停/重置。',
+  tags: ['效率', '交互工具']
+}
+
 const DATE_CARD: VExample = {
   id: DATE_CALC_ID,
   name: 'date-calculator',
@@ -102,7 +121,11 @@ function schemaToCard(s: InteractiveToolSchema): VExample {
 }
 
 /** 工具池门面（响应式）：专属卡 + schema 派生卡；catalog 合并时以 .value 消费 */
-export const interactiveToolItems = computed<VExample[]>(() => [DATE_CARD, ...interactiveToolSchemas.map(schemaToCard)])
+export const interactiveToolItems = computed<VExample[]>(() => [
+  DATE_CARD,
+  POMODORO_CARD,
+  ...interactiveToolSchemas.map(schemaToCard)
+])
 
 export function getToolSchema(id: string): InteractiveToolSchema | undefined {
   return interactiveToolSchemas.find((s) => s.id === id)

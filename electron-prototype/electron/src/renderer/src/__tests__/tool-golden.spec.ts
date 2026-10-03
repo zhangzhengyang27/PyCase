@@ -2,7 +2,7 @@
 // （Python 参考实现自校验在 tests/test_tool_golden.py——同一份 JSON，双端唯一事实）。
 // pyCode 是 TS 模板，Python 无法执行——片段断言钉关键行 + 落地时的真实产物抽查。
 import { describe, expect, it } from 'vitest'
-import { getToolSchema } from '../interactive-tools'
+import { getToolSchema, type FieldValue } from '../interactive-tools'
 import golden from '../tool-golden.json'
 
 const temp = getToolSchema('interactive:temp-convert')!
@@ -497,5 +497,178 @@ describe('缩略图拼贴', () => {
     expect(code).toContain('CELL, COLS = 200, 4')
     expect(code).toContain('sheet.save("contact_sheet.png")')
     expect(dev('interactive:contact-sheet').pyCode!({ dir: '', cols: 4, cell: 200, bg: '#111111' })).toContain('# 选择')
+  })
+})
+
+// ---------------------------------------------------------------------------
+// W8-W11：速查/结果浏览/向导/ffmpeg 构建器（sidecar 计算型：pyCode 关键片段全量钉）
+// ---------------------------------------------------------------------------
+const FRAGMENTS: Array<[string, Record<string, FieldValue>, string[]]> = [
+  ['ip-lookup', {}, ['ipify', 'ipinfo', '<<<JSON>>>']],
+  ['dns-lookup', { domain: 'example.com' }, ['getaddrinfo', '"example.com"']],
+  ['port-check', { host: '127.0.0.1', port: 80 }, ['connect_ex', '"127.0.0.1:80"']],
+  ['http-headers', { url: 'https://example.com' }, ['requests.get', 'status_code']],
+  ['speed-test', {}, ['httpbin.org/bytes', 'MB/s 均值']],
+  ['battery', {}, ['sensors_battery', 'power_plugged']],
+  ['disk-usage', {}, ['disk_usage', '/Volumes/Data']],
+  ['system-info', {}, ['platform.release()', 'os.cpu_count()']],
+  ['process-top', {}, ['process_iter', 'memory_info']],
+  ['media-info', { file: '/m.mp4' }, ['ffprobe', '"-show_streams"']],
+  ['bigfile-topn', { dir: '/data', top: 5 }, ['rglob("*")', 'files[:5]']],
+  ['dup-finder', { dir: '/data' }, ['md5', 'len(paths) > 1']],
+  ['empty-dir', { dir: '/data' }, ['空目录', 'not any(p.iterdir())']],
+  ['dir-size', { dir: '/data' }, ['tree_size', 'entries.sort']],
+  ['quick-find', { dir: '/data', pattern: 'report.*xlsx' }, ["re.compile(r'''report.*xlsx'''", 'pat.search']],
+  ['tree-print', { dir: '/data', depth: 2 }, ['IGNORE', 'walk(']],
+  ['todo-scan', { dir: '/code' }, ['TODO|FIXME|HACK', 'exts']],
+  ['secret-scan', { dir: '/code' }, ['api[_-]?key', '***']],
+  ['loc-stats', { dir: '/code' }, ['startswith', '代码行']],
+  ['csv-column-stats', { file: '/t.csv', column: 'age' }, ['DictReader', '均值']],
+  ['log-level-stats', { file: '/a.log' }, ['TRACE|DEBUG|INFO', 'most_common']],
+  ['git-branches', { dir: '/repo' }, ['rev-parse', '--abbrev-ref']],
+  ['git-commits', { dir: '/repo' }, ['--numstat', '%an']],
+  ['table-diff', { oldFile: '/o.xlsx', newFile: '/n.xlsx', keyCol: '工号' }, ['sheet_rows', '"工号"', 'added']],
+  ['sheet-split', { file: '/w.xlsx' }, ['sheetnames', 'max_row']],
+  ['dedup-merge', { fileA: '/a.xlsx', fileB: '/b.xlsx', keyCol: '工号' }, ['A 覆盖 B', '唯一记录']],
+  ['batch-rename', { dir: '/f', prefix: 'pic', apply: false }, ['预览模式', 'plan =']],
+  ['file-classify', { dir: '/f', apply: true }, ['shutil.move', '已归类']],
+  ['sqlite-export', { db: '/d.sqlite', table: 'orders' }, ['sqlite3.connect', 'SELECT * FROM']],
+  ['video-compress', { file: '/v.mp4', crf: 24, preset: 'slow' }, ['libx264', '"-crf", "24"', '"slow"']],
+  ['video-convert', { file: '/v.mp4', format: 'webm' }, ['libvpx-vp9', 'converted.webm']],
+  ['video-merge', { dir: '/vids' }, ['concat', 'parts.txt']],
+  ['video-to-gif', { file: '/v.mp4', start: 1, dur: 4, fps: 10, width: 320 }, ['palettegen', 'fps=10']],
+  ['video-shot', { file: '/v.mp4', at: 5 }, ['-frames:v', '1', 'shot.png']],
+  ['remove-audio', { file: '/v.mp4' }, ['-an', 'muted.mp4']],
+  ['av-trim', { file: '/v.mp4', start: 2, dur: 15 }, ['-ss', '-c', 'copy']],
+  ['volume-adjust', { file: '/v.mp4', vol: 2 }, ['volume=', 'adjusted.mp4']],
+  ['extract-audio', { file: '/v.mp4' }, ['-vn', 'libmp3lame']],
+  ['audio-compress', { file: '/a.wav', format: 'mp3', bitrate: 192 }, ['libmp3lame', '"192k"']],
+  ['batch-transcode', { dir: '/vids', crf: 28 }, ['transcoded_', '成功/总数', '<<<JSON>>>']]
+]
+
+describe('W8-W11 四十工具 pyCode ↔ 关键片段', () => {
+  it.each(FRAGMENTS.map(([id, values, frags]) => [id, values, frags] as const))('%s', (id, values, frags) => {
+    const schema = dev(`interactive:${id}`)!
+    expect(schema, id).toBeTruthy()
+    expect(schema.computeVia, id).toBe('sidecar')
+    const code = schema.pyCode!(values)
+    for (const f of frags) expect(code, `${id} 应含 ${f}`).toContain(f)
+    // 统一契约：结果 JSON 标记
+    expect(code, `${id} 应含结果标记`).toContain('<<<JSON>>>')
+    expect(code, `${id} 应含结束标记`).toContain('<<<END>>>')
+  })
+  it('向导六件都声明 steps；速查本地件声明 quickRun', () => {
+    expect(dev('interactive:table-diff')!.steps).toHaveLength(2)
+    expect(dev('interactive:sqlite-export')!.steps).toHaveLength(2)
+    expect(dev('interactive:battery')!.quickRun).toBe(true)
+    expect(dev('interactive:speed-test')!.quickRun).toBeUndefined()
+    expect(dev('interactive:video-compress')!.quickRun).toBeUndefined()
+  })
+})
+
+// ---------------------------------------------------------------------------
+// W12 收官批：Office 改造 + 字符方阵/文本表格 + 监控（21 schema 片段表）
+// ---------------------------------------------------------------------------
+const W12_FRAGMENTS: Array<[string, Record<string, FieldValue>, string[]]> = [
+  ['char-matrix', { size: 9, chars: '◆◇' }, ['size, chars = 9', 'r * c + r + c']],
+  ['text-table', { data: '名称,数量' }, ['ljust', 'widths']],
+  ['site-monitor', { urls: 'https://a.com' }, ['requests.get', '可用']],
+  ['file-watch', { dir: '/w', interval: 5 }, ['两次快照', 'time.sleep(5)']],
+  ['excel-build', { data: '名称,数量\n苹果,12' }, ['_coerce', 'output.xlsx']],
+  ['excel-style', { data: 'A,B' }, ['PatternFill', 'Font(bold=True']],
+  ['excel-formula', { data: 'A,B' }, ['SUM(', 'get_column_letter']],
+  ['excel-chart', { data: 'A,B' }, ['BarChart', 'add_chart']],
+  ['excel-freeze', { data: 'A,B' }, ['freeze_panes = "A2"']],
+  ['excel-condfmt', { data: 'A,B' }, ['DataBarRule', 'conditional_formatting']],
+  ['excel-sort', { data: 'A,B' }, ['body.sort', 'ws.append(r)']],
+  ['excel-protect', { data: 'A,B', password: 'pw' }, ['protection.password', 'sheet = True']],
+  ['excel-comment', { data: 'A,B' }, ['Comment(', 'PyCase']],
+  ['excel-merge-header', { data: 'A,B' }, ['merge_cells', 'insert_rows']],
+  ['word-doc', { content: '# 标题\n正文' }, ['add_heading', 'List Bullet']],
+  ['word-table', { data: 'A,B' }, ['Table Grid', 'add_table']],
+  ['word-letters', { template: '尊敬的{{姓名}}', data: '姓名\n张三' }, ['DictReader', 'letter_']],
+  ['ppt-slides', { slides: '封面|我的演示' }, ['Presentation', 'add_slide']],
+  ['daily-report', { done: '写代码', plan: '改 bug', issues: '无' }, ['今日完成', '明日计划', '问题与风险']],
+  ['md-todo', { items: '任务 @张三 !P0' }, ['- [ ]', 'P\\d']],
+  ['mail-draft', { to: 'a@b.c', subject: 'S', body: 'B' }, ['MIMEText', 'draft.eml']]
+]
+
+describe('W12 廿一工具 pyCode ↔ 关键片段', () => {
+  it.each(W12_FRAGMENTS.map(([id, values, frags]) => [id, values, frags] as const))('%s', (id, values, frags) => {
+    const schema = dev(`interactive:${id}`)!
+    expect(schema, id).toBeTruthy()
+    const code = schema.pyCode!(values)
+    for (const f of frags) expect(code, `${id} 应含 ${f}`).toContain(f)
+  })
+  it('纯前端两件不走 sidecar', () => {
+    expect(dev('interactive:char-matrix')!.computeVia).toBeUndefined()
+    expect(dev('interactive:text-table')!.computeVia).toBeUndefined()
+  })
+  it('字符方阵 compute：纹理解析与边界', () => {
+    const r = dev('interactive:char-matrix').compute!({ size: 5, chars: 'AB' })
+    const lines = r.text!.split('\n')
+    expect(lines).toHaveLength(5)
+    expect(lines[0]!.length).toBe(5)
+    expect(dev('interactive:char-matrix').compute!({ size: 3, chars: 'AB' })!.error).toContain('边长')
+  })
+  it('文本表格 compute：对齐输出', () => {
+    const r = dev('interactive:text-table').compute!({ data: '名称,数量\n苹果,12' })
+    expect(r.text).toContain('| 名称 | 数量 |')
+    expect(r.primary?.value).toBe('1')
+  })
+})
+
+// ---------------------------------------------------------------------------
+// W13 增补批 ×10：YAML/Base64/URL/文本对比/二维码/编码修复/透视/跨表关联/数据校验/库存盘点
+// ---------------------------------------------------------------------------
+const W13_FRAGMENTS: Array<[string, Record<string, FieldValue>, string[]]> = [
+  ['yaml-json', { direction: 'yaml2json', input: 'a: 1' }, ['safe_load', 'ensure_ascii=False']],
+  ['base64', { mode: 'encode', input: 'Hello' }, ['b64encode', 'utf-8']],
+  ['url-codec', { mode: 'encode', input: '中文' }, ['quote(', 'safe=""']],
+  ['text-diff', { before: 'a', after: 'b' }, ['difflib', 'unified_diff']],
+  ['qrcode-gen', { text: 'https://example.com' }, ['qrcode.make', 'qrcode.png']],
+  ['encoding-fix', { file: '/t.txt' }, ['gbk', 'latin-1', 'fixed.utf8.txt']],
+  [
+    'pivot',
+    { data: '部门,月份,金额', rowDim: '部门', colDim: '月份', valCol: '金额' },
+    ['defaultdict(float)', 'colKeys']
+  ],
+  [
+    'cross-join',
+    { mainFile: '/m.xlsx', lookupFile: '/l.xlsx', mainKey: '工号', lookupKey: '工号', lookupVal: '姓名' },
+    ['左连接', '<未知>']
+  ],
+  ['data-validate', { data: '日期,工时\nA,8', col: '工时', min: 0, max: 16, allowEmpty: true }, ['空值放行', '超范围']],
+  ['stock-inventory', { opening: '键盘,12', inflow: '键盘,10', outflow: '鼠标,15' }, ['defaultdict', '需补货']]
+]
+
+describe('W13 十工具 pyCode ↔ 关键片段', () => {
+  it.each(W13_FRAGMENTS.map(([id, values, frags]) => [id, values, frags] as const))('%s', (id, values, frags) => {
+    const schema = dev(`interactive:${id}`)!
+    expect(schema, id).toBeTruthy()
+    const code = schema.pyCode!(values)
+    for (const f of frags) expect(code, `${id} 应含 ${f}`).toContain(f)
+  })
+  it('纯前端三件不走 sidecar', () => {
+    expect(dev('interactive:base64')!.computeVia).toBeUndefined()
+    expect(dev('interactive:url-codec')!.computeVia).toBeUndefined()
+    expect(dev('interactive:stock-inventory')!.computeVia).toBeUndefined()
+  })
+  it('base64 前端编解码：中文 UTF-8 安全', () => {
+    const enc = dev('interactive:base64').compute!({ mode: 'encode', input: '中文Hello' })
+    const dec = dev('interactive:base64').compute!({ mode: 'decode', input: enc.text! })
+    expect(dec.text).toBe('中文Hello')
+  })
+  it('库存盘点 compute：三表核算与补货标记', () => {
+    const r = dev('interactive:stock-inventory').compute!({
+      opening: '键盘,12\n鼠标,30',
+      inflow: '键盘,10',
+      outflow: '鼠标,15\n显示器,2'
+    })!
+    const rows = Object.fromEntries(r.table!.rows.map((x) => [x[0], x[1]]))
+    expect(rows['键盘']).toBe('22')
+    expect(rows['鼠标']).toBe('15')
+    expect(rows['显示器']).toBe('-2') // 无期初直接出库 → 负数（defaultdict 语义）
+    expect(r.table!.rows.find((x) => x[0] === '显示器')![2]).toContain('需补货')
   })
 })

@@ -65,6 +65,38 @@ async function copyText(key: string, text: string): Promise<void> {
         data-testid="tool-text"
         >{{ result.text }}</pre>
 
+      <div
+        v-if="result.table?.rows?.length"
+        class="surface-card p-0 overflow-auto max-h-[360px]"
+        data-testid="tool-table"
+      >
+        <table class="w-full border-collapse text-control">
+          <thead>
+            <tr class="bg-page">
+              <th
+                v-for="col in result.table.columns"
+                :key="col"
+                class="text-left px-3 py-1.5 text-caption text-ink-mute font-medium border-b border-line sticky top-0 bg-page"
+              >
+                {{ col }}
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(row, ri) in result.table.rows" :key="ri" class="hover:bg-hover">
+              <td
+                v-for="(cell, ci) in row"
+                :key="ci"
+                class="px-3 py-1.5 font-mono text-ink-dim border-b border-line-hairline"
+                :class="ci === 0 ? 'whitespace-nowrap' : ''"
+              >
+                {{ cell }}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
       <ul v-if="result.list?.length" class="m-0 pl-0 list-none flex flex-col gap-1" data-testid="tool-list">
         <li
           v-for="(item, i) in result.list"
