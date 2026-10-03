@@ -8,6 +8,7 @@ import { computed, reactive } from 'vue'
 import { ChevronDown, ChevronUp, SearchX, Star } from 'lucide-vue-next'
 import { buildToolboxGroups } from '../src/toolbox-groups'
 import { INTERACTIVE_GROUP_KEY, isInteractiveId } from '../src/interactive-tools'
+import { interactiveIdForExample } from '../src/interactive-mapping'
 import { openInteractive } from '../src/store/interactive'
 import { toolboxIcon } from '../src/section-icons'
 import {
@@ -78,7 +79,14 @@ function onRun(id: string): void {
 // 卡片打开路由：交互工具进应用内专属页（App.vue 按 selectedId 前缀分支），其余开详情。
 // 专属页路由在 Task 11 接入 App.vue 前为中间态：仅切换 selectedId
 function onOpen(id: string): void {
-  if (isInteractiveId(id)) openInteractive(id)
+  if (isInteractiveId(id)) {
+    openInteractive(id)
+    return
+  }
+  // W14：已有交互页面的目录条目，卡片点击直达交互页面（CLI 详情在交互页头部入口）
+  const ex = examples.value.find((e) => e.id === id)
+  const mapped = ex ? interactiveIdForExample(ex) : null
+  if (mapped) openInteractive(mapped)
   else void openDetail(id)
 }
 function toggleFavOnly(): void {
@@ -168,7 +176,7 @@ const emptyHint = computed(() => {
                 :ex="ex"
                 :enter-index="i"
                 :faved="isFavorite(ex.id)"
-                :interactive="isInteractiveId(ex.id)"
+                :interactive="isInteractiveId(ex.id) || !!interactiveIdForExample(ex)"
                 @open="onOpen(ex.id)"
                 @fav="toggleFavorite(ex.id)"
                 @run="onRun(ex.id)"

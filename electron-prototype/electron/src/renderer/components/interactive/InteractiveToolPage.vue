@@ -9,7 +9,8 @@ import ToolResultPanel from './ToolResultPanel.vue'
 import CodeDrawer from '../date-calculator/CodeDrawer.vue'
 import { getToolSchema, type SelectOption } from '../../src/interactive-tools'
 import { closeInteractive, toolValueOf } from '../../src/store/interactive'
-import { selectedId } from '../../src/store/detail'
+import { openDetail, selectedId } from '../../src/store/detail'
+import { cliExampleOfCurrentPage } from '../../src/interactive-mapping'
 
 const schema = computed(() => (selectedId.value ? getToolSchema(selectedId.value) : undefined))
 const values = computed(() => (schema.value ? toolValueOf(schema.value.id, schema.value.fields) : {}))
@@ -93,6 +94,15 @@ function isInvalid(key: string): boolean {
         {{ schema?.title ?? '交互工具' }}
       </h1>
       <span class="text-caption text-ink-mute border border-line rounded-control px-2 py-0.5">交互工具</span>
+      <button
+        v-if="cliExampleOfCurrentPage"
+        class="app-no-drag border border-line rounded-control bg-transparent text-ink-mute hover:text-accent hover:border-accent cursor-pointer px-2 py-1 text-caption"
+        data-testid="it-cli"
+        :title="`查看同能力 CLI 示例源码：${cliExampleOfCurrentPage.title}`"
+        @click="openDetail(cliExampleOfCurrentPage.id)"
+      >
+        CLI 源码
+      </button>
     </div>
 
     <div
