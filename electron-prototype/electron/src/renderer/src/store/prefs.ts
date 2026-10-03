@@ -12,7 +12,7 @@ const HISTORY_CAP = 500
 export const favorites = ref(new Set<string>())
 export const runHistory = ref<RunHistoryEntry[]>([])
 /** 运行超时（秒）：超时强制终止；设置弹窗「运行」分区可调，存 runPrefs */
-export const runTimeout = ref(30)
+export const runTimeout = ref(120) // 原生 turtle 窗口等交互式运行需要较长存活时间（设置可调 5~600）
 /** 高危确认开关（设置弹窗「安全」分区）：与确认弹窗的「不再提示」共用同一持久化键 */
 export const skipHighRiskConfirm = ref(false)
 

@@ -104,13 +104,15 @@ export function mergeVariantCards(list: VExample[]): VExample[] {
     if (emitted.has(key)) continue
     emitted.add(key)
     const g = groups.get(key)!
+    const label = familyMetaOf(g.rep)!.label
     if (g.count === 1) {
-      out.push(g.rep) // 单例家族：不折叠不改写（点击照常路由）
+      // 单例家族：标题统一为类型名（母本即家族卡），不加归并标记
+      out.push({ ...g.rep, title: label })
       continue
     }
     out.push({
       ...g.rep,
-      title: familyMetaOf(g.rep)!.label,
+      title: label,
       variantCount: g.count,
       description: `${g.count} 个变体已归并 · 点卡片打开交互页面，原变体源码可从页内回链查看`
     })

@@ -1,6 +1,6 @@
 // tool-schemas-turtle.ts：bulk_turtle 29 图形家族交互页（385 变体归并）。
-// 迷你 turtle 引擎与 turtle 模块同构（forward/left/width/pencolor/goto/dot），
-// 各族绘制循环忠实移植变体算法，落笔段用 matplotlib 渲染（sidecar 无头环境）。
+// 生成**原生 turtle 模块**代码：运行弹出 Tk 画布实时绘制、关闭窗口结束；
+// T 子类保持旧引擎的 goto=瞬移 语义，各族绘制循环忠实移植变体算法。
 // 变体的差异（角度/步长/深度/色板）全部变成页面参数。画廊路由专用注册。
 import type { FieldSpec, InteractiveToolSchema } from './interactive-tools'
 
@@ -8,14 +8,7 @@ const TURTLE_HEAD = `import json
 import math
 import random
 
-import matplotlib
-matplotlib.use("Agg")
-matplotlib.rcParams["font.sans-serif"] = [
-    "PingFang SC", "Heiti TC", "Microsoft YaHei", "SimHei", "Arial Unicode MS",
-]
-matplotlib.rcParams["axes.unicode_minus"] = False
-import matplotlib.pyplot as plt
-import numpy as np
+import turtle
 
 random.seed(42)
 
@@ -28,72 +21,24 @@ PALETTES = {
 }
 pal = PALETTES.get(palette, PALETTES["rainbow"])
 
-class T:
-    """迷你 turtle 引擎：与 turtle 模块同构的角度/前进语义，落笔段交 matplotlib。"""
+screen = turtle.Screen()
+screen.bgcolor("#f8f8f6")
 
-    def __init__(self):
-        self.x = self.y = 0.0
-        self.h = 0.0
-        self.segs = []
-        self.dots = []
-        self.cur = [(0.0, 0.0)]
-        self.w = 1.0
-        self.c = pal[0]
-
-    def forward(self, d):
-        nx = self.x + d * math.cos(math.radians(self.h))
-        ny = self.y + d * math.sin(math.radians(self.h))
-        self.cur.append((nx, ny))
-        self.x, self.y = nx, ny
-
-    def backward(self, d):
-        self.forward(-d)
-
-    def left(self, a):
-        self.h += a
-
-    def right(self, a):
-        self.h -= a
-
-    def width(self, w):
-        self._flush()
-        self.w = w
-
-    def pencolor(self, c):
-        self._flush()
-        self.c = c
+class T(turtle.Turtle):
+    """与实验室旧引擎同构：goto 永远是瞬移（不画线），画线只靠 forward。"""
 
     def goto(self, x, y):
-        self._flush()
-        self.x, self.y = x, y
-        self.cur = [(x, y)]
-
-    def dot(self, r=3):
-        self._flush()
-        self.dots.append((self.x, self.y, r, self.c))
-
-    def _flush(self):
-        if len(self.cur) > 1:
-            self.segs.append(([p[0] for p in self.cur], [p[1] for p in self.cur], self.w, self.c))
-        self.cur = [(self.x, self.y)]
+        down = self.isdown()
+        self.penup()
+        turtle.Turtle.goto(self, x, y)
+        if down:
+            self.pendown()
 
 t = T()
-`
+t.speed(0)`
 
-const TURTLE_OUT = `t._flush()
-fig, ax = plt.subplots(figsize=(7.5, 7.5))
-for xs, ys, w, c in t.segs:
-    ax.plot(xs, ys, linewidth=w, color=c, solid_capstyle="round")
-if t.dots:
-    ax.scatter([d[0] for d in t.dots], [d[1] for d in t.dots], s=[d[2] ** 2 for d in t.dots], c=[d[3] for d in t.dots], zorder=3)
-ax.set_aspect("equal")
-ax.axis("off")
-fig.tight_layout()
-fig.savefig("turtle.png", dpi=150)
-print("已输出 turtle.png")
-print("<<<JSON>>>")
-print(json.dumps({"rows": [{"label": "产物", "value": "turtle.png", "copy": True}]}, ensure_ascii=False))
-print("<<<END>>>")
+const TURTLE_OUT = `t.hideturtle()
+turtle.done()
 `
 
 const PALETTE_FIELD = {
@@ -214,7 +159,7 @@ def tri(x, y, s, d):
         t.pencolor(pal[min(len(pal) - 1, d + 1)])
         t.goto(x, y)
         for heading in (60, -120, -120):
-            t.h = heading
+            t.seth(heading)
             t.forward(s)
         return
     h = s * math.sqrt(3) / 4
@@ -239,11 +184,14 @@ for k in range(repeats):
     (v) => `a, b, n = ${N(v, 'a', 3)}, ${N(v, 'b', 2)}, ${N(v, 'n', 600)}
 phase = math.radians(${F(v, 'phase', 90)})
 A, B = 220, 220
+t.pencolor(pal[2])
+t.width(1.8)
+t.penup()
 for i in range(n + 1):
     th = 2 * math.pi * i / n
     t.goto(A * math.sin(a * th + phase), B * math.sin(b * th))
-t.pencolor(pal[2])
-t.width(1.8)`),
+    if i == 0:
+        t.pendown()`),
   turtleFamily('phyllotaxis', '向日葵螺旋',
     '黄金角 137.5° 螺旋散点（phyllotaxis 家族）。',
     [P('n', '种子数', 350), P('spread', '扩散系数', 10)],
@@ -252,9 +200,10 @@ spread = ${F(v, 'spread', 10)}
 golden = 137.5
 for i in range(n):
     r = spread * math.sqrt(i)
-    t.h = i * golden
-    t.goto(r * math.cos(math.radians(t.h)), r * math.sin(math.radians(t.h)))
-    t.c = pal[i % len(pal)]
+    ang = i * golden
+    t.seth(ang)
+    t.goto(r * math.cos(math.radians(ang)), r * math.sin(math.radians(ang)))
+    t.pencolor(pal[i % len(pal)])
     t.dot(2 + i * 0.02)`),
   turtleFamily('polygon-ring', '多边形环',
     '逐环放大的多边形套叠（polygon-ring 家族）。',
@@ -285,10 +234,13 @@ for k in range(petals):
 s = ${F(v, 'scale', 150)}
 t.pencolor(pal[2])
 t.width(1.6)
+t.penup()
 for i in range(n + 1):
     th = 12 * math.pi * i / n
     r = s * math.sin(th) * (math.e ** math.cos(th) - 2 * math.cos(4 * th) + math.sin(th / 12) ** 5)
-    t.goto(r * math.sin(th), -r * math.cos(th))`),
+    t.goto(r * math.sin(th), -r * math.cos(th))
+    if i == 0:
+        t.pendown()`),
   turtleFamily('galaxy', '星系旋臂',
     '对数螺旋散点星系（galaxy 家族）。',
     [P('n', '星点数', 400), P('arms', '旋臂数', 3)],
@@ -298,7 +250,7 @@ for i in range(n):
     th = i * 0.035 + arm * 2 * math.pi / arms
     r = 4 * math.e ** (0.12 * th)
     t.goto(r * math.cos(th), r * math.sin(th))
-    t.c = pal[i % len(pal)]
+    t.pencolor(pal[i % len(pal)])
     t.dot(2 + random.random() * 4)`),
   turtleFamily('heart', '爱心曲线',
     '参数化心形（heart 家族）。',
@@ -307,9 +259,12 @@ for i in range(n):
 s = ${F(v, 'scale', 16)}
 t.pencolor(pal[2])
 t.width(2.2)
+t.penup()
 for i in range(n + 1):
     th = 2 * math.pi * i / n
-    t.goto(s * 16 * math.sin(th) ** 3, s * (13 * math.cos(th) - 5 * math.cos(2 * th) - 2 * math.cos(3 * th) - math.cos(4 * th)))`),
+    t.goto(s * 16 * math.sin(th) ** 3, s * (13 * math.cos(th) - 5 * math.cos(2 * th) - 2 * math.cos(3 * th) - math.cos(4 * th)))
+    if i == 0:
+        t.pendown()`),
   turtleFamily('waves', '波纹',
     '多条相位错开的正弦波（waves 家族）。',
     [P('lines', '波线条数', 12), P('n', '每条采样', 200), P('amp', '振幅', 40)],
@@ -318,7 +273,9 @@ amp = ${F(v, 'amp', 40)}
 for k in range(lines):
     t.pencolor(pal[k % len(pal)])
     t.width(1.4)
+    t.penup()
     t.goto(-320, -200 + k * 400 / lines)
+    t.pendown()
     for i in range(n + 1):
         x = -320 + 640 * i / n
         t.goto(x, -200 + k * 400 / lines + amp * math.sin(2 * math.pi * i / n + k * 0.6))`),
@@ -331,7 +288,7 @@ for k in range(rings):
     t.width(2 + k * 0.15)
     r = ${F(v, 'step', 15)} * (k + 1)
     t.goto(r, 0)
-    t.h = 90
+    t.seth(90)
     for _ in range(90):
         t.forward(2 * r * math.pi / 90)
         t.left(4)`),
@@ -343,7 +300,7 @@ t.goto(0, 0)
 for k in range(n):
     t.pencolor(pal[k % len(pal)])
     t.width(1.5 + k % 2)
-    t.h = 360 * k / n
+    t.seth(360 * k / n)
     t.forward(${F(v, 'len', 300)})
     t.goto(0, 0)`),
   turtleFamily('burst', '烟花绽放',
@@ -353,7 +310,7 @@ for k in range(n):
 for k in range(n):
     t.pencolor(pal[k % len(pal)])
     t.width(1 + random.random() * 2.5)
-    t.h = 360 * k / n
+    t.seth(360 * k / n)
     t.forward(${F(v, 'len', 260)} * (0.3 + random.random() * 0.7))
     t.goto(0, 0)`),
   turtleFamily('dot-field', '点阵场',
@@ -365,7 +322,7 @@ for r in range(rows):
         x = (c - cols / 2) * gap + random.uniform(-3, 3)
         y = (r - rows / 2) * gap + random.uniform(-3, 3)
         t.goto(x, y)
-        t.c = pal[(r + c) % len(pal)]
+        t.pencolor(pal[(r + c) % len(pal)])
         t.dot(4 + 6 * math.sin((r + c) * 0.4) ** 2)`),
   turtleFamily('dragon', '龙形曲线',
     '折纸序列迭代生成（dragon 家族）。',
@@ -398,10 +355,10 @@ for k in range(n):
     (v) => `n = ${N(v, 'n', 60)}
 for k in range(n):
     t.pencolor(pal[k % len(pal)])
-    t.h = 0
+    t.seth(0)
     t.forward(${F(v, 'step', 10)})
     rise = ${F(v, 'amp', 120)} * (math.sin(2 * math.pi * k / n) - math.sin(2 * math.pi * (k - 1) / n))
-    t.h = 90
+    t.seth(90)
     t.forward(rise)`),
   turtleFamily('honeycomb', '蜂窝网格',
     '六边形平铺蜂巢（honeycomb 家族）。',
@@ -410,7 +367,7 @@ for k in range(n):
 size = ${F(v, 'size', 30)}
 def hex_at(x, y, c):
     t.goto(x, y)
-    t.h = 0
+    t.seth(0)
     t.pencolor(c)
     for _ in range(6):
         t.forward(size)
@@ -432,11 +389,11 @@ for k in range(n):
     t.pencolor(pal[k % len(pal)])
     t.width(2)
     t.goto(x, -200)
-    t.h = 90
+    t.seth(90)
     t.forward(h)
-    t.h = 0
+    t.seth(0)
     t.forward(bw)
-    t.h = -90
+    t.seth(-90)
     t.forward(h)
     x += bw`),
   turtleFamily('starfield', '星空',
@@ -445,7 +402,7 @@ for k in range(n):
     (v) => `n = ${N(v, 'n', 220)}
 for _ in range(n):
     t.goto(random.uniform(-320, 320), random.uniform(-320, 320))
-    t.c = pal[int(random.random() * len(pal))]
+    t.pencolor(pal[int(random.random() * len(pal))])
     t.dot(2 + random.random() * 7)`),
   turtleFamily('kaleidoscope', '万花筒',
     '随机折线段多次镜像旋转（kaleidoscope 单例）。',
@@ -456,7 +413,7 @@ for k in range(repeats):
     t.pencolor(pal[k % len(pal)])
     t.width(1.6)
     t.goto(0, 0)
-    t.h = 360 * k / repeats
+    t.seth(360 * k / repeats)
     for dx, da in base_segs:
         t.forward(dx)
         t.left(da)
@@ -481,7 +438,7 @@ for k in range(rings):
     t.pencolor(f"#{int(255 * abs(math.sin(math.pi * hue * 3))):02x}{int(255 * hue):02x}{int(255 * (1 - hue)):02x}")
     r = ${F(v, 'step', 13)} * (k + 1)
     t.goto(r, 0)
-    t.h = 90
+    t.seth(90)
     for _ in range(90):
         t.forward(2 * r * math.pi / 90)
         t.left(4)`),
@@ -502,8 +459,9 @@ for k in range(petals):
 t.pencolor(pal[4])
 for i in range(60):
     r = 4 * math.sqrt(i)
-    t.h = i * 137.5
-    t.goto(r * math.cos(math.radians(t.h)), r * math.sin(math.radians(t.h)))
+    ang = i * 137.5
+    t.seth(ang)
+    t.goto(r * math.cos(math.radians(ang)), r * math.sin(math.radians(ang)))
     t.dot(3)`)
 ]
 
@@ -522,7 +480,7 @@ const TURTLE_SHAPE_FIELD: FieldSpec = {
 export const turtleLabSchema: InteractiveToolSchema = {
   id: 'interactive:turtle-lab',
   title: 'turtle 图形画廊',
-  description: 'bulk_turtle 29 图形家族的归并页：迷你 turtle 引擎忠实复刻变体绘制算法，选图形、调参数与色板。',
+  description: 'bulk_turtle 29 图形家族的归并页：运行弹出原生 turtle 窗口实时绘制（关闭窗口结束运行），选图形、调参数与色板。',
   tags: ['turtle', '绘图'],
   fields: (v) => {
     const t = TURTLE_SHAPES.find((x) => x.value === v.shape) ?? TURTLE_SHAPES[0]!
