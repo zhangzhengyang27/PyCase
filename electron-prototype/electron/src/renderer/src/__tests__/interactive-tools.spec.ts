@@ -2,10 +2,22 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { nextTick } from 'vue'
 import { Sparkles } from 'lucide-vue-next'
-import { catalogToolsTotal, examples, favOnly, toolboxItems, toolsTotal, toolSearchQuery } from '../store/catalog'
+import {
+  activeToolCategory,
+  catalogToolsTotal,
+  examples,
+  favOnly,
+  selectToolCategory,
+  toolboxCategoryNav,
+  toolboxItems,
+  toolsTotal,
+  toolSearchQuery
+} from '../store/catalog'
+import { TOOL_CATEGORY_CATALOG, toolCategoryKeyOf } from '../toolbox-cats'
 import { DATE_CALC_ID, INTERACTIVE_GROUP_KEY, interactiveToolItems, isInteractiveId } from '../interactive-tools'
 import { toolboxIcon } from '../section-icons'
 import { favorites } from '../store/prefs'
+import { getTestApi } from '../store/index'
 
 function seedTools(): void {
   examples.value = [
@@ -118,5 +130,45 @@ describe('schema 注册表', () => {
     const v2 = toolValueOf(dummySchema.id, dummySchema.fields)
     expect(v2).toBe(v1)
     expect(v2.a).toBe('changed')
+  })
+})
+
+describe('工具箱分类（W16 二级菜单）', () => {
+  beforeEach(() => {
+    activeToolCategory.value = null
+    // resetViewFilters 同步清 appliedToolSearch（防抖 ref 不能靠赋值 toolSearchQuery 复位）
+    ;(getTestApi() as { resetViewFilters: () => void }).resetViewFilters()
+    favOnly.value = false // 防上游用例泄漏：favOnly=true 会把未收藏条目全滤光
+    seedTools()
+  })
+  it('分类规则抽样：标题/标签 → 分类 key', () => {
+    expect(toolCategoryKeyOf({ title: '正则测试器', tags: ['文本'] })).toBe('text')
+    expect(toolCategoryKeyOf({ title: '图片批量水印', tags: ['图片'] })).toBe('image')
+    expect(toolCategoryKeyOf({ title: 'Git 提交统计', tags: ['Git'] })).toBe('git')
+    expect(toolCategoryKeyOf({ title: '网速测试', tags: ['网络'] })).toBe('net')
+    expect(toolCategoryKeyOf({ title: '电池状态监控', tags: ['系统'] })).toBe('sysmon')
+    expect(toolCategoryKeyOf({ title: '敏感文件粉碎器', tags: ['安全'] })).toBe('sec')
+    expect(toolCategoryKeyOf({ title: '温度换算器', tags: ['换算'] })).toBe('conv')
+    expect(toolCategoryKeyOf({ title: 'rename_weeks.py', name: 'rename_weeks.py' })).toBe('teach') // 无正标题+纯文件名 = migrated 课程脚本
+    expect(toolCategoryKeyOf({ title: '某工具', tags: [] })).toBe('other')
+  })
+  it('toolboxCategoryNav：全量池计数（不随 activeToolCategory 变化）', () => {
+    const nav = toolboxCategoryNav.value
+    expect(nav.map((n) => n.key)).toEqual(TOOL_CATEGORY_CATALOG.map((c) => c.key))
+    const total = nav.reduce((acc, n) => acc + n.count, 0)
+    // 全量池 = 交互注册表（2 专属卡 + 全部 schema）+ fixture 目录池 2
+    expect(total).toBe(interactiveToolItems.value.length + 2)
+  })
+  it('activeToolCategory 过滤 toolboxItems（目录池与注册表两侧）', () => {
+    examples.value = [
+      { id: 'tools_img', name: 'img.py', title: '图片工具', category: 'tools', path: 'p', tags: ['图片'] },
+      { id: 'tools_git', name: 'g.py', title: 'Git 工具', category: 'tools', path: 'p', tags: ['Git'] }
+    ] as VExample[]
+    activeToolCategory.value = 'image'
+    const ids = toolboxItems.value.map((t) => t.id)
+    expect(ids).toContain('tools_img')
+    expect(ids.every((id) => toolCategoryKeyOf({ title: id, tags: ['图片'] }) === 'image')).toBe(true)
+    activeToolCategory.value = null
+    expect(toolboxItems.value.length).toBe(interactiveToolItems.value.length + 2)
   })
 })
