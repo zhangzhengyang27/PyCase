@@ -1,5 +1,5 @@
-"""{title}
-Turtle 图形：{desc}
+"""随机星空
+Turtle 图形：随机位置与大小绘制五角星，练习 random 与封装的 draw_star 函数。
 运行后弹出画布窗口，绘制完成后点击窗口关闭。
 """
 import turtle

@@ -1,5 +1,5 @@
-"""{title}
-Pillow 图像处理示例。{desc}
+"""曝光过度·变体1
+Pillow 图像处理示例。ImageOps.solarize 阈值翻转。（参数组 1）。
 运行后在当前目录生成 'pil_solarize_v1'_preview.png。
 """
 import numpy as np

@@ -1,5 +1,5 @@
-"""{title}
-Pillow 图像处理示例。{desc}
+"""渐隐蒙版·变体1
+Pillow 图像处理示例。按渐变蒙版向纯色渐隐。（参数组 1）。
 运行后在当前目录生成 'pil_gradient-mask_v1'_preview.png。
 """
 import numpy as np

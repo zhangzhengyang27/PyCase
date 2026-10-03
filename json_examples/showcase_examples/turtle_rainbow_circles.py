@@ -1,5 +1,5 @@
-"""{title}
-Turtle 图形：{desc}
+"""彩虹同心圆
+Turtle 图形：HSV 颜色空间渐变填充同心圆，演示 colorsys 与 begin_fill/end_fill。
 运行后弹出画布窗口，绘制完成后点击窗口关闭。
 """
 import turtle

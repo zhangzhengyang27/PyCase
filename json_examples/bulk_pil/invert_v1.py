@@ -1,5 +1,5 @@
-"""{title}
-Pillow 图像处理示例。{desc}
+"""反色·变体1
+Pillow 图像处理示例。ImageOps.invert 颜色反转。（参数组 1）。
 运行后在当前目录生成 'pil_invert_v1'_preview.png。
 """
 import numpy as np

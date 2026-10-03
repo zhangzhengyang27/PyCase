@@ -1,5 +1,5 @@
-"""{title}
-Pillow 图像处理示例。{desc}
+"""镜像拼贴·变体1
+Pillow 图像处理示例。水平镜像后与原图并排。（参数组 1）。
 运行后在当前目录生成 'pil_mirror_v1'_preview.png。
 """
 import numpy as np

@@ -1,5 +1,5 @@
-"""{title}
-Turtle 图形：{desc}
+"""数学玫瑰线
+Turtle 图形：参数方程 petals 瓣玫瑰线，体会极坐标与循环角度的对应关系。
 运行后弹出画布窗口，绘制完成后点击窗口关闭。
 """
 import turtle

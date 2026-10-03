@@ -1,5 +1,5 @@
-"""{title}
-Pillow 图像处理示例。{desc}
+"""四合一增强·变体1
+Pillow 图像处理示例。锐化/平滑/边缘/原色四宫格。（参数组 1）。
 运行后在当前目录生成 'pil_enhance-quad_v1'_preview.png。
 """
 import numpy as np

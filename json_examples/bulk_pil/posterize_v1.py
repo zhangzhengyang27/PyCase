@@ -1,5 +1,5 @@
-"""{title}
-Pillow 图像处理示例。{desc}
+"""色调分离·变体1
+Pillow 图像处理示例。posterize 减少每通道位数。（参数组 1）。
 运行后在当前目录生成 'pil_posterize_v1'_preview.png。
 """
 import numpy as np

@@ -1,5 +1,5 @@
-"""{title}
-Pillow 图像处理示例。{desc}
+"""高斯模糊·变体1
+Pillow 图像处理示例。不同半径的高斯模糊对比。（参数组 1）。
 运行后在当前目录生成 'pil_gaussian_v1'_preview.png。
 """
 import numpy as np

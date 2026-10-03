@@ -1,5 +1,5 @@
-"""{title}
-Turtle 图形：{desc}
+"""彩色螺旋线
+Turtle 图形：用循环改变边长与颜色绘制渐变螺旋，演示 turtle 基本循环绘图。
 运行后弹出画布窗口，绘制完成后点击窗口关闭。
 """
 import turtle

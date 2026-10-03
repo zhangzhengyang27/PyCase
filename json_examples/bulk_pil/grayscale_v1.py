@@ -1,5 +1,5 @@
-"""{title}
-Pillow 图像处理示例。{desc}
+"""灰度化·变体1
+Pillow 图像处理示例。convert('L') 灰度 + 自动对比度。（参数组 1）。
 运行后在当前目录生成 'pil_grayscale_v1'_preview.png。
 """
 import numpy as np

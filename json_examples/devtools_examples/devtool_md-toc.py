@@ -17,7 +17,7 @@ def main():
         m = re.match(r"^(#{1,4})\s+(.+)", line)
         if m:
             depth, title = len(m.group(1)), m.group(2).strip()
-            print("  " * (depth - 1) + f"- [{title}](#{anchor(title)})")
+            print("  " * (depth - 1) + f"- [Markdown 目录生成](#{anchor(title)})")
 
 
 if __name__ == "__main__":

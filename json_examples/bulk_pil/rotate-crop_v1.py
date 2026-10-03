@@ -1,5 +1,5 @@
-"""{title}
-Pillow 图像处理示例。{desc}
+"""旋转裁剪·变体1
+Pillow 图像处理示例。旋转 45 度后中心裁剪。（参数组 1）。
 运行后在当前目录生成 'pil_rotate-crop_v1'_preview.png。
 """
 import numpy as np

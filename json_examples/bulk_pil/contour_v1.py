@@ -1,5 +1,5 @@
-"""{title}
-Pillow 图像处理示例。{desc}
+"""轮廓提取·变体1
+Pillow 图像处理示例。ImageFilter.CONTOUR 边缘轮廓。（参数组 1）。
 运行后在当前目录生成 'pil_contour_v1'_preview.png。
 """
 import numpy as np
