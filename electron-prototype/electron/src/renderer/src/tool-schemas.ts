@@ -395,3 +395,7 @@ TOOL_SCHEMAS.push(...W12_SCHEMAS)
 // W13 增补批：YAML/Base64/URL/文本对比/二维码/编码修复 + 透视/跨表关联/数据校验/库存盘点
 import { W13_SCHEMAS } from './tool-schemas-w13'
 TOOL_SCHEMAS.push(...W13_SCHEMAS)
+
+// V1 图表生成器：折线/柱状/散点/饼图
+import { CHART_SCHEMAS } from './tool-schemas-charts'
+TOOL_SCHEMAS.push(...CHART_SCHEMAS)
