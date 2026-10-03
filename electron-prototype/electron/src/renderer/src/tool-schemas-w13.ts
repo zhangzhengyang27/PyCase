@@ -4,7 +4,6 @@
 import type { InteractiveToolSchema } from './interactive-tools'
 
 const str = (v: unknown): string => String(v ?? '')
-const MARK = 'print("<<<JSON>>>")'
 
 // ---------------------------------------------------------------------------
 // 1. YAML ↔ JSON 互转（PyYAML safe_load；方向选择）

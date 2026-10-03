@@ -4,7 +4,7 @@ import { mount } from '@vue/test-utils'
 
 // vi.mock 工厂引用的外部绑定必须走 vi.hoisted（提升顺序：工厂先于 const 执行会 TDZ）
 const hoisted = vi.hoisted(() => ({
-  pickFile: vi.fn(async (p: { extensions?: string[] }) => ({
+  pickFile: vi.fn(async (_p: { extensions?: string[] }) => ({
     canceled: false,
     path: '/tmp/图 片.png',
     name: '图 片.png'
