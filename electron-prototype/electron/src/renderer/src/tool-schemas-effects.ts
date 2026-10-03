@@ -300,7 +300,7 @@ export const histEqSchema = cvEffect(
   '灰度 + 彩色两路直方图均衡化并列对比。',
   [],
   () => `gray = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
-eq_gray = cv2.equalizeHist(gray)
+eq_gray = cv2.cvtColor(cv2.equalizeHist(gray), cv2.COLOR_GRAY2BGR)
 yuv = cv2.cvtColor(im, cv2.COLOR_BGR2YUV)
 yuv[:, :, 0] = cv2.equalizeHist(yuv[:, :, 0])
 eq_color = cv2.cvtColor(yuv, cv2.COLOR_YUV2BGR)
@@ -340,8 +340,8 @@ edges = cv2.Canny(gray, 100, 200)
 result = im.copy()
 lines = cv2.HoughLinesP(edges, 1, np.pi / 180, threshold=80, minLineLength=50, maxLineGap=10)
 if lines is not None:
-    for line in lines[:50]:
-        x1, y1, x2, y2 = line[0]
+    for line in lines.reshape(-1, 4)[:50]:
+        x1, y1, x2, y2 = line
         cv2.line(result, (x1, y1), (x2, y2), (0, 0, 255), 2)
     print(f"检测到 {len(lines)} 条直线")
 else:
@@ -382,6 +382,8 @@ export const asciiArtSchema: InteractiveToolSchema = {
     const cols = Math.max(20, Math.min(200, Math.trunc(Number(v.cols ?? 80)) || 80))
     if (!file) return INVALID
     return `"""ASCII 字符画（灰度映射字符梯度）。"""
+import json
+
 from PIL import Image
 
 CHARS = " .:-=+*#%@"

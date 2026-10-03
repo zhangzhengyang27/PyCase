@@ -392,7 +392,7 @@ ax.grid(True, alpha=0.3)`),
   (v) => `k = max(2, ${Math.max(2, Math.trunc(Number(v.vars) || 6))})
 n = max(10, ${Math.max(10, Math.trunc(Number(v.n) || 200))})
 base = rng.normal(0, 1, (k, n))
-mix = base @ (np.eye(k) + rng.uniform(-0.4, 0.9, (k, k)) * 0.5)
+mix = (np.eye(k) + rng.uniform(-0.4, 0.9, (k, k)) * 0.5) @ base
 corr = np.corrcoef(mix)
 labels = [f"V{i + 1}" for i in range(k)]
 fig, ax = plt.subplots(figsize=(7, 6))

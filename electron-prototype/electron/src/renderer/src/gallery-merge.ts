@@ -104,6 +104,10 @@ export function mergeVariantCards(list: VExample[]): VExample[] {
     if (emitted.has(key)) continue
     emitted.add(key)
     const g = groups.get(key)!
+    if (g.count === 1) {
+      out.push(g.rep) // 单例家族：不折叠不改写（点击照常路由）
+      continue
+    }
     out.push({
       ...g.rep,
       title: familyMetaOf(g.rep)!.label,

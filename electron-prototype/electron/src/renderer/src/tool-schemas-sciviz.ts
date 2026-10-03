@@ -62,8 +62,8 @@ ax.add_patch(tri)
 for s in range(1, 5):
     t = s / 5
     for a, b in [((0, 0), (1, 0)), ((1, 0), (0.5, math.sqrt(3) / 2)), ((0.5, math.sqrt(3) / 2), (0, 0))]:
-        p = a + (b - a) * t
-        ax.plot([p[0], 0.5], [p[1], 0.5 * math.sqrt(3) / 2 + (p[1] * 0)], color="0.85", lw=0.6, zorder=0)
+        p = np.array(a) + (np.array(b) - np.array(a)) * t
+        ax.plot([p[0], 0.5], [p[1], math.sqrt(3) / 4], color="0.85", lw=0.6, zorder=0)
 ax.scatter(pts[:, 0], pts[:, 1], s=16, c=raw[:, 2], cmap="viridis", alpha=0.85)
 ax.set_xlim(-0.08, 1.08)
 ax.set_ylim(-0.08, 0.95)
