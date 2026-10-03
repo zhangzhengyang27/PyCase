@@ -7,11 +7,11 @@ import {
   catalogToolsTotal,
   examples,
   favOnly,
-  selectToolCategory,
   toolboxCategoryNav,
   toolboxItems,
   toolsTotal,
-  toolSearchQuery
+  toolSearchQuery,
+  type VExample
 } from '../store/catalog'
 import { TOOL_CATEGORY_CATALOG, toolCategoryKeyOf } from '../toolbox-cats'
 import { DATE_CALC_ID, INTERACTIVE_GROUP_KEY, interactiveToolItems, isInteractiveId } from '../interactive-tools'
