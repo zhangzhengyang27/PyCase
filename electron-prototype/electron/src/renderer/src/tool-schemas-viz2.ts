@@ -67,6 +67,10 @@ const MODE_FIELD = {
 
 const POINTS_FIELD = { key: 'points', label: '点数', type: 'number' as const, default: 60, width: 'half' as const }
 
+const P = (key: string, label: string, def: number, help?: string) => ({
+  key, label, type: 'number' as const, default: def, width: 'half' as const, ...(help ? { help } : {})
+})
+
 const OUT = `fig.tight_layout()
 fig.savefig("chart.png", dpi=150)
 print("已输出 chart.png")
@@ -344,6 +348,86 @@ ax = fig.add_subplot(111, projection="3d")
 ax.bar3d(x, y, np.zeros_like(x), 0.5, 0.5, dz, shade=True)`)
 
 export const VIZ_TYPES: VizType[] = [
+  vizFamily('grouped-bar', '分组柱状图',
+  '多系列并列柱（覆盖 bulk_viz/dataviz grouped-bar）。',
+  [P('groups', '组数', 4), P('series', '系列数', 3)],
+  (v) => `groups = max(2, ${Math.max(2, Math.trunc(Number(v.groups) || 4))})
+series = max(2, ${Math.max(2, Math.trunc(Number(v.series) || 3))})
+vals = rng.uniform(20, 200, (series, groups))
+x = np.arange(groups)
+w = 0.8 / series
+fig, ax = plt.subplots(figsize=(8, 5))
+for i in range(series):
+    ax.bar(x + (i - series / 2 + 0.5) * w, vals[i], w, label=f"系列{i + 1}", alpha=0.9)
+ax.set_xticks(x, [f"组{i + 1}" for i in range(groups)])
+ax.legend()`),
+  vizFamily('stacked-bar', '堆叠柱状图',
+  '多系列纵向堆叠（覆盖 dataviz stacked-bar）。',
+  [P('groups', '组数', 4), P('series', '系列数', 3)],
+  (v) => `groups = max(2, ${Math.max(2, Math.trunc(Number(v.groups) || 4))})
+series = max(2, ${Math.max(2, Math.trunc(Number(v.series) || 3))})
+vals = rng.uniform(10, 80, (series, groups))
+x = np.arange(groups)
+fig, ax = plt.subplots(figsize=(8, 5))
+bottom = np.zeros(groups)
+for i in range(series):
+    ax.bar(x, vals[i], 0.6, bottom=bottom, label=f"系列{i + 1}", alpha=0.9)
+    bottom += vals[i]
+ax.set_xticks(x, [f"组{i + 1}" for i in range(groups)])
+ax.legend()`),
+  vizFamily('bubble', '气泡图',
+  '三维变量散点：x/y/气泡大小 + 颜色（覆盖 dataviz bubble-chart）。',
+  [P('n', '气泡数', 40)],
+  (v) => `n = max(5, ${Math.max(5, Math.trunc(Number(v.n) || 40))})
+x = rng.uniform(0, 100, n)
+y = rng.uniform(0, 100, n)
+size = rng.uniform(30, 600, n)
+fig, ax = plt.subplots(figsize=(8, 5.5))
+sc = ax.scatter(x, y, s=size, c=size, cmap="viridis", alpha=0.6, edgecolors="white")
+fig.colorbar(sc, ax=ax, label="数值")
+ax.grid(True, alpha=0.3)`),
+  vizFamily('correlation', '相关系数矩阵',
+  '多变量两两相关热力（覆盖 dataviz correlation-matrix）。',
+  [P('vars', '变量数', 6), P('n', '样本数', 200)],
+  (v) => `k = max(2, ${Math.max(2, Math.trunc(Number(v.vars) || 6))})
+n = max(10, ${Math.max(10, Math.trunc(Number(v.n) || 200))})
+base = rng.normal(0, 1, (k, n))
+mix = base @ (np.eye(k) + rng.uniform(-0.4, 0.9, (k, k)) * 0.5)
+corr = np.corrcoef(mix)
+labels = [f"V{i + 1}" for i in range(k)]
+fig, ax = plt.subplots(figsize=(7, 6))
+im = ax.imshow(corr, cmap="RdBu_r", vmin=-1, vmax=1)
+ax.set_xticks(range(k), labels)
+ax.set_yticks(range(k), labels)
+for i in range(k):
+    for j in range(k):
+        ax.text(j, i, f"{corr[i, j]:.2f}", ha="center", va="center", fontsize=8)
+fig.colorbar(im, ax=ax, shrink=0.8)`),
+  vizFamily('confidence-band', '置信带折线',
+  '多试验均值线 ± 置信区间填充（覆盖 dataviz line-confidence-band）。',
+  [P('n', '采样点', 400), P('trials', '试验次数', 20), P('level', '置信带宽', 1.96, 'z 倍标准差')],
+  (v) => `n = max(20, ${Math.max(20, Math.trunc(Number(v.n) || 400))})
+trials = max(3, ${Math.max(3, Math.trunc(Number(v.trials) || 20))})
+z = ${Number(v.level) || 1.96}
+runs = np.array([np.array(gen_data("sine" if i % 2 else "linear", n)) + rng.normal(0, 3, n) for i in range(trials)])
+mean = runs.mean(axis=0)
+std = runs.std(axis=0)
+xs = np.arange(n)
+fig, ax = plt.subplots(figsize=(8, 5))
+ax.fill_between(xs, mean - z * std, mean + z * std, alpha=0.25, label="置信区间")
+ax.plot(xs, mean, color="#3b82f6", label="均值")
+ax.legend()`),
+  vizFamily('donut', '环形图',
+  '占比环形（中心镂空，覆盖 dataviz/sciviz pie-donut）。',
+  [P('slices', '扇区数', 5), P('width', '环宽', 0.4, '0~1')],
+  (v) => `slices = max(2, ${Math.max(2, Math.trunc(Number(v.slices) || 5))})
+width = min(0.95, max(0.05, ${Number(v.width) || 0.4}))
+vals = rng.uniform(5, 40, slices)
+labels = [f"类{i + 1}" for i in range(slices)]
+fig, ax = plt.subplots(figsize=(7, 6))
+ax.pie(vals, labels=labels, autopct="%1.1f%%", startangle=90, counterclock=False,
+       wedgeprops=dict(width=width, edgecolor="white"))
+ax.text(0, 0, "占比", ha="center", va="center", fontsize=13)`),
   vizFamily('line', '折线图',
   '单序列折线（数据模式 ×12，覆盖 bulk_viz line 家族）。',
   [],

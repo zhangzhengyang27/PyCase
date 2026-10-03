@@ -116,6 +116,7 @@ import { vizLabSchema } from './tool-schemas-viz2'
 import { pilLabSchema } from './tool-schemas-pil'
 import { cvLabSchema } from './tool-schemas-opencv'
 import { turtleLabSchema } from './tool-schemas-turtle'
+import { scivizLabSchema } from './tool-schemas-sciviz'
 import { ALGO_SCHEMAS } from './tool-schemas-algos'
 import { ALGO2_SCHEMAS } from './tool-schemas-algos-v2'
 import { CRAWLER_SCHEMAS } from './tool-schemas-crawlers'
@@ -125,6 +126,7 @@ export const interactiveGallerySchemas = reactive<InteractiveToolSchema[]>([
   pilLabSchema,
   cvLabSchema,
   turtleLabSchema,
+  scivizLabSchema,
   ...ALGO_SCHEMAS,
   ...ALGO2_SCHEMAS,
   ...CRAWLER_SCHEMAS,
