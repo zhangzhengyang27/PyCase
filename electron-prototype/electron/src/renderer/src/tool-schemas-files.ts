@@ -49,6 +49,7 @@ export const batchResizeSchema: InteractiveToolSchema = {
       ]
     }
   ],
+  computeVia: 'sidecar',
   compute: (v) => {
     const dir = str(v.dir)
     if (!dir) return { error: '请选择图片目录' }
@@ -108,6 +109,7 @@ export const batchConvertSchema: InteractiveToolSchema = {
       ]
     }
   ],
+  computeVia: 'sidecar',
   compute: (v) => {
     const dir = str(v.dir)
     if (!dir) return { error: '请选择图片目录' }
@@ -162,6 +164,7 @@ export const batchCropSchema: InteractiveToolSchema = {
       ]
     }
   ],
+  computeVia: 'sidecar',
   compute: (v) => {
     const dir = str(v.dir)
     if (!dir) return { error: '请选择图片目录' }
@@ -222,6 +225,7 @@ export const batchWatermarkSchema: InteractiveToolSchema = {
     },
     { key: 'fontSize', label: '字号', type: 'number', default: 48, width: 'half' }
   ],
+  computeVia: 'sidecar',
   compute: (v) => {
     const dir = str(v.dir)
     if (!dir) return { error: '请选择图片目录' }
@@ -281,6 +285,7 @@ export const paletteSchema: InteractiveToolSchema = {
     { key: 'file', label: '图片文件', type: 'file', required: true, accept: IMG_EXTS },
     { key: 'colors', label: '主色数量', type: 'number', default: 6, width: 'half' }
   ],
+  computeVia: 'sidecar',
   compute: (v) => {
     const file = str(v.file)
     if (!file) return { error: '请选择图片文件' }
@@ -330,6 +335,7 @@ export const gifExtractSchema: InteractiveToolSchema = {
   description: '把 GIF 逐帧导出为 PNG 序列（抽屉预览前 12 帧），并报告帧数与尺寸。',
   tags: ['图片', 'GIF'],
   fields: [{ key: 'file', label: 'GIF 文件', type: 'file', required: true, accept: ['gif'] }],
+  computeVia: 'sidecar',
   compute: (v) => {
     const file = str(v.file)
     if (!file) return { error: '请选择 GIF 文件' }
@@ -365,6 +371,7 @@ export const gifComposeSchema: InteractiveToolSchema = {
     { key: 'duration', label: '每帧延时(ms)', type: 'number', default: 200, width: 'half' },
     { key: 'loop', label: '循环次数(0=无限)', type: 'number', default: 0, width: 'half' }
   ],
+  computeVia: 'sidecar',
   compute: (v) => {
     const dir = str(v.dir)
     if (!dir) return { error: '请选择图片目录' }
@@ -413,6 +420,7 @@ export const batchEnhanceSchema: InteractiveToolSchema = {
     { key: 'brightness', label: '亮度 %', type: 'number', default: 110, width: 'half' },
     { key: 'contrast', label: '对比度 %', type: 'number', default: 110, width: 'half' }
   ],
+  computeVia: 'sidecar',
   compute: (v) => {
     const dir = str(v.dir)
     if (!dir) return { error: '请选择图片目录' }
@@ -461,6 +469,7 @@ export const roundedFrameSchema: InteractiveToolSchema = {
     { key: 'border', label: '描边宽度(px)', type: 'number', default: 0, width: 'half', help: '0 = 不加描边' },
     { key: 'borderColor', label: '描边颜色', type: 'text', default: '#333333', width: 'half', placeholder: '#333333' }
   ],
+  computeVia: 'sidecar',
   compute: (v) => {
     const file = str(v.file)
     if (!file) return { error: '请选择图片文件' }
@@ -514,6 +523,7 @@ export const imageInfoSchema: InteractiveToolSchema = {
   description: '单张图片的格式/尺寸/模式/体积速览（含像素量与宽高比）。',
   tags: ['图片', '分析'],
   fields: [{ key: 'file', label: '图片文件', type: 'file', required: true, accept: IMG_EXTS }],
+  computeVia: 'sidecar',
   compute: (v) => {
     const file = str(v.file)
     if (!file) return { error: '请选择图片文件' }
@@ -564,6 +574,7 @@ export const excelExportSchema: InteractiveToolSchema = {
       ]
     }
   ],
+  computeVia: 'sidecar',
   compute: (v) => {
     const file = str(v.file)
     if (!file) return { error: '请选择工作簿' }
@@ -617,6 +628,7 @@ export const csvToExcelSchema: InteractiveToolSchema = {
     { key: 'file', label: 'CSV 文件', type: 'file', required: true, accept: ['csv'] },
     { key: 'sheet', label: '工作表名', type: 'text', default: 'Sheet1', width: 'half' }
   ],
+  computeVia: 'sidecar',
   compute: (v) => {
     const file = str(v.file)
     if (!file) return { error: '请选择 CSV 文件' }
@@ -660,6 +672,7 @@ export const pdfExtractSchema: InteractiveToolSchema = {
     { key: 'file', label: 'PDF 文件', type: 'file', required: true, accept: ['pdf'] },
     { key: 'pages', label: '页数上限', type: 'number', default: 5, width: 'half', help: '1~50' }
   ],
+  computeVia: 'sidecar',
   compute: (v) => {
     const file = str(v.file)
     if (!file) return { error: '请选择 PDF 文件' }
@@ -701,6 +714,7 @@ export const imgToPdfSchema: InteractiveToolSchema = {
   description: '目录内全部图片按文件名顺序合成一个多页 PDF（每图一页，RGB 白底）。',
   tags: ['图片', 'PDF'],
   fields: [{ key: 'dir', label: '图片目录', type: 'dir', required: true }],
+  computeVia: 'sidecar',
   compute: (v) => {
     const dir = str(v.dir)
     if (!dir) return { error: '请选择图片目录' }
@@ -738,6 +752,7 @@ export const contactSheetSchema: InteractiveToolSchema = {
     { key: 'cell', label: '单格边长(px)', type: 'number', default: 200, width: 'half', help: '64~800' },
     { key: 'bg', label: '背景色', type: 'text', default: '#111111', width: 'half', placeholder: '#111111' }
   ],
+  computeVia: 'sidecar',
   compute: (v) => {
     const dir = str(v.dir)
     if (!dir) return { error: '请选择图片目录' }

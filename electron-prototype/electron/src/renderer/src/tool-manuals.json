@@ -1,1336 +1,1286 @@
 {
- "comment": "工具手册数据（W7 手册页基座）：由 scripts/gen_tool_manuals.py 从工具源码生成（docstring 概述 + argparse 参数表 + 用法行）。勿手改——改生成器后重跑；tests/test_tool_manuals.py 钉覆盖率与新鲜度。",
- "manuals": {
-  "tools_add_security_notes.py": {
-   "title": "add_security_notes",
-   "summary": "为含教学用示例凭据/注入演示的文件头部插入说明注释（幂等）。",
-   "usage": "python add_security_notes.py",
-   "params": []
-  },
-  "tools_csv-stats": {
-   "title": "CSV 列统计工具",
-   "summary": "CSV 数值列统计：纯标准库实现。",
-   "usage": "python csv_stats.py",
-   "params": [
-    {
-     "flag": "csvfile",
-     "nargs": "?",
-     "default": "demo.csv",
-     "positional": true
+  "comment": "工具手册数据（W7 手册页基座）：由 scripts/gen_tool_manuals.py 从工具源码生成（docstring 概述 + argparse 参数表 + 用法行）。勿手改——改生成器后重跑；tests/test_tool_manuals.py 钉覆盖率与新鲜度。",
+  "manuals": {
+    "tools_add_security_notes.py": {
+      "title": "add_security_notes",
+      "summary": "为含教学用示例凭据/注入演示的文件头部插入说明注释（幂等）。",
+      "usage": "python add_security_notes.py",
+      "params": []
+    },
+    "tools_csv-stats": {
+      "title": "CSV 列统计工具",
+      "summary": "CSV 数值列统计：纯标准库实现。",
+      "usage": "python csv_stats.py",
+      "params": [
+        {
+          "flag": "csvfile",
+          "nargs": "?",
+          "default": "demo.csv",
+          "positional": true
+        }
+      ]
+    },
+    "tools_dev-bigfile-topn": {
+      "title": "大文件 TopN 查找器",
+      "summary": "大文件 TopN：python devtool_bigfile.py <目录> [--top 10]",
+      "usage": "python devtool_bigfile.py <目录> [--top 10]",
+      "params": [
+        {
+          "flag": "directory",
+          "nargs": "?",
+          "default": ".",
+          "positional": true
+        },
+        {
+          "flag": "--top",
+          "type": "int",
+          "default": 10
+        }
+      ]
+    },
+    "tools_dev-bulk-replace": {
+      "title": "批量查找替换",
+      "summary": "批量替换：python xxx.py 目录 旧文本 新文本 --ext .py .md",
+      "usage": "python xxx.py 目录 旧文本 新文本 --ext .py .md",
+      "params": [
+        {
+          "flag": "directory",
+          "positional": true
+        },
+        {
+          "flag": "old",
+          "positional": true
+        },
+        {
+          "flag": "new",
+          "positional": true
+        },
+        {
+          "flag": "--ext",
+          "nargs": "*"
+        },
+        {
+          "flag": "--apply",
+          "action": "store_true"
+        }
+      ]
+    },
+    "tools_dev-dns-lookup": {
+      "title": "DNS 解析查询",
+      "summary": "DNS 查询：socket 标准库版。",
+      "usage": "python devtool_dns-lookup.py",
+      "params": [
+        {
+          "flag": "domain",
+          "positional": true
+        }
+      ]
+    },
+    "tools_dev-dupe-cleaner": {
+      "title": "重复文件清理器",
+      "summary": "重复文件清理：默认只报告，--delete 执行清理。",
+      "usage": "python devtool_dupe-cleaner.py",
+      "params": [
+        {
+          "flag": "directory",
+          "nargs": "?",
+          "default": ".",
+          "positional": true
+        },
+        {
+          "flag": "--delete",
+          "action": "store_true",
+          "help": "删除重复（保留每组第一个）"
+        }
+      ]
+    },
+    "tools_dev-empty-dir-sweep": {
+      "title": "空目录清扫器",
+      "summary": "空目录清扫：自底向上删除空目录。",
+      "usage": "python devtool_empty-dir-sweep.py",
+      "params": [
+        {
+          "flag": "directory",
+          "nargs": "?",
+          "default": ".",
+          "positional": true
+        },
+        {
+          "flag": "--apply",
+          "action": "store_true"
+        }
+      ]
+    },
+    "tools_dev-encoding-fix": {
+      "title": "编码修复器",
+      "summary": "编码修复：GBK/Latin1 → UTF-8 批量转换。",
+      "usage": "python devtool_encoding-fix.py",
+      "params": [
+        {
+          "flag": "directory",
+          "nargs": "?",
+          "default": ".",
+          "positional": true
+        },
+        {
+          "flag": "--ext",
+          "nargs": "*"
+        },
+        {
+          "flag": "--apply",
+          "action": "store_true"
+        }
+      ]
+    },
+    "tools_dev-env-checker": {
+      "title": ".env 校验器",
+      "summary": ".env 校验：缺失键与多余键清单。",
+      "usage": "python devtool_env-checker.py",
+      "params": [
+        {
+          "flag": "--env",
+          "default": ".env"
+        },
+        {
+          "flag": "--example",
+          "default": ".env.example"
+        }
+      ]
+    },
+    "tools_dev-git-branch-report": {
+      "title": "Git 分支报告",
+      "summary": "Git 分支报告：按最近提交排序。",
+      "usage": "python devtool_git-branch-report.py",
+      "params": [
+        {
+          "flag": "repo",
+          "nargs": "?",
+          "default": ".",
+          "positional": true
+        }
+      ]
+    },
+    "tools_dev-git-stats": {
+      "title": "Git 提交统计",
+      "summary": "Git 统计：shortlog + numstat。",
+      "usage": "python devtool_git-stats.py",
+      "params": []
+    },
+    "tools_dev-gitignore-gen": {
+      "title": "gitignore 生成器",
+      "summary": "gitignore 生成：python xxx.py python node macos > .gitignore",
+      "usage": "python xxx.py python node macos > .gitignore",
+      "params": [
+        {
+          "flag": "stacks",
+          "nargs": "+",
+          "positional": true
+        }
+      ]
+    },
+    "tools_dev-http-headers-inspect": {
+      "title": "HTTP 头检查器",
+      "summary": "响应头检查：缓存与安全配置一览。",
+      "usage": "python devtool_http-headers-inspect.py",
+      "params": [
+        {
+          "flag": "url",
+          "positional": true
+        }
+      ]
+    },
+    "tools_dev-indent-fix": {
+      "title": "缩进规范化",
+      "summary": "缩进修复：Tab→4空格 + 行尾空白。",
+      "usage": "python devtool_indent-fix.py",
+      "params": [
+        {
+          "flag": "files",
+          "nargs": "+",
+          "positional": true
+        },
+        {
+          "flag": "--apply",
+          "action": "store_true"
+        }
+      ]
+    },
+    "tools_dev-ip-lookup": {
+      "title": "IP 查询",
+      "summary": "IP 查询：出口 IP 与服务商。",
+      "usage": "python devtool_ip-lookup.py",
+      "params": []
+    },
+    "tools_dev-jwt-decode": {
+      "title": "JWT 解码器",
+      "summary": "JWT 解码：base64 分段解码（不验证签名）。",
+      "usage": "python devtool_jwt-decode.py",
+      "params": [
+        {
+          "flag": "token",
+          "positional": true
+        }
+      ]
+    },
+    "tools_dev-line-endings": {
+      "title": "换行符规范化",
+      "summary": "换行符规范化：CRLF→LF，Tab→4 空格。",
+      "usage": "python devtool_line-endings.py",
+      "params": [
+        {
+          "flag": "directory",
+          "nargs": "?",
+          "default": ".",
+          "positional": true
+        },
+        {
+          "flag": "--ext",
+          "nargs": "*"
+        },
+        {
+          "flag": "--apply",
+          "action": "store_true"
+        }
+      ]
+    },
+    "tools_dev-loc-counter": {
+      "title": "代码行数统计",
+      "summary": "代码统计：按扩展名汇总行数。",
+      "usage": "python devtool_loc-counter.py",
+      "params": [
+        {
+          "flag": "directory",
+          "nargs": "?",
+          "default": ".",
+          "positional": true
+        }
+      ]
+    },
+    "tools_dev-md-toc": {
+      "title": "Markdown 目录生成",
+      "summary": "Markdown TOC：把 # 标题生成目录并打印。",
+      "usage": "python devtool_md-toc.py",
+      "params": [
+        {
+          "flag": "file",
+          "positional": true
+        }
+      ]
+    },
+    "tools_dev-port-check": {
+      "title": "端口连通检查",
+      "summary": "端口检查：socket 探测目标主机端口列表。",
+      "usage": "python devtool_port-check.py",
+      "params": [
+        {
+          "flag": "host",
+          "positional": true
+        },
+        {
+          "flag": "--ports",
+          "nargs": "*",
+          "type": "int"
+        },
+        {
+          "flag": "--timeout",
+          "type": "float",
+          "default": 1.5
+        }
+      ]
+    },
+    "tools_dev-qrcode-gen": {
+      "title": "二维码生成器",
+      "summary": "二维码生成：python xxx.py '文本或链接' -o qr.png",
+      "usage": "python xxx.py '文本或链接' -o qr.png",
+      "params": [
+        {
+          "flag": "text",
+          "positional": true
+        },
+        {
+          "flag": "-o",
+          "default": "qrcode.png"
+        }
+      ]
+    },
+    "tools_dev-quick-find": {
+      "title": "快速文件查找",
+      "summary": "快速查找：名称正则 + 类型过滤。",
+      "usage": "python devtool_quick-find.py",
+      "params": [
+        {
+          "flag": "pattern",
+          "help": "名称正则",
+          "positional": true
+        },
+        {
+          "flag": "directory",
+          "nargs": "?",
+          "default": ".",
+          "positional": true
+        },
+        {
+          "flag": "--type",
+          "default": "f"
+        },
+        {
+          "flag": "--limit",
+          "type": "int",
+          "default": 50
+        }
+      ]
+    },
+    "tools_dev-secret-scanner": {
+      "title": "敏感信息扫描器",
+      "summary": "泄漏扫描：密钥/密码/AK-SK 正则排查。",
+      "usage": "python devtool_secret-scanner.py",
+      "params": [
+        {
+          "flag": "directory",
+          "nargs": "?",
+          "default": ".",
+          "positional": true
+        }
+      ]
+    },
+    "tools_dev-speed-test": {
+      "title": "网速测试",
+      "summary": "网速测试：下载 1MB×3 次取均值。",
+      "usage": "python devtool_speed-test.py",
+      "params": []
+    },
+    "tools_dev-sys-battery": {
+      "title": "电池状态监控",
+      "summary": "电池状态：电量与预估续航。",
+      "usage": "python devtool_sys-battery.py",
+      "params": []
+    },
+    "tools_dev-sys-disk-gauge": {
+      "title": "磁盘使用仪表",
+      "summary": "磁盘仪表：分区使用率进度条。",
+      "usage": "python devtool_sys-disk-gauge.py",
+      "params": []
+    },
+    "tools_dev-sys-info-report": {
+      "title": "系统信息报告",
+      "summary": "系统报告：平台/硬件/Python 环境。",
+      "usage": "python devtool_sys-info-report.py",
+      "params": []
+    },
+    "tools_dev-sys-top-processes": {
+      "title": "进程资源 Top 榜",
+      "summary": "进程榜：CPU 与内存 Top10。",
+      "usage": "python devtool_sys-top-processes.py",
+      "params": [
+        {
+          "flag": "--by",
+          "default": "cpu"
+        }
+      ]
+    },
+    "tools_dev-text-diff": {
+      "title": "文本对比工具",
+      "summary": "文本 diff：unified 风格输出。",
+      "usage": "python devtool_text-diff.py",
+      "params": [
+        {
+          "flag": "a",
+          "positional": true
+        },
+        {
+          "flag": "b",
+          "positional": true
+        }
+      ]
+    },
+    "tools_dev-todo-scanner": {
+      "title": "TODO/FIXME 扫描",
+      "summary": "TODO 扫描：TODO/FIXME/HACK/XXX 全库清单。",
+      "usage": "python devtool_todo-scanner.py",
+      "params": [
+        {
+          "flag": "directory",
+          "nargs": "?",
+          "default": ".",
+          "positional": true
+        }
+      ]
+    },
+    "tools_dev-tree-print": {
+      "title": "目录树打印",
+      "summary": "目录树：tree 命令复刻。",
+      "usage": "python devtool_tree-print.py",
+      "params": [
+        {
+          "flag": "directory",
+          "nargs": "?",
+          "default": ".",
+          "positional": true
+        },
+        {
+          "flag": "--depth",
+          "type": "int",
+          "default": 3
+        },
+        {
+          "flag": "--ignore",
+          "nargs": "*"
+        }
+      ]
+    },
+    "tools_dev-url-batch-check": {
+      "title": "URL 批量体检",
+      "summary": "URL 体检：HEAD 批量检查死链。",
+      "usage": "python devtool_url-batch-check.py",
+      "params": []
+    },
+    "tools_dev-yaml-json-convert": {
+      "title": "YAML ↔ JSON 互转",
+      "summary": "YAML ↔ JSON：python xxx.py yaml2json config.yaml",
+      "usage": "python xxx.py yaml2json config.yaml",
+      "params": [
+        {
+          "flag": "mode",
+          "positional": true
+        },
+        {
+          "flag": "file",
+          "positional": true
+        }
+      ]
+    },
+    "tools_files-batch-rename": {
+      "title": "批量重命名工具",
+      "summary": "批量重命名：dry-run 预览 + 执行。",
+      "usage": "python batch_rename.py",
+      "params": [
+        {
+          "flag": "directory",
+          "nargs": "?",
+          "default": ".",
+          "help": "目标目录",
+          "positional": true
+        },
+        {
+          "flag": "--prefix",
+          "default": "file",
+          "help": "新文件名前缀"
+        },
+        {
+          "flag": "--ext",
+          "default": "",
+          "help": "仅处理指定扩展名，如 .txt"
+        },
+        {
+          "flag": "--apply",
+          "action": "store_true",
+          "help": "真正执行（默认只预览）"
+        }
+      ]
+    },
+    "tools_img2-batch-convert": {
+      "title": "批量格式转换",
+      "summary": "格式转换：python xxx.py <目录> --to webp",
+      "usage": "python xxx.py <目录> --to webp",
+      "params": [
+        {
+          "flag": "directory",
+          "positional": true
+        },
+        {
+          "flag": "--to",
+          "default": "webp"
+        },
+        {
+          "flag": "--quality",
+          "type": "int",
+          "default": 85
+        }
+      ]
+    },
+    "tools_img2-batch-crop-ratio": {
+      "title": "批量裁剪比例",
+      "summary": "比例裁剪：python xxx.py <目录> --ratio 16:9",
+      "usage": "python xxx.py <目录> --ratio 16:9",
+      "params": [
+        {
+          "flag": "directory",
+          "positional": true
+        },
+        {
+          "flag": "--ratio",
+          "default": "16:9"
+        }
+      ]
+    },
+    "tools_img2-batch-enhance": {
+      "title": "批量亮度/对比度",
+      "summary": "画质调整：python xxx.py <目录> --brightness 1.1 --contrast 1.15",
+      "usage": "python xxx.py <目录> --brightness 1.1 --contrast 1.15",
+      "params": [
+        {
+          "flag": "directory",
+          "positional": true
+        },
+        {
+          "flag": "--brightness",
+          "type": "float",
+          "default": 1.0
+        },
+        {
+          "flag": "--contrast",
+          "type": "float",
+          "default": 1.0
+        },
+        {
+          "flag": "--saturation",
+          "type": "float",
+          "default": 1.0
+        }
+      ]
+    },
+    "tools_img2-batch-resize": {
+      "title": "批量缩放",
+      "summary": "批量缩放：python xxx.py <目录> --max-side 1600",
+      "usage": "python xxx.py <目录> --max-side 1600",
+      "params": [
+        {
+          "flag": "directory",
+          "positional": true
+        },
+        {
+          "flag": "--max-side",
+          "type": "int",
+          "default": 1600
+        },
+        {
+          "flag": "--quality",
+          "type": "int",
+          "default": 85
+        }
+      ]
+    },
+    "tools_img2-batch-watermark": {
+      "title": "批量水印",
+      "summary": "批量水印：python xxx.py <目录> --text '© 2026' --mode corner|tile",
+      "usage": "python xxx.py <目录> --text '© 2026' --mode corner|tile",
+      "params": [
+        {
+          "flag": "directory",
+          "positional": true
+        },
+        {
+          "flag": "--text",
+          "default": "© 示例库"
+        },
+        {
+          "flag": "--mode",
+          "default": "corner"
+        },
+        {
+          "flag": "--opacity",
+          "type": "int",
+          "default": 110
+        }
+      ]
+    },
+    "tools_img2-contact-sheet": {
+      "title": "缩略图拼贴",
+      "summary": "拼贴墙：python xxx.py <目录> --cols 4 --cell 240",
+      "usage": "python xxx.py <目录> --cols 4 --cell 240",
+      "params": [
+        {
+          "flag": "directory",
+          "positional": true
+        },
+        {
+          "flag": "--cols",
+          "type": "int",
+          "default": 4
+        },
+        {
+          "flag": "--cell",
+          "type": "int",
+          "default": 240
+        },
+        {
+          "flag": "-o",
+          "default": "contact_sheet.jpg"
+        }
+      ]
+    },
+    "tools_img2-dominant-color": {
+      "title": "主色调提取",
+      "summary": "主色调：缩图 + 量化取出现最多的颜色。",
+      "usage": "python imgtool2_dominant-color.py",
+      "params": [
+        {
+          "flag": "image",
+          "positional": true
+        },
+        {
+          "flag": "--top",
+          "type": "int",
+          "default": 5
+        }
+      ]
+    },
+    "tools_img2-gif-compose": {
+      "title": "图片合成 GIF",
+      "summary": "合成 GIF：python xxx.py frame_*.png 所在目录 -o out.gif --fps 8",
+      "usage": "python xxx.py frame_*.png 所在目录 -o out.gif --fps 8",
+      "params": [
+        {
+          "flag": "directory",
+          "positional": true
+        },
+        {
+          "flag": "-o",
+          "default": "out.gif"
+        },
+        {
+          "flag": "--fps",
+          "type": "int",
+          "default": 8
+        },
+        {
+          "flag": "--width",
+          "type": "int",
+          "default": 480
+        }
+      ]
+    },
+    "tools_img2-gif-extract": {
+      "title": "GIF 帧提取",
+      "summary": "GIF 拆帧：python xxx.py anim.gif -o frames",
+      "usage": "python xxx.py anim.gif -o frames",
+      "params": [
+        {
+          "flag": "gif",
+          "positional": true
+        },
+        {
+          "flag": "-o",
+          "default": "frames"
+        }
+      ]
+    },
+    "tools_img2-img-info-report": {
+      "title": "图片信息报告",
+      "summary": "图片报告：目录内图片尺寸/格式/体积一览。",
+      "usage": "python imgtool2_img-info-report.py",
+      "params": [
+        {
+          "flag": "directory",
+          "nargs": "?",
+          "default": ".",
+          "positional": true
+        }
+      ]
+    },
+    "tools_img2-rounded-border": {
+      "title": "圆角与边框",
+      "summary": "圆角边框：python xxx.py <目录> --radius 24 --border 3",
+      "usage": "python xxx.py <目录> --radius 24 --border 3",
+      "params": [
+        {
+          "flag": "directory",
+          "positional": true
+        },
+        {
+          "flag": "--radius",
+          "type": "int",
+          "default": 24
+        },
+        {
+          "flag": "--border",
+          "type": "int",
+          "default": 0
+        }
+      ]
+    },
+    "tools_log-analyzer": {
+      "title": "日志等级统计",
+      "summary": "日志分析：等级统计 + 错误明细。",
+      "usage": "python log_analyzer.py",
+      "params": []
+    },
+    "tools_media-media-audio-compress": {
+      "title": "音频压缩转码",
+      "summary": "音频压缩：python xxx.py input.wav --bitrate 96k",
+      "usage": "python xxx.py input.wav --bitrate 96k",
+      "params": [
+        {
+          "flag": "input",
+          "positional": true
+        },
+        {
+          "flag": "--bitrate",
+          "default": "128k"
+        },
+        {
+          "flag": "--codec",
+          "default": "libmp3lame"
+        }
+      ]
+    },
+    "tools_media-media-batch-convert": {
+      "title": "批量转码",
+      "summary": "批量转码：python xxx.py <目录> --crf 24",
+      "usage": "python xxx.py <目录> --crf 24",
+      "params": [
+        {
+          "flag": "directory",
+          "positional": true
+        },
+        {
+          "flag": "--crf",
+          "type": "int",
+          "default": 24
+        },
+        {
+          "flag": "--workers",
+          "type": "int",
+          "default": 2
+        }
+      ]
+    },
+    "tools_media-media-compress": {
+      "title": "视频压缩",
+      "summary": "视频压缩：python xxx.py input.mp4 --crf 26 --preset fast",
+      "usage": "python xxx.py input.mp4 --crf 26 --preset fast",
+      "params": [
+        {
+          "flag": "input",
+          "positional": true
+        },
+        {
+          "flag": "--crf",
+          "type": "int",
+          "default": 26,
+          "help": "18 高质量 ~ 28 高压缩"
+        },
+        {
+          "flag": "--preset",
+          "default": "fast"
+        }
+      ]
+    },
+    "tools_media-media-concat": {
+      "title": "视频合并",
+      "summary": "合并：python xxx.py a.mp4 b.mp4 c.mp4 -o merged.mp4",
+      "usage": "python xxx.py a.mp4 b.mp4 c.mp4 -o merged.mp4",
+      "params": [
+        {
+          "flag": "inputs",
+          "nargs": "+",
+          "positional": true
+        },
+        {
+          "flag": "-o",
+          "default": "merged.mp4"
+        }
+      ]
+    },
+    "tools_media-media-convert": {
+      "title": "视频格式转换",
+      "summary": "格式转换：python xxx.py input.mov [-o output.mp4]",
+      "usage": "python xxx.py input.mov [-o output.mp4]",
+      "params": [
+        {
+          "flag": "input",
+          "positional": true
+        },
+        {
+          "flag": "-o"
+        }
+      ]
+    },
+    "tools_media-media-extract-audio": {
+      "title": "提取音频",
+      "summary": "提取音频：python xxx.py input.mp4 -o audio.mp3",
+      "usage": "python xxx.py input.mp4 -o audio.mp3",
+      "params": [
+        {
+          "flag": "input",
+          "positional": true
+        },
+        {
+          "flag": "-o"
+        },
+        {
+          "flag": "--bitrate",
+          "default": "192k"
+        }
+      ]
+    },
+    "tools_media-media-gif": {
+      "title": "视频转 GIF",
+      "summary": "视频转 GIF：python xxx.py clip.mp4 --start 5 --duration 3 --width 480",
+      "usage": "python xxx.py clip.mp4 --start 5 --duration 3 --width 480",
+      "params": [
+        {
+          "flag": "input",
+          "positional": true
+        },
+        {
+          "flag": "--start",
+          "type": "float",
+          "default": 0
+        },
+        {
+          "flag": "--duration",
+          "type": "float",
+          "default": 3
+        },
+        {
+          "flag": "--width",
+          "type": "int",
+          "default": 480
+        },
+        {
+          "flag": "--fps",
+          "type": "int",
+          "default": 12
+        },
+        {
+          "flag": "-o",
+          "default": "out.gif"
+        }
+      ]
+    },
+    "tools_media-media-probe": {
+      "title": "媒体信息探测",
+      "summary": "ffprobe JSON 解析：时长/分辨率/编码/码率。",
+      "usage": "python media_media-probe.py",
+      "params": [
+        {
+          "flag": "media",
+          "nargs": "+",
+          "positional": true
+        }
+      ]
+    },
+    "tools_media-media-screenshot": {
+      "title": "视频截图",
+      "summary": "截图：单帧 --at 00:00:30，或 --every 5 批量截帧。",
+      "usage": "python media_media-screenshot.py",
+      "params": [
+        {
+          "flag": "input",
+          "positional": true
+        },
+        {
+          "flag": "--at",
+          "default": "00:00:05",
+          "help": "单帧时间点"
+        },
+        {
+          "flag": "--every",
+          "type": "float",
+          "default": 0,
+          "help": "每 N 秒一帧（批量模式）"
+        },
+        {
+          "flag": "-o",
+          "default": "frame.png"
+        }
+      ]
+    },
+    "tools_media-media-strip-audio": {
+      "title": "去除音轨",
+      "summary": "去音轨：python xxx.py input.mp4",
+      "usage": "python xxx.py input.mp4",
+      "params": [
+        {
+          "flag": "input",
+          "positional": true
+        }
+      ]
+    },
+    "tools_media-media-trim": {
+      "title": "音视频裁剪",
+      "summary": "裁剪：python xxx.py input.mp4 --start 00:00:10 --duration 30",
+      "usage": "python xxx.py input.mp4 --start 00:00:10 --duration 30",
+      "params": [
+        {
+          "flag": "input",
+          "positional": true
+        },
+        {
+          "flag": "--start",
+          "default": "00:00:00"
+        },
+        {
+          "flag": "--duration",
+          "type": "float",
+          "default": 10
+        },
+        {
+          "flag": "-o"
+        }
+      ]
+    },
+    "tools_media-media-volume": {
+      "title": "音量调整",
+      "summary": "音量：python xxx.py input.mp4 --gain 1.5 | --normalize",
+      "usage": "python xxx.py input.mp4 --gain 1.5 | --normalize",
+      "params": [
+        {
+          "flag": "input",
+          "positional": true
+        },
+        {
+          "flag": "--gain",
+          "type": "float",
+          "default": 1.0,
+          "help": "音量倍数"
+        },
+        {
+          "flag": "--normalize",
+          "action": "store_true",
+          "help": "loudnorm 响度归一化"
+        }
+      ]
+    },
+    "tools_merge_courseware.py": {
+      "title": "merge_courseware",
+      "summary": "将课程资料（按周组织的 Python 代码）融合进当前项目。",
+      "usage": "python merge_courseware.py",
+      "params": []
+    },
+    "tools_office-docx-create": {
+      "title": "Word 文档生成",
+      "summary": "Word 生成：会议纪要模板。",
+      "usage": "python office_docx-create.py",
+      "params": [],
+      "notes": ["教学示例：脚本内数据为演示硬编码；实际使用把数据源换成真实文件/目录即可。"]
+    },
+    "tools_office-docx-read": {
+      "title": "Word 读取",
+      "summary": "Word 读取：先跑 docx-create 生成文件，再提取内容。",
+      "usage": "python office_docx-read.py",
+      "params": [],
+      "notes": ["教学示例：脚本内数据为演示硬编码；实际使用把数据源换成真实文件/目录即可。"]
+    },
+    "tools_office-docx-table": {
+      "title": "Word 表格",
+      "summary": "Word 表格：数据报表插入。",
+      "usage": "python office_docx-table.py",
+      "params": [],
+      "notes": ["教学示例：脚本内数据为演示硬编码；实际使用把数据源换成真实文件/目录即可。"]
+    },
+    "tools_office-file-batch-rename": {
+      "title": "批量重命名",
+      "summary": "批量重命名：默认预览，--apply 执行。",
+      "usage": "python office_file-batch-rename.py",
+      "params": [
+        {
+          "flag": "directory",
+          "nargs": "?",
+          "default": ".",
+          "positional": true
+        },
+        {
+          "flag": "--prefix",
+          "default": "file"
+        },
+        {
+          "flag": "--apply",
+          "action": "store_true"
+        }
+      ]
+    },
+    "tools_office-file-classify": {
+      "title": "文件自动分类",
+      "summary": "文件分类：图片/文档/压缩包/其他 四类归档。",
+      "usage": "python office_file-classify.py",
+      "params": []
+    },
+    "tools_office-file-duplicate-find": {
+      "title": "重复文件查找",
+      "summary": "重复文件：按内容哈希分组。",
+      "usage": "python office_file-duplicate-find.py",
+      "params": []
+    },
+    "tools_office-file-tree-report": {
+      "title": "目录体积报告",
+      "summary": "目录报告：子目录体积排行。",
+      "usage": "python office_file-tree-report.py",
+      "params": []
+    },
+    "tools_office-mail-compose-eml": {
+      "title": "邮件构造与落盘",
+      "summary": "邮件构造：生成 .eml 文件（不实际发送）。",
+      "usage": "python office_mail-compose-eml.py",
+      "params": [],
+      "notes": ["教学示例：脚本内数据为演示硬编码；实际使用把数据源换成真实文件/目录即可。"]
+    },
+    "tools_office-sched-once-task": {
+      "title": "一次性定时任务",
+      "summary": "定时任务：sched 延时执行一次。",
+      "usage": "python office_sched-once-task.py",
+      "params": []
+    },
+    "tools_office-text-report": {
+      "title": "文本日报生成",
+      "summary": "文本日报：数据 → 模板化报告。",
+      "usage": "python office_text-report.py",
+      "params": [],
+      "notes": ["教学示例：脚本内数据为演示硬编码；实际使用把数据源换成真实文件/目录即可。"]
+    },
+    "tools_office-xls-chart": {
+      "title": "Excel 内嵌图表",
+      "summary": "Excel 图表：月度数据的内嵌柱状图。",
+      "usage": "python office_xls-chart.py",
+      "params": [],
+      "notes": ["教学示例：脚本内数据为演示硬编码；实际使用把数据源换成真实文件/目录即可。"]
+    },
+    "tools_office-xls-create": {
+      "title": "Excel 建表入门",
+      "summary": "Excel 建表：生成月度销售表。",
+      "usage": "python office_xls-create.py",
+      "params": [],
+      "notes": ["教学示例：脚本内数据为演示硬编码；实际使用把数据源换成真实文件/目录即可。"]
+    },
+    "tools_office-xls-dedup-merge": {
+      "title": "Excel 去重合并",
+      "summary": "Excel 去重合并：重复工号只保留首条。",
+      "usage": "python office_xls-dedup-merge.py",
+      "params": [],
+      "notes": ["教学示例：脚本内数据为演示硬编码；实际使用把数据源换成真实文件/目录即可。"]
+    },
+    "tools_office-xls-formula": {
+      "title": "Excel 公式与汇总",
+      "summary": "Excel 公式：SUMIF 与总计行。",
+      "usage": "python office_xls-formula.py",
+      "params": [],
+      "notes": ["教学示例：脚本内数据为演示硬编码；实际使用把数据源换成真实文件/目录即可。"]
+    },
+    "tools_office-xls-multi-sheet": {
+      "title": "多 Sheet 拆分",
+      "summary": "多 Sheet：按部门拆分工作表。",
+      "usage": "python office_xls-multi-sheet.py",
+      "params": []
+    },
+    "tools_office-xls-read": {
+      "title": "Excel 读取与遍历",
+      "summary": "Excel 读取：遍历 + 汇总。",
+      "usage": "python office_xls-read.py",
+      "params": [],
+      "notes": ["教学示例：脚本内数据为演示硬编码；实际使用把数据源换成真实文件/目录即可。"]
+    },
+    "tools_office-xls-style": {
+      "title": "Excel 样式",
+      "summary": "Excel 样式：表头加粗白字 + 蓝底 + 定宽列。",
+      "usage": "python office_xls-style.py",
+      "params": [],
+      "notes": ["教学示例：脚本内数据为演示硬编码；实际使用把数据源换成真实文件/目录即可。"]
+    },
+    "tools_office2-clipboard-inventory": {
+      "title": "库存盘点脚本",
+      "summary": "库存盘点：期初/入库/出库 三表核算。",
+      "usage": "python office2_clipboard-inventory.py",
+      "params": [],
+      "notes": ["教学示例：脚本内数据为演示硬编码；实际使用把数据源换成真实文件/目录即可。"]
+    },
+    "tools_office2-docx-batch-letters": {
+      "title": "Word 批量函件",
+      "summary": "批量函件：模板替换生成多份 Word。",
+      "usage": "python office2_docx-batch-letters.py",
+      "params": [],
+      "notes": ["教学示例：脚本内数据为演示硬编码；实际使用把数据源换成真实文件/目录即可。"]
+    },
+    "tools_office2-todo-markdown": {
+      "title": "Markdown 待办清单",
+      "summary": "Markdown 待办：生成与统计。",
+      "usage": "python office2_todo-markdown.py",
+      "params": [],
+      "notes": ["教学示例：脚本内数据为演示硬编码；实际使用把数据源换成真实文件/目录即可。"]
+    },
+    "tools_office2-xls-conditional": {
+      "title": "条件格式",
+      "summary": "条件格式：超阈值标红。",
+      "usage": "python office2_xls-conditional.py",
+      "params": []
+    },
+    "tools_office2-xls-freeze-header": {
+      "title": "冻结表头",
+      "summary": "冻结窗格与自动筛选。",
+      "usage": "python office2_xls-freeze-header.py",
+      "params": []
+    },
+    "tools_office2-xls-sort-in-place": {
+      "title": "Excel 数据排序",
+      "summary": "Excel 排序：按金额降序重写。",
+      "usage": "python office2_xls-sort-in-place.py",
+      "params": [],
+      "notes": ["教学示例：脚本内数据为演示硬编码；实际使用把数据源换成真实文件/目录即可。"]
+    },
+    "tools_office2-xls-two-file-diff": {
+      "title": "两表对比",
+      "summary": "两表对比：新增与移除名单。",
+      "usage": "python office2_xls-two-file-diff.py",
+      "params": []
+    },
+    "tools_office2-xls-validate": {
+      "title": "数据校验",
+      "summary": "Excel 数据校验：错误行收集报告。",
+      "usage": "python office2_xls-validate.py",
+      "params": []
+    },
+    "tools_office3-pdf-split": {
+      "title": "PDF 拆分",
+      "summary": "PDF 拆分：每页一个文件。",
+      "usage": "python office3_pdf-split.py",
+      "params": []
+    },
+    "tools_office3-pptx-create": {
+      "title": "PPT 幻灯片生成",
+      "summary": "PPT 生成：三页周报幻灯片。",
+      "usage": "python office3_pptx-create.py",
+      "params": [],
+      "notes": ["教学示例：脚本内数据为演示硬编码；实际使用把数据源换成真实文件/目录即可。"]
+    },
+    "tools_office3-xls-annotation": {
+      "title": "单元格批注",
+      "summary": "批注：给数据加口径说明。",
+      "usage": "python office3_xls-annotation.py",
+      "params": []
+    },
+    "tools_office3-xls-merged-cells": {
+      "title": "合并单元格表头",
+      "summary": "合并单元格：两级表头。",
+      "usage": "python office3_xls-merged-cells.py",
+      "params": []
+    },
+    "tools_office3-xls-pivot-groupby": {
+      "title": "Excel 透视汇总",
+      "summary": "透视：按部门/月份双维聚合。",
+      "usage": "python office3_xls-pivot-groupby.py",
+      "params": [],
+      "notes": ["教学示例：脚本内数据为演示硬编码；实际使用把数据源换成真实文件/目录即可。"]
+    },
+    "tools_office3-xls-protect": {
+      "title": "工作表保护",
+      "summary": "工作表保护：锁定公式，开放输入列。",
+      "usage": "python office3_xls-protect.py",
+      "params": []
+    },
+    "tools_office3-xls-sqlite-export": {
+      "title": "SQLite ↔ Excel",
+      "summary": "SQLite → Excel：查询结果报表化。",
+      "usage": "python office3_xls-sqlite-export.py",
+      "params": [],
+      "notes": ["教学示例：脚本内数据为演示硬编码；实际使用把数据源换成真实文件/目录即可。"]
+    },
+    "tools_office3-xls-vlookup-join": {
+      "title": "跨表关联",
+      "summary": "跨表关联：主表 + 字典表拼接。",
+      "usage": "python office3_xls-vlookup-join.py",
+      "params": []
+    },
+    "tools_plan_regroup.py": {
+      "title": "plan_regroup",
+      "summary": "规划：将扁平化的章节按主题分组到子目录，子目录内连续编号 NN-标题.py。\n仅打印计划，不实际移动。",
+      "usage": "python plan_regroup.py",
+      "params": []
+    },
+    "tools_regroup.py": {
+      "title": "regroup",
+      "summary": "将扁平化章节按主题分组到子目录，子目录内连续编号 NN-标题.py。\n用法：python3 regroup.py [--dry]",
+      "usage": "python regroup.py",
+      "params": []
+    },
+    "tools_rename_normalize.py": {
+      "title": "rename_normalize",
+      "summary": "规范化文件名：驼峰/连字符命名的英文 .py 改为 snake_case；清理冗余 venv 副本。",
+      "usage": "python rename_normalize.py",
+      "params": []
+    },
+    "tools_rename_weeks.py": {
+      "title": "rename_weeks",
+      "summary": "将按周命名的目录改为按内容语义命名。用法：python3 rename_weeks.py [--dry]",
+      "usage": "python rename_weeks.py",
+      "params": []
+    },
+    "tools_renumber.py": {
+      "title": "renumber",
+      "summary": "对剩余单层章节统一连续编号 NN-标题.py，去掉 hm_/my-/pachong 等前缀。\n不建子目录（主题单一）。用法：python3 renumber.py [--dry]",
+      "usage": "python renumber.py",
+      "params": []
+    },
+    "tools_renumber_crawler.py": {
+      "title": "renumber_crawler",
+      "summary": "统一 crawler/01-basics 与 02-intermediate/dynamic 的文件命名。\n- 去掉重复/无序前缀，统一为连续 NN-标题.py\n- 驼峰英文文件名转 snake_case（如 MozillaCookieJar -> mozilla_cookie_jar）\n用法：python3 renumber_crawler.py [--dry]",
+      "usage": "python renumber_crawler.py",
+      "params": []
+    },
+    "tools_renumber_remaining.py": {
+      "title": "renumber_remaining",
+      "summary": "处理剩余目录的命名规范化。用法：python3 renumber_remaining.py [--dry]",
+      "usage": "python renumber_remaining.py",
+      "params": []
+    },
+    "tools_tools-qr-matrix-1": {
+      "title": "字符方阵·s9◆◇",
+      "summary": "字符方阵：9×9，字符集 ''◆◇''。",
+      "usage": "python tools-qr-matrix_1.py",
+      "params": [],
+      "notes": ["教学示例：脚本内数据为演示硬编码；实际使用把数据源换成真实文件/目录即可。"]
+    },
+    "tools_tools-qr-matrix-2": {
+      "title": "字符方阵·s11░▒▓",
+      "summary": "字符方阵：11×11，字符集 ''░▒▓''。",
+      "usage": "python tools-qr-matrix_2.py",
+      "params": [],
+      "notes": ["教学示例：脚本内数据为演示硬编码；实际使用把数据源换成真实文件/目录即可。"]
+    },
+    "tools_tools-qr-matrix-3": {
+      "title": "字符方阵·s13·:*#",
+      "summary": "字符方阵：13×13，字符集 ''·:*#''。",
+      "usage": "python tools-qr-matrix_3.py",
+      "params": [],
+      "notes": ["教学示例：脚本内数据为演示硬编码；实际使用把数据源换成真实文件/目录即可。"]
+    },
+    "tools_tools-qr-matrix-4": {
+      "title": "字符方阵·s10AB123",
+      "summary": "字符方阵：10×10，字符集 ''AB123''。",
+      "usage": "python tools-qr-matrix_4.py",
+      "params": [],
+      "notes": ["教学示例：脚本内数据为演示硬编码；实际使用把数据源换成真实文件/目录即可。"]
+    },
+    "tools_tools-text-table-1": {
+      "title": "文本表格·商品",
+      "summary": "文本表格：4 行对齐输出。",
+      "usage": "python tools-text-table_1.py",
+      "params": [],
+      "notes": ["教学示例：脚本内数据为演示硬编码；实际使用把数据源换成真实文件/目录即可。"]
+    },
+    "tools_tools-text-table-2": {
+      "title": "文本表格·库存",
+      "summary": "文本表格：3 行对齐输出。",
+      "usage": "python tools-text-table_2.py",
+      "params": [],
+      "notes": ["教学示例：脚本内数据为演示硬编码；实际使用把数据源换成真实文件/目录即可。"]
+    },
+    "tools_tools-text-table-3": {
+      "title": "文本表格·成绩",
+      "summary": "文本表格：5 行对齐输出。",
+      "usage": "python tools-text-table_3.py",
+      "params": [],
+      "notes": ["教学示例：脚本内数据为演示硬编码；实际使用把数据源换成真实文件/目录即可。"]
+    },
+    "tools_verify_merge.py": {
+      "title": "verify_merge",
+      "summary": "校验融合完整性：源目录应纳入的文件是否全部已存在于目标。",
+      "usage": "python verify_merge.py",
+      "params": [
+        {
+          "flag": "--src",
+          "help": "源课程资料目录（按周组织）"
+        }
+      ]
     }
-   ]
-  },
-  "tools_dev-bigfile-topn": {
-   "title": "大文件 TopN 查找器",
-   "summary": "大文件 TopN：python devtool_bigfile.py <目录> [--top 10]",
-   "usage": "python devtool_bigfile.py <目录> [--top 10]",
-   "params": [
-    {
-     "flag": "directory",
-     "nargs": "?",
-     "default": ".",
-     "positional": true
-    },
-    {
-     "flag": "--top",
-     "type": "int",
-     "default": 10
-    }
-   ]
-  },
-  "tools_dev-bulk-replace": {
-   "title": "批量查找替换",
-   "summary": "批量替换：python xxx.py 目录 旧文本 新文本 --ext .py .md",
-   "usage": "python xxx.py 目录 旧文本 新文本 --ext .py .md",
-   "params": [
-    {
-     "flag": "directory",
-     "positional": true
-    },
-    {
-     "flag": "old",
-     "positional": true
-    },
-    {
-     "flag": "new",
-     "positional": true
-    },
-    {
-     "flag": "--ext",
-     "nargs": "*"
-    },
-    {
-     "flag": "--apply",
-     "action": "store_true"
-    }
-   ]
-  },
-  "tools_dev-dns-lookup": {
-   "title": "DNS 解析查询",
-   "summary": "DNS 查询：socket 标准库版。",
-   "usage": "python devtool_dns-lookup.py",
-   "params": [
-    {
-     "flag": "domain",
-     "positional": true
-    }
-   ]
-  },
-  "tools_dev-dupe-cleaner": {
-   "title": "重复文件清理器",
-   "summary": "重复文件清理：默认只报告，--delete 执行清理。",
-   "usage": "python devtool_dupe-cleaner.py",
-   "params": [
-    {
-     "flag": "directory",
-     "nargs": "?",
-     "default": ".",
-     "positional": true
-    },
-    {
-     "flag": "--delete",
-     "action": "store_true",
-     "help": "删除重复（保留每组第一个）"
-    }
-   ]
-  },
-  "tools_dev-empty-dir-sweep": {
-   "title": "空目录清扫器",
-   "summary": "空目录清扫：自底向上删除空目录。",
-   "usage": "python devtool_empty-dir-sweep.py",
-   "params": [
-    {
-     "flag": "directory",
-     "nargs": "?",
-     "default": ".",
-     "positional": true
-    },
-    {
-     "flag": "--apply",
-     "action": "store_true"
-    }
-   ]
-  },
-  "tools_dev-encoding-fix": {
-   "title": "编码修复器",
-   "summary": "编码修复：GBK/Latin1 → UTF-8 批量转换。",
-   "usage": "python devtool_encoding-fix.py",
-   "params": [
-    {
-     "flag": "directory",
-     "nargs": "?",
-     "default": ".",
-     "positional": true
-    },
-    {
-     "flag": "--ext",
-     "nargs": "*"
-    },
-    {
-     "flag": "--apply",
-     "action": "store_true"
-    }
-   ]
-  },
-  "tools_dev-env-checker": {
-   "title": ".env 校验器",
-   "summary": ".env 校验：缺失键与多余键清单。",
-   "usage": "python devtool_env-checker.py",
-   "params": [
-    {
-     "flag": "--env",
-     "default": ".env"
-    },
-    {
-     "flag": "--example",
-     "default": ".env.example"
-    }
-   ]
-  },
-  "tools_dev-git-branch-report": {
-   "title": "Git 分支报告",
-   "summary": "Git 分支报告：按最近提交排序。",
-   "usage": "python devtool_git-branch-report.py",
-   "params": [
-    {
-     "flag": "repo",
-     "nargs": "?",
-     "default": ".",
-     "positional": true
-    }
-   ]
-  },
-  "tools_dev-git-stats": {
-   "title": "Git 提交统计",
-   "summary": "Git 统计：shortlog + numstat。",
-   "usage": "python devtool_git-stats.py",
-   "params": []
-  },
-  "tools_dev-gitignore-gen": {
-   "title": "gitignore 生成器",
-   "summary": "gitignore 生成：python xxx.py python node macos > .gitignore",
-   "usage": "python xxx.py python node macos > .gitignore",
-   "params": [
-    {
-     "flag": "stacks",
-     "nargs": "+",
-     "positional": true
-    }
-   ]
-  },
-  "tools_dev-http-headers-inspect": {
-   "title": "HTTP 头检查器",
-   "summary": "响应头检查：缓存与安全配置一览。",
-   "usage": "python devtool_http-headers-inspect.py",
-   "params": [
-    {
-     "flag": "url",
-     "positional": true
-    }
-   ]
-  },
-  "tools_dev-indent-fix": {
-   "title": "缩进规范化",
-   "summary": "缩进修复：Tab→4空格 + 行尾空白。",
-   "usage": "python devtool_indent-fix.py",
-   "params": [
-    {
-     "flag": "files",
-     "nargs": "+",
-     "positional": true
-    },
-    {
-     "flag": "--apply",
-     "action": "store_true"
-    }
-   ]
-  },
-  "tools_dev-ip-lookup": {
-   "title": "IP 查询",
-   "summary": "IP 查询：出口 IP 与服务商。",
-   "usage": "python devtool_ip-lookup.py",
-   "params": []
-  },
-  "tools_dev-jwt-decode": {
-   "title": "JWT 解码器",
-   "summary": "JWT 解码：base64 分段解码（不验证签名）。",
-   "usage": "python devtool_jwt-decode.py",
-   "params": [
-    {
-     "flag": "token",
-     "positional": true
-    }
-   ]
-  },
-  "tools_dev-line-endings": {
-   "title": "换行符规范化",
-   "summary": "换行符规范化：CRLF→LF，Tab→4 空格。",
-   "usage": "python devtool_line-endings.py",
-   "params": [
-    {
-     "flag": "directory",
-     "nargs": "?",
-     "default": ".",
-     "positional": true
-    },
-    {
-     "flag": "--ext",
-     "nargs": "*"
-    },
-    {
-     "flag": "--apply",
-     "action": "store_true"
-    }
-   ]
-  },
-  "tools_dev-loc-counter": {
-   "title": "代码行数统计",
-   "summary": "代码统计：按扩展名汇总行数。",
-   "usage": "python devtool_loc-counter.py",
-   "params": [
-    {
-     "flag": "directory",
-     "nargs": "?",
-     "default": ".",
-     "positional": true
-    }
-   ]
-  },
-  "tools_dev-md-toc": {
-   "title": "Markdown 目录生成",
-   "summary": "Markdown TOC：把 # 标题生成目录并打印。",
-   "usage": "python devtool_md-toc.py",
-   "params": [
-    {
-     "flag": "file",
-     "positional": true
-    }
-   ]
-  },
-  "tools_dev-port-check": {
-   "title": "端口连通检查",
-   "summary": "端口检查：socket 探测目标主机端口列表。",
-   "usage": "python devtool_port-check.py",
-   "params": [
-    {
-     "flag": "host",
-     "positional": true
-    },
-    {
-     "flag": "--ports",
-     "nargs": "*",
-     "type": "int"
-    },
-    {
-     "flag": "--timeout",
-     "type": "float",
-     "default": 1.5
-    }
-   ]
-  },
-  "tools_dev-qrcode-gen": {
-   "title": "二维码生成器",
-   "summary": "二维码生成：python xxx.py '文本或链接' -o qr.png",
-   "usage": "python xxx.py '文本或链接' -o qr.png",
-   "params": [
-    {
-     "flag": "text",
-     "positional": true
-    },
-    {
-     "flag": "-o",
-     "default": "qrcode.png"
-    }
-   ]
-  },
-  "tools_dev-quick-find": {
-   "title": "快速文件查找",
-   "summary": "快速查找：名称正则 + 类型过滤。",
-   "usage": "python devtool_quick-find.py",
-   "params": [
-    {
-     "flag": "pattern",
-     "help": "名称正则",
-     "positional": true
-    },
-    {
-     "flag": "directory",
-     "nargs": "?",
-     "default": ".",
-     "positional": true
-    },
-    {
-     "flag": "--type",
-     "default": "f"
-    },
-    {
-     "flag": "--limit",
-     "type": "int",
-     "default": 50
-    }
-   ]
-  },
-  "tools_dev-secret-scanner": {
-   "title": "敏感信息扫描器",
-   "summary": "泄漏扫描：密钥/密码/AK-SK 正则排查。",
-   "usage": "python devtool_secret-scanner.py",
-   "params": [
-    {
-     "flag": "directory",
-     "nargs": "?",
-     "default": ".",
-     "positional": true
-    }
-   ]
-  },
-  "tools_dev-speed-test": {
-   "title": "网速测试",
-   "summary": "网速测试：下载 1MB×3 次取均值。",
-   "usage": "python devtool_speed-test.py",
-   "params": []
-  },
-  "tools_dev-sys-battery": {
-   "title": "电池状态监控",
-   "summary": "电池状态：电量与预估续航。",
-   "usage": "python devtool_sys-battery.py",
-   "params": []
-  },
-  "tools_dev-sys-disk-gauge": {
-   "title": "磁盘使用仪表",
-   "summary": "磁盘仪表：分区使用率进度条。",
-   "usage": "python devtool_sys-disk-gauge.py",
-   "params": []
-  },
-  "tools_dev-sys-info-report": {
-   "title": "系统信息报告",
-   "summary": "系统报告：平台/硬件/Python 环境。",
-   "usage": "python devtool_sys-info-report.py",
-   "params": []
-  },
-  "tools_dev-sys-top-processes": {
-   "title": "进程资源 Top 榜",
-   "summary": "进程榜：CPU 与内存 Top10。",
-   "usage": "python devtool_sys-top-processes.py",
-   "params": [
-    {
-     "flag": "--by",
-     "default": "cpu"
-    }
-   ]
-  },
-  "tools_dev-text-diff": {
-   "title": "文本对比工具",
-   "summary": "文本 diff：unified 风格输出。",
-   "usage": "python devtool_text-diff.py",
-   "params": [
-    {
-     "flag": "a",
-     "positional": true
-    },
-    {
-     "flag": "b",
-     "positional": true
-    }
-   ]
-  },
-  "tools_dev-todo-scanner": {
-   "title": "TODO/FIXME 扫描",
-   "summary": "TODO 扫描：TODO/FIXME/HACK/XXX 全库清单。",
-   "usage": "python devtool_todo-scanner.py",
-   "params": [
-    {
-     "flag": "directory",
-     "nargs": "?",
-     "default": ".",
-     "positional": true
-    }
-   ]
-  },
-  "tools_dev-tree-print": {
-   "title": "目录树打印",
-   "summary": "目录树：tree 命令复刻。",
-   "usage": "python devtool_tree-print.py",
-   "params": [
-    {
-     "flag": "directory",
-     "nargs": "?",
-     "default": ".",
-     "positional": true
-    },
-    {
-     "flag": "--depth",
-     "type": "int",
-     "default": 3
-    },
-    {
-     "flag": "--ignore",
-     "nargs": "*"
-    }
-   ]
-  },
-  "tools_dev-url-batch-check": {
-   "title": "URL 批量体检",
-   "summary": "URL 体检：HEAD 批量检查死链。",
-   "usage": "python devtool_url-batch-check.py",
-   "params": []
-  },
-  "tools_dev-yaml-json-convert": {
-   "title": "YAML ↔ JSON 互转",
-   "summary": "YAML ↔ JSON：python xxx.py yaml2json config.yaml",
-   "usage": "python xxx.py yaml2json config.yaml",
-   "params": [
-    {
-     "flag": "mode",
-     "positional": true
-    },
-    {
-     "flag": "file",
-     "positional": true
-    }
-   ]
-  },
-  "tools_files-batch-rename": {
-   "title": "批量重命名工具",
-   "summary": "批量重命名：dry-run 预览 + 执行。",
-   "usage": "python batch_rename.py",
-   "params": [
-    {
-     "flag": "directory",
-     "nargs": "?",
-     "default": ".",
-     "help": "目标目录",
-     "positional": true
-    },
-    {
-     "flag": "--prefix",
-     "default": "file",
-     "help": "新文件名前缀"
-    },
-    {
-     "flag": "--ext",
-     "default": "",
-     "help": "仅处理指定扩展名，如 .txt"
-    },
-    {
-     "flag": "--apply",
-     "action": "store_true",
-     "help": "真正执行（默认只预览）"
-    }
-   ]
-  },
-  "tools_img2-batch-convert": {
-   "title": "批量格式转换",
-   "summary": "格式转换：python xxx.py <目录> --to webp",
-   "usage": "python xxx.py <目录> --to webp",
-   "params": [
-    {
-     "flag": "directory",
-     "positional": true
-    },
-    {
-     "flag": "--to",
-     "default": "webp"
-    },
-    {
-     "flag": "--quality",
-     "type": "int",
-     "default": 85
-    }
-   ]
-  },
-  "tools_img2-batch-crop-ratio": {
-   "title": "批量裁剪比例",
-   "summary": "比例裁剪：python xxx.py <目录> --ratio 16:9",
-   "usage": "python xxx.py <目录> --ratio 16:9",
-   "params": [
-    {
-     "flag": "directory",
-     "positional": true
-    },
-    {
-     "flag": "--ratio",
-     "default": "16:9"
-    }
-   ]
-  },
-  "tools_img2-batch-enhance": {
-   "title": "批量亮度/对比度",
-   "summary": "画质调整：python xxx.py <目录> --brightness 1.1 --contrast 1.15",
-   "usage": "python xxx.py <目录> --brightness 1.1 --contrast 1.15",
-   "params": [
-    {
-     "flag": "directory",
-     "positional": true
-    },
-    {
-     "flag": "--brightness",
-     "type": "float",
-     "default": 1.0
-    },
-    {
-     "flag": "--contrast",
-     "type": "float",
-     "default": 1.0
-    },
-    {
-     "flag": "--saturation",
-     "type": "float",
-     "default": 1.0
-    }
-   ]
-  },
-  "tools_img2-batch-resize": {
-   "title": "批量缩放",
-   "summary": "批量缩放：python xxx.py <目录> --max-side 1600",
-   "usage": "python xxx.py <目录> --max-side 1600",
-   "params": [
-    {
-     "flag": "directory",
-     "positional": true
-    },
-    {
-     "flag": "--max-side",
-     "type": "int",
-     "default": 1600
-    },
-    {
-     "flag": "--quality",
-     "type": "int",
-     "default": 85
-    }
-   ]
-  },
-  "tools_img2-batch-watermark": {
-   "title": "批量水印",
-   "summary": "批量水印：python xxx.py <目录> --text '© 2026' --mode corner|tile",
-   "usage": "python xxx.py <目录> --text '© 2026' --mode corner|tile",
-   "params": [
-    {
-     "flag": "directory",
-     "positional": true
-    },
-    {
-     "flag": "--text",
-     "default": "© 示例库"
-    },
-    {
-     "flag": "--mode",
-     "default": "corner"
-    },
-    {
-     "flag": "--opacity",
-     "type": "int",
-     "default": 110
-    }
-   ]
-  },
-  "tools_img2-contact-sheet": {
-   "title": "缩略图拼贴",
-   "summary": "拼贴墙：python xxx.py <目录> --cols 4 --cell 240",
-   "usage": "python xxx.py <目录> --cols 4 --cell 240",
-   "params": [
-    {
-     "flag": "directory",
-     "positional": true
-    },
-    {
-     "flag": "--cols",
-     "type": "int",
-     "default": 4
-    },
-    {
-     "flag": "--cell",
-     "type": "int",
-     "default": 240
-    },
-    {
-     "flag": "-o",
-     "default": "contact_sheet.jpg"
-    }
-   ]
-  },
-  "tools_img2-dominant-color": {
-   "title": "主色调提取",
-   "summary": "主色调：缩图 + 量化取出现最多的颜色。",
-   "usage": "python imgtool2_dominant-color.py",
-   "params": [
-    {
-     "flag": "image",
-     "positional": true
-    },
-    {
-     "flag": "--top",
-     "type": "int",
-     "default": 5
-    }
-   ]
-  },
-  "tools_img2-gif-compose": {
-   "title": "图片合成 GIF",
-   "summary": "合成 GIF：python xxx.py frame_*.png 所在目录 -o out.gif --fps 8",
-   "usage": "python xxx.py frame_*.png 所在目录 -o out.gif --fps 8",
-   "params": [
-    {
-     "flag": "directory",
-     "positional": true
-    },
-    {
-     "flag": "-o",
-     "default": "out.gif"
-    },
-    {
-     "flag": "--fps",
-     "type": "int",
-     "default": 8
-    },
-    {
-     "flag": "--width",
-     "type": "int",
-     "default": 480
-    }
-   ]
-  },
-  "tools_img2-gif-extract": {
-   "title": "GIF 帧提取",
-   "summary": "GIF 拆帧：python xxx.py anim.gif -o frames",
-   "usage": "python xxx.py anim.gif -o frames",
-   "params": [
-    {
-     "flag": "gif",
-     "positional": true
-    },
-    {
-     "flag": "-o",
-     "default": "frames"
-    }
-   ]
-  },
-  "tools_img2-img-info-report": {
-   "title": "图片信息报告",
-   "summary": "图片报告：目录内图片尺寸/格式/体积一览。",
-   "usage": "python imgtool2_img-info-report.py",
-   "params": [
-    {
-     "flag": "directory",
-     "nargs": "?",
-     "default": ".",
-     "positional": true
-    }
-   ]
-  },
-  "tools_img2-rounded-border": {
-   "title": "圆角与边框",
-   "summary": "圆角边框：python xxx.py <目录> --radius 24 --border 3",
-   "usage": "python xxx.py <目录> --radius 24 --border 3",
-   "params": [
-    {
-     "flag": "directory",
-     "positional": true
-    },
-    {
-     "flag": "--radius",
-     "type": "int",
-     "default": 24
-    },
-    {
-     "flag": "--border",
-     "type": "int",
-     "default": 0
-    }
-   ]
-  },
-  "tools_log-analyzer": {
-   "title": "日志等级统计",
-   "summary": "日志分析：等级统计 + 错误明细。",
-   "usage": "python log_analyzer.py",
-   "params": []
-  },
-  "tools_media-media-audio-compress": {
-   "title": "音频压缩转码",
-   "summary": "音频压缩：python xxx.py input.wav --bitrate 96k",
-   "usage": "python xxx.py input.wav --bitrate 96k",
-   "params": [
-    {
-     "flag": "input",
-     "positional": true
-    },
-    {
-     "flag": "--bitrate",
-     "default": "128k"
-    },
-    {
-     "flag": "--codec",
-     "default": "libmp3lame"
-    }
-   ]
-  },
-  "tools_media-media-batch-convert": {
-   "title": "批量转码",
-   "summary": "批量转码：python xxx.py <目录> --crf 24",
-   "usage": "python xxx.py <目录> --crf 24",
-   "params": [
-    {
-     "flag": "directory",
-     "positional": true
-    },
-    {
-     "flag": "--crf",
-     "type": "int",
-     "default": 24
-    },
-    {
-     "flag": "--workers",
-     "type": "int",
-     "default": 2
-    }
-   ]
-  },
-  "tools_media-media-compress": {
-   "title": "视频压缩",
-   "summary": "视频压缩：python xxx.py input.mp4 --crf 26 --preset fast",
-   "usage": "python xxx.py input.mp4 --crf 26 --preset fast",
-   "params": [
-    {
-     "flag": "input",
-     "positional": true
-    },
-    {
-     "flag": "--crf",
-     "type": "int",
-     "default": 26,
-     "help": "18 高质量 ~ 28 高压缩"
-    },
-    {
-     "flag": "--preset",
-     "default": "fast"
-    }
-   ]
-  },
-  "tools_media-media-concat": {
-   "title": "视频合并",
-   "summary": "合并：python xxx.py a.mp4 b.mp4 c.mp4 -o merged.mp4",
-   "usage": "python xxx.py a.mp4 b.mp4 c.mp4 -o merged.mp4",
-   "params": [
-    {
-     "flag": "inputs",
-     "nargs": "+",
-     "positional": true
-    },
-    {
-     "flag": "-o",
-     "default": "merged.mp4"
-    }
-   ]
-  },
-  "tools_media-media-convert": {
-   "title": "视频格式转换",
-   "summary": "格式转换：python xxx.py input.mov [-o output.mp4]",
-   "usage": "python xxx.py input.mov [-o output.mp4]",
-   "params": [
-    {
-     "flag": "input",
-     "positional": true
-    },
-    {
-     "flag": "-o"
-    }
-   ]
-  },
-  "tools_media-media-extract-audio": {
-   "title": "提取音频",
-   "summary": "提取音频：python xxx.py input.mp4 -o audio.mp3",
-   "usage": "python xxx.py input.mp4 -o audio.mp3",
-   "params": [
-    {
-     "flag": "input",
-     "positional": true
-    },
-    {
-     "flag": "-o"
-    },
-    {
-     "flag": "--bitrate",
-     "default": "192k"
-    }
-   ]
-  },
-  "tools_media-media-gif": {
-   "title": "视频转 GIF",
-   "summary": "视频转 GIF：python xxx.py clip.mp4 --start 5 --duration 3 --width 480",
-   "usage": "python xxx.py clip.mp4 --start 5 --duration 3 --width 480",
-   "params": [
-    {
-     "flag": "input",
-     "positional": true
-    },
-    {
-     "flag": "--start",
-     "type": "float",
-     "default": 0
-    },
-    {
-     "flag": "--duration",
-     "type": "float",
-     "default": 3
-    },
-    {
-     "flag": "--width",
-     "type": "int",
-     "default": 480
-    },
-    {
-     "flag": "--fps",
-     "type": "int",
-     "default": 12
-    },
-    {
-     "flag": "-o",
-     "default": "out.gif"
-    }
-   ]
-  },
-  "tools_media-media-probe": {
-   "title": "媒体信息探测",
-   "summary": "ffprobe JSON 解析：时长/分辨率/编码/码率。",
-   "usage": "python media_media-probe.py",
-   "params": [
-    {
-     "flag": "media",
-     "nargs": "+",
-     "positional": true
-    }
-   ]
-  },
-  "tools_media-media-screenshot": {
-   "title": "视频截图",
-   "summary": "截图：单帧 --at 00:00:30，或 --every 5 批量截帧。",
-   "usage": "python media_media-screenshot.py",
-   "params": [
-    {
-     "flag": "input",
-     "positional": true
-    },
-    {
-     "flag": "--at",
-     "default": "00:00:05",
-     "help": "单帧时间点"
-    },
-    {
-     "flag": "--every",
-     "type": "float",
-     "default": 0,
-     "help": "每 N 秒一帧（批量模式）"
-    },
-    {
-     "flag": "-o",
-     "default": "frame.png"
-    }
-   ]
-  },
-  "tools_media-media-strip-audio": {
-   "title": "去除音轨",
-   "summary": "去音轨：python xxx.py input.mp4",
-   "usage": "python xxx.py input.mp4",
-   "params": [
-    {
-     "flag": "input",
-     "positional": true
-    }
-   ]
-  },
-  "tools_media-media-trim": {
-   "title": "音视频裁剪",
-   "summary": "裁剪：python xxx.py input.mp4 --start 00:00:10 --duration 30",
-   "usage": "python xxx.py input.mp4 --start 00:00:10 --duration 30",
-   "params": [
-    {
-     "flag": "input",
-     "positional": true
-    },
-    {
-     "flag": "--start",
-     "default": "00:00:00"
-    },
-    {
-     "flag": "--duration",
-     "type": "float",
-     "default": 10
-    },
-    {
-     "flag": "-o"
-    }
-   ]
-  },
-  "tools_media-media-volume": {
-   "title": "音量调整",
-   "summary": "音量：python xxx.py input.mp4 --gain 1.5 | --normalize",
-   "usage": "python xxx.py input.mp4 --gain 1.5 | --normalize",
-   "params": [
-    {
-     "flag": "input",
-     "positional": true
-    },
-    {
-     "flag": "--gain",
-     "type": "float",
-     "default": 1.0,
-     "help": "音量倍数"
-    },
-    {
-     "flag": "--normalize",
-     "action": "store_true",
-     "help": "loudnorm 响度归一化"
-    }
-   ]
-  },
-  "tools_merge_courseware.py": {
-   "title": "merge_courseware",
-   "summary": "将课程资料（按周组织的 Python 代码）融合进当前项目。",
-   "usage": "python merge_courseware.py",
-   "params": []
-  },
-  "tools_office-docx-create": {
-   "title": "Word 文档生成",
-   "summary": "Word 生成：会议纪要模板。",
-   "usage": "python office_docx-create.py",
-   "params": [],
-   "notes": [
-    "教学示例：脚本内数据为演示硬编码；实际使用把数据源换成真实文件/目录即可。"
-   ]
-  },
-  "tools_office-docx-read": {
-   "title": "Word 读取",
-   "summary": "Word 读取：先跑 docx-create 生成文件，再提取内容。",
-   "usage": "python office_docx-read.py",
-   "params": [],
-   "notes": [
-    "教学示例：脚本内数据为演示硬编码；实际使用把数据源换成真实文件/目录即可。"
-   ]
-  },
-  "tools_office-docx-table": {
-   "title": "Word 表格",
-   "summary": "Word 表格：数据报表插入。",
-   "usage": "python office_docx-table.py",
-   "params": [],
-   "notes": [
-    "教学示例：脚本内数据为演示硬编码；实际使用把数据源换成真实文件/目录即可。"
-   ]
-  },
-  "tools_office-file-batch-rename": {
-   "title": "批量重命名",
-   "summary": "批量重命名：默认预览，--apply 执行。",
-   "usage": "python office_file-batch-rename.py",
-   "params": [
-    {
-     "flag": "directory",
-     "nargs": "?",
-     "default": ".",
-     "positional": true
-    },
-    {
-     "flag": "--prefix",
-     "default": "file"
-    },
-    {
-     "flag": "--apply",
-     "action": "store_true"
-    }
-   ]
-  },
-  "tools_office-file-classify": {
-   "title": "文件自动分类",
-   "summary": "文件分类：图片/文档/压缩包/其他 四类归档。",
-   "usage": "python office_file-classify.py",
-   "params": []
-  },
-  "tools_office-file-duplicate-find": {
-   "title": "重复文件查找",
-   "summary": "重复文件：按内容哈希分组。",
-   "usage": "python office_file-duplicate-find.py",
-   "params": []
-  },
-  "tools_office-file-tree-report": {
-   "title": "目录体积报告",
-   "summary": "目录报告：子目录体积排行。",
-   "usage": "python office_file-tree-report.py",
-   "params": []
-  },
-  "tools_office-mail-compose-eml": {
-   "title": "邮件构造与落盘",
-   "summary": "邮件构造：生成 .eml 文件（不实际发送）。",
-   "usage": "python office_mail-compose-eml.py",
-   "params": [],
-   "notes": [
-    "教学示例：脚本内数据为演示硬编码；实际使用把数据源换成真实文件/目录即可。"
-   ]
-  },
-  "tools_office-sched-once-task": {
-   "title": "一次性定时任务",
-   "summary": "定时任务：sched 延时执行一次。",
-   "usage": "python office_sched-once-task.py",
-   "params": []
-  },
-  "tools_office-text-report": {
-   "title": "文本日报生成",
-   "summary": "文本日报：数据 → 模板化报告。",
-   "usage": "python office_text-report.py",
-   "params": [],
-   "notes": [
-    "教学示例：脚本内数据为演示硬编码；实际使用把数据源换成真实文件/目录即可。"
-   ]
-  },
-  "tools_office-xls-chart": {
-   "title": "Excel 内嵌图表",
-   "summary": "Excel 图表：月度数据的内嵌柱状图。",
-   "usage": "python office_xls-chart.py",
-   "params": [],
-   "notes": [
-    "教学示例：脚本内数据为演示硬编码；实际使用把数据源换成真实文件/目录即可。"
-   ]
-  },
-  "tools_office-xls-create": {
-   "title": "Excel 建表入门",
-   "summary": "Excel 建表：生成月度销售表。",
-   "usage": "python office_xls-create.py",
-   "params": [],
-   "notes": [
-    "教学示例：脚本内数据为演示硬编码；实际使用把数据源换成真实文件/目录即可。"
-   ]
-  },
-  "tools_office-xls-dedup-merge": {
-   "title": "Excel 去重合并",
-   "summary": "Excel 去重合并：重复工号只保留首条。",
-   "usage": "python office_xls-dedup-merge.py",
-   "params": [],
-   "notes": [
-    "教学示例：脚本内数据为演示硬编码；实际使用把数据源换成真实文件/目录即可。"
-   ]
-  },
-  "tools_office-xls-formula": {
-   "title": "Excel 公式与汇总",
-   "summary": "Excel 公式：SUMIF 与总计行。",
-   "usage": "python office_xls-formula.py",
-   "params": [],
-   "notes": [
-    "教学示例：脚本内数据为演示硬编码；实际使用把数据源换成真实文件/目录即可。"
-   ]
-  },
-  "tools_office-xls-multi-sheet": {
-   "title": "多 Sheet 拆分",
-   "summary": "多 Sheet：按部门拆分工作表。",
-   "usage": "python office_xls-multi-sheet.py",
-   "params": []
-  },
-  "tools_office-xls-read": {
-   "title": "Excel 读取与遍历",
-   "summary": "Excel 读取：遍历 + 汇总。",
-   "usage": "python office_xls-read.py",
-   "params": [],
-   "notes": [
-    "教学示例：脚本内数据为演示硬编码；实际使用把数据源换成真实文件/目录即可。"
-   ]
-  },
-  "tools_office-xls-style": {
-   "title": "Excel 样式",
-   "summary": "Excel 样式：表头加粗白字 + 蓝底 + 定宽列。",
-   "usage": "python office_xls-style.py",
-   "params": [],
-   "notes": [
-    "教学示例：脚本内数据为演示硬编码；实际使用把数据源换成真实文件/目录即可。"
-   ]
-  },
-  "tools_office2-clipboard-inventory": {
-   "title": "库存盘点脚本",
-   "summary": "库存盘点：期初/入库/出库 三表核算。",
-   "usage": "python office2_clipboard-inventory.py",
-   "params": [],
-   "notes": [
-    "教学示例：脚本内数据为演示硬编码；实际使用把数据源换成真实文件/目录即可。"
-   ]
-  },
-  "tools_office2-docx-batch-letters": {
-   "title": "Word 批量函件",
-   "summary": "批量函件：模板替换生成多份 Word。",
-   "usage": "python office2_docx-batch-letters.py",
-   "params": [],
-   "notes": [
-    "教学示例：脚本内数据为演示硬编码；实际使用把数据源换成真实文件/目录即可。"
-   ]
-  },
-  "tools_office2-todo-markdown": {
-   "title": "Markdown 待办清单",
-   "summary": "Markdown 待办：生成与统计。",
-   "usage": "python office2_todo-markdown.py",
-   "params": [],
-   "notes": [
-    "教学示例：脚本内数据为演示硬编码；实际使用把数据源换成真实文件/目录即可。"
-   ]
-  },
-  "tools_office2-xls-conditional": {
-   "title": "条件格式",
-   "summary": "条件格式：超阈值标红。",
-   "usage": "python office2_xls-conditional.py",
-   "params": []
-  },
-  "tools_office2-xls-freeze-header": {
-   "title": "冻结表头",
-   "summary": "冻结窗格与自动筛选。",
-   "usage": "python office2_xls-freeze-header.py",
-   "params": []
-  },
-  "tools_office2-xls-sort-in-place": {
-   "title": "Excel 数据排序",
-   "summary": "Excel 排序：按金额降序重写。",
-   "usage": "python office2_xls-sort-in-place.py",
-   "params": [],
-   "notes": [
-    "教学示例：脚本内数据为演示硬编码；实际使用把数据源换成真实文件/目录即可。"
-   ]
-  },
-  "tools_office2-xls-two-file-diff": {
-   "title": "两表对比",
-   "summary": "两表对比：新增与移除名单。",
-   "usage": "python office2_xls-two-file-diff.py",
-   "params": []
-  },
-  "tools_office2-xls-validate": {
-   "title": "数据校验",
-   "summary": "Excel 数据校验：错误行收集报告。",
-   "usage": "python office2_xls-validate.py",
-   "params": []
-  },
-  "tools_office3-pdf-split": {
-   "title": "PDF 拆分",
-   "summary": "PDF 拆分：每页一个文件。",
-   "usage": "python office3_pdf-split.py",
-   "params": []
-  },
-  "tools_office3-pptx-create": {
-   "title": "PPT 幻灯片生成",
-   "summary": "PPT 生成：三页周报幻灯片。",
-   "usage": "python office3_pptx-create.py",
-   "params": [],
-   "notes": [
-    "教学示例：脚本内数据为演示硬编码；实际使用把数据源换成真实文件/目录即可。"
-   ]
-  },
-  "tools_office3-xls-annotation": {
-   "title": "单元格批注",
-   "summary": "批注：给数据加口径说明。",
-   "usage": "python office3_xls-annotation.py",
-   "params": []
-  },
-  "tools_office3-xls-merged-cells": {
-   "title": "合并单元格表头",
-   "summary": "合并单元格：两级表头。",
-   "usage": "python office3_xls-merged-cells.py",
-   "params": []
-  },
-  "tools_office3-xls-pivot-groupby": {
-   "title": "Excel 透视汇总",
-   "summary": "透视：按部门/月份双维聚合。",
-   "usage": "python office3_xls-pivot-groupby.py",
-   "params": [],
-   "notes": [
-    "教学示例：脚本内数据为演示硬编码；实际使用把数据源换成真实文件/目录即可。"
-   ]
-  },
-  "tools_office3-xls-protect": {
-   "title": "工作表保护",
-   "summary": "工作表保护：锁定公式，开放输入列。",
-   "usage": "python office3_xls-protect.py",
-   "params": []
-  },
-  "tools_office3-xls-sqlite-export": {
-   "title": "SQLite ↔ Excel",
-   "summary": "SQLite → Excel：查询结果报表化。",
-   "usage": "python office3_xls-sqlite-export.py",
-   "params": [],
-   "notes": [
-    "教学示例：脚本内数据为演示硬编码；实际使用把数据源换成真实文件/目录即可。"
-   ]
-  },
-  "tools_office3-xls-vlookup-join": {
-   "title": "跨表关联",
-   "summary": "跨表关联：主表 + 字典表拼接。",
-   "usage": "python office3_xls-vlookup-join.py",
-   "params": []
-  },
-  "tools_plan_regroup.py": {
-   "title": "plan_regroup",
-   "summary": "规划：将扁平化的章节按主题分组到子目录，子目录内连续编号 NN-标题.py。\n仅打印计划，不实际移动。",
-   "usage": "python plan_regroup.py",
-   "params": []
-  },
-  "tools_regroup.py": {
-   "title": "regroup",
-   "summary": "将扁平化章节按主题分组到子目录，子目录内连续编号 NN-标题.py。\n用法：python3 regroup.py [--dry]",
-   "usage": "python regroup.py",
-   "params": []
-  },
-  "tools_rename_normalize.py": {
-   "title": "rename_normalize",
-   "summary": "规范化文件名：驼峰/连字符命名的英文 .py 改为 snake_case；清理冗余 venv 副本。",
-   "usage": "python rename_normalize.py",
-   "params": []
-  },
-  "tools_rename_weeks.py": {
-   "title": "rename_weeks",
-   "summary": "将按周命名的目录改为按内容语义命名。用法：python3 rename_weeks.py [--dry]",
-   "usage": "python rename_weeks.py",
-   "params": []
-  },
-  "tools_renumber.py": {
-   "title": "renumber",
-   "summary": "对剩余单层章节统一连续编号 NN-标题.py，去掉 hm_/my-/pachong 等前缀。\n不建子目录（主题单一）。用法：python3 renumber.py [--dry]",
-   "usage": "python renumber.py",
-   "params": []
-  },
-  "tools_renumber_crawler.py": {
-   "title": "renumber_crawler",
-   "summary": "统一 crawler/01-basics 与 02-intermediate/dynamic 的文件命名。\n- 去掉重复/无序前缀，统一为连续 NN-标题.py\n- 驼峰英文文件名转 snake_case（如 MozillaCookieJar -> mozilla_cookie_jar）\n用法：python3 renumber_crawler.py [--dry]",
-   "usage": "python renumber_crawler.py",
-   "params": []
-  },
-  "tools_renumber_remaining.py": {
-   "title": "renumber_remaining",
-   "summary": "处理剩余目录的命名规范化。用法：python3 renumber_remaining.py [--dry]",
-   "usage": "python renumber_remaining.py",
-   "params": []
-  },
-  "tools_tools-qr-matrix-1": {
-   "title": "字符方阵·s9◆◇",
-   "summary": "字符方阵：9×9，字符集 ''◆◇''。",
-   "usage": "python tools-qr-matrix_1.py",
-   "params": [],
-   "notes": [
-    "教学示例：脚本内数据为演示硬编码；实际使用把数据源换成真实文件/目录即可。"
-   ]
-  },
-  "tools_tools-qr-matrix-2": {
-   "title": "字符方阵·s11░▒▓",
-   "summary": "字符方阵：11×11，字符集 ''░▒▓''。",
-   "usage": "python tools-qr-matrix_2.py",
-   "params": [],
-   "notes": [
-    "教学示例：脚本内数据为演示硬编码；实际使用把数据源换成真实文件/目录即可。"
-   ]
-  },
-  "tools_tools-qr-matrix-3": {
-   "title": "字符方阵·s13·:*#",
-   "summary": "字符方阵：13×13，字符集 ''·:*#''。",
-   "usage": "python tools-qr-matrix_3.py",
-   "params": [],
-   "notes": [
-    "教学示例：脚本内数据为演示硬编码；实际使用把数据源换成真实文件/目录即可。"
-   ]
-  },
-  "tools_tools-qr-matrix-4": {
-   "title": "字符方阵·s10AB123",
-   "summary": "字符方阵：10×10，字符集 ''AB123''。",
-   "usage": "python tools-qr-matrix_4.py",
-   "params": [],
-   "notes": [
-    "教学示例：脚本内数据为演示硬编码；实际使用把数据源换成真实文件/目录即可。"
-   ]
-  },
-  "tools_tools-text-table-1": {
-   "title": "文本表格·商品",
-   "summary": "文本表格：4 行对齐输出。",
-   "usage": "python tools-text-table_1.py",
-   "params": [],
-   "notes": [
-    "教学示例：脚本内数据为演示硬编码；实际使用把数据源换成真实文件/目录即可。"
-   ]
-  },
-  "tools_tools-text-table-2": {
-   "title": "文本表格·库存",
-   "summary": "文本表格：3 行对齐输出。",
-   "usage": "python tools-text-table_2.py",
-   "params": [],
-   "notes": [
-    "教学示例：脚本内数据为演示硬编码；实际使用把数据源换成真实文件/目录即可。"
-   ]
-  },
-  "tools_tools-text-table-3": {
-   "title": "文本表格·成绩",
-   "summary": "文本表格：5 行对齐输出。",
-   "usage": "python tools-text-table_3.py",
-   "params": [],
-   "notes": [
-    "教学示例：脚本内数据为演示硬编码；实际使用把数据源换成真实文件/目录即可。"
-   ]
-  },
-  "tools_verify_merge.py": {
-   "title": "verify_merge",
-   "summary": "校验融合完整性：源目录应纳入的文件是否全部已存在于目标。",
-   "usage": "python verify_merge.py",
-   "params": [
-    {
-     "flag": "--src",
-     "help": "源课程资料目录（按周组织）"
-    }
-   ]
   }
- }
 }

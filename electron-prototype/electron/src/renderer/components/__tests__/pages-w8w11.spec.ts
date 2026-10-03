@@ -105,9 +105,9 @@ describe('向导步骤', () => {
     expect(w.findAll('input')).toHaveLength(1)
     await w.find('[data-testid="wizard-next"]').trigger('click')
     expect(w.findAll('input')).toHaveLength(1)
-    expect(w.find('[data-testid="wizard-run"]').exists()).toBe(true)
+    expect(w.find('[data-testid="page-run"]').exists()).toBe(true)
     await w.find('[data-testid="wizard-prev"]').trigger('click')
-    expect(w.find('[data-testid="wizard-run"]').exists()).toBe(false)
+    expect(w.find('[data-testid="page-run"]').exists()).toBe(false)
   })
 })
 
