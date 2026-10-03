@@ -77,7 +77,6 @@ export const lineChartSchema: InteractiveToolSchema = {
     if (typeof err === 'string') return INVALID
     const marker = v.marker === true ? '"o"' : 'None'
     const lw = Math.max(0.5, Number(v.linewidth ?? 2) || 2)
-    const title = str(v.title)
     const grid = v.grid !== false
     return `${MPL_PRELUDE}
 header, data_rows = parse_csv(${JSON.stringify(data)})

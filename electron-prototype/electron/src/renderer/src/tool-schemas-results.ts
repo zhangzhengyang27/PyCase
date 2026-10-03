@@ -298,7 +298,7 @@ import json
 import re
 from pathlib import Path
 
-pat = re.compile(r"(api[_-]?key|secret|token|passwd|password)\\s*[=: ]\\s*[\\\"']([\\w-]{8,})[\\\"']", re.I)
+pat = re.compile(r"(api[_-]?key|secret|token|passwd|password)\\s*[=: ]\\s*["']([\\w-]{8,})[\\"']", re.I)
 exts = {".py", ".ts", ".js", ".vue", ".env", ".json", ".yml", ".yaml"}
 rows = []
 for f in sorted(Path(${JSON.stringify(dir)}).rglob("*")):
