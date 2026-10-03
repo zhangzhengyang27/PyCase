@@ -108,6 +108,12 @@ const DATE_CARD: VExample = {
 /** schema 注册点（reactive——注册即反映到工具池）；内置三工具来自 tool-schemas.ts */
 export const interactiveToolSchemas = reactive<InteractiveToolSchema[]>([...TOOL_SCHEMAS])
 
+// 画廊路由专用页（W17 图族）：画廊卡片直达的 bulk_viz 图族交互页，与工具池分离——
+// 不进搜索/工具箱卡片（产品口径：这批入口只出现在示例画廊），但 getToolSchema 可达，
+// InteractiveToolPage 照常渲染。注册方向 interactive-tools → viz2（viz2 仅类型导入，无环）。
+import { VIZ2_SCHEMAS } from './tool-schemas-viz2'
+export const interactiveGallerySchemas = reactive<InteractiveToolSchema[]>([...VIZ2_SCHEMAS])
+
 function schemaToCard(s: InteractiveToolSchema): VExample {
   return {
     id: s.id,
@@ -128,5 +134,8 @@ export const interactiveToolItems = computed<VExample[]>(() => [
 ])
 
 export function getToolSchema(id: string): InteractiveToolSchema | undefined {
-  return interactiveToolSchemas.find((s) => s.id === id)
+  return (
+    interactiveToolSchemas.find((s) => s.id === id) ??
+    interactiveGallerySchemas.find((s) => s.id === id)
+  )
 }

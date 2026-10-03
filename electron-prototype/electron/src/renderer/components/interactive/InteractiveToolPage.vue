@@ -9,13 +9,21 @@ import ToolResultPanel from './ToolResultPanel.vue'
 import CodeDrawer from '../date-calculator/CodeDrawer.vue'
 import { getToolSchema, type SelectOption } from '../../src/interactive-tools'
 import { closeInteractive, toolValueOf } from '../../src/store/interactive'
-import { openDetail, selectedId } from '../../src/store/detail'
+import { interactiveSourceId, openDetail, pendingVizMode, selectedId } from '../../src/store/detail'
 import { cliExampleOfCurrentPage } from '../../src/interactive-mapping'
+import { examples } from '../../src/store/catalog'
 
 const schema = computed(() => (selectedId.value ? getToolSchema(selectedId.value) : undefined))
 const values = computed(() => (schema.value ? toolValueOf(schema.value.id, schema.value.fields) : {}))
 const result = computed(() => schema.value?.compute?.(values.value))
 const code = computed(() => (schema.value ? schema.value.pyCode(values.value) : '# 工具不存在'))
+
+// 画廊路由回链：经画廊卡片进来时指向被点的那张卡（可能是 12 个同名变体中的任何一个），
+// 与 W14 的 CLI 工具回链（cliExampleOfCurrentPage）互斥出现。
+const sourceExample = computed(() => {
+  const sid = interactiveSourceId.value
+  return sid ? (examples.value.find((e) => e.id === sid) ?? null) : null
+})
 
 // --- W8-W11 框架：sidecar 计算型 + 向导步骤 + quickRun ---
 import { onMounted, ref, watch } from 'vue'
@@ -63,6 +71,21 @@ watch(schema, (sc) => {
   if (sc?.quickRun) autoRun()
 })
 
+// 路由携带的模式预选：落页（含同页换变体重路由）时套用一次并清空；
+// immediate 必须开——首落场景 pending 在挂载前已设置，靠 immediate 补上这次消费。
+// 目标页没有 mode 字段或没有该档位时静默跳过（回落页面默认）。
+watch(
+  pendingVizMode,
+  (p) => {
+    if (!p || !schema.value || schema.value.id !== p.pageId) return
+    const f = schema.value.fields.find((x) => x.key === 'mode')
+    const ok = f && Array.isArray(f.options) && f.options.some((o) => o.value === p.mode)
+    if (f && ok) values.value.mode = p.mode
+    pendingVizMode.value = null
+  },
+  { immediate: true }
+)
+
 /** required 且当前为空 → 传给 ToolField 标红（compute 侧同时出 error 引导） */
 /** select 联动：options 函数形态按当前输入解析（静态 options 原样透传由 ToolField 兜底） */
 function optionsOf(key: string): SelectOption[] | undefined {
@@ -102,6 +125,15 @@ function isInvalid(key: string): boolean {
         @click="openDetail(cliExampleOfCurrentPage.id)"
       >
         CLI 源码
+      </button>
+      <button
+        v-if="sourceExample"
+        class="app-no-drag border border-line rounded-control bg-transparent text-ink-mute hover:text-accent hover:border-accent cursor-pointer px-2 py-1 text-caption"
+        data-testid="it-source"
+        :title="`查看原示例源码：${sourceExample.title}（${sourceExample.name}）`"
+        @click="openDetail(sourceExample.id, true, { forceDetail: true })"
+      >
+        查看原示例源码
       </button>
     </div>
 

@@ -1,7 +1,7 @@
 // store/interactive.ts：日期计算器页面状态（日期对 / 激活 Tab / 加减行）。
 // 会话内记忆：切走再回来保持；返回列表只清 selectedId，不清这里。
 import { ref } from 'vue'
-import { selectedId } from './detail'
+import { interactiveSourceId, pendingVizMode, selectedId } from './detail'
 import { DATE_CALC_ID } from '../interactive-tools'
 
 export type TabKey = 'diff' | 'countdown' | 'arith' | 'calendar'
@@ -18,13 +18,18 @@ export const dateB = ref('2025-01-01')
 export const activeTab = ref<TabKey>('diff')
 export const arithRows = ref<ArithRow[]>([{ target: 'd1', op: '+', n: 30, unit: 'day' }])
 
-/** 打开交互工具页（selectedId 命中 interactive: 前缀时 App.vue 渲染专属页） */
+/** 打开交互工具页（selectedId 命中 interactive: 前缀时 App.vue 渲染专属页）。
+ * 直开（工具箱/日期计算器等）没有画廊路由语境，清掉回链与模式预选。 */
 export function openInteractive(id: string = DATE_CALC_ID): void {
+  interactiveSourceId.value = null
+  pendingVizMode.value = null
   selectedId.value = id
 }
 
 /** 返回列表（本页无脏状态，直接清选中） */
 export function closeInteractive(): void {
+  interactiveSourceId.value = null
+  pendingVizMode.value = null
   selectedId.value = null
 }
 

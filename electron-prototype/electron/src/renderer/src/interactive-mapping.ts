@@ -1,7 +1,11 @@
-// interactive-mapping.ts：目录工具条目 ↔ 交互页面的映射（W14 终局批）。
-// 凡交互页面已覆盖其能力的 CLI/目录条目，卡片点击直接路由到交互页面
-// （CLI 详情仍可从交互页头部的「CLI 源码」按钮进入——双向可达）。
-// 映射键 = 目录条目标题（与内置库 JSON 的 title 一致，生成器/手改标题需同步本表）。
+// interactive-mapping.ts：目录条目 ↔ 交互页面的映射（画廊路由终局形态）。
+// 两张表：
+//   1) TITLE_TO_INTERACTIVE——CLI/目录条目，title 精确匹配（W3-W14 各批）；
+//   2) VIZ_FAMILY_TO_INTERACTIVE——bulk_viz 图族变体，id 形如 topics_viz-<图族>-d<N>，
+//      由 vizVariantOf 解析出图族后查表（30 图族中 29 个已路由，quiver 暂无页面走详情兜底）。
+// store/detail.ts 的 openDetail 统一收口：凡命中映射的条目，打开动作一律直达交互页面
+// （画廊/清单/收藏/历史/命令面板全生效）；原示例源码从交互页头部的「查看原示例源码」
+// 回链进入（双向可达）。生成器改名时本表与内置库 JSON 需同步。
 import { computed } from 'vue'
 import { examples } from './store/catalog'
 import { selectedId } from './store/detail'
@@ -23,7 +27,7 @@ export const TITLE_TO_INTERACTIVE: Record<string, string> = {
   'JWT 解码器': 'interactive:jwt',
   '.env 校验器': 'interactive:env-check',
   'Markdown 目录生成': 'interactive:md-toc',
-  'gitignore 生成器': 'interactive:interactive:gitignore',
+  'gitignore 生成器': 'interactive:gitignore',
   换行符规范化: 'interactive:normalize',
   缩进规范化: 'interactive:normalize', // 与换行符规范化归并为同一页面
   批量查找替换: 'interactive:find-replace',
@@ -138,11 +142,89 @@ export const TITLE_TO_INTERACTIVE: Record<string, string> = {
   日期计算: 'interactive:date-calculator'
 }
 
-/** 目录条目 → 交互页面 id（无映射返回 null） */
+// ---------------------------------------------------------------------------
+// bulk_viz 图族路由（画廊卡片 → 图族交互页）
+// 变体 id 形如 topics_viz-bar-d8；d1~d12 与 12 种内置数据模式一一对应
+// （生成器与各图族页 MODE_FIELD 同序：d1=正弦加噪 … d12=平方增长），路由时按变体预选。
+// ---------------------------------------------------------------------------
+
+/** 图族代码（id 中段）→ 交互页面 id。W17 图族页为主，line/pie/hist 落工具箱既有图表页。 */
+export const VIZ_FAMILY_TO_INTERACTIVE: Record<string, string> = {
+  bar: 'interactive:viz-bar',
+  scatter: 'interactive:viz-scatter',
+  step: 'interactive:viz-step',
+  area: 'interactive:viz-area',
+  stackplot: 'interactive:viz-area', // 堆叠面积与面积图同族归并
+  errorbar: 'interactive:viz-errbar',
+  stem: 'interactive:viz-stem',
+  'dual-axis': 'interactive:viz-dualaxis',
+  'twin-styles': 'interactive:viz-dualaxis', // 双轴样式与双轴对比同族归并
+  'smooth-multiline': 'interactive:viz-multiseries',
+  polar: 'interactive:viz-polar-rose',
+  radar: 'interactive:viz-radar',
+  box: 'interactive:viz-box',
+  violin: 'interactive:viz-violin',
+  hexbin: 'interactive:viz-hexbin',
+  barh: 'interactive:viz-hbar',
+  'log-scale': 'interactive:viz-log',
+  annotation: 'interactive:viz-annotate',
+  inset: 'interactive:viz-inset',
+  'style-grid': 'interactive:viz-grid',
+  heatmap: 'interactive:viz-heatmap',
+  contour: 'interactive:viz-contour-filled',
+  surface3d: 'interactive:viz-surface-3d',
+  scatter3d: 'interactive:viz-scatter-3d',
+  wireframe3d: 'interactive:viz-wireframe-3d',
+  bar3d: 'interactive:viz-bar-3d',
+  // W17 未覆盖的图族 → 工具箱既有图表页兜底
+  line: 'interactive:chart-line',
+  pie: 'interactive:chart-pie',
+  hist: 'interactive:直方图'
+}
+
+/** 变体序号 → 内置数据模式 value（越界返回 null，页面回落默认模式） */
+const VIZ_D_TO_MODE: Record<string, string> = {
+  '1': 'sine',
+  '2': 'linear',
+  '3': 'exp',
+  '4': 'random',
+  '5': 'normal',
+  '6': 'pulse',
+  '7': 'step',
+  '8': 'bimodal',
+  '9': 'sawtooth',
+  '10': 'spike',
+  '11': 'sparse',
+  '12': 'square'
+}
+
+const VIZ_ID_RE = /^topics_viz-(.+)-d(\d+)$/
+
+export interface VizVariant {
+  /** 图族代码（id 中段，如 bar / dual-axis / smooth-multiline） */
+  family: string
+  /** 变体序号 d1~d12 */
+  n: number
+  /** 对应内置数据模式 value；d 越界时为 null */
+  mode: string | null
+}
+
+/** 解析 bulk_viz 图族变体（按 id，与内置库 JSON 的 id 生成规则同源）；非变体返回 null */
+export function vizVariantOf(ex: VExample | null | undefined): VizVariant | null {
+  if (!ex) return null
+  const m = VIZ_ID_RE.exec(ex.id)
+  if (!m) return null
+  return { family: m[1], n: Number(m[2]), mode: VIZ_D_TO_MODE[m[2]] ?? null }
+}
+
+/** 目录条目 → 交互页面 id（标题表 → 图族表两级解析；无映射返回 null） */
 export function interactiveIdForExample(ex: VExample | null | undefined): string | null {
   if (!ex) return null
   const title = (ex.title || ex.name || '').replace(/\.py$/i, '').trim()
-  return TITLE_TO_INTERACTIVE[title] ?? null
+  const byTitle = TITLE_TO_INTERACTIVE[title]
+  if (byTitle) return byTitle
+  const variant = vizVariantOf(ex)
+  return variant ? (VIZ_FAMILY_TO_INTERACTIVE[variant.family] ?? null) : null
 }
 
 /** 当前交互页面（schema 驱动）对应的同能力目录条目；无则 null */

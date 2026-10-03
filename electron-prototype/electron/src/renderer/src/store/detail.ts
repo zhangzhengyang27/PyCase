@@ -11,6 +11,8 @@ import { examples } from './catalog'
 import type { ExampleDetail, VersionInfo } from '../../../../../shared/protocol'
 import { recordHistory, runHistory, runTimeout, setSkipHighRiskConfirm, skipHighRiskConfirm } from './prefs'
 import { assets, loadAssets } from './assets'
+import { interactiveIdForExample, vizVariantOf } from '../interactive-mapping'
+import { isInteractiveId } from '../interactive-tools'
 
 export interface ArgSpec {
   name: string
@@ -170,6 +172,14 @@ export function surfaceState(s: OutputSurface): SurfaceState {
 let _earlyOutputBuffer: OutputLine[] = []
 
 export const selectedExample = computed(() => examples.value.find((e) => e.id === selectedId.value) || null)
+
+// ---------------------------------------------------------------------------
+// 画廊路由上下文（交互页 ↔ 原示例双向可达）
+// ---------------------------------------------------------------------------
+/** 经画廊路由进入交互页时被点的那张卡片；从工具箱/命令面板直开交互页时为 null */
+export const interactiveSourceId = ref<string | null>(null)
+/** 路由携带的模式预选（变体 d1~d12 → 内置数据模式）；InteractiveToolPage 落页时消费并清空 */
+export const pendingVizMode = ref<{ pageId: string; mode: string } | null>(null)
 export const detailHistory = computed(() =>
   selectedId.value ? runHistory.value.filter((h) => h.id === selectedId.value).slice(0, 20) : []
 )
@@ -234,18 +244,37 @@ export function clearSurface(surface: OutputSurface): void {
 }
 
 /** 打开详情页：返回参数解析 Promise（卡片「运行」据此决定自动运行或引导填参） */
-export async function openDetail(id: string, skipGuard = false): Promise<ArgSpec[]> {
+export async function openDetail(
+  id: string,
+  skipGuard = false,
+  opts: { forceDetail?: boolean } = {}
+): Promise<ArgSpec[]> {
   const ex = examples.value.find((e) => e.id === id)
   if (!ex) return []
   // 未保存的编辑不得静默丢弃：切换到不同示例前需要确认
   if (!skipGuard && selectedId.value && selectedId.value !== id && isDirty.value) {
     // 不在 openDetail 里同步询问：改为渲染层弹窗 + 用户确认后重放本次切换
-    requestConfirm('当前示例有未保存的修改，放弃并打开另一个示例？', () => void openDetail(id, true), {
+    requestConfirm('当前示例有未保存的修改，放弃并打开另一个示例？', () => void openDetail(id, true, opts), {
       title: '放弃未保存的修改？',
       confirmLabel: '放弃修改'
     })
     return []
   }
+  // ---- 画廊路由收口：凡交互页已覆盖能力的条目（CLI 工具标题表 / bulk_viz 图族表），
+  // 打开动作一律直达交互页面——画廊/清单/收藏/历史/命令面板全走这里。交互 id 自身与
+  // forceDetail（卡片「运行」、参数重试、「查看原示例源码」回链）不路由。
+  if (!isInteractiveId(id) && !opts.forceDetail) {
+    const routed = interactiveIdForExample(ex)
+    if (routed) {
+      interactiveSourceId.value = ex.id
+      const variant = vizVariantOf(ex)
+      pendingVizMode.value = variant?.mode ? { pageId: routed, mode: variant.mode } : null
+      selectedId.value = routed
+      return []
+    }
+  }
+  interactiveSourceId.value = null
+  pendingVizMode.value = null
   if (selectedId.value !== id) {
     selectedId.value = id
     // 源码不在这里取：契约 v2 起列表项不含 code，只能按 id 单独拉（loadSourceCode）。
@@ -333,9 +362,9 @@ async function loadSourceCode(id: string): Promise<void> {
   }
 }
 
-/** 参数解析失败后的重试（沿用当前选中项）。 */
+/** 参数解析失败后的重试（沿用当前选中项；详情页语境，不走画廊路由）。 */
 export function retryParseArgs(): Promise<ArgSpec[]> {
-  return selectedId.value ? openDetail(selectedId.value) : Promise.resolve([])
+  return selectedId.value ? openDetail(selectedId.value, false, { forceDetail: true }) : Promise.resolve([])
 }
 
 /**
@@ -380,6 +409,8 @@ export function closeDetail(force = false): void {
     return
   }
   selectedId.value = null
+  interactiveSourceId.value = null
+  pendingVizMode.value = null
 }
 
 // Monaco 实例由组件注册进来；内容变更与取值都经它
@@ -444,9 +475,10 @@ export function runFromDetail(): void {
   void startRun(selectedId.value, args, 'detail')
 }
 
-/** 卡片「运行」入口：必填参数缺失则留在表单引导填写，否则按表单值自动运行 */
+/** 卡片「运行」入口：必填参数缺失则留在表单引导填写，否则按表单值自动运行。
+ * forceDetail：运行要跑的是这个示例文件本身，不得被画廊路由改道到交互页。 */
 export async function runFromCard(id: string): Promise<void> {
-  await openDetail(id) // 参数落到 currentArgs；运行走 runFromDetail 的收集路径
+  await openDetail(id, false, { forceDetail: true }) // 参数落到 currentArgs；运行走 runFromDetail 的收集路径
   if (selectedId.value !== id) return // 等待期间用户已切换
   if (requiredArgsMissing.value) return
   runFromDetail()

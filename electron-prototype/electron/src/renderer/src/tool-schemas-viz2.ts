@@ -1,7 +1,10 @@
-// tool-schemas-viz2.ts：W17 bulk_viz 剩余 21 图族交互页（252 变体归并）。
-// 全部 matplotlib sidecar 运行 → PNG 进抽屉预览；内置数据模式（12 分布，种子 42）。
-// 1d 图族用 gen_data(mode,n) 一列数值；matrix 图族固定内置场景。
-// 只依赖 interactive-tools 的类型（运行时零导入）。
+// tool-schemas-viz2.ts：W17 bulk_viz 图族交互页（画廊路由专用注册，不进工具箱卡片池）。
+// 画廊卡片（topics_viz-<图族>-d<N> 变体）经 interactive-mapping 的图族表路由到本组页面
+// （24 页归并 348 变体；注册进 interactiveGallerySchemas，仅 getToolSchema 可达）。
+// 全部 matplotlib sidecar 运行 → PNG 进抽屉预览；内置数据模式（12 分布，种子 42，
+// 与变体 d1~d12 同序，路由时按变体预选）。1d 图族用 gen_data(mode,n) 一列数值；
+// matrix 图族固定内置场景（mode 字段仅保持表单一致）。
+// 只依赖 interactive-tools 的类型（运行时零导入，注册方向是 interactive-tools → 本文件）。
 import type { InteractiveToolSchema } from './interactive-tools'
 
 const str = (v: unknown): string => String(v ?? '')
@@ -77,8 +80,7 @@ function vizBase(
   title: string,
   description: string,
   extraFields: InteractiveToolSchema['fields'],
-  body: (v: Record<string, unknown>) => string,
-  needsJson = false
+  body: (v: Record<string, unknown>) => string
 ): InteractiveToolSchema {
   return {
     id: `interactive:viz-${id}`,
@@ -97,9 +99,10 @@ function vizBase(
       const n = Math.max(5, Math.trunc(Number(v.points ?? 60)) || 60)
       const jsonImport = 'import json\n'
       const decl = `mode = ${JSON.stringify(mode)}\nn = ${n}\n`
+      // 整桶透传：matrix 图族的 rows/cols/levels 等扩展字段要进 body（只传 mode/n 会让它们失效）
       return `${jsonImport}${GEN_HEAD}
 ${decl}
-${body({ mode, n })}
+${body({ ...v, mode, n })}
 
 ${OUT}`
     }
@@ -279,18 +282,6 @@ ax.grid(True, which="major", alpha=0.5)
 ax.minorticks_on()
 ax.grid(True, which="minor", alpha=0.15)`)
 
-export const subplotsVizSchema = vizBase('subplots', '双子图布局',
-  '上下双子图（原始/滑动均值）。',
-  [],
-  () => `data = gen_data(mode, n)
-kernel = np.ones(7) / 7
-smooth = np.convolve(data, kernel, mode="same")
-fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(8, 6))
-ax1.plot(np.arange(len(data)), data)
-ax1.set_title("原始")
-ax2.plot(np.arange(len(smooth)), smooth, color="tab:orange")
-ax2.set_title("平滑")`)
-
 // ---------------------------------------------------------------------------
 // 矩阵/特殊图族 ×6
 // ---------------------------------------------------------------------------
@@ -374,7 +365,7 @@ export const VIZ2_SCHEMAS: InteractiveToolSchema[] = [
   errbarVizSchema, stemVizSchema, dualaxisVizSchema, multiseriesVizSchema,
   polarRoseVizSchema, radarVizSchema, boxVizSchema, violinVizSchema,
   hexbinVizSchema, hbarVizSchema, logVizSchema, annotateVizSchema,
-  insetVizSchema, gridVizSchema, subplotsVizSchema,
+  insetVizSchema, gridVizSchema,
   heatmapVizSchema, contourVizSchema, surfaceVizSchema,
   scatter3dVizSchema, wireframeVizSchema, bar3dVizSchema
 ]
