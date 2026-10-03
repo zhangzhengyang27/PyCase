@@ -117,7 +117,9 @@ describe('画廊集成（catalog 管道 + 开关）', () => {
     await flushPromises()
     const cards = w.findAllComponents(ExampleCard)
     expect(cards).toHaveLength(1)
-    expect(cards[0]!.text()).toContain('×12')
+    // 用户反馈：×N 徽章没必要——家族卡只以标题「柱状图」示人
+    expect(cards[0]!.text()).toContain('柱状图')
+    expect(cards[0]!.text()).not.toContain('×12')
     await cards[0]!.get('[role="button"]').trigger('click')
     expect(selectedId.value).toBe('interactive:viz-lab')
     expect(pendingPreset.value?.values).toEqual({ type: 'bar', mode: 'sine' })

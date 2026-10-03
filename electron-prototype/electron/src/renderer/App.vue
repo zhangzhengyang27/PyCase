@@ -33,7 +33,7 @@ import BaseButton from './components/base/BaseButton.vue'
 import { statusDotCls } from './src/utils'
 import { applyMonacoTheme } from './monaco'
 import { aiPanelOpen, aiSettingsOpen, initAIEvents, loadAISettings, openAISettings } from './src/store/ai'
-import {
+import { galleryPool,
   activeSectionKey,
   activeView,
   examples,
@@ -169,7 +169,8 @@ function setView(key: ViewKey): void {
 const statusCount = computed(() => {
   if (activeView.value === 'toolbox') return `${toolboxItems.value.length} / ${toolsTotal.value} 个工具`
   if (activeView.value === 'runner') return `${examples.value.length} 个示例`
-  return `${filtered.value.length} / ${galleryExamples.value.length} 个示例`
+  // 画廊 = 归并口径（与页头/侧栏一致）；关掉变体归并时 galleryPool 即全量
+  return `${filtered.value.length} / ${galleryPool.value.length} 个示例`
 })
 
 // 侧栏导航计数徽章：与状态栏同源（分母口径，表示该视图的总量）
@@ -299,12 +300,12 @@ onBeforeUnmount(() => {
                 data-testid="gallery-subnav-all"
                 data-section-key="all"
                 data-section-label="全部示例"
-                :data-section-count="galleryExamples.length"
+                :data-section-count="galleryPool.length"
                 @click="selectSection(null)"
               >
                 <Layers :size="14" :stroke-width="1.5" class="shrink-0" />
                 <span class="truncate">全部示例</span>
-                <span class="badge-n">{{ galleryExamples.length.toLocaleString('zh-CN') }}</span>
+                <span class="badge-n">{{ galleryPool.length.toLocaleString('zh-CN') }}</span>
               </button>
               <button
                 v-for="sec in gallerySectionNav"
