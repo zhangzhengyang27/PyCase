@@ -123,7 +123,7 @@ async function pick(): Promise<void> {
     <input
       v-else
       :id="`tf-${spec.key}`"
-      :type="spec.type === 'number' ? 'number' : 'text'"
+      :type="spec.type === 'number' ? 'number' : spec.type === 'password' ? 'password' : 'text'"
       :step="spec.type === 'number' ? 'any' : undefined"
       class="w-full"
       :class="[INPUT_CLS, borderCls]"

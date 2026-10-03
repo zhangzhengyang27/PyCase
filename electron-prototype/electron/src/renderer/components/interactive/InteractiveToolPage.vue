@@ -9,7 +9,8 @@ import ToolResultPanel from './ToolResultPanel.vue'
 import CodeDrawer from '../date-calculator/CodeDrawer.vue'
 import { getToolSchema, type SelectOption } from '../../src/interactive-tools'
 import { closeInteractive, toolValueOf } from '../../src/store/interactive'
-import { selectedId } from '../../src/store/detail'
+import { openDetail, selectedId } from '../../src/store/detail'
+import { cliExampleOfCurrentPage } from '../../src/interactive-mapping'
 
 const schema = computed(() => (selectedId.value ? getToolSchema(selectedId.value) : undefined))
 const values = computed(() => (schema.value ? toolValueOf(schema.value.id, schema.value.fields) : {}))
@@ -93,6 +94,15 @@ function isInvalid(key: string): boolean {
         {{ schema?.title ?? '交互工具' }}
       </h1>
       <span class="text-caption text-ink-mute border border-line rounded-control px-2 py-0.5">交互工具</span>
+      <button
+        v-if="cliExampleOfCurrentPage"
+        class="app-no-drag border border-line rounded-control bg-transparent text-ink-mute hover:text-accent hover:border-accent cursor-pointer px-2 py-1 text-caption"
+        data-testid="it-cli"
+        :title="`查看同能力 CLI 示例源码：${cliExampleOfCurrentPage.title}`"
+        @click="openDetail(cliExampleOfCurrentPage.id)"
+      >
+        CLI 源码
+      </button>
     </div>
 
     <div
@@ -131,20 +141,37 @@ function isInvalid(key: string): boolean {
               />
             </template>
           </div>
-          <ToolResultPanel v-if="result" :result="result" />
+          <div
+            v-if="isSidecar && (!steps.length || isLastStep)"
+            class="flex justify-center"
+            data-testid="page-run-wrap"
+          >
+            <button
+              class="inline-flex items-center gap-1.5 px-5 h-9 rounded-control border-0 text-control font-medium cursor-pointer transition-colors dur-fast disabled:opacity-50"
+              style="background: var(--color-accent, #3b82f6); color: #fff"
+              data-testid="page-run"
+              :disabled="runBusy"
+              @click="runSnippet(schema.id, code)"
+            >
+              ▶ {{ runOutput ? '重新运行' : '运行' }}
+            </button>
+          </div>
           <template v-if="isSidecar">
-            <ToolResultPanel v-if="sidecarResult" :result="sidecarResult" data-testid="sidecar-result" />
+            <ToolResultPanel v-if="result?.error" :result="result" data-testid="sidecar-invalid" />
             <div v-else-if="runBusy" class="text-control text-ink-mute pt-4 text-center" data-testid="sidecar-running">
               正在运行…
             </div>
-            <div v-else-if="!runOutput" class="text-control text-ink-mute pt-4 text-center">
-              点击下方「运行」获取结果
-            </div>
+            <ToolResultPanel v-else-if="sidecarResult" :result="sidecarResult" data-testid="sidecar-result" />
+            <ToolResultPanel v-else-if="result" :result="result" data-testid="sidecar-echo" />
+            <div v-else class="text-control text-ink-mute pt-4 text-center">点击「运行」获取结果</div>
             <pre
               v-if="sidecarRest"
               class="m-0 p-3 surface-card text-caption font-mono text-ink-mute whitespace-pre-wrap"
               data-testid="sidecar-rest"
               >{{ sidecarRest }}</pre>
+          </template>
+          <template v-else>
+            <ToolResultPanel v-if="result" :result="result" />
           </template>
           <div v-if="steps.length && !isLastStep" class="flex justify-end">
             <button
@@ -162,16 +189,6 @@ function isInvalid(key: string): boolean {
               @click="prevStep()"
             >
               <ChevronLeft :size="13" /> 上一步
-            </button>
-          </div>
-          <div v-if="isSidecar && steps.length && isLastStep" class="flex justify-end" data-testid="wizard-run">
-            <button
-              class="inline-flex items-center gap-1.5 px-4 h-9 rounded-control border-0 text-control font-medium cursor-pointer transition-colors dur-fast disabled:opacity-50"
-              style="background: var(--color-accent, #3b82f6); color: #fff"
-              :disabled="runBusy"
-              @click="runSnippet(schema.id, code)"
-            >
-              ▶ 运行
             </button>
           </div>
         </div>

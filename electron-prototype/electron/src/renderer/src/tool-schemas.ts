@@ -392,6 +392,15 @@ TOOL_SCHEMAS.push(...QUICK_SCHEMAS, ...RESULTS_SCHEMAS, ...WIZARD_SCHEMAS, ...FF
 import { W12_SCHEMAS } from './tool-schemas-w12'
 TOOL_SCHEMAS.push(...W12_SCHEMAS)
 
+// W14 终局补齐：哈希/正文提取/压缩解压/临时清理/打包备份/日志轮转/目录同步/粉碎器/
+// Word 插图/PPT 数据表/花销记账×2
+import { W14_SCHEMAS } from './tool-schemas-w14'
+TOOL_SCHEMAS.push(...W14_SCHEMAS)
+
+// W15 终极补齐：密码保险库×2 / 一次性定时任务 / Word 读取
+import { W15_SCHEMAS } from './tool-schemas-w15'
+TOOL_SCHEMAS.push(...W15_SCHEMAS)
+
 // W13 增补批：YAML/Base64/URL/文本对比/二维码/编码修复 + 透视/跨表关联/数据校验/库存盘点
 import { W13_SCHEMAS } from './tool-schemas-w13'
 TOOL_SCHEMAS.push(...W13_SCHEMAS)

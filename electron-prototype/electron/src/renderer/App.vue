@@ -69,6 +69,8 @@ import ToolboxView from './components/ToolboxView.vue'
 import DetailPage from './components/DetailPage.vue'
 import DateCalculatorPage from './components/date-calculator/DateCalculatorPage.vue'
 import { DATE_CALC_ID, POMODORO_ID, isInteractiveId } from './src/interactive-tools'
+import { activeToolCategory, selectToolCategory, toolboxCategoryNav } from './src/store/catalog'
+import { toolCategoryIcon } from './src/section-icons'
 import PomodoroPage from './components/interactive/PomodoroPage.vue'
 import { isManualId } from './src/tool-manuals'
 import ToolManualPage from './components/interactive/ToolManualPage.vue'
@@ -319,6 +321,42 @@ onBeforeUnmount(() => {
                 <component :is="sectionIcon(sec.key)" :size="14" :stroke-width="1.5" class="shrink-0" />
                 <span class="truncate">{{ sec.label }}</span>
                 <span class="badge-n">{{ sec.count.toLocaleString('zh-CN') }}</span>
+              </button>
+            </div>
+
+            <!-- 工具箱二级分类菜单：仅工具箱视图展开；结构与画廊分区菜单同款。
+                 全部工具置首（activeToolCategory === null） -->
+            <div
+              v-if="item.key === 'toolbox' && activeView === 'toolbox'"
+              class="flex flex-col gap-px mt-0.5 mb-1 pl-3 max-h-[42vh] overflow-y-auto [scrollbar-width:thin]"
+              data-testid="toolbox-subnav"
+            >
+              <button
+                class="subnav app-no-drag"
+                :class="{ sel: activeToolCategory === null }"
+                :aria-current="activeToolCategory === null ? 'true' : undefined"
+                data-testid="toolbox-subnav-all"
+                @click="selectToolCategory(null)"
+              >
+                <Wrench :size="14" :stroke-width="1.5" class="shrink-0" />
+                <span class="truncate">全部工具</span>
+                <span class="badge-n">{{ toolsTotal.toLocaleString('zh-CN') }}</span>
+              </button>
+              <button
+                v-for="cat in toolboxCategoryNav"
+                :key="cat.key"
+                class="subnav app-no-drag"
+                :class="{ sel: activeToolCategory === cat.key }"
+                :aria-current="activeToolCategory === cat.key ? 'true' : undefined"
+                data-testid="toolbox-subnav-item"
+                :data-category-key="cat.key"
+                :data-category-label="cat.label"
+                :data-category-count="cat.count"
+                @click="selectToolCategory(cat.key)"
+              >
+                <component :is="toolCategoryIcon(cat.key)" :size="14" :stroke-width="1.5" class="shrink-0" />
+                <span class="truncate">{{ cat.label }}</span>
+                <span class="badge-n">{{ cat.count.toLocaleString('zh-CN') }}</span>
               </button>
             </div>
           </template>

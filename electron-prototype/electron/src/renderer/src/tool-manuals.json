@@ -20,29 +20,6 @@
     }
    ]
   },
-  "tools_dev-archive-tool": {
-   "title": "统一压缩解压器",
-   "summary": "压缩/解压：zip 与 tar.gz 统一接口。",
-   "usage": "python devtool_archive-tool.py",
-   "params": [
-    {
-     "flag": "folder",
-     "positional": true
-    },
-    {
-     "flag": "out",
-     "positional": true
-    },
-    {
-     "flag": "archive",
-     "positional": true
-    },
-    {
-     "flag": "dest",
-     "positional": true
-    }
-   ]
-  },
   "tools_dev-bigfile-topn": {
    "title": "大文件 TopN 查找器",
    "summary": "大文件 TopN：python devtool_bigfile.py <目录> [--top 10]",
@@ -85,21 +62,6 @@
     {
      "flag": "--apply",
      "action": "store_true"
-    }
-   ]
-  },
-  "tools_dev-dir-sync": {
-   "title": "目录同步器",
-   "summary": "目录同步：源 → 目标 增量复制（新增/更新才拷贝）。",
-   "usage": "python devtool_dir-sync.py",
-   "params": [
-    {
-     "flag": "src",
-     "positional": true
-    },
-    {
-     "flag": "dst",
-     "positional": true
     }
    ]
   },
@@ -185,22 +147,6 @@
     }
    ]
   },
-  "tools_dev-expense-tracker": {
-   "title": "花销记账本",
-   "summary": "记账本：add <分类> <金额> [备注] | report [月份]",
-   "usage": "python devtool_expense-tracker.py",
-   "params": [
-    {
-     "flag": "cmd",
-     "positional": true
-    },
-    {
-     "flag": "args",
-     "nargs": "*",
-     "positional": true
-    }
-   ]
-  },
   "tools_dev-git-branch-report": {
    "title": "Git 分支报告",
    "summary": "Git 分支报告：按最近提交排序。",
@@ -231,27 +177,6 @@
      "positional": true
     }
    ]
-  },
-  "tools_dev-hash-checksum": {
-   "title": "哈希校验器",
-   "summary": "哈希校验：文件多算法指纹。",
-   "usage": "python devtool_hash-checksum.py",
-   "params": [
-    {
-     "flag": "file",
-     "positional": true
-    },
-    {
-     "flag": "--algo",
-     "nargs": "*"
-    }
-   ]
-  },
-  "tools_dev-html2text": {
-   "title": "网页正文提取",
-   "summary": "正文提取：脚本+样式剔除，块级标签换行。",
-   "usage": "python devtool_html2text.py",
-   "params": []
   },
   "tools_dev-http-headers-inspect": {
    "title": "HTTP 头检查器",
@@ -418,23 +343,6 @@
     }
    ]
   },
-  "tools_dev-secure-shred": {
-   "title": "敏感文件粉碎器",
-   "summary": "文件粉碎：随机覆写 3 遍 + 改名 + 删除。",
-   "usage": "python devtool_secure-shred.py",
-   "params": [
-    {
-     "flag": "files",
-     "nargs": "+",
-     "positional": true
-    },
-    {
-     "flag": "--passes",
-     "type": "int",
-     "default": 3
-    }
-   ]
-  },
   "tools_dev-speed-test": {
    "title": "网速测试",
    "summary": "网速测试：下载 1MB×3 次取均值。",
@@ -482,28 +390,6 @@
     {
      "flag": "b",
      "positional": true
-    }
-   ]
-  },
-  "tools_dev-tmp-sweep": {
-   "title": "临时文件清理器",
-   "summary": "临时清理：删除 mtime 超过 N 天的 .tmp/.log/.cache 文件。",
-   "usage": "python devtool_tmp-sweep.py",
-   "params": [
-    {
-     "flag": "directory",
-     "nargs": "?",
-     "default": ".",
-     "positional": true
-    },
-    {
-     "flag": "--days",
-     "type": "int",
-     "default": 7
-    },
-    {
-     "flag": "--apply",
-     "action": "store_true"
     }
    ]
   },
@@ -1231,27 +1117,6 @@
     "教学示例：脚本内数据为演示硬编码；实际使用把数据源换成真实文件/目录即可。"
    ]
   },
-  "tools_office2-docx-image": {
-   "title": "Word 插入图片",
-   "summary": "Word 插图：matplotlib 出图 → 插入 Word。",
-   "usage": "python office2_docx-image.py",
-   "params": [],
-   "notes": [
-    "教学示例：脚本内数据为演示硬编码；实际使用把数据源换成真实文件/目录即可。"
-   ]
-  },
-  "tools_office2-file-backup-zip": {
-   "title": "目录打包备份",
-   "summary": "目录备份：zip 打包 + 时间戳命名。",
-   "usage": "python office2_file-backup-zip.py",
-   "params": []
-  },
-  "tools_office2-file-log-rotate": {
-   "title": "日志轮转",
-   "summary": "日志轮转：超过阈值切分为 .1/.2 文件。",
-   "usage": "python office2_file-log-rotate.py",
-   "params": []
-  },
   "tools_office2-todo-markdown": {
    "title": "Markdown 待办清单",
    "summary": "Markdown 待办：生成与统计。",
@@ -1304,15 +1169,6 @@
    "title": "PPT 幻灯片生成",
    "summary": "PPT 生成：三页周报幻灯片。",
    "usage": "python office3_pptx-create.py",
-   "params": [],
-   "notes": [
-    "教学示例：脚本内数据为演示硬编码；实际使用把数据源换成真实文件/目录即可。"
-   ]
-  },
-  "tools_office3-pptx-table": {
-   "title": "PPT 数据表",
-   "summary": "PPT 表格与图片页。",
-   "usage": "python office3_pptx-table.py",
    "params": [],
    "notes": [
     "教学示例：脚本内数据为演示硬编码；实际使用把数据源换成真实文件/目录即可。"

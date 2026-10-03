@@ -52,6 +52,8 @@ import { deleteUserExample } from '../src/store/import'
 import { isFavorite, toggleFavorite } from '../src/store/prefs'
 import { stopRun } from '../src/store/detail'
 import { hasManual, openManual } from '../src/tool-manuals'
+import { interactiveIdForExample } from '../src/interactive-mapping'
+import { openInteractive } from '../src/store/interactive'
 import ArgsForm from './ArgsForm.vue'
 import MonacoEditor from './MonacoEditor.vue'
 import OutputPanel from './OutputPanel.vue'
@@ -230,6 +232,13 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
         </BaseButton>
         <BaseButton v-if="hasManual(selectedId)" title="查看工具手册（用途/参数/用法）" @click="openManual(selectedId)">
           <BookOpen :size="13" /> 手册
+        </BaseButton>
+        <BaseButton
+          v-if="selectedExample && interactiveIdForExample(selectedExample)"
+          :title="`打开交互页面：${interactiveIdForExample(selectedExample)}`"
+          @click="openInteractive(interactiveIdForExample(selectedExample)!)"
+        >
+          交互页面
         </BaseButton>
         <BaseButton title="AI 解释选中或全部代码（DeepSeek）" @click="explainSelectedCode()">
           <Sparkles :size="13" /> AI 解释

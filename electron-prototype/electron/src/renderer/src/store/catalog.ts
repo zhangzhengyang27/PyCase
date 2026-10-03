@@ -8,6 +8,7 @@ import { THEMES } from '../themes'
 import { SECTION_CATALOG, assignSections, sectionKeyOf } from '../overview'
 import { buildFilterChips, type FilterChip } from '../filter-chips'
 import { interactiveToolItems } from '../interactive-tools'
+import { TOOL_CATEGORY_CATALOG, toolCategoryKeyOf } from '../toolbox-cats'
 import type { ExampleItem } from '../types'
 import { api } from '../sidecar-client'
 import { favorites, runHistory, toggleFavorite, recordHistory, toPlain } from './prefs'
@@ -190,16 +191,19 @@ export const shownGallery = computed(() => sortedGallery.value.slice(0, galleryL
 
 export const toolboxItems = computed<VExample[]>(() => {
   const list = FilterEngine.filterExamples(examples.value, toolboxQuery.value, filterContext.value) as VExample[]
+  const cat = activeToolCategory.value
+  const byCat = (t: { tags?: string[]; title?: string; name?: string }): boolean => !cat || toolCategoryKeyOf(t) === cat
   // 交互工具不在 examples 目录池，不走 FilterEngine：客户端匹配搜索词与收藏，恒置顶。
   // 搜索词用 debounce 后的 appliedToolSearch，与目录池口径一致。
   const q = appliedToolSearch.value.trim().toLowerCase()
   const inter = interactiveToolItems.value.filter((t) => {
+    if (!byCat(t)) return false
     if (favOnly.value && !favorites.value.has(t.id)) return false
     if (q && !`${t.name} ${t.title ?? ''} ${t.description ?? ''} ${(t.tags ?? []).join(' ')}`.toLowerCase().includes(q))
       return false
     return true
   })
-  return [...inter, ...list]
+  return [...inter, ...(cat ? list.filter((t) => byCat(t)) : list)]
 })
 
 /** 目录池内工具数：可运行率的分母口径（交互工具无 .py 文件，不计入） */
@@ -207,6 +211,37 @@ export const catalogToolsTotal = computed(() => examples.value.filter((e) => e.c
 
 /** 工具总数：状态栏 / 导航徽章口径（目录池 + 交互工具） */
 export const toolsTotal = computed(() => interactiveToolItems.value.length + catalogToolsTotal.value)
+
+// ---------------------------------------------------------------------------
+// W16 工具箱二级分类菜单：分类是「范围」过滤（互斥单选，全部工具置首），
+// 同时作用于目录池（FilterEngine 结果之上）与交互注册表；计数与菜单数据同源。
+// ---------------------------------------------------------------------------
+export const activeToolCategory = ref<string | null>(null)
+
+export function selectToolCategory(key: string | null): void {
+  activeToolCategory.value = key
+}
+
+export interface ToolCategoryNav {
+  key: string
+  label: string
+  count: number
+}
+
+/** 侧栏二级分类菜单数据：全量池计数（不随搜索/收藏浮动，口径同画廊分区菜单） */
+export const toolboxCategoryNav = computed<ToolCategoryNav[]>(() => {
+  const counts = new Map<string, number>()
+  for (const t of interactiveToolItems.value) {
+    const k = toolCategoryKeyOf(t)
+    counts.set(k, (counts.get(k) ?? 0) + 1)
+  }
+  for (const e of examples.value) {
+    if (e.category !== 'tools') continue
+    const k = toolCategoryKeyOf(e)
+    counts.set(k, (counts.get(k) ?? 0) + 1)
+  }
+  return TOOL_CATEGORY_CATALOG.map((c) => ({ key: c.key, label: c.label, count: counts.get(c.key) || 0 }))
+})
 
 /** 视图内排序助手：工具箱分组、画廊等共用同一排序偏好（含最近运行索引） */
 export function sortVExamples(list: VExample[]): VExample[] {
@@ -394,6 +429,7 @@ export function catalogTestHooks(): Record<string, unknown> {
     // 筛选状态（CI 干净环境无此问题），不清理会让 favorites/facets 断言失真
     resetViewFilters: () => {
       activeSectionKey.value = null
+      activeToolCategory.value = null
       activeTheme.value = 'all'
       minQuality.value = 0
       activeRunnable.value = 'all'

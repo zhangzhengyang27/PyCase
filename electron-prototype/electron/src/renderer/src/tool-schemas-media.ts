@@ -28,6 +28,7 @@ export const imageResizeSchema: InteractiveToolSchema = {
       ]
     }
   ],
+  computeVia: 'sidecar',
   compute: (v) => {
     const file = str(v.file)
     if (!file) return { error: '请选择图片文件' }

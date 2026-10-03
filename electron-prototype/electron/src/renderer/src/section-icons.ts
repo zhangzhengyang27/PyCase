@@ -4,26 +4,35 @@
 import {
   BarChart3,
   Blocks,
+  Boxes,
   Calculator,
   Camera,
   ClipboardList,
   Database,
   Download,
   FileSpreadsheet,
+  FileText,
+  Film,
   FlaskConical,
+  Folder,
   Gamepad2,
+  GitBranch,
   Globe,
+  GraduationCap,
   Image,
   MessageSquare,
   Network,
   Package,
   Rocket,
+  Shield,
   Sparkles,
   Timer,
+  Type,
   Turtle,
   Wand2,
   Wrench,
   Zap,
+  Activity,
   type LucideIcon
 } from 'lucide-vue-next'
 import { INTERACTIVE_GROUP_KEY } from './interactive-tools'
@@ -66,4 +75,26 @@ const TOOLBOX_ICONS: Record<string, LucideIcon> = {
 
 export function toolboxIcon(key: string): LucideIcon {
   return TOOLBOX_ICONS[key] || Wrench
+}
+
+// 工具箱二级分类图标（W16）：key = toolbox-cats.ts 分类 key
+export const TOOL_CATEGORY_ICONS: Record<string, LucideIcon> = {
+  files: Folder,
+  image: Image,
+  media: Film,
+  doc: FileText,
+  data: Database,
+  text: Type,
+  net: Globe,
+  sysmon: Activity,
+  sec: Shield,
+  git: GitBranch,
+  conv: Calculator,
+  effi: Timer,
+  teach: GraduationCap,
+  other: Boxes
+}
+
+export function toolCategoryIcon(key: string): LucideIcon {
+  return TOOL_CATEGORY_ICONS[key] || Boxes
 }
