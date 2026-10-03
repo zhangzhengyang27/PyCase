@@ -103,7 +103,7 @@ while i > 0 and j > 0:
         i -= 1
     else:
         j -= 1
-print(f"LCS 长度: {{dp[m][n]}}")
+print(f"LCS 长度: {dp[m][n]}")
 print("".join(reversed(seq)))
 `
   }
@@ -171,7 +171,7 @@ for ln in ${JSON.stringify(edges)}.splitlines():
 groups: dict = {}
 for i in range(${n}):
     groups.setdefault(find(i), []).append(i)
-print(f"连通分量数: {{len(groups)}}")
+print(f"连通分量数: {len(groups)}")
 for g in groups.values():
     print(g)
 `
@@ -210,8 +210,8 @@ a, b = ${a}, ${b}
 x, y = a, b
 while y:
     x, y = y, x % y
-print(f"GCD = {{x}}")
-print(f"LCM = {{a * b // x}}")
+print(f"GCD = {x}")
+print(f"LCM = {a * b // x}")
 `
   }
 }
@@ -324,7 +324,7 @@ words = [w.strip(".,!?;:()").lower() for w in text.split()]
 words = [w for w in words if w]
 counter = Counter(words)
 for word, cnt in counter.most_common(${topn}):
-    print(f"{{word:>12}}  {{cnt}}")
+    print(f"{word:>12}  {cnt}")
 print("去重词数:", len(counter))
 `
   }

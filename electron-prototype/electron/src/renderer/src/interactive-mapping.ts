@@ -200,6 +200,151 @@ const VIZ_D_TO_MODE: Record<string, string> = {
 
 const VIZ_ID_RE = /^topics_viz-(.+)-d(\d+)$/
 
+// ---------------------------------------------------------------------------
+// 通用 topics 家族路由（全库示例交互化：「能改的就改」批次）。
+// id 形如 topics_<家族><变体尾缀>，尾缀为 -v12 / -s8 / -x1 / -1（家族各异）或无尾缀（单例）。
+// 家族键 = 剥掉 topics_ 前缀与变体尾缀后的中段（如 algo-quick-sort / pil-gaussian / turtle-spiral）。
+// 变体尾缀只标识同族参数差异，不带数据模式语义（模式预选仅 viz 的 d1~d12 有）。
+// ---------------------------------------------------------------------------
+
+const TOPICS_ID_RE = /^topics_(.+?)(?:-[vsx]?\d+)?$/
+
+export interface TopicsFamily {
+  /** 家族中段（如 algo-quick-sort / pil-gaussian / turtle-spiral / basics-fizzbuzz） */
+  family: string
+  /** 变体尾缀里的数字（无尾缀单例为 null） */
+  variant: number | null
+}
+
+/** 解析 topics 家族（非 viz 变体；viz 走 vizVariantOf）。.py 结尾的 id 先归一化；
+ * 解析不出或非 topics id 返回 null */
+export function topicsFamilyOf(ex: VExample | null | undefined): TopicsFamily | null {
+  if (!ex) return null
+  const norm = ex.id.replace(/\.py$/i, '')
+  const m = TOPICS_ID_RE.exec(norm)
+  if (!m) return null
+  const v = /-(?:[vsx])?(\d+)$/.exec(norm)
+  return { family: m[1], variant: v ? Number(v[1]) : null }
+}
+
+/** 家族中段 → 交互页面 id。仅收录交互页能力确实覆盖该家族的条目（宁缺毋歪曲）。 */
+export const TOPICS_FAMILY_TO_INTERACTIVE: Record<string, string> = {
+  // ---- 算法可视化（V4/V5 既有页；algo-* 32 变体 + 单例）----
+  'algo-binary-search': 'interactive:binary-search',
+  'algo-quick-sort': 'interactive:quick-sort',
+  'algo-lcs': 'interactive:lcs',
+  'algo-dijkstra': 'interactive:dijkstra',
+  'algo-knapsack': 'interactive:knapsack',
+  'algo-union-find': 'interactive:union-find',
+  'algo-collatz': 'interactive:collatz',
+  'algo-gcd-lcm': 'interactive:gcd-lcm',
+  'algo-matrix-rotate': 'interactive:matrix-rotate',
+  // ---- bulk_basics 教学家族（既有页覆盖）----
+  'basics-fizzbuzz': 'interactive:fizzbuzz',
+  'basics-prime': 'interactive:prime-sieve',
+  'basics-fibonacci': 'interactive:fibonacci',
+  'basics-wordcount': 'interactive:word-freq',
+  'basics-matrix-mul': 'interactive:matrix-multiply',
+  'basics-regex': 'interactive:regex-tester',
+  // ---- dataviz 明确等价（其余家族待建页后补映射）----
+  'data-analysis_dataviz-error-bar': 'interactive:viz-errbar',
+  'data-analysis_dataviz-log-scale': 'interactive:viz-log',
+  'data-analysis_dataviz-polar-rose': 'interactive:viz-polar-rose',
+  'data-analysis_dataviz-scatter-3d': 'interactive:viz-scatter-3d',
+  'data-analysis_dataviz-surface-3d': 'interactive:viz-surface-3d',
+  'data-analysis_dataviz-scatter-density': 'interactive:散点密度图',
+  'data-analysis_dataviz-radar-chart': 'interactive:viz-radar',
+  'data-analysis_dataviz-heatmap-annotated': 'interactive:viz-heatmap',
+  'data-analysis_dataviz-dual-axis-combo': 'interactive:viz-dualaxis',
+  'data-analysis_dataviz-line-multi-series': 'interactive:viz-multiseries',
+  'data-analysis_dataviz-boxplot-multi': 'interactive:viz-box',
+  'data-analysis_dataviz-histogram-kde': 'interactive:直方图',
+  // ---- sciviz 明确等价 ----
+  'data-analysis_sciviz-sciviz-venn-diagram': 'interactive:venn',
+  'data-analysis_sciviz-sciviz-dendrogram': 'interactive:dendrogram',
+  'data-analysis_sciviz-sciviz-wordcloud': 'interactive:wordcloud-chart',
+  'data-analysis_sciviz-sciviz-3d-surface': 'interactive:viz-surface-3d',
+  'data-analysis_sciviz-sciviz-polar-rose': 'interactive:viz-polar-rose',
+  'data-analysis_sciviz-sciviz-contour-fields': 'interactive:viz-contour-filled',
+  // ---- 爬虫中交互页能力确实覆盖的条目（请求/头检查/批量下载/汇率/天气）----
+  'crawler-http-get-basic': 'interactive:http-requester',
+  'crawler-http-headers-ua': 'interactive:http-headers',
+  'crawler-http-timeout-retry': 'interactive:http-requester',
+  'crawler-parse-json-api': 'interactive:http-requester',
+  'crawler3-image-batch-download': 'interactive:image-downloader',
+  'crawler3-exchange-rate-api': 'interactive:exchange-rate',
+  'crawler3-open-meteo-weather': 'interactive:weather',
+  // ---- bulk_pil 滤镜家族（tool-schemas-pil.ts，画廊专用页）----
+  'pil-gaussian': 'interactive:pil-gaussian',
+  'pil-grayscale': 'interactive:pil-grayscale',
+  'pil-invert': 'interactive:pil-invert',
+  'pil-emboss': 'interactive:pil-emboss',
+  'pil-contour': 'interactive:pil-contour',
+  'pil-solarize': 'interactive:pil-solarize',
+  'pil-posterize': 'interactive:pil-posterize',
+  'pil-mirror': 'interactive:pil-mirror',
+  'pil-rotate-crop': 'interactive:pil-rotate-crop',
+  'pil-enhance-quad': 'interactive:pil-enhance-quad',
+  'pil-gradient-mask': 'interactive:pil-gradient-mask',
+  'pil-pixelate': 'interactive:pil-pixelate',
+  // ---- bulk_opencv 处理家族（tool-schemas-opencv.ts）----
+  'opencv-canny': 'interactive:cv-canny',
+  'opencv-threshold': 'interactive:cv-threshold',
+  'opencv-adaptive': 'interactive:cv-adaptive',
+  'opencv-morph-open': 'interactive:cv-morph-open',
+  'opencv-morph-close': 'interactive:cv-morph-close',
+  'opencv-gradient': 'interactive:cv-gradient',
+  'opencv-sobel': 'interactive:cv-sobel',
+  'opencv-laplacian': 'interactive:cv-laplacian',
+  'opencv-blur-stack': 'interactive:cv-blur-stack',
+  'opencv-sharpen': 'interactive:cv-sharpen',
+  'opencv-equalize': 'interactive:cv-equalize',
+  'opencv-gamma': 'interactive:cv-gamma',
+  'opencv-rotate': 'interactive:cv-rotate',
+  'opencv-perspective': 'interactive:cv-perspective',
+  'opencv-resize-pyramid': 'interactive:cv-resize-pyramid',
+  'opencv-contours-area': 'interactive:cv-contours-area',
+  'opencv-hough-lines': 'interactive:cv-hough-lines',
+  'opencv-distance-transform': 'interactive:cv-distance-transform',
+  'opencv-bitwise-mix': 'interactive:cv-bitwise-mix',
+  'opencv-colormap': 'interactive:cv-colormap',
+  'opencv-edge': 'interactive:cv-edge',
+  'opencv-colorspace': 'interactive:cv-colorspace',
+  'opencv-geometric': 'interactive:cv-geometric',
+  'opencv-histogram': 'interactive:cv-histogram',
+  'opencv-contours': 'interactive:cv-edge', // 单例轮廓演示 → 边缘/轮廓组合页
+  // ---- bulk_turtle 图形家族（tool-schemas-turtle.ts）----
+  'turtle-spiral': 'interactive:turtle-spiral',
+  'turtle-spiral-square': 'interactive:turtle-spiral-square',
+  'turtle-rose': 'interactive:turtle-rose',
+  'turtle-fractal-tree': 'interactive:turtle-fractal-tree',
+  'turtle-koch': 'interactive:turtle-koch',
+  'turtle-sierpinski': 'interactive:turtle-sierpinski',
+  'turtle-mandala': 'interactive:turtle-mandala',
+  'turtle-lissajous': 'interactive:turtle-lissajous',
+  'turtle-phyllotaxis': 'interactive:turtle-phyllotaxis',
+  'turtle-polygon-ring': 'interactive:turtle-polygon-ring',
+  'turtle-hex-flower': 'interactive:turtle-hex-flower',
+  'turtle-butterfly': 'interactive:turtle-butterfly',
+  'turtle-galaxy': 'interactive:turtle-galaxy',
+  'turtle-heart': 'interactive:turtle-heart',
+  'turtle-waves': 'interactive:turtle-waves',
+  'turtle-rings': 'interactive:turtle-rings',
+  'turtle-rays': 'interactive:turtle-rays',
+  'turtle-burst': 'interactive:turtle-burst',
+  'turtle-dot-field': 'interactive:turtle-dot-field',
+  'turtle-dragon': 'interactive:turtle-dragon',
+  'turtle-square-stairs': 'interactive:turtle-square-stairs',
+  'turtle-staircase-wave': 'interactive:turtle-staircase-wave',
+  'turtle-honeycomb': 'interactive:turtle-honeycomb',
+  'turtle-city-skyline': 'interactive:turtle-city-skyline',
+  'turtle-starfield': 'interactive:turtle-starfield',
+  'turtle-kaleidoscope': 'interactive:turtle-kaleidoscope',
+  'turtle-maze-walk': 'interactive:turtle-maze-walk',
+  'turtle-rainbow-circles': 'interactive:turtle-rainbow-circles',
+  'turtle-sunflower': 'interactive:turtle-sunflower'
+}
+
 export interface VizVariant {
   /** 图族代码（id 中段，如 bar / dual-axis / smooth-multiline） */
   family: string
@@ -217,14 +362,16 @@ export function vizVariantOf(ex: VExample | null | undefined): VizVariant | null
   return { family: m[1], n: Number(m[2]), mode: VIZ_D_TO_MODE[m[2]] ?? null }
 }
 
-/** 目录条目 → 交互页面 id（标题表 → 图族表两级解析；无映射返回 null） */
+/** 目录条目 → 交互页面 id（标题表 → viz 图族表 → 通用 topics 家族表三级解析；无映射返回 null） */
 export function interactiveIdForExample(ex: VExample | null | undefined): string | null {
   if (!ex) return null
   const title = (ex.title || ex.name || '').replace(/\.py$/i, '').trim()
   const byTitle = TITLE_TO_INTERACTIVE[title]
   if (byTitle) return byTitle
   const variant = vizVariantOf(ex)
-  return variant ? (VIZ_FAMILY_TO_INTERACTIVE[variant.family] ?? null) : null
+  if (variant) return VIZ_FAMILY_TO_INTERACTIVE[variant.family] ?? null
+  const fam = topicsFamilyOf(ex)
+  return fam ? (TOPICS_FAMILY_TO_INTERACTIVE[fam.family] ?? null) : null
 }
 
 /** 当前交互页面（schema 驱动）对应的同能力目录条目；无则 null */

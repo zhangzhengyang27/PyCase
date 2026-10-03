@@ -6,6 +6,7 @@ const str = (v: unknown): string => String(v ?? '')
 const INVALID = '# 粘贴 CSV 数据后自动生成图表代码'
 const PRELUDE = `import csv
 import io
+import json
 
 import matplotlib
 matplotlib.use("Agg")
@@ -35,8 +36,11 @@ function base(
   description: string,
   tags: string[],
   fields: InteractiveToolSchema['fields'],
-  body: (v: Record<string, unknown>) => string
+  body: (v: Record<string, unknown>) => string,
+  /** 标题尾巴：默认写到当前 ax；多子图页传 suptitle 版本 */
+  tail?: (v: Record<string, unknown>) => string
 ): InteractiveToolSchema {
+  const tailFn = tail ?? TITLE_LINE
   return {
     id: `interactive:${title.replace(/\s+/g, '-').toLowerCase()}`,
     title,
@@ -60,12 +64,18 @@ function base(
         .split('\n')
         .filter((l) => l.trim())
       if (lines.length < 2) return INVALID
-      return PRELUDE + '\n' + `header, data_rows = parse_csv(${JSON.stringify(data)})\n` + body(v) + '\n' + OUT
+      return PRELUDE + '\n' + `header, data_rows = parse_csv(${JSON.stringify(data)})\n` + body(v) + '\n' + tailFn(v) + '\n' + OUT
     }
   }
 }
 
-const DATA_FIELD = { key: 'data', label: '数据（CSV）', type: 'textarea' as const, required: true }
+const DATA_FIELD = {
+  key: 'data',
+  label: '数据（CSV）',
+  type: 'textarea' as const,
+  required: true,
+  placeholder: 'x,y\n1,2\n2,4\n3,9\n4,16'
+}
 const TITLE_FIELD = { key: 'title', label: '标题', type: 'text' as const, default: '', width: 'half' as const }
 
 // ---------------------------------------------------------------------------
@@ -86,7 +96,7 @@ ax = fig.add_subplot(111, projection="3d")
 X, Y = np.meshgrid(np.arange(mat.shape[1]), np.arange(mat.shape[0]))
 surf = ax.plot_surface(X, Y, mat, cmap="${cmap}", edgecolor="k", linewidth=0.2)
 fig.colorbar(surf, ax=ax, shrink=0.6)
-${TITLE_LINE(v)}`
+`
   }
 )
 
@@ -97,7 +107,11 @@ export const scatter3dSchema = base(
   '3D 散点图',
   '三维散点：数据列依次为 x,y,z（第四列可选为大小）。',
   ['图表', '3D'],
-  [DATA_FIELD, TITLE_FIELD, { key: 'color', label: '颜色', type: 'text', default: '#2563eb', width: 'half' }],
+  [
+    { ...DATA_FIELD, placeholder: 'x,y,z\n1,2,3\n2,4,1\n3,3,5\n4,7,2\n5,6,6' },
+    TITLE_FIELD,
+    { key: 'color', label: '颜色', type: 'text', default: '#2563eb', width: 'half' }
+  ],
   (v) => {
     const color = /^#[0-9a-fA-F]{6}$/.test(str(v.color)) ? str(v.color) : '#2563eb'
     return `xs = [float(r[0]) for r in data_rows]
@@ -110,7 +124,7 @@ ax.scatter(xs, ys, zs, c="${color}", s=40, edgecolors="white")
 ax.set_xlabel(header[0])
 ax.set_ylabel(header[1])
 ax.set_zlabel(header[2])
-${TITLE_LINE(v)}`
+`
   }
 )
 
@@ -122,15 +136,15 @@ export const subplotsSchema = base(
   '多子图组合：每行一条子图数据（首列为 X），自动纵向排列共享标题区。',
   ['图表', '布局'],
   [DATA_FIELD, TITLE_FIELD],
-  (v) => `columns = list(zip(*data_rows))
+  (_v) => `columns = list(zip(*data_rows))
 x = columns[0]
 series = columns[1:]
 n = len(series)
 fig, axes = plt.subplots(n, 1, figsize=(8, 3 * n), squeeze=False)
 for i, (ax, col) in enumerate(zip(axes.flat, series)):
     ax.plot(x, [float(c) for c in col])
-    ax.set_ylabel(header[i + 1])
-${TITLE_LINE(v)}`
+    ax.set_ylabel(header[i + 1])`,
+  (v) => `fig.suptitle(${JSON.stringify(str(v.title ?? ''))})`
 )
 
 // ---------------------------------------------------------------------------
@@ -140,7 +154,11 @@ export const dualAxisSchema = base(
   '双轴对比',
   '双 Y 轴组合图：第一系列用左轴，第二系列用右轴。',
   ['图表', '布局'],
-  [DATA_FIELD, TITLE_FIELD, { key: 'secondColor', label: '右轴颜色', type: 'text', default: '#ef4444', width: 'half' }],
+  [
+    { ...DATA_FIELD, placeholder: 'x,y1,y2\n1,10,120\n2,14,90\n3,12,150\n4,18,80\n5,16,110' },
+    TITLE_FIELD,
+    { key: 'secondColor', label: '右轴颜色', type: 'text', default: '#ef4444', width: 'half' }
+  ],
   (v) => {
     const c2 = /^#[0-9a-fA-F]{6}$/.test(str(v.secondColor)) ? str(v.secondColor) : '#ef4444'
     return `columns = list(zip(*data_rows))
@@ -151,8 +169,9 @@ ax1.set_ylabel(header[1], color="#3b82f6")
 ax2 = ax1.twinx()
 ax2.plot(x, [float(c) for c in columns[2]], color="${c2}", label=header[2])
 ax2.set_ylabel(header[2], color="${c2}")
-${TITLE_LINE(v)}`
-  }
+`
+  },
+  (v) => `fig.suptitle(${JSON.stringify(str(v.title ?? ''))})`
 )
 
 // ---------------------------------------------------------------------------
@@ -163,7 +182,7 @@ export const logScaleSchema = base(
   'Y 轴对数坐标折线（适合跨数量级数据）。',
   ['图表', '布局'],
   [DATA_FIELD, TITLE_FIELD],
-  (v) => `columns = list(zip(*data_rows))
+  (_v) => `columns = list(zip(*data_rows))
 x = columns[0]
 fig, ax = plt.subplots(figsize=(8, 5))
 for i, col in enumerate(columns[1:], 1):
@@ -171,7 +190,7 @@ for i, col in enumerate(columns[1:], 1):
 ax.set_yscale("log")
 ax.legend()
 ax.grid(True, alpha=0.3)
-${TITLE_LINE(v)}`
+`
 )
 
 // ---------------------------------------------------------------------------
@@ -214,6 +233,8 @@ export const wordcloudSchema: InteractiveToolSchema = {
     if (!data.trim()) return INVALID
     const bg = /^#[0-9a-fA-F]{6}$/.test(str(v.bg ?? '#ffffff')) ? str(v.bg) : '#ffffff'
     return `"""词云图（wordcloud + matplotlib）。"""
+import json
+
 import matplotlib
 matplotlib.use("Agg")
 matplotlib.rcParams["font.sans-serif"] = ["PingFang SC", "Microsoft YaHei", "SimHei"]
@@ -247,12 +268,13 @@ ${OUT}`
 export const vennSchema: InteractiveToolSchema = {
   id: 'interactive:venn',
   title: '韦恩图',
-  description: '两集合或三集合交叠图：每行「集合名,元素数」（2-3 行）。',
+  description:
+    'matplotlib_venn 区域计数：2 集合填 3 行「名称,元素数」（仅A/仅B/交集）；3 集合填 7 行（仅A/仅B/仅C/AB/AC/BC/ABC）。',
   tags: ['图表'],
   fields: [
     {
       key: 'data',
-      label: '集合规模（CSV：名称,元素数，2-3 行）',
+      label: '区域元素数（CSV：名称,数量；2 集合 3 行 / 3 集合 7 行）',
       type: 'textarea',
       required: true,
       placeholder: '集合A,18\n集合B,12\n共有,7'
@@ -264,20 +286,23 @@ export const vennSchema: InteractiveToolSchema = {
     const rows = str(v.data)
       .split('\n')
       .filter((l) => l.trim())
-    if (rows.length < 2 || rows.length > 3) return { error: '韦恩图支持 2~3 个集合' }
-    return { rows: [{ label: '集合数', value: String(rows.length) }] }
+    if (rows.length !== 3 && rows.length !== 7)
+      return { error: '2 集合需 3 行（仅A/仅B/交集），3 集合需 7 行（仅A/仅B/仅C/AB/AC/BC/ABC）' }
+    return { rows: [{ label: '集合数', value: rows.length === 3 ? '2' : '3' }] }
   },
   pyCode: (v) => {
     const data = str(v.data)
     const rows = data.split('\n').filter((l) => l.trim())
-    if (rows.length < 2 || rows.length > 3) return '# 韦恩图支持 2~3 个集合'
+    if (rows.length !== 3 && rows.length !== 7) return '# 2 集合需 3 行 / 3 集合需 7 行（区域元素数）'
     const vals = rows.map((r) => Number(r.split(',')[1] ?? 0))
     const names = rows.map((r) => r.split(',')[0] ?? '')
     const imp =
-      rows.length === 2
-        ? 'from matplotlib_venn import venn2 as venn\nvenn_fn = venn2\nsubset = (vals[0], vals[1], vals[2])'
-        : 'from matplotlib_venn import venn3 as venn_fn\nsubset = (vals[0], vals[1], vals[2], vals[3], vals[4], vals[5], vals[6])'
-    return `"""韦恩图（matplotlib_venn）。"""
+      rows.length === 3
+        ? 'from matplotlib_venn import venn2 as venn_fn\nsubset = (vals[0], vals[1], vals[2])\nlabels = names[:2]'
+        : 'from matplotlib_venn import venn3 as venn_fn\nsubset = (vals[0], vals[1], vals[2], vals[3], vals[4], vals[5], vals[6])\nlabels = names[:3]'
+    return `"""韦恩图（matplotlib_venn，区域元素数口径）。"""
+import json
+
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
@@ -287,7 +312,7 @@ names = ${JSON.stringify(names)}
 ${imp}
 
 fig, ax = plt.subplots(figsize=(6, 6))
-venn_fn(subset=subset, set_labels=names, ax=ax)
+venn_fn(subsets=subset, set_labels=labels, ax=ax)
 ${TITLE_LINE(v)}
 ${OUT}`
   }
@@ -310,7 +335,7 @@ export const ganttSchema = base(
     },
     TITLE_FIELD
   ],
-  (v) => {
+  (_v) => {
     return `tasks = []
 for r in data_rows:
     tasks.append((r[0], float(r[1] or 0), float(r[2] or 0)))
@@ -321,7 +346,7 @@ for i, (name, start, dur) in enumerate(tasks):
     ax.text(start + dur / 2, i, name, ha="center", va="center", color="white", fontsize=9)
 ax.set_yticks(range(len(tasks)), [t[0] for t in tasks])
 ax.set_xlabel("时间（天）")
-${TITLE_LINE(v)}`
+`
   }
 )
 
@@ -351,13 +376,31 @@ export const dendrogramSchema: InteractiveToolSchema = {
       : { error: '请粘贴数据' },
   pyCode: (v) => {
     const data = str(v.data)
-    if (!data.trim()) return INVALID
+    const lines = data
+      .trim()
+      .split('\n')
+      .filter((l) => l.trim())
+    if (lines.length < 2) return INVALID
     return `"""系统树状图（scipy 层次聚类）。"""
+import csv
+import io
 import json
 
+import matplotlib
+matplotlib.use("Agg")
+matplotlib.rcParams["font.sans-serif"] = [
+    "PingFang SC", "Heiti TC", "Microsoft YaHei", "SimHei", "Arial Unicode MS",
+]
+matplotlib.rcParams["axes.unicode_minus"] = False
+import matplotlib.pyplot as plt
 import numpy as np
 from scipy.cluster.hierarchy import dendrogram, linkage
 
+def parse_csv(text):
+    rows = list(csv.reader(io.StringIO(text.strip())))
+    return rows[0], rows[1:]
+
+header, data_rows = parse_csv(${JSON.stringify(data)})
 mat = np.array([[float(c) for c in r[1:]] for r in data_rows], dtype=float)
 labels = [r[0] for r in data_rows]
 Z = linkage(mat, method="single")

@@ -166,4 +166,33 @@ describe('图族表完整性（防生成器改名漂移）', () => {
     }
     expect(vizIds.size).toBe(24)
   })
+
+  it('通用 topics 家族表引用的每个页面都已注册（全库交互化批次）', async () => {
+    const { TOPICS_FAMILY_TO_INTERACTIVE } = await import('../../src/interactive-mapping')
+    expect(Object.keys(TOPICS_FAMILY_TO_INTERACTIVE).length).toBeGreaterThanOrEqual(90)
+    for (const [fam, id] of Object.entries(TOPICS_FAMILY_TO_INTERACTIVE)) {
+      expect(getToolSchema(id), `家族 ${fam} 引用了未注册页面 ${id}`).toBeTruthy()
+    }
+  })
+
+  it('五大批次家族路由到位：algo/basics/pil/opencv/turtle', async () => {
+    const { interactiveIdForExample } = await import('../../src/interactive-mapping')
+    const cases: Array<[string, string]> = [
+      ['topics_algo-quick-sort-1', 'interactive:quick-sort'],
+      ['topics_basics-fizzbuzz-3', 'interactive:fizzbuzz'],
+      ['topics_pil-gaussian-v7', 'interactive:pil-gaussian'],
+      ['topics_opencv-canny-s4', 'interactive:cv-canny'],
+      ['topics_turtle-spiral-v3', 'interactive:turtle-spiral'],
+      ['topics_turtle-starfield', 'interactive:turtle-starfield']
+    ]
+    for (const [id, expected] of cases) {
+      expect(interactiveIdForExample({ id } as VExample), id).toBe(expected)
+    }
+  })
+
+  it('游戏家族不路由（保持详情页兜底）', async () => {
+    const { interactiveIdForExample } = await import('../../src/interactive-mapping')
+    expect(interactiveIdForExample({ id: 'topics_game-snake-1' } as VExample)).toBeNull()
+    expect(interactiveIdForExample({ id: 'topics_pygame-snake' } as VExample)).toBeNull()
+  })
 })

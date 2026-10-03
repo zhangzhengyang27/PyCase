@@ -92,7 +92,7 @@ for i in range(2, limit + 1):
         primes.append(i)
         for j in range(i * i, limit + 1, i):
             sieve[j] = True
-print(f"共 {{len(primes)}} 个素数，最大 {{primes[-1]}}")
+print(f"共 {len(primes)} 个素数，最大 {primes[-1]}")
 print(primes)
 `
   }
@@ -132,7 +132,7 @@ seq = []
 for _ in range(${n}):
     seq.append(a)
     a, b = b, a + b
-print(f"F({${n} - 1}) = {{seq[-1]}}")
+print(f"F({${n} - 1}) = {seq[-1]}")
 print(seq)
 `
   }
@@ -198,7 +198,7 @@ def qs(lo, hi, depth):
             arr[i], arr[j] = arr[j], arr[i]
             i += 1
     arr[i], arr[hi] = arr[hi], arr[i]
-    print(f"pivot={{pivot}} → [{{', '.join(str(x) for x in arr[lo:hi + 1])}}]")
+    print(f"pivot={pivot} → [{', '.join(str(x) for x in arr[lo:hi + 1])}]")
     qs(lo, i - 1, depth + 1)
     qs(i + 1, hi, depth + 1)
 
@@ -266,15 +266,15 @@ while lo <= hi:
     mid = (lo + hi) // 2
     if arr[mid] == target:
         found = mid
-        print(f"lo={{lo}} mid={{mid}}({{arr[mid]}}) hi={{hi}} → 命中")
+        print(f"lo={lo} mid={mid}({arr[mid]}) hi={hi} → 命中")
         break
     elif arr[mid] < target:
-        print(f"lo={{lo}} mid={{mid}}({{arr[mid]}}) hi={{hi}} → 右半")
+        print(f"lo={lo} mid={mid}({arr[mid]}) hi={hi} → 右半")
         lo = mid + 1
     else:
-        print(f"lo={{lo}} mid={{mid}}({{arr[mid]}}) hi={{hi}} → 左半")
+        print(f"lo={lo} mid={mid}({arr[mid]}) hi={hi} → 左半")
         hi = mid - 1
-print(f"结果: 索引 {{found}}" if found >= 0 else "未找到")
+print(f"结果: 索引 {found}" if found >= 0 else "未找到")
 `
   }
 }
@@ -356,7 +356,7 @@ for i in range(1, n + 1):
         dp[i][c] = dp[i - 1][c]
         if w <= c:
             dp[i][c] = max(dp[i][c], dp[i - 1][c - w] + val)
-print(f"最大价值: {{dp[n][capacity]}}")
+print(f"最大价值: {dp[n][capacity]}")
 c = capacity
 chosen = []
 for i in range(n, 0, -1):
@@ -475,7 +475,7 @@ else:
     while cur != ${JSON.stringify(start)}:
         cur = prev[cur]
         path.insert(0, cur)
-    print(f"最短距离: {{dist[${JSON.stringify(end)}]}}")
+    print(f"最短距离: {dist[${JSON.stringify(end)}]}")
     print("路径:", " → ".join(path))
 `
   }
@@ -514,7 +514,7 @@ seq = [n]
 while n != 1:
     n = n // 2 if n % 2 == 0 else 3 * n + 1
     seq.append(n)
-print(f"步数: {{len(seq) - 1}}，峰值: {{max(seq)}}")
+print(f"步数: {len(seq) - 1}，峰值: {max(seq)}")
 print(" → ".join(map(str, seq)))
 `
   }

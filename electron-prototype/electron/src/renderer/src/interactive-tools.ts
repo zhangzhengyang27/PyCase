@@ -108,11 +108,28 @@ const DATE_CARD: VExample = {
 /** schema 注册点（reactive——注册即反映到工具池）；内置三工具来自 tool-schemas.ts */
 export const interactiveToolSchemas = reactive<InteractiveToolSchema[]>([...TOOL_SCHEMAS])
 
-// 画廊路由专用页（W17 图族）：画廊卡片直达的 bulk_viz 图族交互页，与工具池分离——
-// 不进搜索/工具箱卡片（产品口径：这批入口只出现在示例画廊），但 getToolSchema 可达，
-// InteractiveToolPage 照常渲染。注册方向 interactive-tools → viz2（viz2 仅类型导入，无环）。
+// 画廊路由专用页（与工具池分离——不进搜索/工具箱卡片，getToolSchema 可达，InteractiveToolPage 照常渲染）：
+//   viz2：W17 bulk_viz 图族页；pil/opencv/turtle：「全库示例交互化」三大批；
+//   algos/algos-v2/crawlers/gap：V4/V5 批（历史上从未注册、UI 不可达的死代码，本批一并挂接）。
+// 注册方向 interactive-tools → 各文件（各文件仅类型导入，无环）。
 import { VIZ2_SCHEMAS } from './tool-schemas-viz2'
-export const interactiveGallerySchemas = reactive<InteractiveToolSchema[]>([...VIZ2_SCHEMAS])
+import { PIL_EFFECT_SCHEMAS } from './tool-schemas-pil'
+import { OPENCV_EFFECT_SCHEMAS } from './tool-schemas-opencv'
+import { TURTLE_SCHEMAS } from './tool-schemas-turtle'
+import { ALGO_SCHEMAS } from './tool-schemas-algos'
+import { ALGO2_SCHEMAS } from './tool-schemas-algos-v2'
+import { CRAWLER_SCHEMAS } from './tool-schemas-crawlers'
+import { GAP_SCHEMAS } from './tool-schemas-gap'
+export const interactiveGallerySchemas = reactive<InteractiveToolSchema[]>([
+  ...VIZ2_SCHEMAS,
+  ...PIL_EFFECT_SCHEMAS,
+  ...OPENCV_EFFECT_SCHEMAS,
+  ...TURTLE_SCHEMAS,
+  ...ALGO_SCHEMAS,
+  ...ALGO2_SCHEMAS,
+  ...CRAWLER_SCHEMAS,
+  ...GAP_SCHEMAS
+])
 
 function schemaToCard(s: InteractiveToolSchema): VExample {
   return {
