@@ -672,3 +672,28 @@ describe('W13 十工具 pyCode ↔ 关键片段', () => {
     expect(r.table!.rows.find((x) => x[0] === '显示器')![2]).toContain('需补货')
   })
 })
+
+// ---------------------------------------------------------------------------
+// W15 终极补齐 ×4：保险库写入/查看、一次性定时任务、Word 读取
+// ---------------------------------------------------------------------------
+const W15_FRAGMENTS: Array<[string, Record<string, FieldValue>, string[]]> = [
+  ['vault-add', { master: 'm1', site: 'github.com', secret: 's3cret' }, ['keystream', '已保存', '<<<JSON>>>']],
+  ['vault-list', { master: 'm1' }, ['load(', '<<<JSON>>>']],
+  ['sched-once', { delay: 5, task: "print('任务')" }, ['sched.scheduler', 'scheduler.enter(5', '<<<JSON>>>']],
+  ['word-read', { file: '/周会.docx' }, ['doc.paragraphs', 'doc.tables', '<<<JSON>>>']]
+]
+
+describe('W15 四工具 pyCode ↔ 关键片段', () => {
+  it.each(W15_FRAGMENTS.map(([id, values, frags]) => [id, values, frags] as const))('%s', (id, values, frags) => {
+    const schema = dev(`interactive:${id}`)!
+    expect(schema, id).toBeTruthy()
+    expect(schema.computeVia, id).toBe('sidecar')
+    const code = schema.pyCode!(values)
+    for (const f of frags) expect(code, `${id} 应含 ${f}`).toContain(f)
+  })
+  it('password 字段类型存在且 vaultList 单步', () => {
+    expect(dev('interactive:vault-add')!.fields[0]!.type).toBe('password')
+    expect(dev('interactive:vault-list')!.steps).toBeUndefined()
+    expect(dev('interactive:vault-add')!.steps).toHaveLength(2)
+  })
+})

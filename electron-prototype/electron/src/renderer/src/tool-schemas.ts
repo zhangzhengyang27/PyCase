@@ -397,6 +397,10 @@ TOOL_SCHEMAS.push(...W12_SCHEMAS)
 import { W14_SCHEMAS } from './tool-schemas-w14'
 TOOL_SCHEMAS.push(...W14_SCHEMAS)
 
+// W15 终极补齐：密码保险库×2 / 一次性定时任务 / Word 读取
+import { W15_SCHEMAS } from './tool-schemas-w15'
+TOOL_SCHEMAS.push(...W15_SCHEMAS)
+
 // W13 增补批：YAML/Base64/URL/文本对比/二维码/编码修复 + 透视/跨表关联/数据校验/库存盘点
 import { W13_SCHEMAS } from './tool-schemas-w13'
 TOOL_SCHEMAS.push(...W13_SCHEMAS)

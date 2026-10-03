@@ -1185,6 +1185,114 @@ def test_qrcode_real_execution(tmp_path):
         assert im.size[0] >= 100  # 正方形二维码
 
 
+# ---------------------------------------------------------------------------
+# W15：保险库往返真实执行（add → list 同口令可读）+ Word 读取
+# ---------------------------------------------------------------------------
+VAULT_LIB = """import base64
+import hashlib
+import json
+import os
+
+VAULT = "vault.enc.json"
+
+def keystream(master, salt, size):
+    out = b""
+    counter = 0
+    while len(out) < size:
+        out += hashlib.sha256(master.encode() + salt + str(counter).encode()).digest()
+        counter += 1
+    return out[:size]
+
+def xor(data, key):
+    return bytes(a ^ b for a, b in zip(data, key))
+
+def load(master):
+    raw = json.loads(open(VAULT, encoding="utf-8").read())
+    salt = base64.b64decode(raw["salt"])
+    data = xor(base64.b64decode(raw["data"]), keystream(master, salt, len(base64.b64decode(raw["data"]))))
+    return json.loads(data.decode("utf-8"))
+
+def save(master, entries):
+    salt = os.urandom(16)
+    text = json.dumps(entries, ensure_ascii=False).encode("utf-8")
+    enc = xor(text, keystream(master, salt, len(text)))
+    open(VAULT, "w", encoding="utf-8").write(json.dumps(
+        {{"salt": base64.b64encode(salt).decode(), "data": base64.b64encode(enc).decode()}}))
+"""
+
+VAULT_ADD_TPL = VAULT_LIB + """
+import sys
+
+entries = {{}}
+if os.path.exists(VAULT):
+    try:
+        entries = load({master!r})
+    except Exception:
+        print("解密失败：主口令错误或库已损坏")
+        sys.exit(1)
+entries[{site!r}] = {secret!r}
+save({master!r}, entries)
+print("OK")
+"""
+
+VAULT_LIST_TPL = VAULT_LIB + """
+entries = load({master!r})
+print("<<<JSON>>>")
+print(json.dumps({{"list": [f"{{s}} → {{p[:2]}}{{'*' * max(0, len(p) - 2)}}".replace("{{'*' * 0}}", "") for s, p in entries.items()]}}, ensure_ascii=False))
+print("<<<END>>>")
+"""
+
+WORD_READ_TPL = """import json
+
+from docx import Document
+
+doc = Document({src!r})
+lines = ["== 段落 =="]
+for p in doc.paragraphs:
+    if p.text.strip():
+        lines.append(f"[{{p.style.name}}] {{p.text}}")
+print("<<<JSON>>>")
+print(json.dumps({{"text": "\\n".join(lines)}}, ensure_ascii=False))
+print("<<<END>>>")
+"""
+
+
+def test_vault_roundtrip_real_execution(tmp_path):
+    script = tmp_path / "add.py"
+    script.write_text(VAULT_ADD_TPL.format(master="m1", site="github.com", secret="s3cret"), encoding="utf-8")
+    r = subprocess.run([sys.executable, str(script)], cwd=tmp_path, capture_output=True, text=True, timeout=60)
+    assert r.returncode == 0, r.stderr
+    lst = tmp_path / "list.py"
+    lst.write_text(VAULT_LIST_TPL.format(master="m1"), encoding="utf-8")
+    r2 = subprocess.run([sys.executable, str(lst)], cwd=tmp_path, capture_output=True, text=True, timeout=60)
+    assert r2.returncode == 0, r2.stderr
+    parsed = _parse_sidecar(r2.stdout)
+    assert any("github.com" in x for x in parsed["list"])
+    # 错误口令 → 退出码 1（解密失败不静默）
+    bad = tmp_path / "bad.py"
+    bad.write_text(VAULT_ADD_TPL.format(master="WRONG", site="x", secret="y"), encoding="utf-8")
+    r3 = subprocess.run([sys.executable, str(bad)], cwd=tmp_path, capture_output=True, text=True, timeout=60)
+    assert r3.returncode != 0
+
+
+def test_word_read_real_execution(tmp_path):
+    docx = pytest.importorskip("docx")
+    from docx import Document
+
+    src = tmp_path / "周会.docx"
+    doc = Document()
+    doc.add_heading("周会纪要", level=1)
+    doc.add_paragraph("下次会议改期")
+    doc.save(src)
+    script = tmp_path / "run.py"
+    script.write_text(WORD_READ_TPL.format(src=str(src)), encoding="utf-8")
+    r = subprocess.run([sys.executable, str(script)], capture_output=True, text=True, timeout=60)
+    assert r.returncode == 0, r.stderr
+    parsed = _parse_sidecar(r.stdout)
+    assert "周会纪要" in parsed["text"]
+    assert "下次会议改期" in parsed["text"]
+
+
 def test_golden_has_all_sections():
     data = _load()
     assert len(data["temp"]) == 7

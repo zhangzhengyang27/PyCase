@@ -114,6 +114,14 @@ export const TITLE_TO_INTERACTIVE: Record<string, string> = {
   // ---- W13 增补 ----
   编码修复器: 'interactive:encoding-fix',
   二维码生成器: 'interactive:qrcode-gen',
+  // ---- W12/W13 漏映射补全 ----
+  文件变更监听: 'interactive:file-watch',
+  站点可用性监控: 'interactive:site-monitor',
+  'URL 批量体检': 'interactive:site-monitor',
+  'YAML ↔ JSON 互转': 'interactive:yaml-json',
+  'Excel 透视汇总': 'interactive:pivot',
+  跨表关联: 'interactive:cross-join',
+  数据校验: 'interactive:data-validate',
   // ---- W14 终局补齐 ----
   哈希校验器: 'interactive:hash-checker',
   网页正文提取: 'interactive:web-article',

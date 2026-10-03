@@ -46,8 +46,8 @@ describe('toolboxItems 合并交互工具', () => {
   })
   it('toolsTotal 含交互工具，catalogToolsTotal 不含', () => {
     expect(catalogToolsTotal.value).toBe(2)
-    // 目录池 2 + 交互注册表 122（… + W14 终局补齐×12）
-    expect(toolsTotal.value).toBe(124)
+    // 目录池 2 + 交互注册表 126（… + W15×4）
+    expect(toolsTotal.value).toBe(128)
   })
   it('isInteractiveId 前缀判定', () => {
     expect(isInteractiveId(DATE_CALC_ID)).toBe(true)
