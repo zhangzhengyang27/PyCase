@@ -8,14 +8,21 @@
 import { computed } from 'vue'
 import { THEMES } from '../src/themes'
 import { sectionLabelOf } from '../src/overview'
-import { activeSectionKey, galleryExamples, gallerySections, openGallery } from '../src/store/catalog'
+import { activeSectionKey, galleryExamples, galleryPool, gallerySections, mergeVariants, openGallery } from '../src/store/catalog'
 import { favorites } from '../src/store/prefs'
 import BaseButton from './base/BaseButton.vue'
 
 // 当前语境的样本池：无分区 = 全库；有分区 = 该分区的成员（与侧栏计数同源）
 const pool = computed(() => {
-  if (!activeSectionKey.value) return galleryExamples.value
+  if (!activeSectionKey.value) return galleryPool.value
   return gallerySections.value.find((s) => s.key === activeSectionKey.value)?.items ?? []
+})
+
+// 归并口径下补一句「多少变体收进了多少张卡」（仅全局语境展示）
+const mergedNote = computed(() => {
+  if (!mergeVariants.value || activeSectionKey.value) return null
+  const merged = galleryExamples.value.length - pool.value.length
+  return merged > 0 ? merged : null
 })
 
 const title = computed(() => (activeSectionKey.value ? sectionLabelOf(activeSectionKey.value) : '示例库') ?? '示例库')
@@ -42,6 +49,9 @@ const favCount = computed(() => pool.value.filter((e) => favorites.value.has(e.i
         <div class="flex items-center gap-1.5 mt-2.5 app-no-drag">
           <span class="stat-chip"
             ><b class="font-mono">{{ pool.length }}</b> 个示例</span
+          >
+          <span v-if="mergedNote" class="stat-chip" title="同族变体已归并进实验室页，可在浏览工具栏关闭归并">
+            已归并 <b class="font-mono">{{ mergedNote }}</b> 个变体</span
           >
           <span v-if="!scoped" class="stat-chip"
             ><b class="font-mono">{{ THEMES.length }}</b> 大主题</span

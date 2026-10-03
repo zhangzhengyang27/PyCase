@@ -72,6 +72,12 @@ const enterDelay = computed(() => ({
         <component :is="icon" :size="15" :stroke-width="1.5" />
       </span>
       <span class="flex-1 min-w-0 text-body font-semibold text-ink leading-[1.3] truncate capitalize">{{ title }}</span>
+      <span
+        v-if="ex.variantCount"
+        class="shrink-0 text-caption font-mono text-accent border border-line rounded-control px-1.5 py-0"
+        :title="`${ex.variantCount} 个变体已归并，点卡片打开交互页面`"
+        >×{{ ex.variantCount }}</span
+      >
       <button
         class="w-6 h-6 flex items-center justify-center rounded-control border-0 bg-transparent cursor-pointer shrink-0 transition-colors dur-fast"
         :class="faved ? 'text-warn' : 'text-ink-faint hover:text-warn'"

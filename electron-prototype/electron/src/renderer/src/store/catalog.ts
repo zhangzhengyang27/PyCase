@@ -8,6 +8,7 @@ import { THEMES } from '../themes'
 import { SECTION_CATALOG, assignSections, sectionKeyOf } from '../overview'
 import { buildFilterChips, type FilterChip } from '../filter-chips'
 import { interactiveToolItems } from '../interactive-tools'
+import { mergeVariantCards } from '../gallery-merge'
 import { TOOL_CATEGORY_CATALOG, toolCategoryKeyOf } from '../toolbox-cats'
 import type { ExampleItem } from '../types'
 import { api } from '../sidecar-client'
@@ -19,6 +20,8 @@ export interface VExample extends ExampleItem, FilterEngine.ExampleLike {
   description?: string
   _codeLower?: string
   _tagsAll?: string[]
+  /** 变体归并标记：>1 时该卡是家族归并卡（代表 N 个变体，点卡片进交互页） */
+  variantCount?: number
 }
 
 export type SortBy = 'quality_desc' | 'name' | 'last_run'
@@ -50,6 +53,8 @@ export const galleryLimit = ref(120)
 
 // 浏览密度（画廊浏览态网格/清单，随 viewPrefs 持久化）
 export const viewMode = ref<ViewDensity>('grid')
+/** 变体归并：已路由家族折叠为一张家族卡（favOnly 时绕过——收藏针对具体变体） */
+export const mergeVariants = ref(true)
 
 // 收藏 / 运行状态 / 可运行性 / 标签
 
@@ -152,8 +157,13 @@ const countBaseQuery = computed<FilterEngine.FilterQuery>(() => ({
  *  与工具箱查询的 category:'tools' 互为补集 */
 export const galleryExamples = computed<VExample[]>(() => examples.value.filter((e) => e.category !== 'tools'))
 
-/** 画廊分区（互斥分配，质量降序）：侧栏菜单计数与卡片徽章同口径 */
-export const gallerySections = computed(() => assignSections(galleryExamples.value))
+/** 归并展示池：页头统计与侧栏分区计数口径（mergeVariants 关闭时与 galleryExamples 相同） */
+export const galleryPool = computed<VExample[]>(() =>
+  mergeVariants.value ? mergeVariantCards(galleryExamples.value) : galleryExamples.value
+)
+
+/** 画廊分区（互斥分配，质量降序）：侧栏菜单计数与卡片徽章同口径（归并池口径） */
+export const gallerySections = computed(() => assignSections(galleryPool.value))
 
 export interface GallerySectionNav {
   key: string
@@ -179,9 +189,11 @@ async function refreshCodeHits(query: string): Promise<void> {
   }
 }
 
-export const filtered = computed(
-  () => FilterEngine.filterExamples(galleryExamples.value, galleryQuery.value, filterContext.value) as VExample[]
-)
+export const filtered = computed(() => {
+  const hits = FilterEngine.filterExamples(galleryExamples.value, galleryQuery.value, filterContext.value) as VExample[]
+  // 归并在筛选之后：搜索/tag 命中任一变体仍会点亮家族卡；favOnly 绕过（收藏针对具体变体）
+  return mergeVariants.value && !favOnly.value ? mergeVariantCards(hits) : hits
+})
 
 export const sortedGallery = computed(
   () => FilterEngine.sortExamples(filtered.value, sortBy.value, { lastRunAt: lastRunIndex.value }) as VExample[]

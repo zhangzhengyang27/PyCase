@@ -9,9 +9,9 @@
 // 契约 §5：列表不带 code，代码命中由 sidecar 按需读文件）。它是画廊唯一的文本检索入口，
 // 筛选下拉只承担维度收窄，不能顶替它。
 import { computed } from 'vue'
-import { LayoutGrid, List, Star, X } from 'lucide-vue-next'
+import { Layers, LayoutGrid, List, Star, X } from 'lucide-vue-next'
 import { THEMES } from '../src/themes'
-import {
+import { mergeVariants,
   activeSectionKey,
   activeTheme,
   clearAllFilters,
@@ -139,6 +139,18 @@ function facetSuffix(has: boolean, n: number | undefined): string {
           </button>
           <button title="列表视图" aria-label="列表视图" :aria-pressed="viewMode === 'list'" @click="setMode('list')">
             <List :size="13" :stroke-width="1.5" /> 列表
+          </button>
+        </div>
+
+        <div class="app-no-drag seg shrink-0" role="group" aria-label="变体归并">
+          <button
+            type="button"
+            :aria-pressed="mergeVariants"
+            title="同族变体折叠为一张家族卡（关闭后显示全部原始变体）"
+            data-testid="merge-variants-toggle"
+            @click="mergeVariants = !mergeVariants"
+          >
+            <Layers :size="13" :stroke-width="1.5" /> 变体归并
           </button>
         </div>
       </div>
