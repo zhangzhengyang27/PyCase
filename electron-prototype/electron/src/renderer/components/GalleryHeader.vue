@@ -8,7 +8,7 @@
 import { computed } from 'vue'
 import { THEMES } from '../src/themes'
 import { sectionLabelOf } from '../src/overview'
-import { activeSectionKey, galleryExamples, galleryPool, gallerySections, mergeVariants, openGallery } from '../src/store/catalog'
+import { activeSectionKey, galleryExamples, galleryPool, gallerySections, openGallery } from '../src/store/catalog'
 import { favorites } from '../src/store/prefs'
 import BaseButton from './base/BaseButton.vue'
 
@@ -20,7 +20,7 @@ const pool = computed(() => {
 
 // 归并口径下补一句「多少变体收进了多少张卡」（仅全局语境展示）
 const mergedNote = computed(() => {
-  if (!mergeVariants.value || activeSectionKey.value) return null
+  if (activeSectionKey.value) return null
   const merged = galleryExamples.value.length - pool.value.length
   return merged > 0 ? merged : null
 })

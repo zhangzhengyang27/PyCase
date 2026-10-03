@@ -1,4 +1,4 @@
-// 画廊变体归并层：已路由家族折叠为单张家族卡（×N），搜索穿透变体、favOnly 绕过、
+// 画廊变体归并层（唯一形态，无开关）：已路由家族折叠为单张家族卡，搜索穿透变体、favOnly 绕过、
 // 未路由家族不折叠、点击家族卡照常路由进实验室（类型预选）。
 import { beforeEach, describe, expect, it } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
@@ -11,7 +11,6 @@ import {
   galleryPool,
   loadError,
   loading,
-  mergeVariants,
   searchQuery,
   type VExample
 } from '../../src/store/catalog'
@@ -40,7 +39,6 @@ const barVariants = (): VExample[] =>
 
 beforeEach(() => {
   examples.value = []
-  mergeVariants.value = true
   favOnly.value = false
   searchQuery.value = ''
   selectedId.value = null
@@ -87,10 +85,10 @@ describe('画廊集成（catalog 管道 + 开关）', () => {
     expect(galleryPool.value).toHaveLength(2)
   })
 
-  it('关闭归并开关后显示全部原始变体', () => {
-    examples.value = [...barVariants(), ex('e-unique')]
-    mergeVariants.value = false
-    expect(galleryPool.value).toHaveLength(13)
+  it('单例家族透传不改写（count=1 不加归并标记）', () => {
+    examples.value = [ex('topics_basics-dataclass'), ex('e-unique')]
+    expect(galleryPool.value).toHaveLength(2)
+    expect(galleryPool.value.every((e) => !e.variantCount)).toBe(true)
   })
 
   it('搜索穿透变体：搜「变体7」仍命中柱状图家族卡', () => {
