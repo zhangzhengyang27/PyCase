@@ -120,7 +120,7 @@ print("<<<END>>>")
 `
     if (mode !== 'custom') {
       const n = Math.max(5, Math.min(1000, Math.trunc(Number(v.points ?? 50)) || 50))
-      const gens = {
+      const gens: Record<string, string> = {
         sine:
           'import math\nimport random\n\nrandom.seed(42)\ny = [math.sin(i / 5) + random.uniform(-0.3, 0.3) for i in range(' +
           n +

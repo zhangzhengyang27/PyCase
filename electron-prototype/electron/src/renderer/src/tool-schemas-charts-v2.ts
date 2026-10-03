@@ -4,6 +4,41 @@ import type { InteractiveToolSchema } from './interactive-tools'
 
 const str = (v: unknown): string => String(v ?? '')
 const INVALID = '# 粘贴 CSV 数据后自动生成图表代码'
+const GEN_HEAD = `import math
+import random
+
+random.seed(42)
+
+def gen_data(mode, n):
+    gens = {
+        "sine": lambda i: (i, math.sin(i / 5) + random.uniform(-0.3, 0.3)),
+        "linear": lambda i: (i, i * 0.8 + 2),
+        "exp": lambda i: (i, 100 * math.exp(-i / 15)),
+        "random": lambda i: (i, random.uniform(0, 100)),
+        "normal": lambda i: (i, random.gauss(50, 12)),
+        "pulse": lambda i: (i, 100 if (i // 10) % 2 == 0 else 20),
+        "step": lambda i: (i, 50 * (i // 8)),
+        "bimodal": lambda i: (i, random.gauss(30, 8) if i % 2 else random.gauss(70, 8)),
+        "sawtooth": lambda i: (i, (i % 12) * 8),
+        "spike": lambda i: (i, min(100, i * 2) if i < n - 5 else 100 - (i - n + 5) * 20),
+        "sparse": lambda i: (i, random.uniform(10, 30) + (80 if i % 15 == 0 else 0)),
+        "square": lambda i: (i, i ** 2 / 10),
+    }
+    fn = gens.get(mode, gens["random"])
+    xs, ys = [], []
+    for i in range(n):
+        x, y = fn(i)
+        xs.append(x)
+        ys.append(y)
+    return xs, ys
+
+def gen_csv(mode, n):
+    xs, ys = gen_data(mode, n)
+    header = ["x", "y"]
+    rows = [[str(x), str(y)] for x, y in zip(xs, ys)]
+    return header, rows
+`
+
 const PRELUDE = `import csv
 import io
 
@@ -54,16 +89,44 @@ function base(
       return { rows: [{ label: '数据行', value: String(lines.length - 1) }] }
     },
     pyCode: (v) => {
-      const data = str(v.data)
-      const lines = data
-        .trim()
-        .split('\n')
-        .filter((l) => l.trim())
-      if (lines.length < 2) return INVALID
-      return PRELUDE + '\n' + `header, data_rows = parse_csv(${JSON.stringify(data)})\n` + body(v) + '\n' + OUT
+      const mode = str(v.mode ?? 'sine')
+      const n = Math.trunc(Number(v.points ?? 60)) || 60
+      if (mode === 'custom') {
+        const data = str(v.data)
+        const lines = data
+          .trim()
+          .split('\n')
+          .filter((l) => l.trim())
+        if (lines.length < 2) return INVALID
+        return PRELUDE + '\n' + `header, data_rows = parse_csv(${JSON.stringify(data)})\n` + body(v) + '\n' + OUT
+      }
+      return GEN_HEAD + PRELUDE + '\n' + `header, data_rows = gen_csv(${JSON.stringify(v.mode ?? "sine")}, ${JSON.stringify(Math.trunc(Number(v.points ?? 60)) || 60)})\n` + body(v) + '\n' + OUT
     }
   }
 }
+
+const MODE_FIELD = {
+  key: 'mode',
+  label: '数据模式',
+  type: 'select' as const,
+  default: 'sine',
+  width: 'half' as const,
+  options: [
+    { value: 'sine', label: '正弦加噪' },
+    { value: 'linear', label: '线性趋势' },
+    { value: 'exp', label: '指数衰减' },
+    { value: 'random', label: '均匀随机' },
+    { value: 'normal', label: '聚簇正态' },
+    { value: 'pulse', label: '周期脉冲' },
+    { value: 'step', label: '阶梯平台' },
+    { value: 'bimodal', label: '双峰分布' },
+    { value: 'sawtooth', label: '锯齿波' },
+    { value: 'sparse', label: '稀疏脉冲' },
+    { value: 'square', label: '平方增长' }
+  ]
+}
+
+const POINTS_FIELD = { key: 'points', label: '点数', type: 'number' as const, default: 60, width: 'half' as const }
 
 const DATA_FIELD = { key: 'data', label: '数据（CSV）', type: 'textarea' as const, required: true }
 const TITLE_FIELD = { key: 'title', label: '标题', type: 'text' as const, default: '', width: 'half' as const }
@@ -222,6 +285,8 @@ export const scatterDensitySchema = base(
   '大数据量散点 + 密度着色（hexbin 六角分箱）。',
   ['图表'],
   [
+    MODE_FIELD,
+    POINTS_FIELD,
     { key: 'data', label: '数据（CSV：x,y）', type: 'textarea', required: true },
     TITLE_FIELD,
     { key: 'gridsize', label: '分箱数', type: 'number', default: 30, width: 'half' }
