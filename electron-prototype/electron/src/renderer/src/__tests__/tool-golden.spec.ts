@@ -617,3 +617,58 @@ describe('W12 廿一工具 pyCode ↔ 关键片段', () => {
     expect(r.primary?.value).toBe('1')
   })
 })
+
+// ---------------------------------------------------------------------------
+// W13 增补批 ×10：YAML/Base64/URL/文本对比/二维码/编码修复/透视/跨表关联/数据校验/库存盘点
+// ---------------------------------------------------------------------------
+const W13_FRAGMENTS: Array<[string, Record<string, FieldValue>, string[]]> = [
+  ['yaml-json', { direction: 'yaml2json', input: 'a: 1' }, ['safe_load', 'ensure_ascii=False']],
+  ['base64', { mode: 'encode', input: 'Hello' }, ['b64encode', 'utf-8']],
+  ['url-codec', { mode: 'encode', input: '中文' }, ['quote(', 'safe=""']],
+  ['text-diff', { before: 'a', after: 'b' }, ['difflib', 'unified_diff']],
+  ['qrcode-gen', { text: 'https://example.com' }, ['qrcode.make', 'qrcode.png']],
+  ['encoding-fix', { file: '/t.txt' }, ['gbk', 'latin-1', 'fixed.utf8.txt']],
+  [
+    'pivot',
+    { data: '部门,月份,金额', rowDim: '部门', colDim: '月份', valCol: '金额' },
+    ['defaultdict(float)', 'colKeys']
+  ],
+  [
+    'cross-join',
+    { mainFile: '/m.xlsx', lookupFile: '/l.xlsx', mainKey: '工号', lookupKey: '工号', lookupVal: '姓名' },
+    ['左连接', '<未知>']
+  ],
+  ['data-validate', { data: '日期,工时\nA,8', col: '工时', min: 0, max: 16, allowEmpty: true }, ['空值放行', '超范围']],
+  ['stock-inventory', { opening: '键盘,12', inflow: '键盘,10', outflow: '鼠标,15' }, ['defaultdict', '需补货']]
+]
+
+describe('W13 十工具 pyCode ↔ 关键片段', () => {
+  it.each(W13_FRAGMENTS.map(([id, values, frags]) => [id, values, frags] as const))('%s', (id, values, frags) => {
+    const schema = dev(`interactive:${id}`)!
+    expect(schema, id).toBeTruthy()
+    const code = schema.pyCode!(values)
+    for (const f of frags) expect(code, `${id} 应含 ${f}`).toContain(f)
+  })
+  it('纯前端三件不走 sidecar', () => {
+    expect(dev('interactive:base64')!.computeVia).toBeUndefined()
+    expect(dev('interactive:url-codec')!.computeVia).toBeUndefined()
+    expect(dev('interactive:stock-inventory')!.computeVia).toBeUndefined()
+  })
+  it('base64 前端编解码：中文 UTF-8 安全', () => {
+    const enc = dev('interactive:base64').compute!({ mode: 'encode', input: '中文Hello' })
+    const dec = dev('interactive:base64').compute!({ mode: 'decode', input: enc.text! })
+    expect(dec.text).toBe('中文Hello')
+  })
+  it('库存盘点 compute：三表核算与补货标记', () => {
+    const r = dev('interactive:stock-inventory').compute!({
+      opening: '键盘,12\n鼠标,30',
+      inflow: '键盘,10',
+      outflow: '鼠标,15\n显示器,2'
+    })!
+    const rows = Object.fromEntries(r.table!.rows.map((x) => [x[0], x[1]]))
+    expect(rows['键盘']).toBe('22')
+    expect(rows['鼠标']).toBe('15')
+    expect(rows['显示器']).toBe('-2') // 无期初直接出库 → 负数（defaultdict 语义）
+    expect(r.table!.rows.find((x) => x[0] === '显示器')![2]).toContain('需补货')
+  })
+})

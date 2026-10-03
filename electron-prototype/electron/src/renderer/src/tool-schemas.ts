@@ -391,3 +391,7 @@ TOOL_SCHEMAS.push(...QUICK_SCHEMAS, ...RESULTS_SCHEMAS, ...WIZARD_SCHEMAS, ...FF
 // W12 收官批：Office 演示改造 18 + 字符方阵/文本表格 + 站点监控/文件变更对比
 import { W12_SCHEMAS } from './tool-schemas-w12'
 TOOL_SCHEMAS.push(...W12_SCHEMAS)
+
+// W13 增补批：YAML/Base64/URL/文本对比/二维码/编码修复 + 透视/跨表关联/数据校验/库存盘点
+import { W13_SCHEMAS } from './tool-schemas-w13'
+TOOL_SCHEMAS.push(...W13_SCHEMAS)

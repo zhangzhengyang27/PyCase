@@ -1080,6 +1080,111 @@ def test_word_table_real_execution(tmp_path):
     assert d.tables[0].cell(1, 0).text == "苹果"
 
 
+# ---------------------------------------------------------------------------
+# W13：真实执行测试（YAML 转换 / 透视 / 编码修复 / 二维码）
+# ---------------------------------------------------------------------------
+YAML2JSON_TPL = """import json
+
+import yaml
+
+data = yaml.safe_load({inp!r})
+print("<<<JSON>>>")
+print(json.dumps({{"text": json.dumps(data, ensure_ascii=False, indent=2)}}, ensure_ascii=False))
+print("<<<END>>>")
+"""
+
+PIVOT_TPL = """import csv
+import io
+import json
+from collections import defaultdict
+
+rows = list(csv.DictReader(io.StringIO({data!r})))
+pivot = defaultdict(float)
+col_keys = []
+for r in rows:
+    ck = r[{col_dim!r}]
+    if ck not in col_keys:
+        col_keys.append(ck)
+    pivot[(r[{row_dim!r}], ck)] += float(r[{val_col!r}] or 0)
+col_keys.sort()
+row_keys = sorted({{k[0] for k in pivot}})
+table_rows = [[rk] + [f"{{pivot.get((rk, ck), 0):g}}" for ck in col_keys] for rk in row_keys]
+print("<<<JSON>>>")
+print(json.dumps({{"table": {{"columns": [{row_dim!r}] + col_keys, "rows": table_rows}}}}, ensure_ascii=False))
+print("<<<END>>>")
+"""
+
+ENCODING_FIX_TPL = """import json
+
+data = open({src!r}, "rb").read()
+detected = None
+for enc in ("utf-8", "gbk", "latin-1"):
+    try:
+        text = data.decode(enc)
+        detected = enc
+        break
+    except (UnicodeDecodeError, UnicodeError):
+        continue
+open("fixed.utf8.txt", "w", encoding="utf-8").write(text)
+print("<<<JSON>>>")
+print(json.dumps({{"rows": [{{"label": "检测编码", "value": detected}}]}}, ensure_ascii=False))
+print("<<<END>>>")
+"""
+
+QRCODE_TPL = """import qrcode
+
+img = qrcode.make({text!r})
+img.save("qrcode.png")
+print("generated")
+"""
+
+
+def test_yaml_to_json_real_execution(tmp_path):
+    pytest.importorskip("yaml")
+    script = tmp_path / "run.py"
+    script.write_text(YAML2JSON_TPL.format(inp="name: 张三\nage: 30"), encoding="utf-8")
+    r = subprocess.run([sys.executable, str(script)], capture_output=True, text=True, timeout=60)
+    assert r.returncode == 0, r.stderr
+    parsed = _parse_sidecar(r.stdout)
+    assert '"name": "张三"' in parsed["text"]
+    assert '"age": 30' in parsed["text"]
+
+
+def test_pivot_real_execution(tmp_path):
+    data = "部门,月份,金额\n研发,1月,120\n研发,2月,135\n市场,1月,90\n市场,2月,110\n研发,1月,60"
+    script = tmp_path / "run.py"
+    script.write_text(PIVOT_TPL.format(data=data, row_dim="部门", col_dim="月份", val_col="金额"), encoding="utf-8")
+    r = subprocess.run([sys.executable, str(script)], capture_output=True, text=True, timeout=60)
+    assert r.returncode == 0, r.stderr
+    rows = _parse_sidecar(r.stdout)["table"]["rows"]
+    assert rows[0] == ["市场", "90", "110"]
+    assert rows[1][:2] == ["研发", "180"]  # 120 + 60
+
+
+def test_encoding_fix_real_execution(tmp_path):
+    src = tmp_path / "gbk.txt"
+    src.write_bytes("中文内容".encode("gbk"))
+    script = tmp_path / "run.py"
+    script.write_text(ENCODING_FIX_TPL.format(src=str(src)), encoding="utf-8")
+    r = subprocess.run([sys.executable, str(script)], cwd=tmp_path, capture_output=True, text=True, timeout=60)
+    assert r.returncode == 0, r.stderr
+    rows = _parse_sidecar(r.stdout)["rows"]
+    assert rows[0]["value"] == "gbk"
+    assert (tmp_path / "fixed.utf8.txt").read_text(encoding="utf-8") == "中文内容"
+
+
+def test_qrcode_real_execution(tmp_path):
+    pytest.importorskip("qrcode")
+    script = tmp_path / "run.py"
+    script.write_text(QRCODE_TPL.format(text="https://example.com"), encoding="utf-8")
+    r = subprocess.run([sys.executable, str(script)], cwd=tmp_path, capture_output=True, text=True, timeout=60)
+    assert r.returncode == 0, r.stderr
+    from PIL import Image
+
+    with Image.open(tmp_path / "qrcode.png") as im:
+        assert im.size[0] >= 100  # 正方形二维码
+
+
 def test_golden_has_all_sections():
     data = _load()
     assert len(data["temp"]) == 7
