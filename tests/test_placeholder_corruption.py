@@ -80,5 +80,5 @@ def test_corpus_has_no_runtime_placeholder_corruption():
             scanned += 1
             for ph in _runtime_corruptions(src, tree):
                 bad.append(f"{p.relative_to(ROOT)}: {ph}")
-    assert scanned > 1400, f"语料扫描量异常（{scanned}），检查 ROOTS 是否仍指向真相源"
+    assert scanned > 450, f"语料扫描量异常（{scanned}），检查 ROOTS 是否仍指向真相源"
     assert not bad, f"发现 {len(bad)} 处占位符损坏（输出会是字面量而非值）:\n" + "\n".join(bad[:20])

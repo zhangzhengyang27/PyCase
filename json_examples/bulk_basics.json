@@ -16,149 +16,6 @@
    "file": "bulk_basics/basics-fizzbuzz_1.py"
   },
   {
-   "id": "topics_basics-fizzbuzz-2",
-   "name": "basics-fizzbuzz_2.py",
-   "category": "topics",
-   "tags": [
-    "基础",
-    "循环"
-   ],
-   "title": "FizzBuzz 变奏·1~30·2/7",
-   "description": "经典整除分类打印，参数化区间与规则。本变体：1~30·2/7。",
-   "requirements": [],
-   "file": "bulk_basics/basics-fizzbuzz_2.py"
-  },
-  {
-   "id": "topics_basics-fizzbuzz-3",
-   "name": "basics-fizzbuzz_3.py",
-   "category": "topics",
-   "tags": [
-    "基础",
-    "循环"
-   ],
-   "title": "FizzBuzz 变奏·1~30·4/6",
-   "description": "经典整除分类打印，参数化区间与规则。本变体：1~30·4/6。",
-   "requirements": [],
-   "file": "bulk_basics/basics-fizzbuzz_3.py"
-  },
-  {
-   "id": "topics_basics-fizzbuzz-4",
-   "name": "basics-fizzbuzz_4.py",
-   "category": "topics",
-   "tags": [
-    "基础",
-    "循环"
-   ],
-   "title": "FizzBuzz 变奏·1~50·3/5",
-   "description": "经典整除分类打印，参数化区间与规则。本变体：1~50·3/5。",
-   "requirements": [],
-   "file": "bulk_basics/basics-fizzbuzz_4.py"
-  },
-  {
-   "id": "topics_basics-fizzbuzz-5",
-   "name": "basics-fizzbuzz_5.py",
-   "category": "topics",
-   "tags": [
-    "基础",
-    "循环"
-   ],
-   "title": "FizzBuzz 变奏·1~50·2/7",
-   "description": "经典整除分类打印，参数化区间与规则。本变体：1~50·2/7。",
-   "requirements": [],
-   "file": "bulk_basics/basics-fizzbuzz_5.py"
-  },
-  {
-   "id": "topics_basics-fizzbuzz-6",
-   "name": "basics-fizzbuzz_6.py",
-   "category": "topics",
-   "tags": [
-    "基础",
-    "循环"
-   ],
-   "title": "FizzBuzz 变奏·1~50·4/6",
-   "description": "经典整除分类打印，参数化区间与规则。本变体：1~50·4/6。",
-   "requirements": [],
-   "file": "bulk_basics/basics-fizzbuzz_6.py"
-  },
-  {
-   "id": "topics_basics-fizzbuzz-7",
-   "name": "basics-fizzbuzz_7.py",
-   "category": "topics",
-   "tags": [
-    "基础",
-    "循环"
-   ],
-   "title": "FizzBuzz 变奏·10~60·3/5",
-   "description": "经典整除分类打印，参数化区间与规则。本变体：10~60·3/5。",
-   "requirements": [],
-   "file": "bulk_basics/basics-fizzbuzz_7.py"
-  },
-  {
-   "id": "topics_basics-fizzbuzz-8",
-   "name": "basics-fizzbuzz_8.py",
-   "category": "topics",
-   "tags": [
-    "基础",
-    "循环"
-   ],
-   "title": "FizzBuzz 变奏·10~60·2/7",
-   "description": "经典整除分类打印，参数化区间与规则。本变体：10~60·2/7。",
-   "requirements": [],
-   "file": "bulk_basics/basics-fizzbuzz_8.py"
-  },
-  {
-   "id": "topics_basics-fizzbuzz-9",
-   "name": "basics-fizzbuzz_9.py",
-   "category": "topics",
-   "tags": [
-    "基础",
-    "循环"
-   ],
-   "title": "FizzBuzz 变奏·10~60·4/6",
-   "description": "经典整除分类打印，参数化区间与规则。本变体：10~60·4/6。",
-   "requirements": [],
-   "file": "bulk_basics/basics-fizzbuzz_9.py"
-  },
-  {
-   "id": "topics_basics-fizzbuzz-10",
-   "name": "basics-fizzbuzz_10.py",
-   "category": "topics",
-   "tags": [
-    "基础",
-    "循环"
-   ],
-   "title": "FizzBuzz 变奏·20~80·3/5",
-   "description": "经典整除分类打印，参数化区间与规则。本变体：20~80·3/5。",
-   "requirements": [],
-   "file": "bulk_basics/basics-fizzbuzz_10.py"
-  },
-  {
-   "id": "topics_basics-fizzbuzz-11",
-   "name": "basics-fizzbuzz_11.py",
-   "category": "topics",
-   "tags": [
-    "基础",
-    "循环"
-   ],
-   "title": "FizzBuzz 变奏·20~80·2/7",
-   "description": "经典整除分类打印，参数化区间与规则。本变体：20~80·2/7。",
-   "requirements": [],
-   "file": "bulk_basics/basics-fizzbuzz_11.py"
-  },
-  {
-   "id": "topics_basics-fizzbuzz-12",
-   "name": "basics-fizzbuzz_12.py",
-   "category": "topics",
-   "tags": [
-    "基础",
-    "循环"
-   ],
-   "title": "FizzBuzz 变奏·20~80·4/6",
-   "description": "经典整除分类打印，参数化区间与规则。本变体：20~80·4/6。",
-   "requirements": [],
-   "file": "bulk_basics/basics-fizzbuzz_12.py"
-  },
-  {
    "id": "topics_basics-prime-1",
    "name": "basics-prime_1.py",
    "category": "topics",
@@ -172,71 +29,6 @@
    "file": "bulk_basics/basics-prime_1.py"
   },
   {
-   "id": "topics_basics-prime-2",
-   "name": "basics-prime_2.py",
-   "category": "topics",
-   "tags": [
-    "基础",
-    "数学"
-   ],
-   "title": "素数筛·N=200",
-   "description": "埃氏筛统计区间素数。本变体：N=200。",
-   "requirements": [],
-   "file": "bulk_basics/basics-prime_2.py"
-  },
-  {
-   "id": "topics_basics-prime-3",
-   "name": "basics-prime_3.py",
-   "category": "topics",
-   "tags": [
-    "基础",
-    "数学"
-   ],
-   "title": "素数筛·N=500",
-   "description": "埃氏筛统计区间素数。本变体：N=500。",
-   "requirements": [],
-   "file": "bulk_basics/basics-prime_3.py"
-  },
-  {
-   "id": "topics_basics-prime-4",
-   "name": "basics-prime_4.py",
-   "category": "topics",
-   "tags": [
-    "基础",
-    "数学"
-   ],
-   "title": "素数筛·N=1000",
-   "description": "埃氏筛统计区间素数。本变体：N=1000。",
-   "requirements": [],
-   "file": "bulk_basics/basics-prime_4.py"
-  },
-  {
-   "id": "topics_basics-prime-5",
-   "name": "basics-prime_5.py",
-   "category": "topics",
-   "tags": [
-    "基础",
-    "数学"
-   ],
-   "title": "素数筛·N=2000",
-   "description": "埃氏筛统计区间素数。本变体：N=2000。",
-   "requirements": [],
-   "file": "bulk_basics/basics-prime_5.py"
-  },
-  {
-   "id": "topics_basics-prime-6",
-   "name": "basics-prime_6.py",
-   "category": "topics",
-   "tags": [
-    "基础",
-    "数学"
-   ],
-   "title": "素数筛·N=5000",
-   "description": "埃氏筛统计区间素数。本变体：N=5000。",
-   "requirements": [],
-   "file": "bulk_basics/basics-prime_6.py"
-  },
-  {
    "id": "topics_basics-fibonacci-1",
    "name": "basics-fibonacci_1.py",
    "category": "topics",
@@ -248,58 +40,6 @@
    "description": "递归/迭代/矩阵快速幂对比。本变体：n=10。",
    "requirements": [],
    "file": "bulk_basics/basics-fibonacci_1.py"
-  },
-  {
-   "id": "topics_basics-fibonacci-2",
-   "name": "basics-fibonacci_2.py",
-   "category": "topics",
-   "tags": [
-    "基础",
-    "动态规划"
-   ],
-   "title": "斐波那契三解·n=20",
-   "description": "递归/迭代/矩阵快速幂对比。本变体：n=20。",
-   "requirements": [],
-   "file": "bulk_basics/basics-fibonacci_2.py"
-  },
-  {
-   "id": "topics_basics-fibonacci-3",
-   "name": "basics-fibonacci_3.py",
-   "category": "topics",
-   "tags": [
-    "基础",
-    "动态规划"
-   ],
-   "title": "斐波那契三解·n=30",
-   "description": "递归/迭代/矩阵快速幂对比。本变体：n=30。",
-   "requirements": [],
-   "file": "bulk_basics/basics-fibonacci_3.py"
-  },
-  {
-   "id": "topics_basics-fibonacci-4",
-   "name": "basics-fibonacci_4.py",
-   "category": "topics",
-   "tags": [
-    "基础",
-    "动态规划"
-   ],
-   "title": "斐波那契三解·n=50",
-   "description": "递归/迭代/矩阵快速幂对比。本变体：n=50。",
-   "requirements": [],
-   "file": "bulk_basics/basics-fibonacci_4.py"
-  },
-  {
-   "id": "topics_basics-fibonacci-5",
-   "name": "basics-fibonacci_5.py",
-   "category": "topics",
-   "tags": [
-    "基础",
-    "动态规划"
-   ],
-   "title": "斐波那契三解·n=80",
-   "description": "递归/迭代/矩阵快速幂对比。本变体：n=80。",
-   "requirements": [],
-   "file": "bulk_basics/basics-fibonacci_5.py"
   },
   {
    "id": "topics_basics-wordcount-1",
@@ -316,34 +56,6 @@
    "file": "bulk_basics/basics-wordcount_1.py"
   },
   {
-   "id": "topics_basics-wordcount-2",
-   "name": "basics-wordcount_2.py",
-   "category": "topics",
-   "tags": [
-    "基础",
-    "文本",
-    "统计"
-   ],
-   "title": "词频统计·Top5",
-   "description": "Counter 统计文本词频并输出 TopN。本变体：Top5。",
-   "requirements": [],
-   "file": "bulk_basics/basics-wordcount_2.py"
-  },
-  {
-   "id": "topics_basics-wordcount-3",
-   "name": "basics-wordcount_3.py",
-   "category": "topics",
-   "tags": [
-    "基础",
-    "文本",
-    "统计"
-   ],
-   "title": "词频统计·Top8",
-   "description": "Counter 统计文本词频并输出 TopN。本变体：Top8。",
-   "requirements": [],
-   "file": "bulk_basics/basics-wordcount_3.py"
-  },
-  {
    "id": "topics_basics-matrix-mul-1",
    "name": "basics-matrix-mul_1.py",
    "category": "topics",
@@ -355,58 +67,6 @@
    "description": "纯 Python 三重循环矩阵乘法。本变体：n=4·m7。",
    "requirements": [],
    "file": "bulk_basics/basics-matrix-mul_1.py"
-  },
-  {
-   "id": "topics_basics-matrix-mul-2",
-   "name": "basics-matrix-mul_2.py",
-   "category": "topics",
-   "tags": [
-    "基础",
-    "线性代数"
-   ],
-   "title": "矩阵乘法·n=6·m11",
-   "description": "纯 Python 三重循环矩阵乘法。本变体：n=6·m11。",
-   "requirements": [],
-   "file": "bulk_basics/basics-matrix-mul_2.py"
-  },
-  {
-   "id": "topics_basics-matrix-mul-3",
-   "name": "basics-matrix-mul_3.py",
-   "category": "topics",
-   "tags": [
-    "基础",
-    "线性代数"
-   ],
-   "title": "矩阵乘法·n=8·m13",
-   "description": "纯 Python 三重循环矩阵乘法。本变体：n=8·m13。",
-   "requirements": [],
-   "file": "bulk_basics/basics-matrix-mul_3.py"
-  },
-  {
-   "id": "topics_basics-matrix-mul-4",
-   "name": "basics-matrix-mul_4.py",
-   "category": "topics",
-   "tags": [
-    "基础",
-    "线性代数"
-   ],
-   "title": "矩阵乘法·n=10·m5",
-   "description": "纯 Python 三重循环矩阵乘法。本变体：n=10·m5。",
-   "requirements": [],
-   "file": "bulk_basics/basics-matrix-mul_4.py"
-  },
-  {
-   "id": "topics_basics-matrix-mul-5",
-   "name": "basics-matrix-mul_5.py",
-   "category": "topics",
-   "tags": [
-    "基础",
-    "线性代数"
-   ],
-   "title": "矩阵乘法·n=12·m9",
-   "description": "纯 Python 三重循环矩阵乘法。本变体：n=12·m9。",
-   "requirements": [],
-   "file": "bulk_basics/basics-matrix-mul_5.py"
   },
   {
    "id": "topics_algo-binary-search-1",
@@ -422,32 +82,6 @@
    "file": "bulk_basics/algo-binary-search_1.py"
   },
   {
-   "id": "topics_algo-binary-search-2",
-   "name": "algo-binary-search_2.py",
-   "category": "topics",
-   "tags": [
-    "算法",
-    "查找"
-   ],
-   "title": "二分查找·n=50",
-   "description": "有序数组二分定位（含边界变体）。本变体：n=50。",
-   "requirements": [],
-   "file": "bulk_basics/algo-binary-search_2.py"
-  },
-  {
-   "id": "topics_algo-binary-search-3",
-   "name": "algo-binary-search_3.py",
-   "category": "topics",
-   "tags": [
-    "算法",
-    "查找"
-   ],
-   "title": "二分查找·n=100",
-   "description": "有序数组二分定位（含边界变体）。本变体：n=100。",
-   "requirements": [],
-   "file": "bulk_basics/algo-binary-search_3.py"
-  },
-  {
    "id": "topics_algo-quick-sort-1",
    "name": "algo-quick-sort_1.py",
    "category": "topics",
@@ -459,45 +93,6 @@
    "description": "手写快排（尾递归式分区）。本变体：n=20。",
    "requirements": [],
    "file": "bulk_basics/algo-quick-sort_1.py"
-  },
-  {
-   "id": "topics_algo-quick-sort-2",
-   "name": "algo-quick-sort_2.py",
-   "category": "topics",
-   "tags": [
-    "算法",
-    "排序"
-   ],
-   "title": "快速排序·n=50",
-   "description": "手写快排（尾递归式分区）。本变体：n=50。",
-   "requirements": [],
-   "file": "bulk_basics/algo-quick-sort_2.py"
-  },
-  {
-   "id": "topics_algo-quick-sort-3",
-   "name": "algo-quick-sort_3.py",
-   "category": "topics",
-   "tags": [
-    "算法",
-    "排序"
-   ],
-   "title": "快速排序·n=100",
-   "description": "手写快排（尾递归式分区）。本变体：n=100。",
-   "requirements": [],
-   "file": "bulk_basics/algo-quick-sort_3.py"
-  },
-  {
-   "id": "topics_algo-quick-sort-4",
-   "name": "algo-quick-sort_4.py",
-   "category": "topics",
-   "tags": [
-    "算法",
-    "排序"
-   ],
-   "title": "快速排序·n=200",
-   "description": "手写快排（尾递归式分区）。本变体：n=200。",
-   "requirements": [],
-   "file": "bulk_basics/algo-quick-sort_4.py"
   },
   {
    "id": "topics_algo-lcs-1",
@@ -513,45 +108,6 @@
    "file": "bulk_basics/algo-lcs_1.py"
   },
   {
-   "id": "topics_algo-lcs-2",
-   "name": "algo-lcs_2.py",
-   "category": "topics",
-   "tags": [
-    "算法",
-    "动态规划"
-   ],
-   "title": "最长公共子序列·动态规划很重×规规整整做规",
-   "description": "动态规划 LCS 与回溯路径。本变体：动态规划很重×规规整整做规。",
-   "requirements": [],
-   "file": "bulk_basics/algo-lcs_2.py"
-  },
-  {
-   "id": "topics_algo-lcs-3",
-   "name": "algo-lcs_3.py",
-   "category": "topics",
-   "tags": [
-    "算法",
-    "动态规划"
-   ],
-   "title": "最长公共子序列·kitten×sittin",
-   "description": "动态规划 LCS 与回溯路径。本变体：kitten×sittin。",
-   "requirements": [],
-   "file": "bulk_basics/algo-lcs_3.py"
-  },
-  {
-   "id": "topics_algo-lcs-4",
-   "name": "algo-lcs_4.py",
-   "category": "topics",
-   "tags": [
-    "算法",
-    "动态规划"
-   ],
-   "title": "最长公共子序列·AGGTAB×GXTXAY",
-   "description": "动态规划 LCS 与回溯路径。本变体：AGGTAB×GXTXAY。",
-   "requirements": [],
-   "file": "bulk_basics/algo-lcs_4.py"
-  },
-  {
    "id": "topics_algo-dijkstra-1",
    "name": "algo-dijkstra_1.py",
    "category": "topics",
@@ -563,32 +119,6 @@
    "description": "邻接表 + 堆的最短路径。本变体：n=5。",
    "requirements": [],
    "file": "bulk_basics/algo-dijkstra_1.py"
-  },
-  {
-   "id": "topics_algo-dijkstra-2",
-   "name": "algo-dijkstra_2.py",
-   "category": "topics",
-   "tags": [
-    "算法",
-    "图"
-   ],
-   "title": "Dijkstra 最短路·n=6",
-   "description": "邻接表 + 堆的最短路径。本变体：n=6。",
-   "requirements": [],
-   "file": "bulk_basics/algo-dijkstra_2.py"
-  },
-  {
-   "id": "topics_algo-dijkstra-3",
-   "name": "algo-dijkstra_3.py",
-   "category": "topics",
-   "tags": [
-    "算法",
-    "图"
-   ],
-   "title": "Dijkstra 最短路·n=7",
-   "description": "邻接表 + 堆的最短路径。本变体：n=7。",
-   "requirements": [],
-   "file": "bulk_basics/algo-dijkstra_3.py"
   },
   {
    "id": "topics_algo-knapsack-1",
@@ -604,45 +134,6 @@
    "file": "bulk_basics/algo-knapsack_1.py"
   },
   {
-   "id": "topics_algo-knapsack-2",
-   "name": "algo-knapsack_2.py",
-   "category": "topics",
-   "tags": [
-    "算法",
-    "动态规划"
-   ],
-   "title": "0-1 背包·容量15",
-   "description": "动态规划背包最优值与回溯。本变体：容量15。",
-   "requirements": [],
-   "file": "bulk_basics/algo-knapsack_2.py"
-  },
-  {
-   "id": "topics_algo-knapsack-3",
-   "name": "algo-knapsack_3.py",
-   "category": "topics",
-   "tags": [
-    "算法",
-    "动态规划"
-   ],
-   "title": "0-1 背包·容量20",
-   "description": "动态规划背包最优值与回溯。本变体：容量20。",
-   "requirements": [],
-   "file": "bulk_basics/algo-knapsack_3.py"
-  },
-  {
-   "id": "topics_algo-knapsack-4",
-   "name": "algo-knapsack_4.py",
-   "category": "topics",
-   "tags": [
-    "算法",
-    "动态规划"
-   ],
-   "title": "0-1 背包·容量30",
-   "description": "动态规划背包最优值与回溯。本变体：容量30。",
-   "requirements": [],
-   "file": "bulk_basics/algo-knapsack_4.py"
-  },
-  {
    "id": "topics_algo-union-find-1",
    "name": "algo-union-find_1.py",
    "category": "topics",
@@ -654,32 +145,6 @@
    "description": "路径压缩 + 按秩合并的并查集。本变体：N8-P0。",
    "requirements": [],
    "file": "bulk_basics/algo-union-find_1.py"
-  },
-  {
-   "id": "topics_algo-union-find-2",
-   "name": "algo-union-find_2.py",
-   "category": "topics",
-   "tags": [
-    "算法",
-    "图"
-   ],
-   "title": "并查集·N9-P1",
-   "description": "路径压缩 + 按秩合并的并查集。本变体：N9-P1。",
-   "requirements": [],
-   "file": "bulk_basics/algo-union-find_2.py"
-  },
-  {
-   "id": "topics_algo-union-find-3",
-   "name": "algo-union-find_3.py",
-   "category": "topics",
-   "tags": [
-    "算法",
-    "图"
-   ],
-   "title": "并查集·N10-P2",
-   "description": "路径压缩 + 按秩合并的并查集。本变体：N10-P2。",
-   "requirements": [],
-   "file": "bulk_basics/algo-union-find_3.py"
   },
   {
    "id": "tools_tools-qr-matrix-1",
@@ -786,45 +251,6 @@
    "file": "bulk_basics/algo-collatz_x1.py"
   },
   {
-   "id": "topics_algo-collatz-x2",
-   "name": "algo-collatz_x2.py",
-   "category": "topics",
-   "tags": [
-    "算法",
-    "数学"
-   ],
-   "title": "考拉兹猜想·L2000",
-   "description": "3n+1 序列步数统计。本变体：L2000。",
-   "requirements": [],
-   "file": "bulk_basics/algo-collatz_x2.py"
-  },
-  {
-   "id": "topics_algo-collatz-x3",
-   "name": "algo-collatz_x3.py",
-   "category": "topics",
-   "tags": [
-    "算法",
-    "数学"
-   ],
-   "title": "考拉兹猜想·L5000",
-   "description": "3n+1 序列步数统计。本变体：L5000。",
-   "requirements": [],
-   "file": "bulk_basics/algo-collatz_x3.py"
-  },
-  {
-   "id": "topics_algo-collatz-x4",
-   "name": "algo-collatz_x4.py",
-   "category": "topics",
-   "tags": [
-    "算法",
-    "数学"
-   ],
-   "title": "考拉兹猜想·L10000",
-   "description": "3n+1 序列步数统计。本变体：L10000。",
-   "requirements": [],
-   "file": "bulk_basics/algo-collatz_x4.py"
-  },
-  {
    "id": "topics_algo-gcd-lcm-x1",
    "name": "algo-gcd-lcm_x1.py",
    "category": "topics",
@@ -838,32 +264,6 @@
    "file": "bulk_basics/algo-gcd-lcm_x1.py"
   },
   {
-   "id": "topics_algo-gcd-lcm-x2",
-   "name": "algo-gcd-lcm_x2.py",
-   "category": "topics",
-   "tags": [
-    "算法",
-    "数学"
-   ],
-   "title": "GCD/LCM·组1",
-   "description": "辗转相除与最小公倍数。本变体：组1。",
-   "requirements": [],
-   "file": "bulk_basics/algo-gcd-lcm_x2.py"
-  },
-  {
-   "id": "topics_algo-gcd-lcm-x3",
-   "name": "algo-gcd-lcm_x3.py",
-   "category": "topics",
-   "tags": [
-    "算法",
-    "数学"
-   ],
-   "title": "GCD/LCM·组2",
-   "description": "辗转相除与最小公倍数。本变体：组2。",
-   "requirements": [],
-   "file": "bulk_basics/algo-gcd-lcm_x3.py"
-  },
-  {
    "id": "topics_algo-matrix-rotate-x1",
    "name": "algo-matrix-rotate_x1.py",
    "category": "topics",
@@ -875,45 +275,6 @@
    "description": "n×n 矩阵原地旋转 90 度。本变体：n4m9。",
    "requirements": [],
    "file": "bulk_basics/algo-matrix-rotate_x1.py"
-  },
-  {
-   "id": "topics_algo-matrix-rotate-x2",
-   "name": "algo-matrix-rotate_x2.py",
-   "category": "topics",
-   "tags": [
-    "算法",
-    "矩阵"
-   ],
-   "title": "矩阵旋转·n5m7",
-   "description": "n×n 矩阵原地旋转 90 度。本变体：n5m7。",
-   "requirements": [],
-   "file": "bulk_basics/algo-matrix-rotate_x2.py"
-  },
-  {
-   "id": "topics_algo-matrix-rotate-x3",
-   "name": "algo-matrix-rotate_x3.py",
-   "category": "topics",
-   "tags": [
-    "算法",
-    "矩阵"
-   ],
-   "title": "矩阵旋转·n6m13",
-   "description": "n×n 矩阵原地旋转 90 度。本变体：n6m13。",
-   "requirements": [],
-   "file": "bulk_basics/algo-matrix-rotate_x3.py"
-  },
-  {
-   "id": "topics_algo-matrix-rotate-x4",
-   "name": "algo-matrix-rotate_x4.py",
-   "category": "topics",
-   "tags": [
-    "算法",
-    "矩阵"
-   ],
-   "title": "矩阵旋转·n8m5",
-   "description": "n×n 矩阵原地旋转 90 度。本变体：n8m5。",
-   "requirements": [],
-   "file": "bulk_basics/algo-matrix-rotate_x4.py"
   }
  ],
  "schema_version": 2
