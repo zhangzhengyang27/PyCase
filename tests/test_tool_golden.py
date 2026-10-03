@@ -951,6 +951,135 @@ def test_table_diff_wizard_real_execution(tmp_path):
     assert _parse_sidecar(r.stdout)["primary"]["value"] == "1"
 
 
+# ---------------------------------------------------------------------------
+# W12：Office 改造真实执行测试（Excel 建表 / 公式汇总 / Word 表格）
+# ---------------------------------------------------------------------------
+EXCEL_BUILD_TPL = """import csv as _csv
+import io as _io
+import json
+
+def parse_rows(text):
+    return [r for r in _csv.reader(_io.StringIO(text.strip())) if r]
+
+def _coerce(c):
+    if c == "": return None
+    if c == "true": return True
+    if c == "false": return False
+    try:
+        return int(c)
+    except ValueError:
+        pass
+    try:
+        return float(c)
+    except ValueError:
+        pass
+    return c
+
+rows = parse_rows({data!r})
+if len(rows) < 1:
+    raise SystemExit("请提供至少一行表头")
+from openpyxl import Workbook
+
+wb = Workbook()
+ws = wb.active
+for r in rows:
+    ws.append([_coerce(c) for c in r])
+wb.save("output.xlsx")
+print("<<<JSON>>>")
+print(json.dumps({{"rows": [{{"label": "规模", "value": f"{{ws.max_row}} 行 × {{ws.max_column}} 列"}}]}}, ensure_ascii=False))
+print("<<<END>>>")
+"""
+
+EXCEL_FORMULA_TPL = """import csv as _csv
+import io as _io
+import json
+
+def parse_rows(text):
+    return [r for r in _csv.reader(_io.StringIO(text.strip())) if r]
+
+rows = parse_rows({data!r})
+from openpyxl import Workbook
+import openpyxl.utils
+
+wb = Workbook()
+ws = wb.active
+for r in rows:
+    ws.append(r)
+last_col = ws.max_column
+sum_col = last_col + 1
+ws.cell(row=1, column=sum_col, value="合计")
+for r in range(2, ws.max_row + 1):
+    ws.cell(row=r, column=sum_col, value=f"=SUM(A{{r}}:{{openpyxl.utils.get_column_letter(last_col)}}{{r}})")
+wb.save("output.xlsx")
+print("<<<JSON>>>")
+print(json.dumps({{"rows": [{{"label": "产物", "value": "output.xlsx"}}]}}, ensure_ascii=False))
+print("<<<END>>>")
+"""
+
+WORD_TABLE_TPL = """import csv
+import io
+import json
+
+from docx import Document
+
+rows = list(csv.reader(io.StringIO({data!r})))
+doc = Document()
+table = doc.add_table(rows=len(rows), cols=len(rows[0]))
+table.style = "Table Grid"
+for i, row in enumerate(rows):
+    for j, cell in enumerate(row):
+        table.cell(i, j).text = str(cell)
+doc.save("table.docx")
+print("<<<JSON>>>")
+print(json.dumps({{"rows": [{{"label": "产物", "value": "table.docx"}}]}}, ensure_ascii=False))
+print("<<<END>>>")
+"""
+
+
+def test_excel_build_real_execution(tmp_path):
+    openpyxl = pytest.importorskip("openpyxl")
+    data = "名称,数量\n苹果,12\nlisi,"
+    script = tmp_path / "run.py"
+    script.write_text(EXCEL_BUILD_TPL.format(data=data), encoding="utf-8")
+    r = subprocess.run([sys.executable, str(script)], cwd=tmp_path, capture_output=True, text=True, timeout=60)
+    assert r.returncode == 0, r.stderr
+    from openpyxl import load_workbook
+
+    wb = load_workbook(tmp_path / "output.xlsx")
+    ws = wb.active
+    assert ws.cell(row=2, column=1).value == "苹果"
+    assert ws.cell(row=2, column=2).value == 12  # int 推断
+    assert ws.cell(row=3, column=2).value is None  # 空串 → None
+    parsed = _parse_sidecar(r.stdout)
+    assert parsed["rows"][0]["value"] == "3 行 × 2 列"
+
+
+def test_excel_formula_real_execution(tmp_path):
+    pytest.importorskip("openpyxl")
+    data = "项目,金额\nA,10\nB,20"
+    script = tmp_path / "run.py"
+    script.write_text(EXCEL_FORMULA_TPL.format(data=data), encoding="utf-8")
+    r = subprocess.run([sys.executable, str(script)], cwd=tmp_path, capture_output=True, text=True, timeout=60)
+    assert r.returncode == 0, r.stderr
+    from openpyxl import load_workbook
+
+    wb = load_workbook(tmp_path / "output.xlsx")
+    ws = wb.active
+    assert ws.cell(row=2, column=3).value == "=SUM(A2:B2)"
+
+
+def test_word_table_real_execution(tmp_path):
+    docx = pytest.importorskip("docx")
+    data = "名称,数量\n苹果,12"
+    script = tmp_path / "run.py"
+    script.write_text(WORD_TABLE_TPL.format(data=data), encoding="utf-8")
+    r = subprocess.run([sys.executable, str(script)], cwd=tmp_path, capture_output=True, text=True, timeout=60)
+    assert r.returncode == 0, r.stderr
+    d = docx.Document(tmp_path / "table.docx")
+    assert len(d.tables) == 1
+    assert d.tables[0].cell(1, 0).text == "苹果"
+
+
 def test_golden_has_all_sections():
     data = _load()
     assert len(data["temp"]) == 7

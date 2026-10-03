@@ -387,3 +387,7 @@ import { RESULTS_SCHEMAS } from './tool-schemas-results'
 import { WIZARD_SCHEMAS } from './tool-schemas-wizard'
 import { FFMPEG_SCHEMAS } from './tool-schemas-ffmpeg'
 TOOL_SCHEMAS.push(...QUICK_SCHEMAS, ...RESULTS_SCHEMAS, ...WIZARD_SCHEMAS, ...FFMPEG_SCHEMAS)
+
+// W12 收官批：Office 演示改造 18 + 字符方阵/文本表格 + 站点监控/文件变更对比
+import { W12_SCHEMAS } from './tool-schemas-w12'
+TOOL_SCHEMAS.push(...W12_SCHEMAS)

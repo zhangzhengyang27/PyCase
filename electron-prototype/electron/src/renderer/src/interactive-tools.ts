@@ -83,6 +83,18 @@ export interface InteractiveToolSchema {
 // ---------------------------------------------------------------------------
 // 注册表：专属卡片 + schema 派生卡片
 // ---------------------------------------------------------------------------
+export const POMODORO_ID = `${INTERACTIVE_PREFIX}pomodoro`
+
+const POMODORO_CARD: VExample = {
+  id: POMODORO_ID,
+  name: 'pomodoro',
+  category: 'tools',
+  path: '',
+  title: '番茄钟',
+  description: '专注计时器：25 分钟工作 / 5 分钟休息循环，会话计数与暂停/重置。',
+  tags: ['效率', '交互工具']
+}
+
 const DATE_CARD: VExample = {
   id: DATE_CALC_ID,
   name: 'date-calculator',
@@ -109,7 +121,11 @@ function schemaToCard(s: InteractiveToolSchema): VExample {
 }
 
 /** 工具池门面（响应式）：专属卡 + schema 派生卡；catalog 合并时以 .value 消费 */
-export const interactiveToolItems = computed<VExample[]>(() => [DATE_CARD, ...interactiveToolSchemas.map(schemaToCard)])
+export const interactiveToolItems = computed<VExample[]>(() => [
+  DATE_CARD,
+  POMODORO_CARD,
+  ...interactiveToolSchemas.map(schemaToCard)
+])
 
 export function getToolSchema(id: string): InteractiveToolSchema | undefined {
   return interactiveToolSchemas.find((s) => s.id === id)

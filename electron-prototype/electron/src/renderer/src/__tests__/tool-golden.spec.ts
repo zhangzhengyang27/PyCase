@@ -565,3 +565,55 @@ describe('W8-W11 四十工具 pyCode ↔ 关键片段', () => {
     expect(dev('interactive:video-compress')!.quickRun).toBeUndefined()
   })
 })
+
+// ---------------------------------------------------------------------------
+// W12 收官批：Office 改造 + 字符方阵/文本表格 + 监控（21 schema 片段表）
+// ---------------------------------------------------------------------------
+const W12_FRAGMENTS: Array<[string, Record<string, FieldValue>, string[]]> = [
+  ['char-matrix', { size: 9, chars: '◆◇' }, ['size, chars = 9', 'r * c + r + c']],
+  ['text-table', { data: '名称,数量' }, ['ljust', 'widths']],
+  ['site-monitor', { urls: 'https://a.com' }, ['requests.get', '可用']],
+  ['file-watch', { dir: '/w', interval: 5 }, ['两次快照', 'time.sleep(5)']],
+  ['excel-build', { data: '名称,数量\n苹果,12' }, ['_coerce', 'output.xlsx']],
+  ['excel-style', { data: 'A,B' }, ['PatternFill', 'Font(bold=True']],
+  ['excel-formula', { data: 'A,B' }, ['SUM(', 'get_column_letter']],
+  ['excel-chart', { data: 'A,B' }, ['BarChart', 'add_chart']],
+  ['excel-freeze', { data: 'A,B' }, ['freeze_panes = "A2"']],
+  ['excel-condfmt', { data: 'A,B' }, ['DataBarRule', 'conditional_formatting']],
+  ['excel-sort', { data: 'A,B' }, ['body.sort', 'ws.append(r)']],
+  ['excel-protect', { data: 'A,B', password: 'pw' }, ['protection.password', 'sheet = True']],
+  ['excel-comment', { data: 'A,B' }, ['Comment(', 'PyCase']],
+  ['excel-merge-header', { data: 'A,B' }, ['merge_cells', 'insert_rows']],
+  ['word-doc', { content: '# 标题\n正文' }, ['add_heading', 'List Bullet']],
+  ['word-table', { data: 'A,B' }, ['Table Grid', 'add_table']],
+  ['word-letters', { template: '尊敬的{{姓名}}', data: '姓名\n张三' }, ['DictReader', 'letter_']],
+  ['ppt-slides', { slides: '封面|我的演示' }, ['Presentation', 'add_slide']],
+  ['daily-report', { done: '写代码', plan: '改 bug', issues: '无' }, ['今日完成', '明日计划', '问题与风险']],
+  ['md-todo', { items: '任务 @张三 !P0' }, ['- [ ]', 'P\\d']],
+  ['mail-draft', { to: 'a@b.c', subject: 'S', body: 'B' }, ['MIMEText', 'draft.eml']]
+]
+
+describe('W12 廿一工具 pyCode ↔ 关键片段', () => {
+  it.each(W12_FRAGMENTS.map(([id, values, frags]) => [id, values, frags] as const))('%s', (id, values, frags) => {
+    const schema = dev(`interactive:${id}`)!
+    expect(schema, id).toBeTruthy()
+    const code = schema.pyCode!(values)
+    for (const f of frags) expect(code, `${id} 应含 ${f}`).toContain(f)
+  })
+  it('纯前端两件不走 sidecar', () => {
+    expect(dev('interactive:char-matrix')!.computeVia).toBeUndefined()
+    expect(dev('interactive:text-table')!.computeVia).toBeUndefined()
+  })
+  it('字符方阵 compute：纹理解析与边界', () => {
+    const r = dev('interactive:char-matrix').compute!({ size: 5, chars: 'AB' })
+    const lines = r.text!.split('\n')
+    expect(lines).toHaveLength(5)
+    expect(lines[0]!.length).toBe(5)
+    expect(dev('interactive:char-matrix').compute!({ size: 3, chars: 'AB' })!.error).toContain('边长')
+  })
+  it('文本表格 compute：对齐输出', () => {
+    const r = dev('interactive:text-table').compute!({ data: '名称,数量\n苹果,12' })
+    expect(r.text).toContain('| 名称 | 数量 |')
+    expect(r.primary?.value).toBe('1')
+  })
+})
