@@ -1293,6 +1293,98 @@ def test_word_read_real_execution(tmp_path):
     assert "下次会议改期" in parsed["text"]
 
 
+# ---------------------------------------------------------------------------
+# W13/W8 运行防护回归：磁盘零除（macOS /home）/ YAML 坏输入 / 记账缺表
+# ---------------------------------------------------------------------------
+DISK_USAGE_TPL = """import json
+import shutil
+
+_r = {"table": {"columns": ["挂载点", "总容量", "已用", "可用", "使用率"], "rows": []}}
+for mount in ("/", "/Volumes/Data", "/home"):
+    try:
+        u = shutil.disk_usage(mount)
+    except OSError:
+        continue
+    if u.total == 0:
+        continue  # 虚拟挂载点（如 macOS /home auto_master）
+    g = lambda n: f"{n / 1024 ** 3:.0f}G"
+    _r["table"]["rows"].append([mount, g(u.total), g(u.used), g(u.free), f"{u.used / u.total * 100:.0f}%"])
+print("<<<JSON>>>")
+print(json.dumps(_r, ensure_ascii=False))
+print("<<<END>>>")
+"""
+
+YAML_BAD_TPL = """import json
+
+import yaml
+
+try:
+    data = yaml.safe_load("a: [1, oops")
+except yaml.YAMLError as e:
+    print("<<<JSON>>>")
+    print(json.dumps({"error": f"YAML 解析失败: {e}"}, ensure_ascii=False))
+    print("<<<END>>>")
+    raise SystemExit(0)
+"""
+
+EXPENSE_ADD_BAD_TPL = """import json
+import sqlite3
+
+try:
+    conn = sqlite3.connect({src!r})
+    conn.execute("INSERT INTO expenses (date, category, amount, note) VALUES (?, ?, ?, ?)",
+                 ("2026-10-03", "餐饮", 20, ""))
+    conn.commit()
+except sqlite3.Error as e:
+    print("<<<JSON>>>")
+    print(json.dumps({{"error": f"写入失败: {{e}}"}}, ensure_ascii=False))
+    print("<<<END>>>")
+    raise SystemExit(0)
+"""
+
+
+def tmp_path_ctx():
+    """供无参真实执行测试使用的临时目录。"""
+    import tempfile
+
+    return Path(tempfile.mkdtemp(prefix="pycase-golden-"))
+
+
+def test_disk_usage_no_zero_division():
+    # macOS /home 为 total=0 的虚拟挂载点——修复前此脚本抛 ZeroDivisionError
+    script = tmp_path_ctx() / "run.py"
+    script.write_text(DISK_USAGE_TPL, encoding="utf-8")
+    r = subprocess.run([sys.executable, str(script)], capture_output=True, text=True, timeout=60)
+    assert r.returncode == 0, r.stderr
+    assert "ZeroDivisionError" not in r.stdout
+    parsed = _parse_sidecar(r.stdout)
+    for row in parsed["table"]["rows"]:
+        assert row[0] != "/home"
+
+
+def test_yaml_bad_input_friendly_error():
+    script = tmp_path_ctx() / "run.py"
+    script.write_text(YAML_BAD_TPL, encoding="utf-8")
+    r = subprocess.run([sys.executable, str(script)], capture_output=True, text=True, timeout=60)
+    assert r.returncode == 0  # 友好错误不视为脚本失败
+    parsed = _parse_sidecar(r.stdout)
+    assert parsed["error"].startswith("YAML 解析失败")
+
+
+def test_expense_missing_table_friendly_error(tmp_path):
+    import sqlite3
+
+    db = tmp_path / "empty.db"
+    conn = sqlite3.connect(db)
+    conn.close()  # 空库（无 expenses 表）
+    script = tmp_path / "run.py"
+    script.write_text(EXPENSE_ADD_BAD_TPL.format(src=str(db)), encoding="utf-8")
+    r = subprocess.run([sys.executable, str(script)], cwd=tmp_path, capture_output=True, text=True, timeout=60)
+    assert r.returncode == 0
+    parsed = _parse_sidecar(r.stdout)
+    assert parsed["error"].startswith("写入失败")
+
+
 def test_golden_has_all_sections():
     data = _load()
     assert len(data["temp"]) == 7

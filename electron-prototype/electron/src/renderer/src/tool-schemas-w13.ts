@@ -46,7 +46,13 @@ import json
 
 import yaml
 
-data = yaml.safe_load(${JSON.stringify(input)})
+try:
+    data = yaml.safe_load(${JSON.stringify(input)})
+except yaml.YAMLError as e:
+    print("<<<JSON>>>")
+    print(json.dumps({"error": f"YAML 解析失败: {e}"}, ensure_ascii=False))
+    print("<<<END>>>")
+    raise SystemExit(0)
 print("<<<JSON>>>")
 print(json.dumps({"text": json.dumps(data, ensure_ascii=False, indent=2)}, ensure_ascii=False))
 print("<<<END>>>")
@@ -57,7 +63,13 @@ import json
 
 import yaml
 
-data = json.loads(${JSON.stringify(input)})
+try:
+    data = json.loads(${JSON.stringify(input)})
+except json.JSONDecodeError as e:
+    print("<<<JSON>>>")
+    print(json.dumps({"error": f"JSON 解析失败: {e}"}, ensure_ascii=False))
+    print("<<<END>>>")
+    raise SystemExit(0)
 print("<<<JSON>>>")
 print(json.dumps({"text": yaml.dump(data, allow_unicode=True, sort_keys=False)}, ensure_ascii=False))
 print("<<<END>>>")
@@ -329,10 +341,13 @@ rows = list(csv.DictReader(io.StringIO(${JSON.stringify(data)})))
 pivot: dict = defaultdict(float)
 colKeys: list = []
 for r in rows:
-    ck = r[${JSON.stringify(cd)}]
+    ck = r.get(${JSON.stringify(cd)}, "")
     if ck not in colKeys:
         colKeys.append(ck)
-    pivot[(r[${JSON.stringify(rd)}], ck)] += float(r[${JSON.stringify(vc)}] or 0)
+    try:
+        pivot[(r.get(${JSON.stringify(rd)}, ""), ck)] += float(r.get(${JSON.stringify(vc)}, 0) or 0)
+    except (TypeError, ValueError):
+        continue
 colKeys.sort()
 rowKeys = sorted({k[0] for k in pivot})
 table_rows = [[rk] + [f"{pivot.get((rk, ck), 0):g}" for ck in colKeys] for rk in rowKeys]
@@ -400,7 +415,15 @@ main_rows = any_rows(${JSON.stringify(m)})
 lookup_rows = any_rows(${JSON.stringify(l)})
 m_head, m_body = main_rows[0], main_rows[1:]
 l_head, l_body = lookup_rows[0], lookup_rows[1:]
-mi, li, vi = m_head.index(${JSON.stringify(mk)}), l_head.index(${JSON.stringify(lk)}), l_head.index(${JSON.stringify(lv)})
+try:
+    mi = m_head.index(${JSON.stringify(mk)})
+    li = l_head.index(${JSON.stringify(lk)})
+    vi = l_head.index(${JSON.stringify(lv)})
+except ValueError as e:
+    print("<<<JSON>>>")
+    print(json.dumps({"error": f"键列不存在: {e}（请核对表头名）"}, ensure_ascii=False))
+    print("<<<END>>>")
+    raise SystemExit(0)
 lookup = {r[li]: r[vi] for r in l_body}
 out_head = m_head + [${JSON.stringify(lv)}]
 out_rows = [r + [lookup.get(r[mi], "<未知>")] for r in m_body]

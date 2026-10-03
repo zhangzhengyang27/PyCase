@@ -59,7 +59,13 @@ import re
 
 import requests
 
-html = requests.get(${JSON.stringify(url)}, timeout=15).text
+try:
+    html = requests.get(${JSON.stringify(url)}, timeout=15).text
+except Exception as e:
+    print("<<<JSON>>>")
+    print(json.dumps({"error": f"请求失败（需联网）: {e}"}, ensure_ascii=False))
+    print("<<<END>>>")
+    raise SystemExit(0)
 html = re.sub(r"(?is)<(script|style)[^>]*>.*?</\\1>", "", html)
 text = re.sub(r"(?s)<[^>]+>", "\\n", html)
 lines = [ln.strip() for ln in text.splitlines() if ln.strip()]
@@ -541,9 +547,15 @@ import json
 import sqlite3
 from collections import defaultdict
 
-conn = sqlite3.connect(${JSON.stringify(db)})
-rows = conn.execute("SELECT category, amount FROM expenses WHERE substr(date, 1, 7) = ?", (${JSON.stringify(month)},)).fetchall()
-conn.close()
+try:
+    conn = sqlite3.connect(${JSON.stringify(db)})
+    rows = conn.execute("SELECT category, amount FROM expenses WHERE substr(date, 1, 7) = ?", (${JSON.stringify(month)},)).fetchall()
+    conn.close()
+except sqlite3.Error as e:
+    print("<<<JSON>>>")
+    print(json.dumps({"error": f"读取记账库失败: {e}（expenses 表需含 date/category/amount 列）"}, ensure_ascii=False))
+    print("<<<END>>>")
+    raise SystemExit(0)
 sums: dict = defaultdict(float)
 for cat, amt in rows:
     sums[cat] += amt
@@ -596,10 +608,16 @@ export const expenseAddSchema: InteractiveToolSchema = {
 import json
 import sqlite3
 
-conn = sqlite3.connect(${JSON.stringify(db)})
-conn.execute("INSERT INTO expenses (date, category, amount, note) VALUES (?, ?, ?, ?)",
-             (${JSON.stringify(date)}, ${JSON.stringify(cat)}, ${amt}, ${JSON.stringify(note)}))
-conn.commit()
+try:
+    conn = sqlite3.connect(${JSON.stringify(db)})
+    conn.execute("INSERT INTO expenses (date, category, amount, note) VALUES (?, ?, ?, ?)",
+                 (${JSON.stringify(date)}, ${JSON.stringify(cat)}, ${amt}, ${JSON.stringify(note)}))
+    conn.commit()
+except sqlite3.Error as e:
+    print("<<<JSON>>>")
+    print(json.dumps({"error": f"写入失败: {e}（expenses 表需含 date/category/amount/note 列）"}, ensure_ascii=False))
+    print("<<<END>>>")
+    raise SystemExit(0)
 total = conn.execute("SELECT SUM(amount) FROM expenses WHERE substr(date, 1, 7) = ?", (${JSON.stringify(date.slice(0, 7))},)).fetchone()[0]
 conn.close()
 print("<<<JSON>>>")

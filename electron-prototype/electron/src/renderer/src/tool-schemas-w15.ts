@@ -190,7 +190,13 @@ import json
 
 from docx import Document
 
-doc = Document(${JSON.stringify(file)})
+try:
+    doc = Document(${JSON.stringify(file)})
+except Exception as e:
+    print("<<<JSON>>>")
+    print(json.dumps({"error": f"文档读取失败: {e}"}, ensure_ascii=False))
+    print("<<<END>>>")
+    raise SystemExit(0)
 lines = ["== 段落 =="]
 for p in doc.paragraphs:
     if p.text.strip():

@@ -150,15 +150,18 @@ export const speedTestSchema: InteractiveToolSchema = {
 
 import requests
 
-sizes = []
-for i in range(3):
-    t0 = time.monotonic()
-    data = requests.get("https://httpbin.org/bytes/1048576", timeout=30).content
-    secs = time.monotonic() - t0
-    sizes.append(len(data) / secs / 1024 / 1024)
-    print(f"第{i + 1}次: {sizes[-1]:.2f} MB/s")
-avg = sum(sizes) / len(sizes)
-_r = {"primary": {"value": f"{avg:.2f}", "unit": "MB/s 均值"}}`)
+_r = {}
+try:
+    for i in range(3):
+        t0 = time.monotonic()
+        data = requests.get("https://httpbin.org/bytes/1048576", timeout=30).content
+        secs = time.monotonic() - t0
+        sizes.append(len(data) / secs / 1024 / 1024)
+        print(f"第{i + 1}次: {sizes[-1]:.2f} MB/s")
+    avg = sum(sizes) / len(sizes)
+    _r = {"primary": {"value": f"{avg:.2f}", "unit": "MB/s 均值"}}
+except Exception as e:
+    _r = {"error": f"测速失败（需联网）: {e}"}`)
 }
 
 // ---------------------------------------------------------------------------
@@ -207,6 +210,8 @@ for mount in ("/", "/Volumes/Data", "/home"):
         u = shutil.disk_usage(mount)
     except OSError:
         continue
+    if u.total == 0:
+        continue  # 虚拟挂载点（如 macOS /home auto_master）
     g = lambda n: f"{n / 1024 ** 3:.0f}G"
     _r["table"]["rows"].append([mount, g(u.total), g(u.used), g(u.free), f"{u.used / u.total * 100:.0f}%"])`)
 }
@@ -295,9 +300,13 @@ import subprocess
 ff = shutil.which("ffprobe")
 if not ff:
     raise SystemExit("未找到 ffprobe（brew install ffmpeg）")
-info = json.loads(subprocess.run(
+raw = subprocess.run(
     [ff, "-v", "quiet", "-print_format", "json", "-show_format", "-show_streams", ${JSON.stringify(file)}],
-    capture_output=True, text=True).stdout)
+    capture_output=True, text=True)
+try:
+    info = json.loads(raw.stdout)
+except json.JSONDecodeError:
+    raise SystemExit("无法解析媒体文件（文件损坏或格式不支持）")
 f = info.get("format", {})
 dur = float(f.get("duration", 0))
 rows = [
