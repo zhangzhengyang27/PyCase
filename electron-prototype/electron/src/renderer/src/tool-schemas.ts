@@ -399,3 +399,7 @@ TOOL_SCHEMAS.push(...W13_SCHEMAS)
 // V1 图表生成器：折线/柱状/散点/饼图
 import { CHART_SCHEMAS } from './tool-schemas-charts'
 TOOL_SCHEMAS.push(...CHART_SCHEMAS)
+
+// V2 图表扩展：直方/热力/雷达/箱线/面积/误差条/水平条形/极坐标/散点密度/阶梯/等高线
+import { W2v2_SCHEMAS } from './tool-schemas-charts-v2'
+TOOL_SCHEMAS.push(...W2v2_SCHEMAS)
