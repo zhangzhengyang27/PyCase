@@ -203,7 +203,7 @@ describe('科学单位换算 ↔ 黄金用例', () => {
   })
   it('单位选项随量纲联动（options 函数形态）', () => {
     const schema = dev('interactive:unit-convert')!
-    const fromField = schema.fields.find((f) => f.key === 'from')!
+    const fromField = (Array.isArray(schema.fields) ? schema.fields : schema.fields({}))!.find((f) => f.key === 'from')!
     expect(typeof fromField.options).toBe('function')
     const opts = (fromField.options as (v: Record<string, unknown>) => { value: string }[])({ dim: '质量' })
     expect(opts.map((o) => o.value)).toContain('lb')
@@ -692,7 +692,8 @@ describe('W15 四工具 pyCode ↔ 关键片段', () => {
     for (const f of frags) expect(code, `${id} 应含 ${f}`).toContain(f)
   })
   it('password 字段类型存在且 vaultList 单步', () => {
-    expect(dev('interactive:vault-add')!.fields[0]!.type).toBe('password')
+    const vaultFields = dev('interactive:vault-add')!.fields
+    expect((Array.isArray(vaultFields) ? vaultFields : vaultFields({}))[0]!.type).toBe('password')
     expect(dev('interactive:vault-list')!.steps).toBeUndefined()
     expect(dev('interactive:vault-add')!.steps).toHaveLength(2)
   })

@@ -90,7 +90,6 @@ function base(
     },
     pyCode: (v) => {
       const mode = str(v.mode ?? 'sine')
-      const n = Math.trunc(Number(v.points ?? 60)) || 60
       if (mode === 'custom') {
         const data = str(v.data)
         const lines = data

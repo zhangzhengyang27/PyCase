@@ -66,7 +66,8 @@ export interface InteractiveToolSchema {
   title: string
   description: string
   tags: string[]
-  fields: FieldSpec[]
+  /** 字段清单；函数形态=随当前输入联动（实验室页按类型切换参数表单） */
+  fields: FieldSpec[] | ((v: Record<string, FieldValue>) => FieldSpec[])
   /** 前端计算型必填：输入 → 结构化结果（纯函数，输入缺失时返回 error 引导） */
   compute?: (v: Record<string, FieldValue>) => ToolResult
   /** 计算位置：frontend（默认，compute 必填）| sidecar（结果由运行输出的 JSON 承担，
@@ -109,22 +110,21 @@ const DATE_CARD: VExample = {
 export const interactiveToolSchemas = reactive<InteractiveToolSchema[]>([...TOOL_SCHEMAS])
 
 // 画廊路由专用页（与工具池分离——不进搜索/工具箱卡片，getToolSchema 可达，InteractiveToolPage 照常渲染）：
-//   viz2：W17 bulk_viz 图族页；pil/opencv/turtle：「全库示例交互化」三大批；
-//   algos/algos-v2/crawlers/gap：V4/V5 批（历史上从未注册、UI 不可达的死代码，本批一并挂接）。
-// 注册方向 interactive-tools → 各文件（各文件仅类型导入，无环）。
-import { VIZ2_SCHEMAS } from './tool-schemas-viz2'
-import { PIL_EFFECT_SCHEMAS } from './tool-schemas-pil'
-import { OPENCV_EFFECT_SCHEMAS } from './tool-schemas-opencv'
-import { TURTLE_SCHEMAS } from './tool-schemas-turtle'
+//   四个实验室页 = 变体归并单页（图表 30 类型 / PIL 滤镜 12 / OpenCV 处理 24 / turtle 图形 29，
+//   fields 随类型联动，路由进来预选类型）；algos/algos-v2/crawlers/gap = V4/V5 批复活页。
+import { vizLabSchema } from './tool-schemas-viz2'
+import { pilLabSchema } from './tool-schemas-pil'
+import { cvLabSchema } from './tool-schemas-opencv'
+import { turtleLabSchema } from './tool-schemas-turtle'
 import { ALGO_SCHEMAS } from './tool-schemas-algos'
 import { ALGO2_SCHEMAS } from './tool-schemas-algos-v2'
 import { CRAWLER_SCHEMAS } from './tool-schemas-crawlers'
 import { GAP_SCHEMAS } from './tool-schemas-gap'
 export const interactiveGallerySchemas = reactive<InteractiveToolSchema[]>([
-  ...VIZ2_SCHEMAS,
-  ...PIL_EFFECT_SCHEMAS,
-  ...OPENCV_EFFECT_SCHEMAS,
-  ...TURTLE_SCHEMAS,
+  vizLabSchema,
+  pilLabSchema,
+  cvLabSchema,
+  turtleLabSchema,
   ...ALGO_SCHEMAS,
   ...ALGO2_SCHEMAS,
   ...CRAWLER_SCHEMAS,

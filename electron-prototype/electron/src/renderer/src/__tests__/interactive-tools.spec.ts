@@ -89,7 +89,7 @@ describe('toolboxItems 合并交互工具', () => {
 // ---------------------------------------------------------------------------
 // T2：schema 注册表——派生卡片、按 id 查找、工具输入值初始化
 // ---------------------------------------------------------------------------
-import { interactiveToolSchemas, getToolSchema, type InteractiveToolSchema } from '../interactive-tools'
+import { interactiveToolSchemas, getToolSchema, type FieldSpec, type InteractiveToolSchema } from '../interactive-tools'
 import { toolValues, toolValueOf } from '../store/interactive'
 
 const dummySchema: InteractiveToolSchema = {
@@ -124,10 +124,10 @@ describe('schema 注册表', () => {
     }
   })
   it('toolValueOf 首次按 defaults 初始化并复用同一对象', () => {
-    const v1 = toolValueOf(dummySchema.id, dummySchema.fields)
+    const v1 = toolValueOf(dummySchema.id, dummySchema.fields as FieldSpec[])
     expect(v1).toEqual({ a: 'x', b: undefined })
     v1.a = 'changed'
-    const v2 = toolValueOf(dummySchema.id, dummySchema.fields)
+    const v2 = toolValueOf(dummySchema.id, dummySchema.fields as FieldSpec[])
     expect(v2).toBe(v1)
     expect(v2.a).toBe('changed')
   })

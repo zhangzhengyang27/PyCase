@@ -1,7 +1,7 @@
 // tool-schemas-effects.ts：V3 图像效果实验室 ×25——PIL/OpenCV 单文件输入 → 效果处理 → PNG 产物预览。
 // 形态：file 字段选图片 → 参数调优 → sidecar 运行（PIL/OpenCV）→ PNG 进抽屉预览。
 // 只依赖 interactive-tools 的类型（运行时零导入）。
-import type { InteractiveToolSchema } from './interactive-tools'
+import type { FieldSpec, InteractiveToolSchema } from './interactive-tools'
 
 const str = (v: unknown): string => String(v ?? '')
 const INVALID = '# 选择图片文件后自动生成代码'
@@ -22,7 +22,7 @@ function pilEffect(
   id: string,
   title: string,
   description: string,
-  params: InteractiveToolSchema['fields'],
+  params: FieldSpec[],
   body: (v: Record<string, unknown>) => string
 ): InteractiveToolSchema {
   return {
@@ -182,7 +182,7 @@ function cvEffect(
   id: string,
   title: string,
   description: string,
-  params: InteractiveToolSchema['fields'],
+  params: FieldSpec[],
   body: (v: Record<string, unknown>) => string
 ): InteractiveToolSchema {
   return {

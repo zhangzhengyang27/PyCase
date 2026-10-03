@@ -11,7 +11,7 @@ import { examples } from './catalog'
 import type { ExampleDetail, VersionInfo } from '../../../../../shared/protocol'
 import { recordHistory, runHistory, runTimeout, setSkipHighRiskConfirm, skipHighRiskConfirm } from './prefs'
 import { assets, loadAssets } from './assets'
-import { interactiveIdForExample, vizVariantOf } from '../interactive-mapping'
+import { interactiveRouteForExample, vizVariantOf } from '../interactive-mapping'
 import { isInteractiveId } from '../interactive-tools'
 
 export interface ArgSpec {
@@ -178,8 +178,8 @@ export const selectedExample = computed(() => examples.value.find((e) => e.id ==
 // ---------------------------------------------------------------------------
 /** 经画廊路由进入交互页时被点的那张卡片；从工具箱/命令面板直开交互页时为 null */
 export const interactiveSourceId = ref<string | null>(null)
-/** 路由携带的模式预选（变体 d1~d12 → 内置数据模式）；InteractiveToolPage 落页时消费并清空 */
-export const pendingVizMode = ref<{ pageId: string; mode: string } | null>(null)
+/** 路由携带的预选值（实验室页的类型 / viz 变体的数据模式等）；InteractiveToolPage 落页时消费并清空 */
+export const pendingPreset = ref<{ pageId: string; values: Record<string, string> } | null>(null)
 export const detailHistory = computed(() =>
   selectedId.value ? runHistory.value.filter((h) => h.id === selectedId.value).slice(0, 20) : []
 )
@@ -264,17 +264,20 @@ export async function openDetail(
   // 打开动作一律直达交互页面——画廊/清单/收藏/历史/命令面板全走这里。交互 id 自身与
   // forceDetail（卡片「运行」、参数重试、「查看原示例源码」回链）不路由。
   if (!isInteractiveId(id) && !opts.forceDetail) {
-    const routed = interactiveIdForExample(ex)
-    if (routed) {
+    const route = interactiveRouteForExample(ex)
+    if (route) {
       interactiveSourceId.value = ex.id
+      const preset: Record<string, string> = {}
+      if (route.type) preset.type = route.type
       const variant = vizVariantOf(ex)
-      pendingVizMode.value = variant?.mode ? { pageId: routed, mode: variant.mode } : null
-      selectedId.value = routed
+      if (variant?.mode) preset.mode = variant.mode
+      pendingPreset.value = Object.keys(preset).length ? { pageId: route.page, values: preset } : null
+      selectedId.value = route.page
       return []
     }
   }
   interactiveSourceId.value = null
-  pendingVizMode.value = null
+  pendingPreset.value = null
   if (selectedId.value !== id) {
     selectedId.value = id
     // 源码不在这里取：契约 v2 起列表项不含 code，只能按 id 单独拉（loadSourceCode）。
@@ -410,7 +413,7 @@ export function closeDetail(force = false): void {
   }
   selectedId.value = null
   interactiveSourceId.value = null
-  pendingVizMode.value = null
+  pendingPreset.value = null
 }
 
 // Monaco 实例由组件注册进来；内容变更与取值都经它

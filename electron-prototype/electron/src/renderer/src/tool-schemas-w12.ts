@@ -2,7 +2,7 @@
 // + 字符方阵/文本表格（纯前端）+ 站点监控/文件变更对比（sidecar）。
 // 产物形态：openpyxl / python-docx / python-pptx 写 xlsx/docx/pptx 到运行工作区，
 // 结果 JSON 报告产物名与规模（二进制产物暂不支持抽屉下载，见规划 §3.3 注）。
-import type { InteractiveToolSchema } from './interactive-tools'
+import type { FieldSpec, InteractiveToolSchema } from './interactive-tools'
 
 const str = (v: unknown): string => String(v ?? '')
 const MARK = 'print("<<<JSON>>>")'
@@ -260,7 +260,7 @@ function excelTool(
     id: string
     title: string
     description: string
-    fields: InteractiveToolSchema['fields']
+    fields: FieldSpec[]
     tags?: string[]
     body: (dataVar: string, v: Record<string, unknown>) => string
   }

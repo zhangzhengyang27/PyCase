@@ -148,38 +148,38 @@ export const TITLE_TO_INTERACTIVE: Record<string, string> = {
 // （生成器与各图族页 MODE_FIELD 同序：d1=正弦加噪 … d12=平方增长），路由时按变体预选。
 // ---------------------------------------------------------------------------
 
-/** 图族代码（id 中段）→ 交互页面 id。W17 图族页为主，line/pie/hist 落工具箱既有图表页。 */
-export const VIZ_FAMILY_TO_INTERACTIVE: Record<string, string> = {
-  bar: 'interactive:viz-bar',
-  scatter: 'interactive:viz-scatter',
-  step: 'interactive:viz-step',
-  area: 'interactive:viz-area',
-  stackplot: 'interactive:viz-area', // 堆叠面积与面积图同族归并
-  errorbar: 'interactive:viz-errbar',
-  stem: 'interactive:viz-stem',
-  'dual-axis': 'interactive:viz-dualaxis',
-  'twin-styles': 'interactive:viz-dualaxis', // 双轴样式与双轴对比同族归并
-  'smooth-multiline': 'interactive:viz-multiseries',
-  polar: 'interactive:viz-polar-rose',
-  radar: 'interactive:viz-radar',
-  box: 'interactive:viz-box',
-  violin: 'interactive:viz-violin',
-  hexbin: 'interactive:viz-hexbin',
-  barh: 'interactive:viz-hbar',
-  'log-scale': 'interactive:viz-log',
-  annotation: 'interactive:viz-annotate',
-  inset: 'interactive:viz-inset',
-  'style-grid': 'interactive:viz-grid',
-  heatmap: 'interactive:viz-heatmap',
-  contour: 'interactive:viz-contour-filled',
-  surface3d: 'interactive:viz-surface-3d',
-  scatter3d: 'interactive:viz-scatter-3d',
-  wireframe3d: 'interactive:viz-wireframe-3d',
-  bar3d: 'interactive:viz-bar-3d',
-  // W17 未覆盖的图族 → 工具箱既有图表页兜底
-  line: 'interactive:chart-line',
-  pie: 'interactive:chart-pie',
-  hist: 'interactive:直方图'
+/** 图族代码（id 中段）→ 路由目标：图表实验室页 + 类型预选。30 图族全量归并进单页。 */
+export const VIZ_FAMILY_TO_INTERACTIVE: Record<string, { page: string; type: string }> = {
+  bar: { page: 'interactive:viz-lab', type: 'bar' },
+  scatter: { page: 'interactive:viz-lab', type: 'scatter' },
+  step: { page: 'interactive:viz-lab', type: 'step' },
+  area: { page: 'interactive:viz-lab', type: 'area' },
+  stackplot: { page: 'interactive:viz-lab', type: 'area' }, // 堆叠面积与面积图同族归并
+  errorbar: { page: 'interactive:viz-lab', type: 'errbar' },
+  stem: { page: 'interactive:viz-lab', type: 'stem' },
+  'dual-axis': { page: 'interactive:viz-lab', type: 'dualaxis' },
+  'twin-styles': { page: 'interactive:viz-lab', type: 'dualaxis' }, // 双轴样式与双轴对比同族归并
+  'smooth-multiline': { page: 'interactive:viz-lab', type: 'multiseries' },
+  polar: { page: 'interactive:viz-lab', type: 'polar-rose' },
+  radar: { page: 'interactive:viz-lab', type: 'radar' },
+  box: { page: 'interactive:viz-lab', type: 'box' },
+  violin: { page: 'interactive:viz-lab', type: 'violin' },
+  hexbin: { page: 'interactive:viz-lab', type: 'hexbin' },
+  barh: { page: 'interactive:viz-lab', type: 'hbar' },
+  'log-scale': { page: 'interactive:viz-lab', type: 'log' },
+  annotation: { page: 'interactive:viz-lab', type: 'annotate' },
+  inset: { page: 'interactive:viz-lab', type: 'inset' },
+  'style-grid': { page: 'interactive:viz-lab', type: 'grid' },
+  heatmap: { page: 'interactive:viz-lab', type: 'heatmap' },
+  contour: { page: 'interactive:viz-lab', type: 'contour-filled' },
+  surface3d: { page: 'interactive:viz-lab', type: 'surface-3d' },
+  scatter3d: { page: 'interactive:viz-lab', type: 'scatter-3d' },
+  wireframe3d: { page: 'interactive:viz-lab', type: 'wireframe-3d' },
+  bar3d: { page: 'interactive:viz-lab', type: 'bar-3d' },
+  // W17 未覆盖的图族 → 实验室补齐类型
+  line: { page: 'interactive:viz-lab', type: 'line' },
+  pie: { page: 'interactive:viz-lab', type: 'pie' },
+  hist: { page: 'interactive:viz-lab', type: 'hist' }
 }
 
 /** 变体序号 → 内置数据模式 value（越界返回 null，页面回落默认模式） */
@@ -228,121 +228,121 @@ export function topicsFamilyOf(ex: VExample | null | undefined): TopicsFamily | 
 }
 
 /** 家族中段 → 交互页面 id。仅收录交互页能力确实覆盖该家族的条目（宁缺毋歪曲）。 */
-export const TOPICS_FAMILY_TO_INTERACTIVE: Record<string, string> = {
+export const TOPICS_FAMILY_TO_INTERACTIVE: Record<string, { page: string; type?: string }> = {
   // ---- 算法可视化（V4/V5 既有页；algo-* 32 变体 + 单例）----
-  'algo-binary-search': 'interactive:binary-search',
-  'algo-quick-sort': 'interactive:quick-sort',
-  'algo-lcs': 'interactive:lcs',
-  'algo-dijkstra': 'interactive:dijkstra',
-  'algo-knapsack': 'interactive:knapsack',
-  'algo-union-find': 'interactive:union-find',
-  'algo-collatz': 'interactive:collatz',
-  'algo-gcd-lcm': 'interactive:gcd-lcm',
-  'algo-matrix-rotate': 'interactive:matrix-rotate',
+  'algo-binary-search': { page: 'interactive:binary-search' },
+  'algo-quick-sort': { page: 'interactive:quick-sort' },
+  'algo-lcs': { page: 'interactive:lcs' },
+  'algo-dijkstra': { page: 'interactive:dijkstra' },
+  'algo-knapsack': { page: 'interactive:knapsack' },
+  'algo-union-find': { page: 'interactive:union-find' },
+  'algo-collatz': { page: 'interactive:collatz' },
+  'algo-gcd-lcm': { page: 'interactive:gcd-lcm' },
+  'algo-matrix-rotate': { page: 'interactive:matrix-rotate' },
   // ---- bulk_basics 教学家族（既有页覆盖）----
-  'basics-fizzbuzz': 'interactive:fizzbuzz',
-  'basics-prime': 'interactive:prime-sieve',
-  'basics-fibonacci': 'interactive:fibonacci',
-  'basics-wordcount': 'interactive:word-freq',
-  'basics-matrix-mul': 'interactive:matrix-multiply',
-  'basics-regex': 'interactive:regex-tester',
+  'basics-fizzbuzz': { page: 'interactive:fizzbuzz' },
+  'basics-prime': { page: 'interactive:prime-sieve' },
+  'basics-fibonacci': { page: 'interactive:fibonacci' },
+  'basics-wordcount': { page: 'interactive:word-freq' },
+  'basics-matrix-mul': { page: 'interactive:matrix-multiply' },
+  'basics-regex': { page: 'interactive:regex-tester' },
   // ---- dataviz 明确等价（其余家族待建页后补映射）----
-  'data-analysis_dataviz-error-bar': 'interactive:viz-errbar',
-  'data-analysis_dataviz-log-scale': 'interactive:viz-log',
-  'data-analysis_dataviz-polar-rose': 'interactive:viz-polar-rose',
-  'data-analysis_dataviz-scatter-3d': 'interactive:viz-scatter-3d',
-  'data-analysis_dataviz-surface-3d': 'interactive:viz-surface-3d',
-  'data-analysis_dataviz-scatter-density': 'interactive:散点密度图',
-  'data-analysis_dataviz-radar-chart': 'interactive:viz-radar',
-  'data-analysis_dataviz-heatmap-annotated': 'interactive:viz-heatmap',
-  'data-analysis_dataviz-dual-axis-combo': 'interactive:viz-dualaxis',
-  'data-analysis_dataviz-line-multi-series': 'interactive:viz-multiseries',
-  'data-analysis_dataviz-boxplot-multi': 'interactive:viz-box',
-  'data-analysis_dataviz-histogram-kde': 'interactive:直方图',
+  'data-analysis_dataviz-error-bar': { page: 'interactive:viz-lab', type: 'errbar' },
+  'data-analysis_dataviz-log-scale': { page: 'interactive:viz-lab', type: 'log' },
+  'data-analysis_dataviz-polar-rose': { page: 'interactive:viz-lab', type: 'polar-rose' },
+  'data-analysis_dataviz-scatter-3d': { page: 'interactive:viz-lab', type: 'scatter-3d' },
+  'data-analysis_dataviz-surface-3d': { page: 'interactive:viz-lab', type: 'surface-3d' },
+  'data-analysis_dataviz-scatter-density': { page: 'interactive:散点密度图' },
+  'data-analysis_dataviz-radar-chart': { page: 'interactive:viz-lab', type: 'radar' },
+  'data-analysis_dataviz-heatmap-annotated': { page: 'interactive:viz-lab', type: 'heatmap' },
+  'data-analysis_dataviz-dual-axis-combo': { page: 'interactive:viz-lab', type: 'dualaxis' },
+  'data-analysis_dataviz-line-multi-series': { page: 'interactive:viz-lab', type: 'multiseries' },
+  'data-analysis_dataviz-boxplot-multi': { page: 'interactive:viz-lab', type: 'box' },
+  'data-analysis_dataviz-histogram-kde': { page: 'interactive:直方图' },
   // ---- sciviz 明确等价 ----
-  'data-analysis_sciviz-sciviz-venn-diagram': 'interactive:venn',
-  'data-analysis_sciviz-sciviz-dendrogram': 'interactive:dendrogram',
-  'data-analysis_sciviz-sciviz-wordcloud': 'interactive:wordcloud-chart',
-  'data-analysis_sciviz-sciviz-3d-surface': 'interactive:viz-surface-3d',
-  'data-analysis_sciviz-sciviz-polar-rose': 'interactive:viz-polar-rose',
-  'data-analysis_sciviz-sciviz-contour-fields': 'interactive:viz-contour-filled',
+  'data-analysis_sciviz-sciviz-venn-diagram': { page: 'interactive:venn' },
+  'data-analysis_sciviz-sciviz-dendrogram': { page: 'interactive:dendrogram' },
+  'data-analysis_sciviz-sciviz-wordcloud': { page: 'interactive:wordcloud-chart' },
+  'data-analysis_sciviz-sciviz-3d-surface': { page: 'interactive:viz-lab', type: 'surface-3d' },
+  'data-analysis_sciviz-sciviz-polar-rose': { page: 'interactive:viz-lab', type: 'polar-rose' },
+  'data-analysis_sciviz-sciviz-contour-fields': { page: 'interactive:viz-lab', type: 'contour-filled' },
   // ---- 爬虫中交互页能力确实覆盖的条目（请求/头检查/批量下载/汇率/天气）----
-  'crawler-http-get-basic': 'interactive:http-requester',
-  'crawler-http-headers-ua': 'interactive:http-headers',
-  'crawler-http-timeout-retry': 'interactive:http-requester',
-  'crawler-parse-json-api': 'interactive:http-requester',
-  'crawler3-image-batch-download': 'interactive:image-downloader',
-  'crawler3-exchange-rate-api': 'interactive:exchange-rate',
-  'crawler3-open-meteo-weather': 'interactive:weather',
+  'crawler-http-get-basic': { page: 'interactive:http-requester' },
+  'crawler-http-headers-ua': { page: 'interactive:http-headers' },
+  'crawler-http-timeout-retry': { page: 'interactive:http-requester' },
+  'crawler-parse-json-api': { page: 'interactive:http-requester' },
+  'crawler3-image-batch-download': { page: 'interactive:image-downloader' },
+  'crawler3-exchange-rate-api': { page: 'interactive:exchange-rate' },
+  'crawler3-open-meteo-weather': { page: 'interactive:weather' },
   // ---- bulk_pil 滤镜家族（tool-schemas-pil.ts，画廊专用页）----
-  'pil-gaussian': 'interactive:pil-gaussian',
-  'pil-grayscale': 'interactive:pil-grayscale',
-  'pil-invert': 'interactive:pil-invert',
-  'pil-emboss': 'interactive:pil-emboss',
-  'pil-contour': 'interactive:pil-contour',
-  'pil-solarize': 'interactive:pil-solarize',
-  'pil-posterize': 'interactive:pil-posterize',
-  'pil-mirror': 'interactive:pil-mirror',
-  'pil-rotate-crop': 'interactive:pil-rotate-crop',
-  'pil-enhance-quad': 'interactive:pil-enhance-quad',
-  'pil-gradient-mask': 'interactive:pil-gradient-mask',
-  'pil-pixelate': 'interactive:pil-pixelate',
+  'pil-gaussian': { page: 'interactive:pil-lab', type: 'gaussian' },
+  'pil-grayscale': { page: 'interactive:pil-lab', type: 'grayscale' },
+  'pil-invert': { page: 'interactive:pil-lab', type: 'invert' },
+  'pil-emboss': { page: 'interactive:pil-lab', type: 'emboss' },
+  'pil-contour': { page: 'interactive:pil-lab', type: 'contour' },
+  'pil-solarize': { page: 'interactive:pil-lab', type: 'solarize' },
+  'pil-posterize': { page: 'interactive:pil-lab', type: 'posterize' },
+  'pil-mirror': { page: 'interactive:pil-lab', type: 'mirror' },
+  'pil-rotate-crop': { page: 'interactive:pil-lab', type: 'rotate-crop' },
+  'pil-enhance-quad': { page: 'interactive:pil-lab', type: 'enhance-quad' },
+  'pil-gradient-mask': { page: 'interactive:pil-lab', type: 'gradient-mask' },
+  'pil-pixelate': { page: 'interactive:pil-lab', type: 'pixelate' },
   // ---- bulk_opencv 处理家族（tool-schemas-opencv.ts）----
-  'opencv-canny': 'interactive:cv-canny',
-  'opencv-threshold': 'interactive:cv-threshold',
-  'opencv-adaptive': 'interactive:cv-adaptive',
-  'opencv-morph-open': 'interactive:cv-morph-open',
-  'opencv-morph-close': 'interactive:cv-morph-close',
-  'opencv-gradient': 'interactive:cv-gradient',
-  'opencv-sobel': 'interactive:cv-sobel',
-  'opencv-laplacian': 'interactive:cv-laplacian',
-  'opencv-blur-stack': 'interactive:cv-blur-stack',
-  'opencv-sharpen': 'interactive:cv-sharpen',
-  'opencv-equalize': 'interactive:cv-equalize',
-  'opencv-gamma': 'interactive:cv-gamma',
-  'opencv-rotate': 'interactive:cv-rotate',
-  'opencv-perspective': 'interactive:cv-perspective',
-  'opencv-resize-pyramid': 'interactive:cv-resize-pyramid',
-  'opencv-contours-area': 'interactive:cv-contours-area',
-  'opencv-hough-lines': 'interactive:cv-hough-lines',
-  'opencv-distance-transform': 'interactive:cv-distance-transform',
-  'opencv-bitwise-mix': 'interactive:cv-bitwise-mix',
-  'opencv-colormap': 'interactive:cv-colormap',
-  'opencv-edge': 'interactive:cv-edge',
-  'opencv-colorspace': 'interactive:cv-colorspace',
-  'opencv-geometric': 'interactive:cv-geometric',
-  'opencv-histogram': 'interactive:cv-histogram',
-  'opencv-contours': 'interactive:cv-edge', // 单例轮廓演示 → 边缘/轮廓组合页
+  'opencv-canny': { page: 'interactive:cv-lab', type: 'canny' },
+  'opencv-threshold': { page: 'interactive:cv-lab', type: 'threshold' },
+  'opencv-adaptive': { page: 'interactive:cv-lab', type: 'adaptive' },
+  'opencv-morph-open': { page: 'interactive:cv-lab', type: 'morph-open' },
+  'opencv-morph-close': { page: 'interactive:cv-lab', type: 'morph-close' },
+  'opencv-gradient': { page: 'interactive:cv-lab', type: 'gradient' },
+  'opencv-sobel': { page: 'interactive:cv-lab', type: 'sobel' },
+  'opencv-laplacian': { page: 'interactive:cv-lab', type: 'laplacian' },
+  'opencv-blur-stack': { page: 'interactive:cv-lab', type: 'blur-stack' },
+  'opencv-sharpen': { page: 'interactive:cv-lab', type: 'sharpen' },
+  'opencv-equalize': { page: 'interactive:cv-lab', type: 'equalize' },
+  'opencv-gamma': { page: 'interactive:cv-lab', type: 'gamma' },
+  'opencv-rotate': { page: 'interactive:cv-lab', type: 'rotate' },
+  'opencv-perspective': { page: 'interactive:cv-lab', type: 'perspective' },
+  'opencv-resize-pyramid': { page: 'interactive:cv-lab', type: 'resize-pyramid' },
+  'opencv-contours-area': { page: 'interactive:cv-lab', type: 'contours-area' },
+  'opencv-hough-lines': { page: 'interactive:cv-lab', type: 'hough-lines' },
+  'opencv-distance-transform': { page: 'interactive:cv-lab', type: 'distance-transform' },
+  'opencv-bitwise-mix': { page: 'interactive:cv-lab', type: 'bitwise-mix' },
+  'opencv-colormap': { page: 'interactive:cv-lab', type: 'colormap' },
+  'opencv-edge': { page: 'interactive:cv-lab', type: 'edge' },
+  'opencv-colorspace': { page: 'interactive:cv-lab', type: 'colorspace' },
+  'opencv-geometric': { page: 'interactive:cv-lab', type: 'geometric' },
+  'opencv-histogram': { page: 'interactive:cv-lab', type: 'histogram' },
+  'opencv-contours': { page: 'interactive:cv-lab', type: 'edge' }, // 单例轮廓演示 → 边缘组合类型
   // ---- bulk_turtle 图形家族（tool-schemas-turtle.ts）----
-  'turtle-spiral': 'interactive:turtle-spiral',
-  'turtle-spiral-square': 'interactive:turtle-spiral-square',
-  'turtle-rose': 'interactive:turtle-rose',
-  'turtle-fractal-tree': 'interactive:turtle-fractal-tree',
-  'turtle-koch': 'interactive:turtle-koch',
-  'turtle-sierpinski': 'interactive:turtle-sierpinski',
-  'turtle-mandala': 'interactive:turtle-mandala',
-  'turtle-lissajous': 'interactive:turtle-lissajous',
-  'turtle-phyllotaxis': 'interactive:turtle-phyllotaxis',
-  'turtle-polygon-ring': 'interactive:turtle-polygon-ring',
-  'turtle-hex-flower': 'interactive:turtle-hex-flower',
-  'turtle-butterfly': 'interactive:turtle-butterfly',
-  'turtle-galaxy': 'interactive:turtle-galaxy',
-  'turtle-heart': 'interactive:turtle-heart',
-  'turtle-waves': 'interactive:turtle-waves',
-  'turtle-rings': 'interactive:turtle-rings',
-  'turtle-rays': 'interactive:turtle-rays',
-  'turtle-burst': 'interactive:turtle-burst',
-  'turtle-dot-field': 'interactive:turtle-dot-field',
-  'turtle-dragon': 'interactive:turtle-dragon',
-  'turtle-square-stairs': 'interactive:turtle-square-stairs',
-  'turtle-staircase-wave': 'interactive:turtle-staircase-wave',
-  'turtle-honeycomb': 'interactive:turtle-honeycomb',
-  'turtle-city-skyline': 'interactive:turtle-city-skyline',
-  'turtle-starfield': 'interactive:turtle-starfield',
-  'turtle-kaleidoscope': 'interactive:turtle-kaleidoscope',
-  'turtle-maze-walk': 'interactive:turtle-maze-walk',
-  'turtle-rainbow-circles': 'interactive:turtle-rainbow-circles',
-  'turtle-sunflower': 'interactive:turtle-sunflower'
+  'turtle-spiral': { page: 'interactive:turtle-lab', type: 'spiral' },
+  'turtle-spiral-square': { page: 'interactive:turtle-lab', type: 'spiral-square' },
+  'turtle-rose': { page: 'interactive:turtle-lab', type: 'rose' },
+  'turtle-fractal-tree': { page: 'interactive:turtle-lab', type: 'fractal-tree' },
+  'turtle-koch': { page: 'interactive:turtle-lab', type: 'koch' },
+  'turtle-sierpinski': { page: 'interactive:turtle-lab', type: 'sierpinski' },
+  'turtle-mandala': { page: 'interactive:turtle-lab', type: 'mandala' },
+  'turtle-lissajous': { page: 'interactive:turtle-lab', type: 'lissajous' },
+  'turtle-phyllotaxis': { page: 'interactive:turtle-lab', type: 'phyllotaxis' },
+  'turtle-polygon-ring': { page: 'interactive:turtle-lab', type: 'polygon-ring' },
+  'turtle-hex-flower': { page: 'interactive:turtle-lab', type: 'hex-flower' },
+  'turtle-butterfly': { page: 'interactive:turtle-lab', type: 'butterfly' },
+  'turtle-galaxy': { page: 'interactive:turtle-lab', type: 'galaxy' },
+  'turtle-heart': { page: 'interactive:turtle-lab', type: 'heart' },
+  'turtle-waves': { page: 'interactive:turtle-lab', type: 'waves' },
+  'turtle-rings': { page: 'interactive:turtle-lab', type: 'rings' },
+  'turtle-rays': { page: 'interactive:turtle-lab', type: 'rays' },
+  'turtle-burst': { page: 'interactive:turtle-lab', type: 'burst' },
+  'turtle-dot-field': { page: 'interactive:turtle-lab', type: 'dot-field' },
+  'turtle-dragon': { page: 'interactive:turtle-lab', type: 'dragon' },
+  'turtle-square-stairs': { page: 'interactive:turtle-lab', type: 'square-stairs' },
+  'turtle-staircase-wave': { page: 'interactive:turtle-lab', type: 'staircase-wave' },
+  'turtle-honeycomb': { page: 'interactive:turtle-lab', type: 'honeycomb' },
+  'turtle-city-skyline': { page: 'interactive:turtle-lab', type: 'city-skyline' },
+  'turtle-starfield': { page: 'interactive:turtle-lab', type: 'starfield' },
+  'turtle-kaleidoscope': { page: 'interactive:turtle-lab', type: 'kaleidoscope' },
+  'turtle-maze-walk': { page: 'interactive:turtle-lab', type: 'maze-walk' },
+  'turtle-rainbow-circles': { page: 'interactive:turtle-lab', type: 'rainbow-circles' },
+  'turtle-sunflower': { page: 'interactive:turtle-lab', type: 'sunflower' }
 }
 
 export interface VizVariant {
@@ -362,16 +362,28 @@ export function vizVariantOf(ex: VExample | null | undefined): VizVariant | null
   return { family: m[1], n: Number(m[2]), mode: VIZ_D_TO_MODE[m[2]] ?? null }
 }
 
-/** 目录条目 → 交互页面 id（标题表 → viz 图族表 → 通用 topics 家族表三级解析；无映射返回 null） */
-export function interactiveIdForExample(ex: VExample | null | undefined): string | null {
+export interface InteractiveRoute {
+  /** 交互页面 id */
+  page: string
+  /** 类型预选（实验室页的类型选择器值）；非实验室页无 */
+  type?: string
+}
+
+/** 目录条目 → 路由目标（标题表 → viz 图族表 → 通用 topics 家族表三级解析；无映射返回 null） */
+export function interactiveRouteForExample(ex: VExample | null | undefined): InteractiveRoute | null {
   if (!ex) return null
   const title = (ex.title || ex.name || '').replace(/\.py$/i, '').trim()
   const byTitle = TITLE_TO_INTERACTIVE[title]
-  if (byTitle) return byTitle
+  if (byTitle) return { page: byTitle }
   const variant = vizVariantOf(ex)
   if (variant) return VIZ_FAMILY_TO_INTERACTIVE[variant.family] ?? null
   const fam = topicsFamilyOf(ex)
   return fam ? (TOPICS_FAMILY_TO_INTERACTIVE[fam.family] ?? null) : null
+}
+
+/** 目录条目 → 交互页面 id（仅页面，无类型预选；详情页「交互页面」按钮等兼容场景用） */
+export function interactiveIdForExample(ex: VExample | null | undefined): string | null {
+  return interactiveRouteForExample(ex)?.page ?? null
 }
 
 /** 当前交互页面（schema 驱动）对应的同能力目录条目；无则 null */

@@ -81,52 +81,12 @@ const TITLE_FIELD = { key: 'title', label: '标题', type: 'text' as const, defa
 // ---------------------------------------------------------------------------
 // 1. 3D 曲面图
 // ---------------------------------------------------------------------------
-export const surface3dSchema = base(
-  '3D 曲面图',
-  '三维曲面：数据为 Z 值网格（行为 y、列为 x）。',
-  ['图表', '3D'],
-  [DATA_FIELD, TITLE_FIELD, { key: 'cmap', label: '色系', type: 'text', default: 'viridis', width: 'half' }],
-  (v) => {
-    const cmap = str(v.cmap ?? 'viridis').replace(/[^a-zA-Z0-9_]/g, '') || 'viridis'
-    return `import numpy as np
 
-mat = np.array([[float(c) for c in r[1:]] for r in data_rows], dtype=float)
-fig = plt.figure(figsize=(9, 6))
-ax = fig.add_subplot(111, projection="3d")
-X, Y = np.meshgrid(np.arange(mat.shape[1]), np.arange(mat.shape[0]))
-surf = ax.plot_surface(X, Y, mat, cmap="${cmap}", edgecolor="k", linewidth=0.2)
-fig.colorbar(surf, ax=ax, shrink=0.6)
-`
-  }
-)
 
 // ---------------------------------------------------------------------------
 // 2. 3D 散点图
 // ---------------------------------------------------------------------------
-export const scatter3dSchema = base(
-  '3D 散点图',
-  '三维散点：数据列依次为 x,y,z（第四列可选为大小）。',
-  ['图表', '3D'],
-  [
-    { ...DATA_FIELD, placeholder: 'x,y,z\n1,2,3\n2,4,1\n3,3,5\n4,7,2\n5,6,6' },
-    TITLE_FIELD,
-    { key: 'color', label: '颜色', type: 'text', default: '#2563eb', width: 'half' }
-  ],
-  (v) => {
-    const color = /^#[0-9a-fA-F]{6}$/.test(str(v.color)) ? str(v.color) : '#2563eb'
-    return `xs = [float(r[0]) for r in data_rows]
-ys = [float(r[1]) for r in data_rows]
-zs = [float(r[2]) for r in data_rows]
 
-fig = plt.figure(figsize=(9, 6))
-ax = fig.add_subplot(111, projection="3d")
-ax.scatter(xs, ys, zs, c="${color}", s=40, edgecolors="white")
-ax.set_xlabel(header[0])
-ax.set_ylabel(header[1])
-ax.set_zlabel(header[2])
-`
-  }
-)
 
 // ---------------------------------------------------------------------------
 // 3. 子图布局
@@ -150,48 +110,12 @@ for i, (ax, col) in enumerate(zip(axes.flat, series)):
 // ---------------------------------------------------------------------------
 // 4. 双轴对比
 // ---------------------------------------------------------------------------
-export const dualAxisSchema = base(
-  '双轴对比',
-  '双 Y 轴组合图：第一系列用左轴，第二系列用右轴。',
-  ['图表', '布局'],
-  [
-    { ...DATA_FIELD, placeholder: 'x,y1,y2\n1,10,120\n2,14,90\n3,12,150\n4,18,80\n5,16,110' },
-    TITLE_FIELD,
-    { key: 'secondColor', label: '右轴颜色', type: 'text', default: '#ef4444', width: 'half' }
-  ],
-  (v) => {
-    const c2 = /^#[0-9a-fA-F]{6}$/.test(str(v.secondColor)) ? str(v.secondColor) : '#ef4444'
-    return `columns = list(zip(*data_rows))
-x = columns[0]
-fig, ax1 = plt.subplots(figsize=(8, 5))
-ax1.plot(x, [float(c) for c in columns[1]], color="#3b82f6", label=header[1])
-ax1.set_ylabel(header[1], color="#3b82f6")
-ax2 = ax1.twinx()
-ax2.plot(x, [float(c) for c in columns[2]], color="${c2}", label=header[2])
-ax2.set_ylabel(header[2], color="${c2}")
-`
-  },
-  (v) => `fig.suptitle(${JSON.stringify(str(v.title ?? ''))})`
-)
+
 
 // ---------------------------------------------------------------------------
 // 5. 对数坐标
 // ---------------------------------------------------------------------------
-export const logScaleSchema = base(
-  '对数坐标图',
-  'Y 轴对数坐标折线（适合跨数量级数据）。',
-  ['图表', '布局'],
-  [DATA_FIELD, TITLE_FIELD],
-  (_v) => `columns = list(zip(*data_rows))
-x = columns[0]
-fig, ax = plt.subplots(figsize=(8, 5))
-for i, col in enumerate(columns[1:], 1):
-    ax.plot(x, [float(c) for c in col], marker="o", label=header[i])
-ax.set_yscale("log")
-ax.legend()
-ax.grid(True, alpha=0.3)
-`
-)
+
 
 // ---------------------------------------------------------------------------
 // 6. 词云图（wordcloud 已装）
@@ -471,11 +395,7 @@ print("<<<END>>>")
 }
 
 export const GAP_SCHEMAS: InteractiveToolSchema[] = [
-  surface3dSchema,
-  scatter3dSchema,
   subplotsSchema,
-  dualAxisSchema,
-  logScaleSchema,
   wordcloudSchema,
   vennSchema,
   ganttSchema,

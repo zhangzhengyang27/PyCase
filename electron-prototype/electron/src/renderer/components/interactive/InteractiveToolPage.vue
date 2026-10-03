@@ -8,13 +8,24 @@ import ToolField from './ToolField.vue'
 import ToolResultPanel from './ToolResultPanel.vue'
 import CodeDrawer from '../date-calculator/CodeDrawer.vue'
 import { getToolSchema, type SelectOption } from '../../src/interactive-tools'
-import { closeInteractive, toolValueOf } from '../../src/store/interactive'
-import { interactiveSourceId, openDetail, pendingVizMode, selectedId } from '../../src/store/detail'
+import { closeInteractive, rawToolValues, toolValueOf } from '../../src/store/interactive'
+import { interactiveSourceId, openDetail, pendingPreset, selectedId } from '../../src/store/detail'
 import { cliExampleOfCurrentPage } from '../../src/interactive-mapping'
 import { examples } from '../../src/store/catalog'
 
 const schema = computed(() => (selectedId.value ? getToolSchema(selectedId.value) : undefined))
-const values = computed(() => (schema.value ? toolValueOf(schema.value.id, schema.value.fields) : {}))
+const values = computed(() => {
+  if (!schema.value) return {}
+  const f = schema.value.fields
+  // 动态表单探测：fieldsFn 可能读当前值（类型选择器）——用原始桶直读，避免计算环
+  const probe = typeof f === 'function' ? f(rawToolValues(schema.value.id)) : f
+  return toolValueOf(schema.value.id, probe)
+})
+const fields = computed(() => {
+  if (!schema.value) return []
+  const f = schema.value.fields
+  return typeof f === 'function' ? f(values.value) : f
+})
 const result = computed(() => schema.value?.compute?.(values.value))
 const code = computed(() => (schema.value ? schema.value.pyCode(values.value) : '# 工具不存在'))
 
@@ -42,10 +53,10 @@ const sidecarRest = computed(() => (isSidecar.value ? parseSidecarOutput(runOutp
 const stepIndex = ref(0)
 const steps = computed(() => schema.value?.steps ?? [])
 const stepFields = computed(() => {
-  if (!steps.value.length || !schema.value) return schema.value?.fields ?? []
+  if (!steps.value.length || !schema.value) return fields.value
   const keys = steps.value[stepIndex.value]?.keys ?? []
   const set = new Set(keys)
-  return schema.value.fields.filter((f) => set.has(f.key))
+  return fields.value.filter((f) => set.has(f.key))
 })
 const isLastStep = computed(() => !steps.value.length || stepIndex.value >= steps.value.length - 1)
 function nextStep(): void {
@@ -71,17 +82,20 @@ watch(schema, (sc) => {
   if (sc?.quickRun) autoRun()
 })
 
-// 路由携带的模式预选：落页（含同页换变体重路由）时套用一次并清空；
-// immediate 必须开——首落场景 pending 在挂载前已设置，靠 immediate 补上这次消费。
-// 目标页没有 mode 字段或没有该档位时静默跳过（回落页面默认）。
+// 路由携带的预选（类型/数据模式等）：落页（含同页换变体重路由）时逐键套用一次并清空。
+// 键在当前字段表不存在、或 select 档位不含该值时静默跳过（回落页面默认）。
+// immediate 必须开——首落场景 preset 在挂载前已设置，靠 immediate 补上这次消费。
 watch(
-  pendingVizMode,
+  pendingPreset,
   (p) => {
     if (!p || !schema.value || schema.value.id !== p.pageId) return
-    const f = schema.value.fields.find((x) => x.key === 'mode')
-    const ok = f && Array.isArray(f.options) && f.options.some((o) => o.value === p.mode)
-    if (f && ok) values.value.mode = p.mode
-    pendingVizMode.value = null
+    for (const [key, val] of Object.entries(p.values)) {
+      const f = fields.value.find((x) => x.key === key)
+      if (!f) continue
+      if (f.type === 'select' && Array.isArray(f.options) && !f.options.some((o) => o.value === val)) continue
+      values.value[key] = val
+    }
+    pendingPreset.value = null
   },
   { immediate: true }
 )
@@ -89,13 +103,13 @@ watch(
 /** required 且当前为空 → 传给 ToolField 标红（compute 侧同时出 error 引导） */
 /** select 联动：options 函数形态按当前输入解析（静态 options 原样透传由 ToolField 兜底） */
 function optionsOf(key: string): SelectOption[] | undefined {
-  const f = schema.value?.fields.find((x) => x.key === key)
+  const f = fields.value.find((x) => x.key === key)
   if (!f || typeof f.options !== 'function') return undefined
   return f.options(values.value)
 }
 
 function isInvalid(key: string): boolean {
-  const f = schema.value?.fields.find((x) => x.key === key)
+  const f = fields.value.find((x) => x.key === key)
   if (!f?.required) return false
   const v = values.value[key]
   return v === undefined || v === null || String(v).trim() === ''
