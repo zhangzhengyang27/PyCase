@@ -382,10 +382,10 @@ export function runSmokeTest(ctx: SmokeContext): void {
         if (p.fatal) throw new Error(`页面走查: ${p.fatal}`)
         const problems: string[] = []
         if ((p.cards as number) < 1) problems.push('画廊无卡片')
-        // 侧栏二级分区菜单（v2 唯一分区入口）：10 项 = 「全部示例」+ 9 分区（5 主题 + 3 标签组 + 其他），且不得残留 emoji
+        // 侧栏二级分区菜单（v2 唯一分区入口）：11 项 = 「全部示例」+ 10 分区（5 主题 + 4 标签组 + 其他），且不得残留 emoji
         if (p.subnav !== true) problems.push('侧栏缺二级分区菜单')
-        if (p.subCount !== 10) problems.push(`侧栏分区项总数 ${p.subCount} != 10（全部示例 + 9 分区）`)
-        if (p.subSectionCount !== 9) problems.push(`侧栏分区数 ${p.subSectionCount} != 9`)
+        if (p.subCount !== 11) problems.push(`侧栏分区项总数 ${p.subCount} != 11（全部示例 + 10 分区）`)
+        if (p.subSectionCount !== 10) problems.push(`侧栏分区数 ${p.subSectionCount} != 10`)
         if (p.subAll !== true) problems.push('侧栏二级菜单缺「全部示例」入口')
         if (p.cardChip !== true || p.cardChipSvg !== true) problems.push('卡片缺语义图标 chip')
         if (p.cardChipText !== '') problems.push(`图标 chip 内含文本（emoji 残留？）: ${p.cardChipText}`)

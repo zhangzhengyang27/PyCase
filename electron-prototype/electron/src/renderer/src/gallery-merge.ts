@@ -10,6 +10,7 @@ import { CV_OPS } from './tool-schemas-opencv'
 import { TURTLE_SHAPES } from './tool-schemas-turtle'
 import { GAME_TYPES } from './tool-schemas-games'
 import { CRAWLER_TYPES } from './tool-schemas-crawler-lab'
+import { PANDAS_TYPES } from './tool-schemas-pandas-lab'
 import {
   TITLE_TO_INTERACTIVE,
   TOPICS_FAMILY_TO_INTERACTIVE,
@@ -30,7 +31,8 @@ const LAB_REGISTRIES: Record<string, RegistryLike[]> = {
   'interactive:cv-lab': CV_OPS,
   'interactive:turtle-lab': TURTLE_SHAPES,
   'interactive:games-lab': GAME_TYPES,
-  'interactive:crawler-lab': CRAWLER_TYPES
+  'interactive:crawler-lab': CRAWLER_TYPES,
+  'interactive:pandas-lab': PANDAS_TYPES
 }
 
 /** 实验室类型名 > 交互页标题 > 原样家族键 */

@@ -1,0 +1,327 @@
+{
+ "name": "数据分析示例",
+ "description": "pandas 全链路演算示例（20 条）——与数据分析实验室类型一一对应的母本，内置演示数据离线可跑。",
+ "examples": [
+  {
+   "id": "topics_pandas-read-csv",
+   "name": "pandas_read-csv.py",
+   "category": "topics",
+   "tags": [
+    "数据分析",
+    "pandas"
+   ],
+   "title": "CSV 读取与预览",
+   "description": "read_csv 入门：head/dtypes/shape 三板斧快速摸底数据。",
+   "requirements": [
+    "numpy",
+    "pandas"
+   ],
+   "file": "pandas_examples/pandas_read-csv.py"
+  },
+  {
+   "id": "topics_pandas-select-filter",
+   "name": "pandas_select-filter.py",
+   "category": "topics",
+   "tags": [
+    "数据分析",
+    "pandas"
+   ],
+   "title": "列选择与行筛选",
+   "description": "列选取 / 布尔掩码 / query 三种筛选写法。",
+   "requirements": [
+    "numpy",
+    "pandas"
+   ],
+   "file": "pandas_examples/pandas_select-filter.py"
+  },
+  {
+   "id": "topics_pandas-sort-top",
+   "name": "pandas_sort-top.py",
+   "category": "topics",
+   "tags": [
+    "数据分析",
+    "pandas"
+   ],
+   "title": "排序与 TopN",
+   "description": "sort_values 单列/多列排序与 nlargest 快速 TopN。",
+   "requirements": [
+    "numpy",
+    "pandas"
+   ],
+   "file": "pandas_examples/pandas_sort-top.py"
+  },
+  {
+   "id": "topics_pandas-groupby-agg",
+   "name": "pandas_groupby-agg.py",
+   "category": "topics",
+   "tags": [
+    "数据分析",
+    "pandas"
+   ],
+   "title": "分组聚合",
+   "description": "groupby + agg 命名聚合：一次拿到总和/均值/计数。",
+   "requirements": [
+    "numpy",
+    "pandas"
+   ],
+   "file": "pandas_examples/pandas_groupby-agg.py"
+  },
+  {
+   "id": "topics_pandas-pivot",
+   "name": "pandas_pivot.py",
+   "category": "topics",
+   "tags": [
+    "数据分析",
+    "pandas"
+   ],
+   "title": "透视表",
+   "description": "pivot_table 交叉汇总：城市 × 品类的金额矩阵与 margins 合计。",
+   "requirements": [
+    "numpy",
+    "pandas"
+   ],
+   "file": "pandas_examples/pandas_pivot.py"
+  },
+  {
+   "id": "topics_pandas-merge-join",
+   "name": "pandas_merge-join.py",
+   "category": "topics",
+   "tags": [
+    "数据分析",
+    "pandas"
+   ],
+   "title": "表连接",
+   "description": "merge 内连接/左连接差异：连接键不匹配行的去留。",
+   "requirements": [
+    "numpy",
+    "pandas"
+   ],
+   "file": "pandas_examples/pandas_merge-join.py"
+  },
+  {
+   "id": "topics_pandas-missing-data",
+   "name": "pandas_missing-data.py",
+   "category": "topics",
+   "tags": [
+    "数据分析",
+    "pandas"
+   ],
+   "title": "缺失值处理",
+   "description": "isna 定位 → 三种策略：填 0 / 填均值 / 丢行。",
+   "requirements": [
+    "numpy",
+    "pandas"
+   ],
+   "file": "pandas_examples/pandas_missing-data.py"
+  },
+  {
+   "id": "topics_pandas-dtypes-cast",
+   "name": "pandas_dtypes-cast.py",
+   "category": "topics",
+   "tags": [
+    "数据分析",
+    "pandas"
+   ],
+   "title": "类型转换",
+   "description": "脏类型纠正：字符串数字 to_numeric 容错转换与 astype。",
+   "requirements": [
+    "numpy",
+    "pandas"
+   ],
+   "file": "pandas_examples/pandas_dtypes-cast.py"
+  },
+  {
+   "id": "topics_pandas-apply",
+   "name": "pandas_apply.py",
+   "category": "topics",
+   "tags": [
+    "数据分析",
+    "pandas"
+   ],
+   "title": "apply 自定义函数",
+   "description": "axis=1 行级 apply 派生等级列，map 做字典映射。",
+   "requirements": [
+    "numpy",
+    "pandas"
+   ],
+   "file": "pandas_examples/pandas_apply.py"
+  },
+  {
+   "id": "topics_pandas-string-methods",
+   "name": "pandas_string-methods.py",
+   "category": "topics",
+   "tags": [
+    "数据分析",
+    "pandas"
+   ],
+   "title": "字符串列处理",
+   "description": ".str 向量化字符串操作：去空白 / 提取 / 替换。",
+   "requirements": [
+    "numpy",
+    "pandas"
+   ],
+   "file": "pandas_examples/pandas_string-methods.py"
+  },
+  {
+   "id": "topics_pandas-datetime-resample",
+   "name": "pandas_datetime-resample.py",
+   "category": "topics",
+   "tags": [
+    "数据分析",
+    "pandas"
+   ],
+   "title": "时间解析与重采样",
+   "description": "to_datetime + resample：日粒度转周粒度统计。",
+   "requirements": [
+    "numpy",
+    "pandas"
+   ],
+   "file": "pandas_examples/pandas_datetime-resample.py"
+  },
+  {
+   "id": "topics_pandas-describe-stats",
+   "name": "pandas_describe-stats.py",
+   "category": "topics",
+   "tags": [
+    "数据分析",
+    "pandas"
+   ],
+   "title": "描述统计与相关性",
+   "description": "describe 全景 + 数值列相关矩阵，一分钟摸清分布。",
+   "requirements": [
+    "numpy",
+    "pandas"
+   ],
+   "file": "pandas_examples/pandas_describe-stats.py"
+  },
+  {
+   "id": "topics_pandas-value-counts",
+   "name": "pandas_value-counts.py",
+   "category": "topics",
+   "tags": [
+    "数据分析",
+    "pandas"
+   ],
+   "title": "频次统计与去重",
+   "description": "value_counts / unique / nunique：类别分布三件套。",
+   "requirements": [
+    "numpy",
+    "pandas"
+   ],
+   "file": "pandas_examples/pandas_value-counts.py"
+  },
+  {
+   "id": "topics_pandas-concat-stack",
+   "name": "pandas_concat-stack.py",
+   "category": "topics",
+   "tags": [
+    "数据分析",
+    "pandas"
+   ],
+   "title": "表拼接",
+   "description": "concat 纵向堆叠两个月份的订单 + ignore_index 重排索引。",
+   "requirements": [
+    "numpy",
+    "pandas"
+   ],
+   "file": "pandas_examples/pandas_concat-stack.py"
+  },
+  {
+   "id": "topics_pandas-melt",
+   "name": "pandas_melt.py",
+   "category": "topics",
+   "tags": [
+    "数据分析",
+    "pandas"
+   ],
+   "title": "宽表转长表",
+   "description": "melt 把「城市×月份」宽表融为长表——画图与聚合的前置变形。",
+   "requirements": [
+    "numpy",
+    "pandas"
+   ],
+   "file": "pandas_examples/pandas_melt.py"
+  },
+  {
+   "id": "topics_pandas-export",
+   "name": "pandas_export.py",
+   "category": "topics",
+   "tags": [
+    "数据分析",
+    "pandas"
+   ],
+   "title": "导出 CSV 与 JSON",
+   "description": "清洗结果落盘：to_csv / to_json 双格式产物（运行目录可见）。",
+   "requirements": [
+    "numpy",
+    "pandas"
+   ],
+   "file": "pandas_examples/pandas_export.py"
+  },
+  {
+   "id": "topics_pandas-plot",
+   "name": "pandas_plot.py",
+   "category": "topics",
+   "tags": [
+    "数据分析",
+    "pandas"
+   ],
+   "title": "DataFrame 快速绘图",
+   "description": "df.plot 一行出图：双城气温曲线落盘 chart.png。",
+   "requirements": [
+    "numpy",
+    "pandas"
+   ],
+   "file": "pandas_examples/pandas_plot.py"
+  },
+  {
+   "id": "topics_pandas-rolling",
+   "name": "pandas_rolling.py",
+   "category": "topics",
+   "tags": [
+    "数据分析",
+    "pandas"
+   ],
+   "title": "移窗与扩展统计",
+   "description": "rolling / expanding：滑动均值与累计统计的时间序列视角。",
+   "requirements": [
+    "numpy",
+    "pandas"
+   ],
+   "file": "pandas_examples/pandas_rolling.py"
+  },
+  {
+   "id": "topics_pandas-cut-bins",
+   "name": "pandas_cut-bins.py",
+   "category": "topics",
+   "tags": [
+    "数据分析",
+    "pandas"
+   ],
+   "title": "分箱 cut/qcut",
+   "description": "连续值离散化：等宽 cut 与等频 qcut 的分桶对比。",
+   "requirements": [
+    "numpy",
+    "pandas"
+   ],
+   "file": "pandas_examples/pandas_cut-bins.py"
+  },
+  {
+   "id": "topics_pandas-method-chain",
+   "name": "pandas_method-chain.py",
+   "category": "topics",
+   "tags": [
+    "数据分析",
+    "pandas"
+   ],
+   "title": "方法链风格",
+   "description": "query/sort_values/head 链式管道：一段代码完成「筛-排-取」。",
+   "requirements": [
+    "numpy",
+    "pandas"
+   ],
+   "file": "pandas_examples/pandas_method-chain.py"
+  }
+ ],
+ "schema_version": 2
+}

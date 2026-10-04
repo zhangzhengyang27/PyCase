@@ -123,6 +123,7 @@ import { scivizLabSchema } from './tool-schemas-sciviz'
 import { basicsLabSchema } from './tool-schemas-basics'
 import { gamesLabSchema } from './tool-schemas-games'
 import { crawlerLabSchema } from './tool-schemas-crawler-lab'
+import { pandasLabSchema } from './tool-schemas-pandas-lab'
 import { EFFECT_SCHEMAS } from './tool-schemas-effects'
 import { ALGO_SCHEMAS } from './tool-schemas-algos'
 import { ALGO2_SCHEMAS } from './tool-schemas-algos-v2'
@@ -137,6 +138,7 @@ export const interactiveGallerySchemas = reactive<InteractiveToolSchema[]>([
   basicsLabSchema,
   gamesLabSchema,
   crawlerLabSchema,
+  pandasLabSchema,
   ...ALGO_SCHEMAS,
   ...ALGO2_SCHEMAS,
   ...CRAWLER_SCHEMAS,

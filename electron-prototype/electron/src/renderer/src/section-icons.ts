@@ -18,6 +18,7 @@ import {
   Globe,
   GraduationCap,
   Image,
+  LineChart,
   MessageSquare,
   Package,
   Shield,
@@ -42,6 +43,7 @@ const SECTION_ICONS: Record<string, LucideIcon> = {
   'tag:basics': Blocks,
   'tag:algo': Calculator,
   'tag:crawler': Globe,
+  'tag:data': LineChart,
   others: Package
 }
 
