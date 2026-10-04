@@ -309,10 +309,10 @@ check('openGallery({favOnly}) 置收藏开关', S.favOnly.value === true)
 console.log('侧栏分区菜单数据（gallerySectionNav）')
 await boot()
 const nav = S.gallerySectionNav.value
-check('gallerySectionNav 完整 8 项', nav.length === 8)
+check('gallerySectionNav 完整 13 项', nav.length === 13)
 check(
   '键序 = THEMES + 标签组 + 其他',
-  nav[0].key === 'turtle' && nav[5].key === 'tag:basics' && nav[7].key === 'others'
+  nav[0].key === 'turtle' && nav[5].key === 'tag:basics' && nav[12].key === 'others'
 )
 check(
   '计数取互斥分配成员数',

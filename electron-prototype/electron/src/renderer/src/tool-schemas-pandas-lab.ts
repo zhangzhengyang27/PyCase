@@ -56,14 +56,6 @@ WEATHER = pd.DataFrame(
 )
 `
 
-const F = (key: string, label: string, def = '', help?: string): FieldSpec => ({
-  key,
-  label,
-  type: 'text',
-  default: def,
-  width: 'half',
-  ...(help ? { help } : {})
-})
 const N = (key: string, label: string, def: number, help?: string): FieldSpec => ({
   key,
   label,

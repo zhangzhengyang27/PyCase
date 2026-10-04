@@ -146,16 +146,16 @@ console.log('assignSections')
   check('未知标签返回 undefined', tagSectionLabel(['no-such-tag']) === undefined)
 }
 
-// 8. SECTION_CATALOG：侧栏二级分区菜单的完整元数据（全部 9 项，others 恒在）
+// 8. SECTION_CATALOG：侧栏二级分区菜单的完整元数据（全部 13 项，others 恒在）
 {
-  check('9 项 = 5 主题 + 3 标签组 + 其他', SECTION_CATALOG.length === 9)
+  check('13 项 = 5 主题 + 7 标签组 + 其他', SECTION_CATALOG.length === 13)
   // 与 assignSections 同序；assignSections 空库省略 others，这里补回正好对齐 8 项
   check(
     '键序与 assignSections 一致（others 恒在末尾）',
     SECTION_CATALOG.map((s) => s.key).join() === [...assignSections([]).map((s) => s.key), 'others'].join()
   )
   check(
-    "kind 分布：5 theme + 3 tags + 1 others",
+    "kind 分布：5 theme + 7 tags + 1 others",
     SECTION_CATALOG.filter((s) => s.kind === 'theme').length === 5 &&
       SECTION_CATALOG.filter((s) => s.kind === 'tags').length === TAG_SECTIONS.length &&
       SECTION_CATALOG.filter((s) => s.kind === 'others').length === 1
@@ -164,10 +164,16 @@ console.log('assignSections')
     "标签组项带 tags（下钻/图标解析用）",
     SECTION_CATALOG.filter((s) => s.kind === 'tags').every((s) => Array.isArray(s.tags) && s.tags.length > 0)
   )
-  check('others 收尾', SECTION_CATALOG[8].key === 'others')
+  check('others 收尾', SECTION_CATALOG[12].key === 'others')
   check(
-    '网络爬虫分区：爬虫标签命中且排在标签组末位',
-    sectionLabelOf('tag:crawler') === '网络爬虫' && SECTION_CATALOG[7].key === 'tag:crawler'
+    '新域分区四件套齐全且键序稳定',
+    sectionLabelOf('tag:crawler') === '网络爬虫' &&
+      sectionLabelOf('tag:data') === '数据分析' &&
+      sectionLabelOf('tag:db') === '数据库' &&
+      sectionLabelOf('tag:web') === 'Web 开发' &&
+      sectionLabelOf('tag:async') === '并发与异步' &&
+      SECTION_CATALOG.map((s) => s.key).slice(7, 12).join() ===
+        'tag:crawler,tag:data,tag:db,tag:web,tag:async'
   )
   check(
     'sectionLabelOf 反查（分区 key → 展示名）',

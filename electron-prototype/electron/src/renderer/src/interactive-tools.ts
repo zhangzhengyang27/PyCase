@@ -124,6 +124,9 @@ import { basicsLabSchema } from './tool-schemas-basics'
 import { gamesLabSchema } from './tool-schemas-games'
 import { crawlerLabSchema } from './tool-schemas-crawler-lab'
 import { pandasLabSchema } from './tool-schemas-pandas-lab'
+import { sqliteLabSchema } from './tool-schemas-sqlite-lab'
+import { webLabSchema } from './tool-schemas-web-lab'
+import { asyncioLabSchema } from './tool-schemas-asyncio-lab'
 import { EFFECT_SCHEMAS } from './tool-schemas-effects'
 import { ALGO_SCHEMAS } from './tool-schemas-algos'
 import { ALGO2_SCHEMAS } from './tool-schemas-algos-v2'
@@ -139,6 +142,9 @@ export const interactiveGallerySchemas = reactive<InteractiveToolSchema[]>([
   gamesLabSchema,
   crawlerLabSchema,
   pandasLabSchema,
+  sqliteLabSchema,
+  webLabSchema,
+  asyncioLabSchema,
   ...ALGO_SCHEMAS,
   ...ALGO2_SCHEMAS,
   ...CRAWLER_SCHEMAS,

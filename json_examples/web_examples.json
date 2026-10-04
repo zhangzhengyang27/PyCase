@@ -1,0 +1,157 @@
+{
+ "name": "Web 开发示例",
+ "description": "http.server 本地闭环 Web 示例（10 条）——与 Web 开发实验室类型一一对应的母本，离线可跑。",
+ "examples": [
+  {
+   "id": "topics_web-hello-server",
+   "name": "web_hello-server.py",
+   "category": "topics",
+   "tags": [
+    "Web开发",
+    "web"
+   ],
+   "title": "最小 HTTP 服务",
+   "description": "http.server 起服务 → 自请求 → 关停：Web 服务的最小闭环。",
+   "requirements": [
+    "requests"
+   ],
+   "file": "web_examples/web_hello-server.py"
+  },
+  {
+   "id": "topics_web-routes",
+   "name": "web_routes.py",
+   "category": "topics",
+   "tags": [
+    "Web开发",
+    "web"
+   ],
+   "title": "路由分发",
+   "description": "path → handler 字典路由表：一个服务多个端点的组织方式。",
+   "requirements": [
+    "requests"
+   ],
+   "file": "web_examples/web_routes.py"
+  },
+  {
+   "id": "topics_web-query-params",
+   "name": "web_query-params.py",
+   "category": "topics",
+   "tags": [
+    "Web开发",
+    "web"
+   ],
+   "title": "查询参数解析",
+   "description": "parse_qs 解析查询串：多值参数与默认值兜底。",
+   "requirements": [
+    "requests"
+   ],
+   "file": "web_examples/web_query-params.py"
+  },
+  {
+   "id": "topics_web-json-api",
+   "name": "web_json-api.py",
+   "category": "topics",
+   "tags": [
+    "Web开发",
+    "web"
+   ],
+   "title": "JSON API 端点",
+   "description": "返回 JSON 的 API 端点：Content-Type 与数据结构约定。",
+   "requirements": [
+    "requests"
+   ],
+   "file": "web_examples/web_json-api.py"
+  },
+  {
+   "id": "topics_web-post-form",
+   "name": "web_post-form.py",
+   "category": "topics",
+   "tags": [
+    "Web开发",
+    "web"
+   ],
+   "title": "表单接收",
+   "description": "do_POST 解析 urlencoded 表单：服务端回执与校验。",
+   "requirements": [
+    "requests"
+   ],
+   "file": "web_examples/web_post-form.py"
+  },
+  {
+   "id": "topics_web-static-files",
+   "name": "web_static-files.py",
+   "category": "topics",
+   "tags": [
+    "Web开发",
+    "web"
+   ],
+   "title": "静态文件服务",
+   "description": "SimpleHTTPRequestHandler 托管目录：把本地文件夹变成网站。",
+   "requirements": [
+    "requests"
+   ],
+   "file": "web_examples/web_static-files.py"
+  },
+  {
+   "id": "topics_web-error-pages",
+   "name": "web_error-pages.py",
+   "category": "topics",
+   "tags": [
+    "Web开发",
+    "web"
+   ],
+   "title": "错误页与异常",
+   "description": "404/500 的统一错误响应：状态码语义与客户端分支。",
+   "requirements": [
+    "requests"
+   ],
+   "file": "web_examples/web_error-pages.py"
+  },
+  {
+   "id": "topics_web-headers-cookies",
+   "name": "web_headers-cookies.py",
+   "category": "topics",
+   "tags": [
+    "Web开发",
+    "web"
+   ],
+   "title": "响应头与 Set-Cookie",
+   "description": "自定义响应头与 Cookie 下发：会话保持的第一步。",
+   "requirements": [
+    "requests"
+   ],
+   "file": "web_examples/web_headers-cookies.py"
+  },
+  {
+   "id": "topics_web-rest-crud",
+   "name": "web_rest-crud.py",
+   "category": "topics",
+   "tags": [
+    "Web开发",
+    "web"
+   ],
+   "title": "REST 资源增查删",
+   "description": "内存资源表上的 GET/POST/DELETE：REST 风格最小实现。",
+   "requirements": [
+    "requests"
+   ],
+   "file": "web_examples/web_rest-crud.py"
+  },
+  {
+   "id": "topics_web-client-server",
+   "name": "web_client-server.py",
+   "category": "topics",
+   "tags": [
+    "Web开发",
+    "web"
+   ],
+   "title": "客户端服务端闭环",
+   "description": "同一脚本里同时扮演服务端与客户端：理解请求/响应的完整往返。",
+   "requirements": [
+    "requests"
+   ],
+   "file": "web_examples/web_client-server.py"
+  }
+ ],
+ "schema_version": 2
+}

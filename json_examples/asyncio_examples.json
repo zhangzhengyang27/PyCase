@@ -1,0 +1,137 @@
+{
+ "name": "并发与异步示例",
+ "description": "stdlib asyncio 并发演算示例（10 条）——与并发实验室类型一一对应的母本，离线可跑。",
+ "examples": [
+  {
+   "id": "topics_async-async-basics",
+   "name": "async_async-basics.py",
+   "category": "topics",
+   "tags": [
+    "并发",
+    "async"
+   ],
+   "title": "async/await 入门",
+   "description": "顺序 await vs gather 并发：同两个 IO 任务的耗时对比。",
+   "requirements": [],
+   "file": "asyncio_examples/async_async-basics.py"
+  },
+  {
+   "id": "topics_async-gather-order",
+   "name": "async_gather-order.py",
+   "category": "topics",
+   "tags": [
+    "并发",
+    "async"
+   ],
+   "title": "gather 与完成顺序",
+   "description": "gather 保持提交顺序返回；as_completed 按完成先后消费。",
+   "requirements": [],
+   "file": "asyncio_examples/async_gather-order.py"
+  },
+  {
+   "id": "topics_async-sleep-timing",
+   "name": "async_sleep-timing.py",
+   "category": "topics",
+   "tags": [
+    "并发",
+    "async"
+   ],
+   "title": "事件循环与阻塞",
+   "description": "asyncio.sleep 让出循环 vs time.sleep 卡死循环：阻塞的代价一目了然。",
+   "requirements": [],
+   "file": "asyncio_examples/async_sleep-timing.py"
+  },
+  {
+   "id": "topics_async-semaphore",
+   "name": "async_semaphore.py",
+   "category": "topics",
+   "tags": [
+    "并发",
+    "async"
+   ],
+   "title": "信号量限并发",
+   "description": "Semaphore 限制同时运行的任务数：并发有上限的下载池。",
+   "requirements": [],
+   "file": "asyncio_examples/async_semaphore.py"
+  },
+  {
+   "id": "topics_async-queue",
+   "name": "async_queue.py",
+   "category": "topics",
+   "tags": [
+    "并发",
+    "async"
+   ],
+   "title": "生产者消费者",
+   "description": "asyncio.Queue 解耦两端：多生产者投递、消费者池消化。",
+   "requirements": [],
+   "file": "asyncio_examples/async_queue.py"
+  },
+  {
+   "id": "topics_async-task-cancel",
+   "name": "async_task-cancel.py",
+   "category": "topics",
+   "tags": [
+    "并发",
+    "async"
+   ],
+   "title": "任务取消与异常",
+   "description": "create_task 的取消（CancelledError）与异常不会静默丢失。",
+   "requirements": [],
+   "file": "asyncio_examples/async_task-cancel.py"
+  },
+  {
+   "id": "topics_async-aiohttp-fetch",
+   "name": "async_aiohttp-fetch.py",
+   "category": "topics",
+   "tags": [
+    "并发",
+    "async"
+   ],
+   "title": "aiohttp 并发抓取",
+   "description": "ClientSession + gather 抓本地演示服务：异步 IO 的标准实战形态。",
+   "requirements": [],
+   "file": "asyncio_examples/async_aiohttp-fetch.py"
+  },
+  {
+   "id": "topics_async-to-thread",
+   "name": "async_to-thread.py",
+   "category": "topics",
+   "tags": [
+    "并发",
+    "async"
+   ],
+   "title": "to_thread 卸载阻塞",
+   "description": "asyncio.to_thread 把阻塞调用扔进线程池：不卡事件循环的两全法。",
+   "requirements": [],
+   "file": "asyncio_examples/async_to-thread.py"
+  },
+  {
+   "id": "topics_async-locks-events",
+   "name": "async_locks-events.py",
+   "category": "topics",
+   "tags": [
+    "并发",
+    "async"
+   ],
+   "title": "锁与事件",
+   "description": "asyncio.Lock 保护共享计数；Event 一键广播收尾信号。",
+   "requirements": [],
+   "file": "asyncio_examples/async_locks-events.py"
+  },
+  {
+   "id": "topics_async-timeout",
+   "name": "async_timeout.py",
+   "category": "topics",
+   "tags": [
+    "并发",
+    "async"
+   ],
+   "title": "超时与保护",
+   "description": "wait_for 超时兜底：慢任务不许拖垮整批。",
+   "requirements": [],
+   "file": "asyncio_examples/async_timeout.py"
+  }
+ ],
+ "schema_version": 2
+}

@@ -3,7 +3,7 @@
 > 本文是架构的**活文档**（2026-10-04 起）。历史设计过程见 `docs/redesign-plan.md`（已冻结于 09-30）
 > 与 `docs/superpowers/specs/`；里程碑索引与发版口径见 [ROADMAP.md](ROADMAP.md)。
 
-PyCase 是 **Electron 壳 + Python sidecar** 的桌面应用：内置 415 条 Python 示例（画廊 285 + 工具箱 130 个
+PyCase 是 **Electron 壳 + Python sidecar** 的桌面应用：内置 445 条 Python 示例（画廊 315 + 工具箱 130 个
 交互工具），可浏览、筛选、编辑，并在共享虚拟环境里隔离运行、实时查看输出与产物图。
 
 ## 分层
@@ -28,7 +28,7 @@ scripts/                      生成器（全部带退役对账守卫）/ 数据
 ## 数据流（单一真相）
 
 ```
-15 个清单（元数据 + id）+ topics/ 真实源码树
+18 个清单（元数据 + id）+ topics/ 真实源码树
         │  python -m app.facts_cli bake
         ▼
 json_examples/facts.json   ←—— 唯一的派生真相（条目指纹/theme/imports/deps/static）
@@ -71,7 +71,7 @@ sidecar contract_store ──IPC──► renderer store ──► 画廊/工具
    （COLLECT/SEED_FILE 序章、sciviz 程序化网格）。分辨三类语义再动手：需数据（播种）、
    需参数（占位引导）、GUI 阻塞（弹窗，既定行为）。
 2. **真实执行取证**：静态可解析 ≠ 可运行。「可运行」的判定 = 真跑 exit 0 且产物非空/有 stdout。
-   常备工具 `scripts/verify_corpus.py`（415 条全量真跑 + 分类 + 豁免清单）。
+   常备工具 `scripts/verify_corpus.py`（445 条全量真跑 + 分类 + 豁免清单）。
 
 ## 门禁矩阵
 

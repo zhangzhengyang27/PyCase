@@ -208,7 +208,7 @@ class TestRealData:
 
     def test_shipped_collections_load_without_errors(self):
         manifests = [p for p in sorted((ROOT / "json_examples").glob("*.json")) if p.name != "facts.json"]
-        assert len(manifests) == 15
+        assert len(manifests) == 18
         total = 0
         for path in manifests:
             m = load_manifest(path)
@@ -219,4 +219,4 @@ class TestRealData:
             assert all(e.file for e in m.entries), f"{path.name} 有条目缺 file"
             assert all(not e.code for e in m.entries), f"{path.name} 仍带内联 code"
             total += len(m.entries)
-        assert total == 415
+        assert total == 445

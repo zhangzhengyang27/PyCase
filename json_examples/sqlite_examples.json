@@ -1,0 +1,137 @@
+{
+ "name": "SQLite 数据库示例",
+ "description": "stdlib sqlite3 数据库演算示例（10 条）——与 SQLite 实验室类型一一对应的母本，临时库离线可跑。",
+ "examples": [
+  {
+   "id": "topics_sqlite-create-table",
+   "name": "sqlite_create-table.py",
+   "category": "topics",
+   "tags": [
+    "数据库",
+    "sqlite"
+   ],
+   "title": "建表与约束",
+   "description": "CREATE TABLE 的主键/非空/默认值约束，sqlite_master 反查表结构。",
+   "requirements": [],
+   "file": "sqlite_examples/sqlite_create-table.py"
+  },
+  {
+   "id": "topics_sqlite-insert-query",
+   "name": "sqlite_insert-query.py",
+   "category": "topics",
+   "tags": [
+    "数据库",
+    "sqlite"
+   ],
+   "title": "参数化插入与查询",
+   "description": "?占位符参数化插入（防注入）与 fetchone/fetchall 游标读取。",
+   "requirements": [],
+   "file": "sqlite_examples/sqlite_insert-query.py"
+  },
+  {
+   "id": "topics_sqlite-update-delete",
+   "name": "sqlite_update-delete.py",
+   "category": "topics",
+   "tags": [
+    "数据库",
+    "sqlite"
+   ],
+   "title": "更新与删除",
+   "description": "UPDATE/DELETE 的 WHERE 条件与 rowcount 影响行数，安全清库演示。",
+   "requirements": [],
+   "file": "sqlite_examples/sqlite_update-delete.py"
+  },
+  {
+   "id": "topics_sqlite-aggregate",
+   "name": "sqlite_aggregate.py",
+   "category": "topics",
+   "tags": [
+    "数据库",
+    "sqlite"
+   ],
+   "title": "分组聚合",
+   "description": "GROUP BY / HAVING / ORDER BY：SQL 侧聚合与过滤。",
+   "requirements": [],
+   "file": "sqlite_examples/sqlite_aggregate.py"
+  },
+  {
+   "id": "topics_sqlite-join",
+   "name": "sqlite_join.py",
+   "category": "topics",
+   "tags": [
+    "数据库",
+    "sqlite"
+   ],
+   "title": "两表连接",
+   "description": "INNER/LEFT JOIN 差异：无库存记录的品类如何去留。",
+   "requirements": [],
+   "file": "sqlite_examples/sqlite_join.py"
+  },
+  {
+   "id": "topics_sqlite-transactions",
+   "name": "sqlite_transactions.py",
+   "category": "topics",
+   "tags": [
+    "数据库",
+    "sqlite"
+   ],
+   "title": "事务与回滚",
+   "description": "commit/rollback：转账式两步操作的原子性演示。",
+   "requirements": [],
+   "file": "sqlite_examples/sqlite_transactions.py"
+  },
+  {
+   "id": "topics_sqlite-index-explain",
+   "name": "sqlite_index-explain.py",
+   "category": "topics",
+   "tags": [
+    "数据库",
+    "sqlite"
+   ],
+   "title": "索引与查询计划",
+   "description": "建索引前后 EXPLAIN QUERY PLAN 对比：全表扫描 → 索引查找。",
+   "requirements": [],
+   "file": "sqlite_examples/sqlite_index-explain.py"
+  },
+  {
+   "id": "topics_sqlite-in-memory",
+   "name": "sqlite_in-memory.py",
+   "category": "topics",
+   "tags": [
+    "数据库",
+    "sqlite"
+   ],
+   "title": "内存库与游标",
+   "description": ":memory: 库、executemany 批量、fetchmany 分批读取。",
+   "requirements": [],
+   "file": "sqlite_examples/sqlite_in-memory.py"
+  },
+  {
+   "id": "topics_sqlite-date-functions",
+   "name": "sqlite_date-functions.py",
+   "category": "topics",
+   "tags": [
+    "数据库",
+    "sqlite"
+   ],
+   "title": "日期函数",
+   "description": "date()/strftime()/julianday：SQL 侧时间处理与区间过滤。",
+   "requirements": [],
+   "file": "sqlite_examples/sqlite_date-functions.py"
+  },
+  {
+   "id": "topics_sqlite-csv-import",
+   "name": "sqlite_csv-import.py",
+   "category": "topics",
+   "tags": [
+    "数据库",
+    "sqlite"
+   ],
+   "title": "CSV 批量导入导出",
+   "description": "csv → executemany 批量入库 → 查询导出，文件与库的双向通道。",
+   "requirements": [],
+   "file": "sqlite_examples/sqlite_csv-import.py"
+  }
+ ],
+ "schema_version": 2
+}

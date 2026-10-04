@@ -22,12 +22,14 @@ import {
   MessageSquare,
   Package,
   Shield,
+  Server,
   Sparkles,
   Timer,
   Type,
   Turtle,
   Wand2,
   Wrench,
+  Zap,
   Activity,
   type LucideIcon
 } from 'lucide-vue-next'
@@ -44,6 +46,9 @@ const SECTION_ICONS: Record<string, LucideIcon> = {
   'tag:algo': Calculator,
   'tag:crawler': Globe,
   'tag:data': LineChart,
+  'tag:db': Database,
+  'tag:web': Server,
+  'tag:async': Zap,
   others: Package
 }
 

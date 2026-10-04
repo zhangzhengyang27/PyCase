@@ -51,12 +51,27 @@ export const TAG_SECTIONS: ReadonlyArray<{ key: string; label: string; tags: str
     key: 'tag:data',
     label: '数据分析',
     tags: ['数据分析']
+  },
+  {
+    key: 'tag:db',
+    label: '数据库',
+    tags: ['数据库', 'sqlite']
+  },
+  {
+    key: 'tag:web',
+    label: 'Web 开发',
+    tags: ['Web开发', 'web']
+  },
+  {
+    key: 'tag:async',
+    label: '并发与异步',
+    tags: ['并发', 'asyncio']
   }
 ]
 
 /**
  * 侧栏二级分区菜单的完整元数据表（与 assignSections 完全同序：
- * 5 主题 → 4 标签组 → 其他 = 10 项）。
+ * 5 主题 → 7 标签组 → 其他 = 13 项）。
  * 与 assignSections 的唯一差别：others 恒在（菜单需完整 8 项，计数为 0 也展示），
  * 而 assignSections 会在 others 为空时省略该分区以避开「0 个」噪音。
  * 分区下钻统一走「分区」筛选维度（FilterQuery.sections），故此处不再需要 kind 驱动下钻分支。
