@@ -256,7 +256,8 @@ describe('映射表完整性（防漂移）', () => {
     const labTypeFields: Record<string, string> = {
       'interactive:pil-lab': 'type',
       'interactive:cv-lab': 'type',
-      'interactive:turtle-lab': 'type'
+      'interactive:turtle-lab': 'type',
+      'interactive:crawler-lab': 'type'
     }
     expect(Object.keys(TOPICS_FAMILY_TO_INTERACTIVE).length).toBeGreaterThanOrEqual(95)
     for (const [fam, route] of Object.entries(TOPICS_FAMILY_TO_INTERACTIVE)) {

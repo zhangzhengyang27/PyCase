@@ -8,6 +8,7 @@ import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import type { FieldValue } from '../interactive-tools'
 import { getToolSchema } from '../interactive-tools'
+import { CRAWLER_TYPES, crawlerLabSchema } from '../tool-schemas-crawler-lab'
 
 // 页面产物依赖 psutil/PIL/numpy（系统 python3 无），用仓库根 .venv 跑
 const VENV_PY = join(process.cwd(), '../../.venv/bin/python')
@@ -109,4 +110,36 @@ describe.skipIf(!hasVenv)('pyCode 真跑回归（.venv 执行 + 产物非空）'
     )
     expect(custom).toContain('已输出 chart.png')
   })
+})
+
+// ---------------------------------------------------------------------------
+// 爬虫实验室全类型真跑循环（57 类型 = crawler/crawler2/crawler3 教案归并单页）：
+// 生成的脚本默认抓本地 fixture 服务器，离线可跑——首建批取证 sweep 抓出 3 个必崩
+// （xml-ns 未声明命名空间前缀 / test-spider 引用未定义 __main__ / unittest 输出走 stderr），
+// 本循环作为永久回归钉住「每个类型生成的脚本 exit 0 且 stdout 有内容」。
+// ---------------------------------------------------------------------------
+describe.skipIf(!hasVenv)('爬虫实验室全类型真跑', () => {
+  it('57 类型逐一生成 + 执行：exit 0 且 stdout 非空', () => {
+    expect(CRAWLER_TYPES.length).toBe(57)
+    const failures: string[] = []
+    for (const t of CRAWLER_TYPES) {
+      const v: Record<string, FieldValue> = { type: t.value }
+      for (const f of t.fields ?? []) v[f.key] = f.default
+      const code = crawlerLabSchema.pyCode(v)
+      expect(code, `${t.value} 生成空代码`).not.toBe('')
+      const cwd = mkdtempSync(join(tmpdir(), 'crawler-pyexec-'))
+      writeFileSync(join(cwd, 'page.py'), code)
+      try {
+        const stdout = execFileSync(VENV_PY, [join(cwd, 'page.py')], {
+          encoding: 'utf8',
+          timeout: 60_000,
+          cwd
+        })
+        if (!stdout.trim() || stdout.includes('Traceback')) failures.push(t.value)
+      } catch (e) {
+        failures.push(`${t.value}: ${String((e as Error).message).split('\n')[0]}`)
+      }
+    }
+    expect(failures, `失败类型: ${failures.join(', ')}`).toEqual([])
+  }, 300_000)
 })

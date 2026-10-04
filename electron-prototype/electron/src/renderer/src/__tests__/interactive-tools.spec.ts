@@ -185,7 +185,8 @@ describe('实验室页头联动（headerFor 全档位）', () => {
     'interactive:cv-lab',
     'interactive:turtle-lab',
     'interactive:sciviz-lab',
-    'interactive:basics-lab'
+    'interactive:basics-lab',
+    'interactive:crawler-lab'
   ]
   for (const id of LABS) {
     it(`${id}：全档位标题/描述与类型注册表一致`, () => {

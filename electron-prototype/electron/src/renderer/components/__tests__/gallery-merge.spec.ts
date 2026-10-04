@@ -75,7 +75,7 @@ describe('mergeVariantCards（纯函数）', () => {
 })
 
 describe('序列折叠（非实验室同主题序列）', () => {
-  it('爬虫 HTTP 教案系列折叠为一张序列卡（已映射单例除外）', () => {
+  it('爬虫教案全量路由实验室后：家族卡逐一独立成卡（类型名标题），序列规则无成员可折叠', () => {
     const merged = mergeVariantCards([
       ex('topics_crawler-http-get-basic', { title: 'HTTP 请求基础' }),
       ex('topics_crawler-http-headers-ua', { title: '请求头与 UA' }),
@@ -83,11 +83,12 @@ describe('序列折叠（非实验室同主题序列）', () => {
       ex('topics_crawler-http-proxy', { title: '代理' }),
       ex('e-cli', { title: '正则测试器' })
     ])
-    // get-basic/headers-ua 已路由 HTTP 请求器 → 各自成卡；其余 2 个折叠为「爬虫 · HTTP 请求」
-    expect(merged).toHaveLength(4)
-    const series = merged.find((e) => e.id === 'topics_crawler-http-post-form')!
-    expect(series.title).toBe('爬虫 · HTTP 请求')
-    expect(series.variantCount).toBe(2)
+    // 57 家族全部路由 crawler-lab：每条独立成家族卡，标题 = 实验室类型名；不再有「爬虫 · …」序列卡
+    expect(merged).toHaveLength(5)
+    expect(merged.find((e) => e.id === 'topics_crawler-http-get-basic')!.title).toBe('GET 请求与响应解读')
+    expect(merged.find((e) => e.id === 'topics_crawler-http-proxy')!.title).toBe('代理配置')
+    expect(merged.find((e) => e.title === '爬虫 · HTTP 请求')).toBeUndefined()
+    expect(merged.find((e) => e.id === 'e-cli')!.title).toBe('正则测试器')
   })
 
   it('sciviz 课件折叠为单张序列卡（bilibili 序列规则已随语料退役移除）', () => {

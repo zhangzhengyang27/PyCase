@@ -9,6 +9,7 @@ import { PIL_FAMILIES } from './tool-schemas-pil'
 import { CV_OPS } from './tool-schemas-opencv'
 import { TURTLE_SHAPES } from './tool-schemas-turtle'
 import { GAME_TYPES } from './tool-schemas-games'
+import { CRAWLER_TYPES } from './tool-schemas-crawler-lab'
 import {
   TITLE_TO_INTERACTIVE,
   TOPICS_FAMILY_TO_INTERACTIVE,
@@ -28,7 +29,8 @@ const LAB_REGISTRIES: Record<string, RegistryLike[]> = {
   'interactive:pil-lab': PIL_FAMILIES,
   'interactive:cv-lab': CV_OPS,
   'interactive:turtle-lab': TURTLE_SHAPES,
-  'interactive:games-lab': GAME_TYPES
+  'interactive:games-lab': GAME_TYPES,
+  'interactive:crawler-lab': CRAWLER_TYPES
 }
 
 /** 实验室类型名 > 交互页标题 > 原样家族键 */
@@ -44,22 +46,10 @@ function familyLabelOf(page: string, type: string | undefined): string | null {
 // ---------------------------------------------------------------------------
 // 序列折叠：同主题教学序列（无实验室页面，点开序列代表卡 = 详情页）。
 // 仅收录**多成员**序列；单例序列放进来只会白改标题。前缀匹配归一化 id（去 topics_ 前缀与 .py 后缀）。
-// 已路由到交互页的单例（如 crawler-http-get-basic → HTTP 请求器）在家族层先被截住，不进序列。
+// crawler/crawler2 的 11 条序列规则已随 crawler-lab 全量路由死亡移除（2026-10-05）：
+// 家族层先截住路由家族，序列规则不再有成员可折叠（同 bilibili 死规则先例）。
 // ---------------------------------------------------------------------------
-const SERIES_RULES: Array<[prefix: string, label: string]> = [
-  ['crawler-http-', '爬虫 · HTTP 请求'],
-  ['crawler-parse-', '爬虫 · 数据解析'],
-  ['crawler-crawl-', '爬虫 · 抓取策略'],
-  ['crawler-store-', '爬虫 · 结果存储'],
-  ['crawler-target-', '爬虫 · 实战目标'],
-  ['crawler-eng-', '爬虫 · 工程化'],
-  ['crawler2-bs4-', '爬虫Ⅱ · BeautifulSoup 解析'],
-  ['crawler2-antiban-', '爬虫Ⅱ · 反爬策略'],
-  ['crawler2-store-', '爬虫Ⅱ · 清洗导出'],
-  ['crawler2-target-', '爬虫Ⅱ · 目标实战'],
-  ['crawler2-eng-', '爬虫Ⅱ · 工程化'],
-  ['data-analysis_sciviz-sciviz-auto', '科研绘图课件']
-]
+const SERIES_RULES: Array<[prefix: string, label: string]> = [['data-analysis_sciviz-sciviz-auto', '科研绘图课件']]
 
 function seriesMetaOf(ex: VExample): { key: string; label: string } | null {
   const norm = ex.id.replace(/\.py$/i, '').replace(/^topics_/, '')
