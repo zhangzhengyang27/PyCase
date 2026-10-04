@@ -59,11 +59,18 @@ def test_manuals_file_is_fresh():
 
     不做逐字节比对：Prettier 会把放得下的短数组收成单行，json.dumps 不会——
     格式一致性由 prettier 门禁管，这里只锁内容。
+    生成器只认固定输出路径：先快照原文件字节，跑完比对后恢复——否则每次本地
+    pytest 都会把工作区弄脏（生成器展开格式 vs 仓内 prettier 折叠格式，
+    2026-10-04 gate.sh full 实测抓出）。
     """
-    before = json.loads(OUT.read_text(encoding="utf-8"))
-    subprocess.run([sys.executable, str(GENERATOR)], check=True, capture_output=True)
-    after = json.loads(OUT.read_text(encoding="utf-8"))
-    assert before == after, "tool-manuals.json 与生成器输出不一致（被手改或生成器已更新）——重跑 scripts/gen_tool_manuals.py"
+    original = OUT.read_bytes()
+    try:
+        before = json.loads(original.decode("utf-8"))
+        subprocess.run([sys.executable, str(GENERATOR)], check=True, capture_output=True)
+        after = json.loads(OUT.read_text(encoding="utf-8"))
+        assert before == after, "tool-manuals.json 与生成器输出不一致（被手改或生成器已更新）——重跑 scripts/gen_tool_manuals.py"
+    finally:
+        OUT.write_bytes(original)
 
 
 def test_manual_entries_have_required_fields():
