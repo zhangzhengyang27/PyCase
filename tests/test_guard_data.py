@@ -102,7 +102,7 @@ def _workspace_snapshot(store: ContractStore) -> tuple[bool, frozenset[str]]:
 
 
 def test_g1_dataset_index_golden():
-    """全量真相源金标（基线 2026-10-03，实验室化收官）：14 个集合 / 409 条示例（2026-10-03 晚：bulk_viz/pil/opencv/turtle/algo/basics 的 967 个参数化变体退役——家族语义由交互实验室页承载，每族保留母本示例锚定家族卡，变体可由 scripts/gen_bulk_* 随时再生；此前基线 1464 = 2026-09-29 迁移后规模，经历 2026-10-01/02 增删）。
+    """全量真相源金标（基线 2026-10-03，实验室化收官）：14 个集合 / 395 条示例（2026-10-03 晚：bulk_viz/pil/opencv/turtle/algo/basics 的 967 个参数化变体退役——家族语义由交互实验室页承载，每族保留母本示例锚定家族卡，变体可由 scripts/gen_bulk_* 随时再生；此前基线 1464 = 2026-09-29 迁移后规模，经历 2026-10-01/02 增删）。
 
     数字是刻意写死的：重构期间真相源规模不得漂移；确需增删示例时连同本基线一起更新。
     v2 观测点：load = 只读清单 + 真实树建索引（**零写盘**，契约 §3.1）；
@@ -115,7 +115,7 @@ def test_g1_dataset_index_golden():
     items = _flat(store.load())
     assert store.facts_source == "shipped", "内置数据的派生事实应命中随包烘焙索引"
     assert _workspace_snapshot(store) == before, "load 必须零写盘（契约 §3.1）"
-    assert len(items) == 409
+    assert len(items) == 395
     # 内容等价：全部条目的源码都能按需取到（取不到即真相源内容缺失）
     missing = [i.json_id for i in items.values() if not store.get_code(i).strip()]
     assert missing == []

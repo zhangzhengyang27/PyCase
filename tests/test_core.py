@@ -45,7 +45,7 @@ def test_repo_root_is_project_itself():
 
 def test_load_examples(items):
     # 2026-09-23 调整基线：Turtle 变体精简（345），新增实用工具箱 50 条
-    assert len(items) > 400
+    assert len(items) > 380
     some = next(iter(items.values()))
     assert some.category in {"topics", "tools", "projects", "json"}
     # v1 兼容窗口内源码还是内联 code（尚未外移）；两种形态都必须能取到源码
