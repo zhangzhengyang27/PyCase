@@ -10,8 +10,7 @@ const INVALID = '# 粘贴 CSV 数据后自动生成图表代码'
 // ---------------------------------------------------------------------------
 // 共享 matplotlib 序章：CJK 字体 + CSV 解析
 // ---------------------------------------------------------------------------
-const MPL_PRELUDE = `import csv
-import io
+const MPL_IMPORTS = `import json
 
 import matplotlib
 matplotlib.use("Agg")
@@ -20,6 +19,11 @@ matplotlib.rcParams["font.sans-serif"] = [
 ]
 matplotlib.rcParams["axes.unicode_minus"] = False
 import matplotlib.pyplot as plt
+`
+
+const MPL_PRELUDE = `${MPL_IMPORTS}
+import csv
+import io
 
 def parse_csv(text):
     rows = list(csv.reader(io.StringIO(text.strip())))
@@ -170,6 +174,7 @@ print("<<<END>>>")
       }
       const gen = gens[mode] ?? gens['sine']
       return `"""折线图（${mode} 模式内置数据）。"""
+${MPL_IMPORTS}
 ${gen}
 
 fig, ax = plt.subplots(figsize=(8, 5))

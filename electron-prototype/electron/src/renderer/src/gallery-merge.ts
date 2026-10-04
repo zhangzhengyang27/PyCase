@@ -41,6 +41,35 @@ function familyLabelOf(page: string, type: string | undefined): string | null {
   return getToolSchema(page)?.title ?? null
 }
 
+// ---------------------------------------------------------------------------
+// 序列折叠：同主题教学序列（无实验室页面，点开序列代表卡 = 详情页）。
+// 仅收录**多成员**序列；单例序列放进来只会白改标题。前缀匹配归一化 id（去 topics_ 前缀与 .py 后缀）。
+// 已路由到交互页的单例（如 crawler-http-get-basic → HTTP 请求器）在家族层先被截住，不进序列。
+// ---------------------------------------------------------------------------
+const SERIES_RULES: Array<[prefix: string, label: string]> = [
+  ['crawler-http-', '爬虫 · HTTP 请求'],
+  ['crawler-parse-', '爬虫 · 数据解析'],
+  ['crawler-crawl-', '爬虫 · 抓取策略'],
+  ['crawler-store-', '爬虫 · 结果存储'],
+  ['crawler-target-', '爬虫 · 实战目标'],
+  ['crawler-eng-', '爬虫 · 工程化'],
+  ['crawler2-bs4-', '爬虫Ⅱ · BeautifulSoup 解析'],
+  ['crawler2-antiban-', '爬虫Ⅱ · 反爬策略'],
+  ['crawler2-store-', '爬虫Ⅱ · 清洗导出'],
+  ['crawler2-target-', '爬虫Ⅱ · 目标实战'],
+  ['crawler2-eng-', '爬虫Ⅱ · 工程化'],
+  ['data-analysis_sciviz-sciviz-auto', '科研绘图课件'],
+  ['crawler_bilibili', 'bilibili 弹幕爬虫项目']
+]
+
+function seriesMetaOf(ex: VExample): { key: string; label: string } | null {
+  const norm = ex.id.replace(/\.py$/i, '').replace(/^topics_/, '')
+  for (const [prefix, label] of SERIES_RULES) {
+    if (norm.startsWith(prefix)) return { key: `series:${prefix}`, label }
+  }
+  return null
+}
+
 /** 家族折叠元数据：可折叠返回 key + 展示名；不可折叠（CLI 工具/未路由家族/杂项）返回 null */
 function familyMetaOf(ex: VExample): { key: string; label: string } | null {
   const title = (ex.title || ex.name || '').replace(/\.py$/i, '').trim()
@@ -52,10 +81,11 @@ function familyMetaOf(ex: VExample): { key: string; label: string } | null {
     return { key: `viz:${variant.family}`, label: familyLabelOf(route.page, route.type) ?? variant.family }
   }
   const fam = topicsFamilyOf(ex)
-  if (!fam) return null
-  const route = TOPICS_FAMILY_TO_INTERACTIVE[fam.family]
-  if (!route) return null
-  return { key: fam.family, label: familyLabelOf(route.page, route.type) ?? fam.family }
+  if (fam) {
+    const route = TOPICS_FAMILY_TO_INTERACTIVE[fam.family]
+    if (route) return { key: fam.family, label: familyLabelOf(route.page, route.type) ?? fam.family }
+  }
+  return seriesMetaOf(ex)
 }
 
 /** 变体序号排序键：无尾缀的 base 单例最小（它是变体们的「母本」） */
@@ -106,15 +136,15 @@ export function mergeVariantCards(list: VExample[]): VExample[] {
     if (emitted.has(key)) continue
     emitted.add(key)
     const g = groups.get(key)!
-    const label = familyMetaOf(g.rep)!.label
+    const meta = familyMetaOf(g.rep)!
     if (g.count === 1) {
-      // 单例家族：标题统一为类型名（母本即家族卡），不加归并标记
-      out.push({ ...g.rep, title: label })
+      // 实验室单例家族：标题统一为类型名（母本即家族卡）；序列单例：原样透传
+      out.push(meta.key.startsWith('series:') ? g.rep : { ...g.rep, title: meta.label })
       continue
     }
     out.push({
       ...g.rep,
-      title: label,
+      title: meta.label,
       variantCount: g.count,
       description: `${g.count} 个变体已归并 · 点卡片打开交互页面，原变体源码可从页内回链查看`
     })

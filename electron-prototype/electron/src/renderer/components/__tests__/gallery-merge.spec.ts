@@ -82,6 +82,34 @@ describe('mergeVariantCards（纯函数）', () => {
   })
 })
 
+describe('序列折叠（非实验室同主题序列）', () => {
+  it('爬虫 HTTP 教案系列折叠为一张序列卡（已映射单例除外）', () => {
+    const merged = mergeVariantCards([
+      ex('topics_crawler-http-get-basic', { title: 'HTTP 请求基础' }),
+      ex('topics_crawler-http-headers-ua', { title: '请求头与 UA' }),
+      ex('topics_crawler-http-post-form', { title: 'POST 表单' }),
+      ex('topics_crawler-http-proxy', { title: '代理' }),
+      ex('e-cli', { title: '正则测试器' })
+    ])
+    // get-basic/headers-ua 已路由 HTTP 请求器 → 各自成卡；其余 2 个折叠为「爬虫 · HTTP 请求」
+    expect(merged).toHaveLength(4)
+    const series = merged.find((e) => e.id === 'topics_crawler-http-post-form')!
+    expect(series.title).toBe('爬虫 · HTTP 请求')
+    expect(series.variantCount).toBe(2)
+  })
+
+  it('sciviz 课件与 bilibili 项目折叠为单张序列卡', () => {
+    const merged = mergeVariantCards([
+      ...Array.from({ length: 21 }, (_, i) => ex(`topics_data-analysis_sciviz-sciviz-auto-Lecture${i + 1}`)),
+      ...Array.from({ length: 9 }, (_, i) => ex(`topics_crawler_bilibili_part${i + 1}`))
+    ])
+    expect(merged).toHaveLength(2)
+    expect(merged[0]!.title).toBe('科研绘图课件')
+    expect(merged[0]!.variantCount).toBe(21)
+    expect(merged[1]!.title).toBe('bilibili 弹幕爬虫项目')
+  })
+})
+
 describe('画廊集成（catalog 管道 + 开关）', () => {
   it('默认开启归并：页头统计池显示家族卡数量', () => {
     examples.value = [...barVariants(), ex('e-unique')]

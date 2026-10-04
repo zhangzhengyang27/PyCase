@@ -80,7 +80,7 @@ print(out)`
           ? 'import time, functools\ndef timer(fn):\n    @functools.wraps(fn)\n    def inner(*a, **kw):\n        t0 = time.perf_counter()\n        try:\n            return fn(*a, **kw)\n        finally:\n            print(f"[timer] {time.perf_counter() - t0:.4f}s")\n    return inner'
           : '',
         needLog
-          ? 'def logger(fn):\n    @functools.wraps(fn)\n    def inner(*a, **kw):\n        print("[logger] 进入", fn.__name__)\n        r = fn(*a, **kw)\n        print("[logger] 离开", fn.__name__)\n        return r\n    return inner'
+          ? 'import functools\ndef logger(fn):\n    @functools.wraps(fn)\n    def inner(*a, **kw):\n        print("[logger] 进入", fn.__name__)\n        r = fn(*a, **kw)\n        print("[logger] 离开", fn.__name__)\n        return r\n    return inner'
           : ''
       ]
         .filter(Boolean)
