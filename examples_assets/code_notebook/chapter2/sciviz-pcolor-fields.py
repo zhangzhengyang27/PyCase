@@ -40,13 +40,7 @@ CSf.cmap.set_under('blue')
 # 3. 绘制等值线
 CS = ax.contour(X, Y, Z, levels=10,colors='k',linewidths=1)
 # 4. 设置线型
-for line, lvl in zip(CS.collections, CS.levels):
-    if lvl < 0:
-        line.set_linestyle('--')
-    elif lvl == 0:
-        line.set_linestyle(':')
-    else:
-        line.set_linestyle('-')
+CS.set_linestyles(['--' if lvl < 0 else ':' if lvl == 0 else '-' for lvl in CS.levels])
 # 设置等值文字标注
 ax.clabel(CS, inline=True, fmt='%.1f', fontsize=7)
 # 划重点： colorbar

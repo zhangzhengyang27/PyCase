@@ -38,13 +38,7 @@ CSf.cmap.set_under('w')
 # CSf = ax.pcolor(X,Y,Z,cmap='jet',edgecolors='face')
 CS = ax.contour(X, Y, Z, levels=10,colors='k',linewidths=1)
 # 4. 设置线型
-for line, lvl in zip(CS.collections, CS.levels):
-    if lvl < 0:
-        line.set_linestyle('--')
-    elif lvl == 0:
-        line.set_linestyle(':')
-    else:
-        line.set_linestyle('-')
+CS.set_linestyles(['--' if lvl < 0 else ':' if lvl == 0 else '-' for lvl in CS.levels])
 # cb=plt.colorbar(CSf)
 caxis = inset_axes(ax,width='100%',height='100%', loc='lower left', 
                    bbox_to_anchor=(1.02, 0, 0.05, 1), 
