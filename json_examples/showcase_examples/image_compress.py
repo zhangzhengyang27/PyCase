@@ -24,6 +24,16 @@ def main():
 
     out_dir = Path(args.directory) / "compressed"
     out_dir.mkdir(exist_ok=True)
+
+    # 自播种：当前目录没有可压缩图片时，先生成两张演示图再继续
+    if args.directory == "." and not any(
+        p.suffix.lower() in {".jpg", ".jpeg", ".png", ".bmp"} and p.is_file()
+        for p in Path(".").glob("*")
+    ):
+        Image.new("RGB", (1600, 900), (90, 140, 200)).save("demo_photo_1.png")
+        Image.new("RGB", (2200, 1200), (200, 120, 90)).save("demo_photo_2.png")
+        print("未发现图片，已生成演示数据：demo_photo_1.png / demo_photo_2.png")
+
     for p in sorted(Path(args.directory).glob("*")):
         if p.suffix.lower() not in {".jpg", ".jpeg", ".png", ".bmp"} or not p.is_file():
             continue

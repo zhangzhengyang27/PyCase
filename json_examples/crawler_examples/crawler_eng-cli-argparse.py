@@ -11,3 +11,7 @@ def main():
     print(f"计划抓取 {args.pages} 页，关键词={args.keyword or '无'}，输出={args.output}")
     for p in range(1, args.pages + 1):
         print(f"  第 {p} 页 …（此处接入真实抓取逻辑）")
+
+
+if __name__ == "__main__":
+    main()
