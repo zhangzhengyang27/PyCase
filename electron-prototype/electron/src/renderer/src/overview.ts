@@ -1,6 +1,6 @@
 // overview.ts：画廊总览态的分区分配（纯函数，无 DOM / store 依赖）
 // 分区 = 主题 first-match 互斥分配（一张卡只出现在一个分区，预览不重复）；
-// 未命中主题的条目再按「综合项目 → 标签组」依次分配，剩余进其他桶。
+// 未命中主题的条目再按标签组分配，剩余进其他桶。
 // 区头计数即 members 长度（互斥口径，与预览成员一致）。
 import { THEMES } from './themes'
 import type { ExampleItem } from './types'
@@ -18,9 +18,6 @@ export interface OverviewSection {
 
 /** 其他桶元数据（空则省略该分区） */
 const OTHERS_META = { key: 'others', label: '其他示例' } as const
-
-/** 综合项目区：主题未覆盖的 projects 条目单列（项目名标签各自为政，标签组收编不了） */
-export const PROJECTS_SECTION_META = { key: 'projects', label: '综合项目' } as const
 
 /**
  * 标签分区表：把五大主题未覆盖的长尾示例（原「其他示例」大头）按语义标签组再分类。
@@ -41,46 +38,6 @@ export const TAG_SECTIONS: ReadonlyArray<{ key: string; label: string; tags: str
     ]
   },
   {
-    key: 'tag:advanced',
-    label: '进阶与并发',
-    tags: ['python-advanced', 'language-advanced', 'python-core-advanced', '并发', '并发编程', 'concurrency']
-  },
-  {
-    key: 'tag:crawling',
-    label: '网络爬虫',
-    tags: [
-      'web-crawling',
-      '网络',
-      'scrapy-projects',
-      'http-requests-basics',
-      'urllib-basics',
-      'spider-techniques',
-      'requests-beautifulsoup',
-      '爬虫',
-      'crawler'
-    ]
-  },
-  {
-    key: 'tag:webapp',
-    label: 'Web 应用',
-    tags: ['web-development', 'Web', 'flask', 'flask-advanced-examples', 'flask-mumunote', 'django', 'fastapi']
-  },
-  {
-    key: 'tag:office',
-    label: '办公自动化',
-    tags: ['office-automation', 'job-auto', 'jobautopilot-extras', 'productivity-course', '办公']
-  },
-  {
-    key: 'tag:database',
-    label: '数据库',
-    tags: ['databases', '数据库', 'sqlite', 'mysql', 'mongodb', 'redis']
-  },
-  {
-    key: 'tag:testing',
-    label: '自动化测试',
-    tags: ['automation-testing', 'pytest', 'unittest', '测试']
-  },
-  {
     key: 'tag:algo',
     label: '算法与数据结构',
     tags: ['algorithms', 'algorithm', '数据结构', '排序', '算法']
@@ -89,7 +46,7 @@ export const TAG_SECTIONS: ReadonlyArray<{ key: string; label: string; tags: str
 
 /**
  * 侧栏二级分区菜单的完整元数据表（与 assignSections 完全同序：
- * 5 主题 → 8 标签组 → 综合项目 → 其他 = 15 项）。
+ * 5 主题 → 2 标签组 → 其他 = 8 项）。
  * 与 assignSections 的唯一差别：others 恒在（菜单需完整 15 项，计数为 0 也展示），
  * 而 assignSections 会在 others 为空时省略该分区以避开「0 个」噪音。
  * 分区下钻统一走「分区」筛选维度（FilterQuery.sections），故此处不再需要 kind 驱动下钻分支。
@@ -104,7 +61,6 @@ export interface SectionMeta {
 export const SECTION_CATALOG: readonly SectionMeta[] = [
   ...THEMES.map((t) => ({ key: t.key, label: t.label, kind: 'theme' as const })),
   ...TAG_SECTIONS.map((s) => ({ key: s.key, label: s.label, kind: 'tags' as const, tags: s.tags })),
-  { ...PROJECTS_SECTION_META, kind: 'projects' as const },
   { ...OTHERS_META, kind: 'others' as const }
 ]
 
@@ -123,7 +79,6 @@ export function sectionKeyOf(ex: ExampleItem): string | undefined {
   const theme = THEMES.find((t) => t.filter(ex))
   let key: string | undefined
   if (theme) key = theme.key
-  else if (ex.category === 'projects') key = 'projects'
   else {
     const tagHit = TAG_SECTIONS.find((spec) => (ex.tags || []).some((t) => spec.tags.includes(t)))
     key = tagHit?.key
@@ -149,18 +104,12 @@ function byQuality<T extends ExampleItem>(a: T, b: T): number {
 
 export function assignSections<T extends ExampleItem>(examples: readonly T[]): OverviewSection[] {
   const themeBuckets = new Map<string, T[]>(THEMES.map((t) => [t.key, []]))
-  const projects: T[] = []
   const tagBuckets = new Map<string, T[]>(TAG_SECTIONS.map((s) => [s.key, []]))
   const others: T[] = []
   for (const ex of examples) {
     const theme = THEMES.find((t) => t.filter(ex))
     if (theme) {
       themeBuckets.get(theme.key)!.push(ex)
-      continue
-    }
-    // 项目先于标签组：项目名标签各自为政，且项目是展示型条目，值得独立一区
-    if (ex.category === 'projects') {
-      projects.push(ex)
       continue
     }
     const tagHit = TAG_SECTIONS.find((spec) => (ex.tags || []).some((t) => spec.tags.includes(t)))
@@ -183,8 +132,7 @@ export function assignSections<T extends ExampleItem>(examples: readonly T[]): O
       items: (tagBuckets.get(s.key) || []).slice().sort(byQuality),
       kind: 'tags' as const,
       tags: s.tags
-    })),
-    { ...PROJECTS_SECTION_META, items: projects.slice().sort(byQuality), kind: 'projects' as const }
+    }))
   ]
   // 其他桶为空时省略，避免「0 个」的噪音分区
   if (others.length > 0)
