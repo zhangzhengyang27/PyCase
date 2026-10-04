@@ -14,6 +14,7 @@ import { app, type BrowserWindow } from 'electron'
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
+import { deriveGalleryThemeCounts, THEME_SECTION_LABELS } from '../../../shared/gallery-counts'
 
 /** 产品主进程暴露给走查索具的只读门面（禁止索具反向修改产品状态） */
 export interface SmokeContext {
@@ -388,19 +389,29 @@ export function runSmokeTest(ctx: SmokeContext): void {
         if ((p.uiCodeHits as number) < 1) problems.push('渲染层未合并服务端代码命中（切面未接线？）')
         if ((p.uiFiltered as number) < 1) problems.push('按代码词搜索后结果为空')
         // 分区构成：主题分类是服务端下发的派生事实（契约 §3.2/§5），漂移必须暴露。
-        // 冻结基线口径 = **画廊池（不含 tools；当前 265 条 = 395 - 130 tools）**，
-        // 数值取自 facts.json 烘焙的 theme 分布（contract_store.theme_key 同源，2026-10-04 实测）。
-        // 数据增删示例时必须同步更新这几个数字——它们是"分类没漂移"的锚点。
-        const FROZEN_THEMES: Record<string, number> = {
-          'Turtle 绘图': 29,
-          'Pygame 游戏': 8,
-          'OpenCV 视觉': 25,
-          'PIL 图像处理': 36,
-          数据可视化: 79
+        // 期望值不再手写冻结：运行时从 facts.json（单一真相，与 sidecar 同源）经
+        // TS 侧独立推导（shared/gallery-counts），与 Python 侧形成双实现互查——
+        // 语料增删无需再同步本文件；主题改名/新增时 unmappedThemes 会点名。
+        const factsPath = path.join(ctx.appDir, 'json_examples', 'facts.json')
+        const facts = JSON.parse(fs.readFileSync(factsPath, 'utf-8')) as {
+          items: Record<string, Record<string, unknown>>
+        }
+        const derived = deriveGalleryThemeCounts(facts.items)
+        if (derived.unmappedThemes.length) {
+          problems.push(
+            `facts 出现未映射主题 ${derived.unmappedThemes.join('、')}——请同步 shared/gallery-counts 的 THEME_SECTION_LABELS`
+          )
         }
         const counts = (p.sectionCounts || {}) as Record<string, number>
-        for (const [label, expect] of Object.entries(FROZEN_THEMES)) {
-          if (counts[label] !== expect) problems.push(`分区「${label}」成员 ${counts[label]} != 冻结基线 ${expect}`)
+        for (const [themeKey, n] of Object.entries(derived.counts)) {
+          const label = THEME_SECTION_LABELS[themeKey]
+          if (label !== undefined && counts[label] !== n) {
+            problems.push(`分区「${label}」成员 ${counts[label]} != facts 派生 ${n}`)
+          }
+        }
+        // 画廊池总数同走派生：渲染层池与 facts 池（tools_ 前缀剥离后的条目数）必须一致
+        if (p.poolTotal !== derived.poolTotal) {
+          problems.push(`画廊池 ${p.poolTotal} != facts 派生池 ${derived.poolTotal}（tools 口径漂移？）`)
         }
         // 合计对的是「画廊池」而非全库：tools 不在任何分区里，拿全库对会永远差 tools 的条数。
         // 分区是一次互斥分配，成员合计必须等于池大小——这条不随示例增删漂移，是结构性不变量
