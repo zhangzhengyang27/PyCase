@@ -91,12 +91,6 @@ check(
   violations.length === 0
 )
 
-if (failed) {
-  console.error(`\n${failed} 项断言失败`)
-  process.exit(1)
-}
-console.log('\n全部通过')
-
 // ---------------------------------------------------------------------------
 // 隐形墨水禁令（2026-10-02 事故）：--color-console 映射的是终端**背景**色
 // （--bg-console），把 text-console 当文字类用 = 输出与背景同色、肉眼不可见——
@@ -124,3 +118,11 @@ check('禁令：text-page / text-panel 等「页头字号名」与背景色同�
   if (used.length) console.error('    命中文件: ' + used.join(', '))
   return used.length === 0
 })())
+
+// 退出码守卫必须在全部 check 之后：曾有提前 return 的守卫，令其后的禁令检查
+// 失败也不改退出码，违例静默逃过 CI（2026-10-04 gate.sh full 首跑抓出）
+if (failed) {
+  console.error(`\n${failed} 项断言失败`)
+  process.exit(1)
+}
+console.log('\n全部通过')

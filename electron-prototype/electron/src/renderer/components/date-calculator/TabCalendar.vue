@@ -67,7 +67,7 @@ function monthCells(c: { y: number; m: number }): Cell[] {
 
 function cellCls(c: Cell): string {
   if (c.blank) return ''
-  if (c.start) return 'bg-accent text-page font-semibold rounded'
+  if (c.start) return 'bg-accent text-on-accent font-semibold rounded'
   if (c.end) return 'border border-accent text-accent font-semibold rounded'
   if (c.between) return 'text-ink-dim bg-accent/10'
   return 'text-ink-dim hover:bg-line cursor-pointer'

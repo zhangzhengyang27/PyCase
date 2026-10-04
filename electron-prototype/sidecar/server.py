@@ -548,12 +548,19 @@ async def _run_subprocess(
             return
         working_dir = workspace
     else:
+        if item is None:
+            # 语料运行必须有条目（adhoc 路径不受此限）——防御性收尾，避免 AttributeError 逃出协程
+            _notify("run_output", {"run_id": run_id, "text": "[错误] 未找到示例条目，运行已取消\n"})
+            _notify("run_finished", {"run_id": run_id, "exit_code": -1})
+            _running.pop(run_id, None)
+            return
         # 契约 §4.1：运行前先确保工作区（唯一落盘入口），运行目录 = 工作区
-        workspace = await asyncio.to_thread(_ensure_store().ensure_workspace, item)
-        if workspace is None:
+        resolved = await asyncio.to_thread(_ensure_store().ensure_workspace, item)
+        if resolved is None:
             _notify("run_output", {"run_id": run_id, "text": "[错误] 无法准备工作区，运行已取消\n"})
             _notify("run_finished", {"run_id": run_id, "exit_code": -1})
             return
+        workspace = resolved
         file_path = workspace / item.name
         working_dir = workspace
     run_started = time.time()
@@ -619,7 +626,7 @@ async def _run_subprocess(
     # 运行期 sys.path：工作区（含基线兄弟文件）+ 集合树根（解析 topics/tools 包导入）；
     # adhoc 运行没有集合归属，只加仓库根
     pythonpath_parts = (
-        [] if adhoc_code is not None else list(_ensure_store().run_pythonpath(item))
+        [] if adhoc_code is not None or item is None else list(_ensure_store().run_pythonpath(item))
     ) + [str(REPO_ROOT)]
     existing_pp = os.environ.get("PYTHONPATH", "")
     if existing_pp:
