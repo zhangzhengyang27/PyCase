@@ -602,6 +602,9 @@ export function initRunEvents(): void {
 export function detailTestHooks(): Record<string, unknown> {
   return {
     openDetail: (id: string) => openDetail(id),
+    // 走查索具专用：绕过交互路由直达详情页（与卡片「运行」按钮同款 forceDetail 路径）——
+    // 归并唯一形态后，映射条目的 openDetail 一律直达交互页，而索具走查的恰是详情 UI 本身
+    openDetailForce: (id: string) => openDetail(id, false, { forceDetail: true }),
     selectedId: () => selectedId.value,
     currentArgs: () => currentArgs.value,
     setArgValue: (idx: number, v: string) => _argsSetter?.(idx, v),

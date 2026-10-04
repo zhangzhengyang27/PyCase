@@ -269,8 +269,17 @@ export function runSmokeTest(ctx: SmokeContext): void {
         out.subnavIcons = subnav ? subnav.querySelectorAll('svg').length : 0;
         const chromeText = (el) => Array.from(el.querySelectorAll('.chip-ic, .hue-chip, .font-semibold, .stat-dot, button')).map((n) => n.textContent || '').join('');
         out.subnavEmoji = subnav ? emojiRe.test(chromeText(subnav)) : true;
-        // 画廊池口径：分区只覆盖画廊（tools 只待在工具箱），成员合计应等于池大小
+        // 画廊池口径：分区只覆盖画廊（tools 只待在工具箱）
         out.poolTotal = app.examples().filter((e) => e.category !== 'tools').length;
+        // 原始主题计数（theme_key 来自服务端）：与 facts.json 的 theme 分布互查，
+        // 抓「服务端 theme_key 判定漂移」；侧栏 data-section-count 是归并后口径，另测
+        out.themeRaw = {};
+        for (const e of app.examples()) {
+          if (e.category === 'tools' || !e.theme_key) continue;
+          out.themeRaw[e.theme_key] = (out.themeRaw[e.theme_key] || 0) + 1;
+        }
+        // 归并池大小（家族卡数）：侧栏分区计数的合计必须等于它（互斥分配结构不变量）
+        out.mergedTotal = typeof app.mergedPoolSize === 'function' ? app.mergedPoolSize() : null;
         // 2) 点侧栏「全部示例」→ 网格落地（真实用户路径；侧栏二级菜单是新的唯一分区入口）
         const allBtn = subnav ? subnav.querySelector('[data-section-key="all"]') : null;
         if (!allBtn) return { fatal: '侧栏二级菜单缺少「全部示例」入口' };
@@ -402,22 +411,34 @@ export function runSmokeTest(ctx: SmokeContext): void {
             `facts 出现未映射主题 ${derived.unmappedThemes.join('、')}——请同步 shared/gallery-counts 的 THEME_SECTION_LABELS`
           )
         }
-        const counts = (p.sectionCounts || {}) as Record<string, number>
+        // 原始口径互查：服务端下发的 theme_key 分布（probe 从 examples() 现算）
+        // 必须与 facts.json 的 theme 分布（TS 独立推导）一致——抓分类判定漂移
+        const themeRaw = (p.themeRaw || {}) as Record<string, number>
         for (const [themeKey, n] of Object.entries(derived.counts)) {
-          const label = THEME_SECTION_LABELS[themeKey]
-          if (label !== undefined && counts[label] !== n) {
-            problems.push(`分区「${label}」成员 ${counts[label]} != facts 派生 ${n}`)
+          if (themeRaw[themeKey] !== n) {
+            problems.push(`主题 ${themeKey} 服务端计数 ${themeRaw[themeKey]} != facts 派生 ${n}`)
           }
         }
         // 画廊池总数同走派生：渲染层池与 facts 池（tools_ 前缀剥离后的条目数）必须一致
         if (p.poolTotal !== derived.poolTotal) {
           problems.push(`画廊池 ${p.poolTotal} != facts 派生池 ${derived.poolTotal}（tools 口径漂移？）`)
         }
-        // 合计对的是「画廊池」而非全库：tools 不在任何分区里，拿全库对会永远差 tools 的条数。
-        // 分区是一次互斥分配，成员合计必须等于池大小——这条不随示例增删漂移，是结构性不变量
+        // 侧栏分区计数是**归并后口径**（家族卡数）：合计必须等于归并池大小（互斥分配），
+        // 且每个主题分区的归并卡数不得超过原始主题成员数（归并只减不增）
+        const counts = (p.sectionCounts || {}) as Record<string, number>
+        const mergedTotal = p.mergedTotal as number | null
         const memberSum = Object.values(counts).reduce((a, b) => a + (b > 0 ? b : 0), 0)
-        if (memberSum !== p.poolTotal) {
-          problems.push(`分区成员合计 ${memberSum} != 画廊池 ${p.poolTotal}（分区不完整或重复计数）`)
+        if (mergedTotal === null) {
+          problems.push('测试钩子 mergedPoolSize 缺失（catalogTestHooks 未接线？）')
+        } else if (memberSum !== mergedTotal) {
+          problems.push(`侧栏分区合计 ${memberSum} != 归并池 ${mergedTotal}（分区不完整或重复计数）`)
+        }
+        for (const [themeKey, rawN] of Object.entries(themeRaw)) {
+          const label = THEME_SECTION_LABELS[themeKey]
+          const merged = label === undefined ? undefined : (counts[label] as number | undefined)
+          if (merged !== undefined && rawN !== undefined && merged > rawN) {
+            problems.push(`分区「${label}」归并卡数 ${merged} > 原始成员 ${rawN}`)
+          }
         }
         if (p.cardTitleWeight !== '600') problems.push(`卡片标题字重 ${p.cardTitleWeight} != 600`)
         const allowed = ['400', '500', '600']
@@ -520,8 +541,13 @@ export function runSmokeTest(ctx: SmokeContext): void {
         // 4) 画廊池不含工具：干净筛选态下 filtered 计数 = 全集 − tools 数（工具只待在工具箱）
         const allEx = app.examples();
         const toolN = allEx.filter((e) => e.category === 'tools').length;
+        // filteredCount 是归并池口径（家族卡数）：与 mergedPoolSize 对账，不再对原始池（归并后必然小于它）
+        const mergedN = typeof app.mergedPoolSize === 'function' ? app.mergedPoolSize() : null;
         const galleryN = app.filteredCount();
-        out.gallery = toolN > 0 && galleryN === allEx.length - toolN ? 'OK' : 'BAD:' + JSON.stringify({ all: allEx.length, toolN, galleryN });
+        out.gallery =
+          toolN > 0 && mergedN !== null && galleryN === mergedN
+            ? 'OK'
+            : 'BAD:' + JSON.stringify({ all: allEx.length, toolN, galleryN, mergedN });
         // 5) AI 代码解释：设置读写 roundtrip + 无 key 优雅降级 + key 不回传明文
         await window.sidecar.ai.setSettings({ apiKey: "sk-test-fake-key", model: "deepseek-chat", baseUrl: "https://api.deepseek.com" });
         const s1 = await window.sidecar.ai.getSettings();
@@ -553,7 +579,7 @@ export function runSmokeTest(ctx: SmokeContext): void {
         if (!app) return { fatal: '__app 未注入' };
         const picks = app.examples().filter((e) => e.category !== 'tools');
         if (!picks.length) return { fatal: '没有可打开的示例' };
-        await app.openDetail(picks[0].id);
+        await app.openDetailForce(picks[0].id);
         await sleep(2500); // Monaco 懒加载 + 首次布局
         const host = document.querySelector('[role="tablist"][aria-label="输出面板"]');
         if (!host) return { fatal: '详情页未打开（无标签页）' };
@@ -635,7 +661,7 @@ export function runSmokeTest(ctx: SmokeContext): void {
         if (!app || !app.uploadAssets) return { fatal: '__app 缺少资源钩子' };
         const target = app.examples().find((e) => e.category !== 'tools') || app.examples()[0];
         if (!target) return { fatal: '没有可用的示例' };
-        await app.openDetail(target.id);
+        await app.openDetailForce(target.id);
         await sleep(300);
         const bytes = new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10]);
         await app.uploadAssets(target.id, [new File([bytes], 'smoke_asset.png', { type: 'image/png' })]);
@@ -716,7 +742,7 @@ export function runSmokeTest(ctx: SmokeContext): void {
         const risky = app.examples().find((e) => e.risk_high);
         out.riskyId = risky ? risky.id : null;
         if (!risky) return { fatal: '数据里没有 risk_high 示例，无法走查确认弹层' };
-        await app.openDetail(risky.id);
+        await app.openDetailForce(risky.id);
         await sleep(700);
         app.runFromDetail();
         await sleep(900);
@@ -979,7 +1005,7 @@ export function runSmokeTest(ctx: SmokeContext): void {
           const app = window.__app;
           const target = app.examples().find((e) => e.run_status === 'missing_deps');
           if (!target) return { skipped: true };
-          await app.openDetail(target.id);
+          await app.openDetailForce(target.id);
           await sleep(800);
           return { skipped: false, has: !!document.querySelector('[data-testid="install-deps"]'), id: target.id };
         })()`)) as { skipped: boolean; has?: boolean; id?: string }
@@ -1016,7 +1042,7 @@ export function runSmokeTest(ctx: SmokeContext): void {
               // 后续 setEditorValue/save 会打到"上一个选中项"上（曾经因此误改内置示例）
               await app.reload();
               await sleep(400);
-              await app.openDetail('${e2eId}');
+              await app.openDetailForce('${e2eId}');
               await sleep(300);
               if (app.selectedId() !== '${e2eId}') {
                 return { fatal: '选中项不是目标示例: ' + String(app.selectedId()) };
@@ -1157,7 +1183,7 @@ export function runSmokeTest(ctx: SmokeContext): void {
             window.sidecar.onRunOutput(() => { received++; });
             await app.reload();
             await sleep(400);
-            await app.openDetail('${floodId}');
+            await app.openDetailForce('${floodId}');
             await sleep(300);
             if (app.selectedId() !== '${floodId}') return { fatal: '选中项不是洪峰示例: ' + String(app.selectedId()) };
             const t0 = performance.now();
@@ -1284,7 +1310,7 @@ export function runE2ETest(ctx: SmokeContext): void {
         if (!ex) return { fatal: 'crawler_eng-cli-argparse.py 不在示例列表中' };
 
         // 1) 打开详情页 → 参数解析（cli_greeting 有 --name/-r 两个可选参数）
-        const args = await app.openDetail(ex.id);
+        const args = await app.openDetailForce(ex.id);
         out.argsParsed = Array.isArray(args) ? args.length : -1;
 
         // 2) 填参 → 收集 → 运行（idx 1 = --keyword，字符串型便于回显断言）

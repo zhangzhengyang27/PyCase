@@ -433,6 +433,9 @@ export function catalogTestHooks(): Record<string, unknown> {
   return {
     examples: () => examples.value,
     filteredCount: () => filtered.value.length,
+    // 归并池大小（家族卡数）：冒烟的分区结构检查用它对账侧栏计数——
+    // 侧栏 data-section-count 是归并后口径，与原始池（examples 过滤 tools）不是同一回事
+    mergedPoolSize: () => galleryPool.value.length,
     // 冒烟探针从干净筛选态开始：本机 viewPrefs/runHistory 可能残留主题、搜索词等
     // 筛选状态（CI 干净环境无此问题），不清理会让 favorites/facets 断言失真
     resetViewFilters: () => {
