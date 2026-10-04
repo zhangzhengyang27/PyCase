@@ -486,6 +486,8 @@ export const wordDocSchema: InteractiveToolSchema = {
     const content = str(v.content)
     if (!content.trim()) return '# 输入内容后自动生成代码'
     return `"""Markdown 子集 → docx。"""
+import json
+
 from docx import Document
 
 doc = Document()
@@ -525,6 +527,7 @@ export const wordTableSchema: InteractiveToolSchema = {
     const data = str(v.data)
     if (!data.trim()) return '# 粘贴数据后自动生成代码'
     return `"""CSV → docx 表格。"""
+import json
 import csv
 import io
 

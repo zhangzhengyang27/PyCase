@@ -12,7 +12,7 @@ t.speed(0)
 t.penup()
 colors = ['#e74c3c', '#f39c12', '#f1c40f', '#2ecc71', '#3498db', '#9b59b6']
 for burst in range(6):
-    cx, cy = random.randint(-240, 240), random.randint(-100, 240 * 0.6)
+    cx, cy = random.randint(-240, 240), random.randint(-100, int(240 * 0.6))
     color = colors[burst % len(colors)]
     for _ in range(40):
         t.goto(cx, cy)

@@ -343,20 +343,6 @@
    "file": "crawler_examples/crawler_target-jsonplaceholder-relations.py"
   },
   {
-   "id": "topics_crawler-target-bilibili-view",
-   "name": "crawler_target-bilibili-view.py",
-   "category": "topics",
-   "tags": [
-    "爬虫"
-   ],
-   "title": "B 站视频信息",
-   "description": "B 站 view 接口标准抓取模式（与原库 bili_api 同源）。",
-   "requirements": [
-    "requests"
-   ],
-   "file": "crawler_examples/crawler_target-bilibili-view.py"
-  },
-  {
    "id": "topics_crawler-crawl-robots-respect",
    "name": "crawler_crawl-robots-respect.py",
    "category": "topics",

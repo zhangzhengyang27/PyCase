@@ -33,9 +33,7 @@ pygmt
 pymysql
 pypdf
 python-docx
-python-dotenv
 python-pptx
-python-ternary
 pytmx
 pyyaml
 qrcode

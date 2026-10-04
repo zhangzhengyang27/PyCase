@@ -39,7 +39,8 @@ def gen_csv(mode, n):
     return header, rows
 `
 
-const PRELUDE = `import csv
+const PRELUDE = `import json
+import csv
 import io
 
 import matplotlib
@@ -336,22 +337,64 @@ ${TITLE_LINE(v)}`
   }
 )
 
-export const contourChartSchema = base(
-  '等高线图',
-  '等高线图：数据为 X 值序列网格（行列均数值，绘制多级等高线）。',
-  ['图表'],
-  [DATA_FIELD, TITLE_FIELD, { key: 'levels', label: '等高线级数', type: 'number', default: 10, width: 'half' }],
-  (v) => {
+export const contourChartSchema: InteractiveToolSchema = {
+  ...base(
+    '等高线图',
+    '等高线图：数据为数值网格（首列行标签，其余列数值，至少 2×2）；留空用内置演示网格。',
+    ['图表'],
+    [DATA_FIELD, TITLE_FIELD, { key: 'levels', label: '等高线级数', type: 'number', default: 10, width: 'half' }],
+    // body 不再走 base 的 pyCode：内置 gen_csv 只产 2 列（x,y），contourf 需要 ≥2×2 网格，
+    // 原实现任何输入都崩；下方 pyCode 按有无数据分派
+    () => ''
+  ),
+  compute: (v) => {
+    const data = str(v.data)
+    const lines = data
+      .trim()
+      .split('\n')
+      .filter((l) => l.trim())
+    if (lines.length < 2) return { rows: [{ label: '数据', value: '未填，运行时用内置演示网格' }] }
+    const grid = lines.slice(1).map((l) => l.split(',').slice(1))
+    const width = grid[0]?.length ?? 0
+    const shaped =
+      width >= 2 &&
+      grid.every((r) => r.length === width) &&
+      grid.flat().every((c) => Number.isFinite(Number(c)))
+    if (!shaped) {
+      return { error: '网格形状不对：首列为标签，其余列均为数值、每行列数一致，且至少 2 行 × 2 列数值' }
+    }
+    return { rows: [{ label: '网格', value: `${grid.length} × ${width}` }] }
+  },
+  pyCode: (v) => {
     const levels = Math.max(3, Math.min(50, Math.trunc(Number(v.levels ?? 10)) || 10))
-    return `import numpy as np
-
-mat = np.array([[float(c) for c in r[1:]] for r in data_rows])
-fig, ax = plt.subplots(figsize=(8, 6))
-cs = ax.contourf(mat, levels=${levels}, cmap="coolwarm")
+    const draw = `cs = ax.contourf(mat, levels=${levels}, cmap="coolwarm")
 fig.colorbar(cs, ax=ax)
 ${TITLE_LINE(v)}`
+    const data = str(v.data)
+    if (!data.trim()) {
+      return `"""等高线图（内置演示网格）。"""
+${PRELUDE}
+import numpy as np
+
+x = np.linspace(-3, 3, 60)
+y = np.linspace(-3, 3, 40)
+X, Y = np.meshgrid(x, y)
+mat = np.exp(-(X ** 2 + Y ** 2) / 4) + 0.3 * np.sin(2 * X) * np.cos(1.5 * Y)
+fig, ax = plt.subplots(figsize=(8, 6))
+${draw}
+${OUT}`
+    }
+    return `"""等高线图（用户网格）。"""
+${PRELUDE}
+import numpy as np
+
+header, data_rows = parse_csv(${JSON.stringify(data)})
+mat = np.array([[float(c) for c in r[1:]] for r in data_rows])
+fig, ax = plt.subplots(figsize=(8, 6))
+${draw}
+${OUT}`
   }
-)
+}
 
 export const W2v2_SCHEMAS: InteractiveToolSchema[] = [
   histChartSchema,

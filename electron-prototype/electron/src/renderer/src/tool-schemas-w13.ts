@@ -554,6 +554,8 @@ export const stockInventorySchema: InteractiveToolSchema = {
     const parse = (t: string): string => JSON.stringify(t)
     if (!str(v.opening).trim()) return '# 填写期初库存后自动生成代码'
     return `"""库存盘点：期初/入库/出库 核算。"""
+import json
+
 from collections import defaultdict
 
 def parse(t):

@@ -14,7 +14,7 @@ edges = cv2.Canny(img, 80, 160)
 lines = cv2.HoughLinesP(edges, 1, np.pi / 180, 60, minLineLength=30, maxLineGap=8)
 result = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
 if lines is not None:
-    for l in lines[:40]:
-        cv2.line(result, tuple(l[0][:2]), tuple(l[0][2:]), (90, 200, 255), 1)
+    for x1, y1, x2, y2 in lines.reshape(-1, 4)[:40]:
+        cv2.line(result, (int(x1), int(y1)), (int(x2), int(y2)), (90, 200, 255), 1)
 cv2.imwrite("cv_hough-lines__preview.png", result if "result" in dir() else img)
 print("已生成 cv_hough-lines__preview.png")

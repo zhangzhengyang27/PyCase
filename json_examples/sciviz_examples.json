@@ -3,23 +3,6 @@
  "description": "来自 Code Notebook 教材的科研出版级绘图示例（ipynb 转换）。",
  "examples": [
   {
-   "id": "topics_data-analysis_sciviz-sciviz-canvas-axes.py",
-   "name": "sciviz-canvas-axes.py",
-   "category": "topics",
-   "tags": [
-    "科研绘图",
-    "坐标轴",
-    "matplotlib"
-   ],
-   "title": "画布与坐标轴（科研绘图）",
-   "description": "matplotlib 画布（figure）与坐标轴（axes）的创建、层级关系与常用参数，科研绘图的起点（Code Notebook 第一章）。",
-   "requirements": [
-    "matplotlib",
-    "numpy"
-   ],
-   "file": "sciviz_examples/sciviz-canvas-axes.py"
-  },
-  {
    "id": "topics_data-analysis_sciviz-sciviz-complex-axes.py",
    "name": "sciviz-complex-axes.py",
    "category": "topics",
@@ -35,88 +18,6 @@
     "numpy"
    ],
    "file": "sciviz_examples/sciviz-complex-axes.py"
-  },
-  {
-   "id": "topics_data-analysis_sciviz-sciviz-data-formats.py",
-   "name": "sciviz-data-formats.py",
-   "category": "topics",
-   "tags": [
-    "科研绘图",
-    "数据读取",
-    "netCDF4"
-   ],
-   "title": "科学数据格式读取（科研绘图）",
-   "description": "netCDF4/h5py/meshio/文本等科学数据格式的读取与预览，演示 ETOPO 地形、非结构网格等真实数据（Code Notebook 第一章第四节）。",
-   "requirements": [
-    "h5py",
-    "matplotlib",
-    "meshio",
-    "netcdf4",
-    "numpy",
-    "pandas",
-    "scipy",
-    "openpyxl"
-   ],
-   "file": "../examples_assets/code_notebook/chapter1/sciviz-data-formats.py"
-  },
-  {
-   "id": "topics_data-analysis_sciviz-sciviz-pandas-plot.py",
-   "name": "sciviz-pandas-plot.py",
-   "category": "topics",
-   "tags": [
-    "科研绘图",
-    "pandas",
-    "论文复现"
-   ],
-   "title": "pandas 论文数据绘图（科研绘图）",
-   "description": "pandas 读取 Nature 论文增补数据并绘制趋势图，复现 Bennett 2019 与 Heap 2019 的科研数据案例（Code Notebook Lecture 2.1）。",
-   "requirements": [
-    "matplotlib",
-    "numpy",
-    "pandas",
-    "scipy",
-    "openpyxl"
-   ],
-   "file": "../examples_assets/code_notebook/chapter2/sciviz-pandas-plot.py"
-  },
-  {
-   "id": "topics_data-analysis_sciviz-sciviz-line-styles.py",
-   "name": "sciviz-line-styles.py",
-   "category": "topics",
-   "tags": [
-    "科研绘图",
-    "折线图",
-    "论文复现"
-   ],
-   "title": "折线图全参数演示（科研绘图）",
-   "description": "演示 plot 的线宽、颜色、透明度、marker、虚线与 clip_on 全套线型参数，并含两个论文复现实战（Shackleton 2020 多子图拼版与 Wang 2020 Nature 增补数据），数据随 dir 目录就位（Code Notebook Lecture 2.2）。",
-   "requirements": [
-    "matplotlib",
-    "numpy",
-    "pandas",
-    "scipy",
-    "openpyxl"
-   ],
-   "file": "../examples_assets/code_notebook/chapter2/sciviz-line-styles.py"
-  },
-  {
-   "id": "topics_data-analysis_sciviz-sciviz-slope-graph.py",
-   "name": "sciviz-slope-graph.py",
-   "category": "topics",
-   "tags": [
-    "科研绘图",
-    "蛛网图",
-    "论文复现"
-   ],
-   "title": "基础蛛网图（科研绘图）",
-   "description": "复现 Zhao 2019 论文图 2 的蛛网图（对角线交互图），演示论文级斜率对比图的绘制（Code Notebook Lecture 2.3）。",
-   "requirements": [
-    "matplotlib",
-    "numpy",
-    "pandas",
-    "openpyxl"
-   ],
-   "file": "../examples_assets/code_notebook/chapter2/sciviz-slope-graph.py"
   },
   {
    "id": "topics_data-analysis_sciviz-sciviz-bar-basics.py",
@@ -135,79 +36,6 @@
     "pandas"
    ],
    "file": "sciviz_examples/sciviz-bar-basics.py"
-  },
-  {
-   "id": "topics_data-analysis_sciviz-sciviz-grouped-bars.py",
-   "name": "sciviz-grouped-bars.py",
-   "category": "topics",
-   "tags": [
-    "科研绘图",
-    "柱状图",
-    "论文复现"
-   ],
-   "title": "并列与层叠柱状图（科研绘图）",
-   "description": "复现 Susanne Nature 2020 Figure3b 的分组构成对比，演示并列与层叠柱状图的论文画法（Code Notebook Lecture 2.5）。",
-   "requirements": [
-    "matplotlib",
-    "numpy",
-    "pandas",
-    "openpyxl"
-   ],
-   "file": "../examples_assets/code_notebook/chapter2/sciviz-grouped-bars.py"
-  },
-  {
-   "id": "topics_data-analysis_sciviz-sciviz-pie-donut.py",
-   "name": "sciviz-pie-donut.py",
-   "category": "topics",
-   "tags": [
-    "科研绘图",
-    "饼图",
-    "占比"
-   ],
-   "title": "饼图与环形图（科研绘图）",
-   "description": "以 VentFields 数据演示占比构成的可视化、百分比标签与环形图排版（Code Notebook Lecture 2.6）。",
-   "requirements": [
-    "matplotlib",
-    "numpy",
-    "pandas"
-   ],
-   "file": "../examples_assets/code_notebook/chapter2/sciviz-pie-donut.py"
-  },
-  {
-   "id": "topics_data-analysis_sciviz-sciviz-polar-rose.py",
-   "name": "sciviz-polar-rose.py",
-   "category": "topics",
-   "tags": [
-    "科研绘图",
-    "极坐标",
-    "玫瑰图"
-   ],
-   "title": "玫瑰图与极坐标系（科研绘图）",
-   "description": "方位/风向数据的极坐标统计与玫瑰图美化，演示极坐标系的科研用法（Code Notebook Lecture 2.7）。",
-   "requirements": [
-    "matplotlib",
-    "numpy",
-    "pandas"
-   ],
-   "file": "sciviz_examples/sciviz-polar-rose.py"
-  },
-  {
-   "id": "topics_data-analysis_sciviz-sciviz-ternary.py",
-   "name": "sciviz-ternary.py",
-   "category": "topics",
-   "tags": [
-    "科研绘图",
-    "三角图",
-    "ternary"
-   ],
-   "title": "三角图（ternary plot，科研绘图）",
-   "description": "基于内嵌 ternary_new 库绘制三组分相图与轨迹线，地球化学/材料学常用图型（Code Notebook Lecture 2.8）。",
-   "requirements": [
-    "matplotlib",
-    "numpy",
-    "pandas"
-   ],
-   "file": "../examples_assets/code_notebook/chapter2/sciviz-ternary.py"
   },
   {
    "id": "topics_data-analysis_sciviz-sciviz-contour-fields.py",
@@ -411,76 +239,6 @@
    "file": "../examples_assets/code_notebook/chapter3/sciviz-wordcloud.py"
   },
   {
-   "id": "topics_data-analysis_sciviz-sciviz-3d-surface.py",
-   "name": "sciviz-3d-surface.py",
-   "category": "topics",
-   "tags": [
-    "科研绘图",
-    "3D 绘图",
-    "曲面"
-   ],
-   "title": "三维曲面图（科研绘图）",
-   "description": "出版级 nice 风格的 3D 曲面绘制，轴样式与视角控制（Code Notebook Lecture 4.2）。",
-   "requirements": [
-    "matplotlib",
-    "numpy",
-    "pandas"
-   ],
-   "file": "../examples_assets/code_notebook/chapter4/sciviz-3d-surface.py"
-  },
-  {
-   "id": "topics_data-analysis_sciviz-sciviz-3d-profile.py",
-   "name": "sciviz-3d-profile.py",
-   "category": "topics",
-   "tags": [
-    "科研绘图",
-    "3D 绘图",
-    "剖面"
-   ],
-   "title": "三维剖面图（科研绘图）",
-   "description": "3D 剖面与 niceAxis 轴美化组合，论文级剖面呈现（Code Notebook Lecture 4.3）。",
-   "requirements": [
-    "matplotlib",
-    "numpy",
-    "pandas"
-   ],
-   "file": "../examples_assets/code_notebook/chapter4/sciviz-3d-profile.py"
-  },
-  {
-   "id": "topics_data-analysis_sciviz-sciviz-3d-bars.py",
-   "name": "sciviz-3d-bars.py",
-   "category": "topics",
-   "tags": [
-    "科研绘图",
-    "3D 绘图",
-    "柱状图"
-   ],
-   "title": "三维柱状图（科研绘图）",
-   "description": "出版级 3D 柱状图绘制与颜色映射（Code Notebook Lecture 4.4）。",
-   "requirements": [
-    "matplotlib",
-    "numpy",
-    "pandas"
-   ],
-   "file": "../examples_assets/code_notebook/chapter4/sciviz-3d-bars.py"
-  },
-  {
-   "id": "topics_data-analysis_sciviz-sciviz-auto-Python语法简介.py",
-   "name": "sciviz-auto-Python语法简介.py",
-   "category": "topics",
-   "tags": [
-    "科研绘图",
-    "matplotlib",
-    "自动收录"
-   ],
-   "title": "Python语法简介（科研绘图）",
-   "description": "由 Chapter1/Python语法简介.ipynb 转换的科研绘图示例（自动收录）。",
-   "requirements": [
-    "numpy"
-   ],
-   "file": "sciviz_examples/sciviz-auto-Python语法简介.py"
-  },
-  {
    "id": "topics_data-analysis_sciviz-sciviz-auto-Lecture2 10 training.py",
    "name": "sciviz-auto-Lecture2 10 training.py",
    "category": "topics",
@@ -519,44 +277,6 @@
    "file": "../examples_assets/code_notebook/chapter2/sciviz-auto-Lecture2 11 training.py"
   },
   {
-   "id": "topics_data-analysis_sciviz-sciviz-auto-Lecture2 2 training.py",
-   "name": "sciviz-auto-Lecture2 2 training.py",
-   "category": "topics",
-   "tags": [
-    "科研绘图",
-    "matplotlib",
-    "自动收录"
-   ],
-   "title": "Lecture2 2 training（科研绘图）",
-   "description": "由 Chapter2/Lecture2_2_training.ipynb 转换的科研绘图示例（自动收录）。",
-   "requirements": [
-    "matplotlib",
-    "numpy",
-    "pandas",
-    "openpyxl"
-   ],
-   "file": "../examples_assets/code_notebook/chapter2/sciviz-auto-Lecture2 2 training.py"
-  },
-  {
-   "id": "topics_data-analysis_sciviz-sciviz-auto-Lecture2 3 Training.py",
-   "name": "sciviz-auto-Lecture2 3 Training.py",
-   "category": "topics",
-   "tags": [
-    "科研绘图",
-    "matplotlib",
-    "自动收录"
-   ],
-   "title": "Lecture2 3 Training（科研绘图）",
-   "description": "由 Chapter2/Lecture2_3_Training.ipynb 转换的科研绘图示例（自动收录）。",
-   "requirements": [
-    "matplotlib",
-    "numpy",
-    "pandas",
-    "openpyxl"
-   ],
-   "file": "../examples_assets/code_notebook/chapter2/sciviz-auto-Lecture2 3 Training.py"
-  },
-  {
    "id": "topics_data-analysis_sciviz-sciviz-auto-Lecture2 4 Training.py",
    "name": "sciviz-auto-Lecture2 4 Training.py",
    "category": "topics",
@@ -575,43 +295,6 @@
    "file": "sciviz_examples/sciviz-auto-Lecture2 4 Training.py"
   },
   {
-   "id": "topics_data-analysis_sciviz-sciviz-auto-Lecture2 5 Trainging.py",
-   "name": "sciviz-auto-Lecture2 5 Trainging.py",
-   "category": "topics",
-   "tags": [
-    "科研绘图",
-    "matplotlib",
-    "自动收录"
-   ],
-   "title": "Lecture2 5 Trainging（科研绘图）",
-   "description": "由 Chapter2/Lecture2_5_Trainging.ipynb 转换的科研绘图示例（自动收录）。",
-   "requirements": [
-    "matplotlib",
-    "numpy",
-    "pandas",
-    "openpyxl"
-   ],
-   "file": "../examples_assets/code_notebook/chapter2/sciviz-auto-Lecture2 5 Trainging.py"
-  },
-  {
-   "id": "topics_data-analysis_sciviz-sciviz-auto-Lecture2 6 Training.py",
-   "name": "sciviz-auto-Lecture2 6 Training.py",
-   "category": "topics",
-   "tags": [
-    "科研绘图",
-    "matplotlib",
-    "自动收录"
-   ],
-   "title": "Lecture2 6 Training（科研绘图）",
-   "description": "由 Chapter2/Lecture2_6_Training.ipynb 转换的科研绘图示例（自动收录）。",
-   "requirements": [
-    "matplotlib",
-    "numpy",
-    "pandas"
-   ],
-   "file": "../examples_assets/code_notebook/chapter2/sciviz-auto-Lecture2 6 Training.py"
-  },
-  {
    "id": "topics_data-analysis_sciviz-sciviz-auto-Lecture2 7 training.py",
    "name": "sciviz-auto-Lecture2 7 training.py",
    "category": "topics",
@@ -628,63 +311,6 @@
     "pandas"
    ],
    "file": "sciviz_examples/sciviz-auto-Lecture2 7 training.py"
-  },
-  {
-   "id": "topics_data-analysis_sciviz-sciviz-auto-Lecture2 8 training.py",
-   "name": "sciviz-auto-Lecture2 8 training.py",
-   "category": "topics",
-   "tags": [
-    "科研绘图",
-    "matplotlib",
-    "自动收录"
-   ],
-   "title": "Lecture2 8 training（科研绘图）",
-   "description": "由 Chapter2/Lecture2_8_training.ipynb 转换的科研绘图示例（自动收录）。",
-   "requirements": [
-    "matplotlib",
-    "numpy",
-    "pandas"
-   ],
-   "file": "sciviz_examples/sciviz-auto-Lecture2 8 training.py"
-  },
-  {
-   "id": "topics_data-analysis_sciviz-sciviz-auto-Lecture2 9 training.py",
-   "name": "sciviz-auto-Lecture2 9 training.py",
-   "category": "topics",
-   "tags": [
-    "科研绘图",
-    "matplotlib",
-    "自动收录"
-   ],
-   "title": "Lecture2 9 training（科研绘图）",
-   "description": "由 Chapter2/Lecture2_9_training.ipynb 转换的科研绘图示例（自动收录）。",
-   "requirements": [
-    "matplotlib",
-    "netcdf4",
-    "numpy",
-    "pandas"
-   ],
-   "file": "../examples_assets/code_notebook/chapter2/sciviz-auto-Lecture2 9 training.py"
-  },
-  {
-   "id": "topics_data-analysis_sciviz-sciviz-auto-Chapter3 1 Training.py",
-   "name": "sciviz-auto-Chapter3 1 Training.py",
-   "category": "topics",
-   "tags": [
-    "科研绘图",
-    "matplotlib",
-    "自动收录"
-   ],
-   "title": "Chapter3 1 Training（科研绘图）",
-   "description": "由 Chapter3/Chapter3_1_Training.ipynb 转换的科研绘图示例（自动收录）。",
-   "requirements": [
-    "matplotlib",
-    "netcdf4",
-    "numpy",
-    "pandas",
-    "pygmt"
-   ],
-   "file": "../examples_assets/code_notebook/chapter3/sciviz-auto-Chapter3 1 Training.py"
   },
   {
    "id": "topics_data-analysis_sciviz-sciviz-auto-Chapter3 2 training.py",
@@ -770,23 +396,6 @@
    "file": "../examples_assets/code_notebook/chapter3/sciviz-auto-Chapter3 5 training.py"
   },
   {
-   "id": "topics_data-analysis_sciviz-sciviz-auto-Chapter3 6 training.py",
-   "name": "sciviz-auto-Chapter3 6 training.py",
-   "category": "topics",
-   "tags": [
-    "科研绘图",
-    "matplotlib",
-    "自动收录"
-   ],
-   "title": "Chapter3 6 training（科研绘图）",
-   "description": "由 Chapter3/Chapter3_6_training.ipynb 转换的科研绘图示例（自动收录）。",
-   "requirements": [
-    "matplotlib",
-    "numpy"
-   ],
-   "file": "../examples_assets/code_notebook/chapter3/sciviz-auto-Chapter3 6 training.py"
-  },
-  {
    "id": "topics_data-analysis_sciviz-sciviz-auto-Chapter3 7 training.py",
    "name": "sciviz-auto-Chapter3 7 training.py",
    "category": "topics",
@@ -805,82 +414,6 @@
     "seaborn"
    ],
    "file": "../examples_assets/code_notebook/chapter3/sciviz-auto-Chapter3 7 training.py"
-  },
-  {
-   "id": "topics_data-analysis_sciviz-sciviz-auto-Chapter3 8 training.py",
-   "name": "sciviz-auto-Chapter3 8 training.py",
-   "category": "topics",
-   "tags": [
-    "科研绘图",
-    "matplotlib",
-    "自动收录"
-   ],
-   "title": "Chapter3 8 training（科研绘图）",
-   "description": "由 Chapter3/Chapter3_8_training.ipynb 转换的科研绘图示例（自动收录）。",
-   "requirements": [
-    "matplotlib",
-    "netcdf4",
-    "numpy",
-    "pandas",
-    "pillow",
-    "scipy",
-    "wordcloud"
-   ],
-   "file": "../examples_assets/code_notebook/chapter3/sciviz-auto-Chapter3 8 training.py"
-  },
-  {
-   "id": "topics_data-analysis_sciviz-sciviz-auto-Chapter4 1.py",
-   "name": "sciviz-auto-Chapter4 1.py",
-   "category": "topics",
-   "tags": [
-    "科研绘图",
-    "matplotlib",
-    "自动收录"
-   ],
-   "title": "Chapter4 1（科研绘图）",
-   "description": "由 Chapter4/Chapter4_1.ipynb 转换的科研绘图示例（自动收录）。",
-   "requirements": [
-    "matplotlib",
-    "numpy",
-    "pandas"
-   ],
-   "file": "sciviz_examples/sciviz-auto-Chapter4 1.py"
-  },
-  {
-   "id": "topics_data-analysis_sciviz-sciviz-auto-Chapter4 3 training.py",
-   "name": "sciviz-auto-Chapter4 3 training.py",
-   "category": "topics",
-   "tags": [
-    "科研绘图",
-    "matplotlib",
-    "自动收录"
-   ],
-   "title": "Chapter4 3 training（科研绘图）",
-   "description": "由 Chapter4/Chapter4_3_training.ipynb 转换的科研绘图示例（自动收录）。",
-   "requirements": [
-    "matplotlib",
-    "numpy",
-    "pandas"
-   ],
-   "file": "sciviz_examples/sciviz-auto-Chapter4 3 training.py"
-  },
-  {
-   "id": "topics_data-analysis_sciviz-sciviz-auto-Chapter4 4 training.py",
-   "name": "sciviz-auto-Chapter4 4 training.py",
-   "category": "topics",
-   "tags": [
-    "科研绘图",
-    "matplotlib",
-    "自动收录"
-   ],
-   "title": "Chapter4 4 training（科研绘图）",
-   "description": "由 Chapter4/Chapter4_4_training.ipynb 转换的科研绘图示例（自动收录）。",
-   "requirements": [
-    "matplotlib",
-    "numpy",
-    "pandas"
-   ],
-   "file": "sciviz_examples/sciviz-auto-Chapter4 4 training.py"
   }
  ],
  "schema_version": 2

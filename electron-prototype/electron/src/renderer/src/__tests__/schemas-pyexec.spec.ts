@@ -61,4 +61,32 @@ describe.skipIf(!hasVenv)('pyCode 真跑回归（.venv 执行 + 产物非空）'
     expect(stdout).toContain('main.py')
     expect(readdirSync(cwd).filter((n) => n !== 'page.py').sort()).toEqual(['project'])
   })
+
+  it('word-doc / word-table / stock-inventory：JSON 标记输出不缺 import json', () => {
+    for (const [id, v] of [
+      ['interactive:word-doc', { content: '# 报告\n正文\n- 要点一' }],
+      ['interactive:word-table', { data: '名称,数量\n苹果,12' }],
+      ['interactive:stock-inventory', { opening: '键盘,12\n鼠标,30', inflow: '键盘,10', outflow: '鼠标,15' }]
+    ] as Array<[string, Record<string, FieldValue>]>) {
+      const { stdout } = run(pyCodeOf(id, v))
+      expect(stdout, id).toContain('<<<END>>>')
+    }
+  })
+
+  it('charts-v2 中文图页：12 页默认路径全部产出 chart.png（曾整批缺 import json）', () => {
+    for (const id of ['interactive:直方图', 'interactive:热力图', 'interactive:雷达图', 'interactive:箱线图', 'interactive:面积图', 'interactive:误差条图', 'interactive:水平条形图', 'interactive:极坐标玫瑰', 'interactive:散点密度图', 'interactive:阶梯图']) {
+      const { stdout } = run(pyCodeOf(id))
+      expect(stdout, id).toContain('已输出 chart.png')
+    }
+  })
+
+  it('等高线图：无数据用内置演示网格、合法网格出图、坏网格给引导', () => {
+    const s = getToolSchema('interactive:等高线图')!
+    const bad = s.compute!({ levels: 10, data: 'x,y\n1,10\n2,20' })
+    expect((bad as { error?: string }).error).toContain('网格形状不对')
+    const { stdout } = run(pyCodeOf('interactive:等高线图'))
+    expect(stdout).toContain('已输出 chart.png')
+    const { stdout: custom } = run(pyCodeOf('interactive:等高线图', { levels: 8, data: 'x,a,b\nr1,1,2\nr2,2,3\nr3,3,5' }))
+    expect(custom).toContain('已输出 chart.png')
+  })
 })

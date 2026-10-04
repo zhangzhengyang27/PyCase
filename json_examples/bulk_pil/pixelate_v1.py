@@ -11,7 +11,7 @@ for i in range(7):
     x0 = 20 + i * (420 - 60) // 7
 dr.rectangle([420 // 2 - 70, 300 // 2, 420 // 2 + 70, 300 - 30], outline="#e8e8e8", width=3)
 
-small = base.resize((base.width // 0 - 6, base.height // 0 - 8))
+small = base.resize((max(1, base.width // 12), max(1, base.height // 12)))
 result = small.resize(base.size, Image.NEAREST)
 result.save("pil_pixelate_v1_preview.png")
 print("已生成 pil_pixelate_v1_preview.png")

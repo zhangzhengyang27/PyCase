@@ -15,6 +15,6 @@ for arm in range(2):
         theta = i * 3.0 + arm * 360 / 2
         r = 4 * math.exp(0.035 * i)
         t.goto(r * math.cos(math.radians(theta)), r * math.sin(math.radians(theta)))
-        t.dot(2, "'#e74c3c'")
+        t.pencolor('#e74c3c'); t.dot(2)
 t.hideturtle()
 turtle.done()
