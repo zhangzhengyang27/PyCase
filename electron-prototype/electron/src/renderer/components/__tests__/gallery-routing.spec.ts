@@ -95,7 +95,7 @@ describe('画廊路由收口（openDetail → 实验室页）', () => {
     expect(pendingPreset.value?.values).toEqual({ type: 'spiral' })
   })
 
-  it('无页面家族（quiver）与游戏家族不路由', async () => {
+  it('无页面家族（quiver）不路由；游戏家族路由进游戏实验室', async () => {
     examples.value = [
       makeExample({ id: 'topics_viz-quiver-d3', name: 'quiver_d3.py' }),
       makeExample({ id: 'topics_game-snake-1', name: 'snake_1.py' })
@@ -103,7 +103,8 @@ describe('画廊路由收口（openDetail → 实验室页）', () => {
     await openDetail('topics_viz-quiver-d3')
     expect(selectedId.value).toBe('topics_viz-quiver-d3')
     await openDetail('topics_game-snake-1')
-    expect(selectedId.value).toBe('topics_game-snake-1')
+    expect(selectedId.value).toBe('interactive:games-lab')
+    expect(pendingPreset.value?.values).toEqual({ type: 'snake' })
   })
 
   it('CLI 标题表条目直达交互页（无类型预选）', async () => {
@@ -157,9 +158,11 @@ describe('交互页回链与预选消费（InteractiveToolPage）', () => {
     w.unmount()
   })
 
-  it('动态表单：切换图表类型后参数字段联动更新', async () => {
-    examples.value = [vizExample('bar', 1)]
-    await openDetail('topics_viz-bar-d1')
+  it('动态表单：未锁型进入时切换类型，参数字段联动更新', async () => {
+    // 直接落页（无路由预选）= 未锁型探索形态；家族卡进入则是锁型（见下），
+    // 页内不再提供类型切换，动态字段机制仍由本用例覆盖
+    toolValues.value = {}
+    selectedId.value = 'interactive:viz-lab'
     const w = mount(InteractiveToolPage)
     await flushPromises()
     // bar 类型无 rows 字段；切到 heatmap 后出现行/列数（类型选择器是第一个 select）
@@ -169,6 +172,67 @@ describe('交互页回链与预选消费（InteractiveToolPage）', () => {
     await selects[0]!.setValue('heatmap')
     await flushPromises()
     expect(w.text()).toContain('行数')
+    w.unmount()
+  })
+
+  it('家族卡进入即锁型：类型选择器隐藏，参数与色板保留，页头为该类型', async () => {
+    examples.value = [makeExample({ id: 'topics_turtle-burst-v2', name: 'burst_v2.py', title: '烟花绽放' })]
+    await openDetail('topics_turtle-burst-v2')
+    const w = mount(InteractiveToolPage)
+    await flushPromises()
+    expect(w.find('h1').text()).toBe('烟花绽放')
+    const selects = w.findAll('select')
+    expect(selects).toHaveLength(1) // 仅剩色板，图形选择器已隐藏
+    expect(w.text()).toContain('线段数')
+    w.unmount()
+  })
+
+  it('锁型页内同页重路由：再点同实验室另一家族卡，类型照常切换', async () => {
+    examples.value = [
+      makeExample({ id: 'topics_turtle-burst-v2', name: 'burst_v2.py', title: '烟花绽放' }),
+      makeExample({ id: 'topics_turtle-lissajous-v3', name: 'lissajous_v3.py', title: '利萨茹曲线' })
+    ]
+    await openDetail('topics_turtle-burst-v2')
+    const w = mount(InteractiveToolPage)
+    await flushPromises()
+    expect(w.find('h1').text()).toBe('烟花绽放')
+    await openDetail('topics_turtle-lissajous-v3')
+    await flushPromises()
+    expect(w.find('h1').text()).toBe('利萨茹曲线')
+    expect(toolValues.value['interactive:turtle-lab']?.type).toBe('lissajous')
+    w.unmount()
+  })
+
+  it('turtle/pil/cv 家族卡落页：类型预选真正写入输入桶（实验室类型键统一为 type）', async () => {
+    examples.value = [
+      makeExample({ id: 'topics_turtle-lissajous-v3', name: 'lissajous_v3.py', title: '利萨茹曲线' }),
+      makeExample({ id: 'topics_pil-gaussian-v2', name: 'gaussian_v2.py', title: '高斯模糊' }),
+      makeExample({ id: 'topics_opencv-canny-s1', name: 'canny_s1.py', title: 'Canny 边缘' })
+    ]
+    await openDetail('topics_turtle-lissajous-v3')
+    let w = mount(InteractiveToolPage)
+    await flushPromises()
+    expect(toolValues.value['interactive:turtle-lab']?.type).toBe('lissajous')
+    w.unmount()
+    await openDetail('topics_pil-gaussian-v2')
+    w = mount(InteractiveToolPage)
+    await flushPromises()
+    expect(toolValues.value['interactive:pil-lab']?.type).toBe('gaussian')
+    w.unmount()
+    await openDetail('topics_opencv-canny-s1')
+    w = mount(InteractiveToolPage)
+    await flushPromises()
+    expect(toolValues.value['interactive:cv-lab']?.type).toBe('canny')
+    w.unmount()
+  })
+
+  it('家族卡进入实验室：页头标题/描述显示具体类型而非归并页名', async () => {
+    examples.value = [makeExample({ id: 'topics_turtle-lissajous-v3', name: 'lissajous_v3.py', title: '利萨茹曲线' })]
+    await openDetail('topics_turtle-lissajous-v3')
+    const w = mount(InteractiveToolPage)
+    await flushPromises()
+    expect(w.find('h1').text()).toBe('利萨茹曲线')
+    expect(w.text()).toContain('参数方程逐段连线')
     w.unmount()
   })
 })
@@ -187,10 +251,12 @@ describe('映射表完整性（防漂移）', () => {
   })
 
   it('TOPICS 表每个路由目标页面已注册、实验室类型存在', () => {
+    // 路由层预选统一发 key='type'（detail.ts），实验室类型选择器 key 必须与其一致，
+    // 否则预选落页被静默丢弃（历史上 turtle=shape / pil=filter / cv=op 曾各自为政）
     const labTypeFields: Record<string, string> = {
-      'interactive:pil-lab': 'filter',
-      'interactive:cv-lab': 'op',
-      'interactive:turtle-lab': 'shape'
+      'interactive:pil-lab': 'type',
+      'interactive:cv-lab': 'type',
+      'interactive:turtle-lab': 'type'
     }
     expect(Object.keys(TOPICS_FAMILY_TO_INTERACTIVE).length).toBeGreaterThanOrEqual(95)
     for (const [fam, route] of Object.entries(TOPICS_FAMILY_TO_INTERACTIVE)) {

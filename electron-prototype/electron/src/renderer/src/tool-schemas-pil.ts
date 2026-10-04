@@ -302,6 +302,7 @@ import math as _m
 frames_img = []
 for i in range(frames):
     fr = Image.new("P", (160, 120), 20)
+    fr.putpalette([v for _i in range(256) for v in (_i, _i, _i)])  # P 模式不设调色板导出全黑
     fd = ImageDraw.Draw(fr)
     cx, cy = 80 + int(52 * _m.cos(2 * _m.pi * i / frames)), 60 + int(38 * _m.sin(2 * _m.pi * i / frames))
     fd.ellipse([cx - 18, cy - 18, cx + 18, cy + 18], fill=230 - i * 8)
@@ -382,7 +383,7 @@ result = canvas`),
 // PIL 滤镜实验室：12 滤镜家族归并单页
 // ---------------------------------------------------------------------------
 const PIL_FILTER_FIELD: FieldSpec = {
-  key: 'filter',
+  key: 'type',
   label: '滤镜',
   type: 'select',
   default: 'gaussian',
@@ -396,13 +397,17 @@ export const pilLabSchema: InteractiveToolSchema = {
   description: 'bulk_pil 12 滤镜家族的归并页：程序化演示底图，选滤镜、调参数，Pillow 出图。',
   tags: ['图像', 'PIL'],
   fields: (v) => {
-    const f = PIL_FAMILIES.find((x) => x.value === v.filter) ?? PIL_FAMILIES[0]!
+    const f = PIL_FAMILIES.find((x) => x.value === v.type) ?? PIL_FAMILIES[0]!
     return [PIL_FILTER_FIELD, ...f.fields]
   },
   computeVia: 'sidecar',
-  compute: (v) => ({ rows: [{ label: '滤镜', value: String(v.filter ?? 'gaussian') }] }),
+  compute: (v) => ({ rows: [{ label: '滤镜', value: String(v.type ?? 'gaussian') }] }),
+  headerFor: (v) => {
+    const f = PIL_FAMILIES.find((x) => x.value === v.type) ?? PIL_FAMILIES[0]!
+    return { title: f.label, description: f.description }
+  },
   pyCode: (v) => {
-    const f = PIL_FAMILIES.find((x) => x.value === v.filter) ?? PIL_FAMILIES[0]!
+    const f = PIL_FAMILIES.find((x) => x.value === v.type) ?? PIL_FAMILIES[0]!
     return `${PIL_HEAD}\n${f.body(v)}\n${PIL_OUT}`
   }
 }

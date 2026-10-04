@@ -77,6 +77,9 @@ export interface InteractiveToolSchema {
   quickRun?: boolean
   /** 向导步骤：字段按 keys 分组逐步呈现（W10；不声明 = 单步平铺） */
   steps?: Array<{ title: string; keys: string[] }>
+  /** 实验室多类型页可选：页头标题/描述随当前类型联动（家族卡进入即显示具体类型，
+   *  页内切换类型实时跟随；不声明 = 恒用静态 title/description） */
+  headerFor?: (v: Record<string, FieldValue>) => { title: string; description: string }
   /** 代码抽屉模板（纯函数拼接，产物可直接 python3 运行，输出与页面结果互证） */
   pyCode: (v: Record<string, FieldValue>) => string
 }
@@ -118,6 +121,7 @@ import { cvLabSchema } from './tool-schemas-opencv'
 import { turtleLabSchema } from './tool-schemas-turtle'
 import { scivizLabSchema } from './tool-schemas-sciviz'
 import { basicsLabSchema } from './tool-schemas-basics'
+import { gamesLabSchema } from './tool-schemas-games'
 import { EFFECT_SCHEMAS } from './tool-schemas-effects'
 import { ALGO_SCHEMAS } from './tool-schemas-algos'
 import { ALGO2_SCHEMAS } from './tool-schemas-algos-v2'
@@ -130,6 +134,7 @@ export const interactiveGallerySchemas = reactive<InteractiveToolSchema[]>([
   turtleLabSchema,
   scivizLabSchema,
   basicsLabSchema,
+  gamesLabSchema,
   ...ALGO_SCHEMAS,
   ...ALGO2_SCHEMAS,
   ...CRAWLER_SCHEMAS,

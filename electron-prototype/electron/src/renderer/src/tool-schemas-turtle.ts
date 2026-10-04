@@ -1,6 +1,7 @@
 // tool-schemas-turtle.ts：bulk_turtle 29 图形家族交互页（385 变体归并）。
 // 生成**原生 turtle 模块**代码：运行弹出 Tk 画布实时绘制、关闭窗口结束；
-// T 子类保持旧引擎的 goto=瞬移 语义，各族绘制循环忠实移植变体算法。
+// T 子类保持旧引擎的 goto=瞬移 语义，靠 goto 逐点连线的曲线族（利萨茹/蝴蝶/
+// 爱心/波纹）改走 line_to（直通原生 goto 落笔），各族绘制循环忠实移植变体算法。
 // 变体的差异（角度/步长/深度/色板）全部变成页面参数。画廊路由专用注册。
 import type { FieldSpec, InteractiveToolSchema } from './interactive-tools'
 
@@ -25,7 +26,7 @@ screen = turtle.Screen()
 screen.bgcolor("#f8f8f6")
 
 class T(turtle.Turtle):
-    """与实验室旧引擎同构：goto 永远是瞬移（不画线），画线只靠 forward。"""
+    """与实验室旧引擎同构：goto 永远是瞬移（不画线），画线只靠 forward / line_to。"""
 
     def goto(self, x, y):
         down = self.isdown()
@@ -33,6 +34,10 @@ class T(turtle.Turtle):
         turtle.Turtle.goto(self, x, y)
         if down:
             self.pendown()
+
+    def line_to(self, x, y):
+        """落笔画线：直通原生 goto，供 goto 曲线族逐点连线（瞬移语义下 goto 不落笔）。"""
+        turtle.Turtle.goto(self, x, y)
 
 t = T()
 t.speed(0)`
@@ -189,7 +194,7 @@ t.width(1.8)
 t.penup()
 for i in range(n + 1):
     th = 2 * math.pi * i / n
-    t.goto(A * math.sin(a * th + phase), B * math.sin(b * th))
+    t.line_to(A * math.sin(a * th + phase), B * math.sin(b * th))
     if i == 0:
         t.pendown()`),
   turtleFamily('phyllotaxis', '向日葵螺旋',
@@ -238,7 +243,7 @@ t.penup()
 for i in range(n + 1):
     th = 12 * math.pi * i / n
     r = s * math.sin(th) * (math.e ** math.cos(th) - 2 * math.cos(4 * th) + math.sin(th / 12) ** 5)
-    t.goto(r * math.sin(th), -r * math.cos(th))
+    t.line_to(r * math.sin(th), -r * math.cos(th))
     if i == 0:
         t.pendown()`),
   turtleFamily('galaxy', '星系旋臂',
@@ -262,7 +267,7 @@ t.width(2.2)
 t.penup()
 for i in range(n + 1):
     th = 2 * math.pi * i / n
-    t.goto(s * 16 * math.sin(th) ** 3, s * (13 * math.cos(th) - 5 * math.cos(2 * th) - 2 * math.cos(3 * th) - math.cos(4 * th)))
+    t.line_to(s * 16 * math.sin(th) ** 3, s * (13 * math.cos(th) - 5 * math.cos(2 * th) - 2 * math.cos(3 * th) - math.cos(4 * th)))
     if i == 0:
         t.pendown()`),
   turtleFamily('waves', '波纹',
@@ -278,7 +283,7 @@ for k in range(lines):
     t.pendown()
     for i in range(n + 1):
         x = -320 + 640 * i / n
-        t.goto(x, -200 + k * 400 / lines + amp * math.sin(2 * math.pi * i / n + k * 0.6))`),
+        t.line_to(x, -200 + k * 400 / lines + amp * math.sin(2 * math.pi * i / n + k * 0.6))`),
   turtleFamily('rings', '同心环',
     '逐层放大的同心圆（rings 家族）。',
     [P('rings', '层数', 20), P('step', '半径增量', 15)],
@@ -469,7 +474,7 @@ for i in range(60):
 // turtle 图形画廊：29 图形家族归并单页
 // ---------------------------------------------------------------------------
 const TURTLE_SHAPE_FIELD: FieldSpec = {
-  key: 'shape',
+  key: 'type',
   label: '图形',
   type: 'select',
   default: 'spiral',
@@ -483,13 +488,17 @@ export const turtleLabSchema: InteractiveToolSchema = {
   description: 'bulk_turtle 29 图形家族的归并页：运行弹出原生 turtle 窗口实时绘制（关闭窗口结束运行），选图形、调参数与色板。',
   tags: ['turtle', '绘图'],
   fields: (v) => {
-    const t = TURTLE_SHAPES.find((x) => x.value === v.shape) ?? TURTLE_SHAPES[0]!
+    const t = TURTLE_SHAPES.find((x) => x.value === v.type) ?? TURTLE_SHAPES[0]!
     return [TURTLE_SHAPE_FIELD, PALETTE_FIELD, ...t.fields]
   },
   computeVia: 'sidecar',
-  compute: (v) => ({ rows: [{ label: '图形', value: String(v.shape ?? 'spiral') }, { label: '色板', value: String(v.palette ?? 'rainbow') }] }),
+  compute: (v) => ({ rows: [{ label: '图形', value: String(v.type ?? 'spiral') }, { label: '色板', value: String(v.palette ?? 'rainbow') }] }),
+  headerFor: (v) => {
+    const t = TURTLE_SHAPES.find((x) => x.value === v.type) ?? TURTLE_SHAPES[0]!
+    return { title: t.label, description: `${t.description}运行弹出原生 turtle 窗口实时绘制，关闭窗口结束。` }
+  },
   pyCode: (v) => {
-    const t = TURTLE_SHAPES.find((x) => x.value === v.shape) ?? TURTLE_SHAPES[0]!
+    const t = TURTLE_SHAPES.find((x) => x.value === v.type) ?? TURTLE_SHAPES[0]!
     return `palette = ${JSON.stringify(String(v.palette ?? 'rainbow'))}\n${TURTLE_HEAD}\n${t.body(v)}\n${TURTLE_OUT}`
   }
 }

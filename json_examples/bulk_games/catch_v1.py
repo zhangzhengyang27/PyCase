@@ -18,7 +18,7 @@ basket = pygame.Rect(W // 2 - 44, H - 60, 88, 26)
 fruits = []
 lives, caught, spawn_ms = 3, 0, 0
 DROP = 3.4
-PALETTE = ['"#e74c3c", "#f39c12", "#f1c40f"']
+PALETTE = ["#e74c3c", "#f39c12", "#f1c40f"]
 
 while True:
     dt = clock.tick(60)

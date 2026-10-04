@@ -1,18 +1,25 @@
 // Electron 主进程：管理窗口、spawn Python sidecar、桥接 IPC。
 
-import { app, BrowserWindow, ipcMain, dialog, Menu, shell, type MenuItemConstructorOptions } from 'electron'
+import { app, BrowserWindow, ipcMain, dialog, Menu, protocol, net, shell, type MenuItemConstructorOptions } from 'electron'
 import { spawn, type ChildProcess } from 'node:child_process'
 import path from 'node:path'
 import fs from 'node:fs'
 import { StringDecoder } from 'node:string_decoder'
-import { fileURLToPath } from 'node:url'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 
 // 协议通知名表（跨语言单一来源）：sidecar → 渲染层的通知转发由它驱动。
 // 曾因主进程手写白名单漏掉 env_progress（protocol.json/ts/server 三处都对，
 // 唯独这第四份副本漂移），tests/test_guard_protocol.py 的 G7 护栏钉死接线。
 import { NOTIFICATIONS } from '../../../shared/protocol'
 import { resolveDataDir } from '../../../shared/paths'
+import { fileToImgSchemeUrl, imgSchemeToPath, IMG_SCHEME } from '../../../shared/result-images'
 import type { SmokeContext } from './smoke'
+
+// 特权协议注册必须在 app ready 之前：dev 模式渲染层在 http://localhost 上，
+// Chromium webSecurity 禁止 http 页面加载 file:// 子资源，运行产物图必须走本协议
+protocol.registerSchemesAsPrivileged([
+  { scheme: IMG_SCHEME, privileges: { stream: true, supportFetchAPI: true } }
+])
 
 // ---------------------------------------------------------------------------
 // 路径解析
@@ -259,6 +266,11 @@ function handleSidecarMessage(line: string): void {
       }
     } else if (msg.method && (NOTIFICATIONS as readonly string[]).includes(msg.method)) {
       // 转发到渲染进程（env_progress 等由名表驱动，不手写白名单）
+      if (msg.method === 'run_images') {
+        // file:// URI 在 dev（http origin）下不能作 <img> src，统一改写成特权协议
+        const images = (msg.params?.images as string[] | undefined) ?? []
+        ;(msg.params as Record<string, unknown>).images = images.map(fileToImgSchemeUrl)
+      }
       broadcast(`sidecar:${msg.method}`, msg.params)
     }
     return
@@ -603,7 +615,8 @@ ipcMain.handle(
   'file:downloadResultImage',
   async (event, { url, defaultName }: { url: string; defaultName?: string }) => {
     try {
-      const srcPath = fileURLToPath(url)
+      // 渲染层拿到的是转发层改写后的 pycase-img:// URL（也可能是旧缓存的 file://）
+      const srcPath = imgSchemeToPath(url) ?? fileURLToPath(url)
       if (!fs.existsSync(srcPath)) {
         return { error: `文件不存在：${srcPath}` }
       }
@@ -878,6 +891,22 @@ function setupMenu(): void {
 // 应用生命周期
 // ---------------------------------------------------------------------------
 app.whenReady().then(() => {
+  // 运行产物图代理：pycase-img:///path → 只读示例缓存目录内的图片文件
+  protocol.handle(IMG_SCHEME, async (request) => {
+    try {
+      const raw = imgSchemeToPath(request.url)
+      if (!raw) return new Response('forbidden', { status: 403 })
+      const filePath = path.resolve(raw)
+      const ext = path.extname(filePath).toLowerCase()
+      if (!['.png', '.jpg', '.jpeg', '.gif', '.bmp', '.webp', '.svg'].includes(ext)) {
+        return new Response('forbidden', { status: 403 })
+      }
+      if (!isInsideExamplesCache(filePath)) return new Response('forbidden', { status: 403 })
+      return await net.fetch(pathToFileURL(filePath).toString())
+    } catch {
+      return new Response('not found', { status: 404 })
+    }
+  })
   app.setAboutPanelOptions({
     applicationName: 'Python 示例管理器',
     applicationVersion: app.getVersion(),

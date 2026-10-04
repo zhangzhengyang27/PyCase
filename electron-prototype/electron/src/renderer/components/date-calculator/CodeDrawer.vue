@@ -8,10 +8,14 @@ import { ChevronUp, Copy, Download, Play, Square } from 'lucide-vue-next'
 import { applyMonacoTheme, currentMonacoTheme, monaco } from '../../monaco'
 import { pushToast } from '../../toast'
 import { api } from '../../src/sidecar-client'
-import { runBusy, runExitCode, runImages, runOutput, runSnippet, stopSnippet } from '../../src/store/date-run'
+import { runBusy, runContext, runExitCode, runImages, runOutput, runSnippet, stopSnippet } from '../../src/store/date-run'
 import BaseButton from '../base/BaseButton.vue'
 
-const props = defineProps<{ code: string; runId: string }>()
+const props = defineProps<{ code: string; runId: string; contextKey?: string | null }>()
+
+// 运行输出/产物图只显示属于本页上下文的运行（InteractiveToolPage 传实验室页的
+// 「页面|类型」上下文）；不传 contextKey 的调用方保持原行为（恒显示）。
+const runMatches = (): boolean => !props.contextKey || props.contextKey === runContext.value
 
 const open = ref(false)
 
@@ -113,7 +117,7 @@ async function copyCode(): Promise<void> {
         </span>
       </div>
       <div ref="container" class="h-[240px] border border-line rounded-control overflow-hidden bg-page" />
-      <div v-if="runImages.length" class="flex flex-wrap gap-2" data-testid="run-images">
+      <div v-if="runMatches() && runImages.length" class="flex flex-wrap gap-2" data-testid="run-images">
         <figure
           v-for="img in runImages"
           :key="img"
@@ -132,7 +136,7 @@ async function copyCode(): Promise<void> {
         </figure>
       </div>
       <pre
-        v-if="runOutput"
+        v-if="runMatches() && runOutput"
         aria-live="polite"
         class="m-0 p-3 max-h-[180px] overflow-auto text-control font-mono bg-page border border-line rounded-control whitespace-pre-wrap"
         data-testid="run-output"

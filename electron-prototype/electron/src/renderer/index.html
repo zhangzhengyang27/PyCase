@@ -6,7 +6,7 @@
     <!-- CSP 与旧渲染层保持一致（Element Plus 仅注入 style 属性，已允许） -->
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' file: data: blob:; font-src 'self' data:; connect-src 'self' ws: wss: http://localhost:* http://127.0.0.1:*; worker-src 'self' blob:"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' file: data: blob: pycase-img:; font-src 'self' data:; connect-src 'self' ws: wss: http://localhost:* http://127.0.0.1:*; worker-src 'self' blob:"
     />
     <title>Python 示例管理器</title>
     <!-- data-theme 默认 dark；主题的提前恢复在 preload（首帧前），此处仅作无 JS 兜底 -->

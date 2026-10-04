@@ -223,7 +223,7 @@ for i, hgt in enumerate(hist):
 // OpenCV 处理实验室：25 处理家族归并单页
 // ---------------------------------------------------------------------------
 const CV_OP_FIELD: FieldSpec = {
-  key: 'op',
+  key: 'type',
   label: '处理操作',
   type: 'select',
   default: 'canny',
@@ -237,13 +237,17 @@ export const cvLabSchema: InteractiveToolSchema = {
   description: 'bulk_opencv 25 处理家族的归并页：合成场景 + 处理链，选操作、调参数，OpenCV 出图。',
   tags: ['图像', 'OpenCV'],
   fields: (v) => {
-    const o = CV_OPS.find((x) => x.value === v.op) ?? CV_OPS[0]!
+    const o = CV_OPS.find((x) => x.value === v.type) ?? CV_OPS[0]!
     return [CV_OP_FIELD, ...o.fields]
   },
   computeVia: 'sidecar',
-  compute: (v) => ({ rows: [{ label: '处理操作', value: String(v.op ?? 'canny') }] }),
+  compute: (v) => ({ rows: [{ label: '处理操作', value: String(v.type ?? 'canny') }] }),
+  headerFor: (v) => {
+    const o = CV_OPS.find((x) => x.value === v.type) ?? CV_OPS[0]!
+    return { title: o.label, description: o.description }
+  },
   pyCode: (v) => {
-    const o = CV_OPS.find((x) => x.value === v.op) ?? CV_OPS[0]!
+    const o = CV_OPS.find((x) => x.value === v.type) ?? CV_OPS[0]!
     return `${CV_HEAD}\n${o.body(v)}\n${CV_OUT}`
   }
 }

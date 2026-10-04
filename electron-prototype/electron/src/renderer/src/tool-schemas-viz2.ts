@@ -486,6 +486,10 @@ export const vizLabSchema: InteractiveToolSchema = {
       { label: '点数', value: String(v.points ?? 60) }
     ]
   }),
+  headerFor: (v) => {
+    const t = VIZ_TYPES.find((x) => x.value === v.type) ?? VIZ_TYPES[0]!
+    return { title: t.label, description: t.description }
+  },
   pyCode: (v) => {
     const t = VIZ_TYPES.find((x) => x.value === v.type) ?? VIZ_TYPES[0]!
     const mode = str(v.mode ?? 'sine')

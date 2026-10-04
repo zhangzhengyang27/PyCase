@@ -172,3 +172,36 @@ describe('工具箱分类（W16 二级菜单）', () => {
     expect(toolboxItems.value.length).toBe(interactiveToolItems.value.length + 2)
   })
 })
+
+// ---------------------------------------------------------------------------
+// 实验室页头联动：headerFor 必须覆盖全部类型档位，标题/描述与类型注册表一致。
+// 背景：家族卡进入实验室页时页头曾恒显归并页名（如「turtle 图形画廊」），
+// 且路由预选键 type 与 turtle/pil/cv 的类型字段键（shape/filter/op）不一致被静默丢弃。
+// 本用例同时钉住「类型选择器 key 统一为 type」与「headerFor 全档位覆盖」两个不变量。
+describe('实验室页头联动（headerFor 全档位）', () => {
+  const LABS = [
+    'interactive:viz-lab',
+    'interactive:pil-lab',
+    'interactive:cv-lab',
+    'interactive:turtle-lab',
+    'interactive:sciviz-lab',
+    'interactive:basics-lab'
+  ]
+  for (const id of LABS) {
+    it(`${id}：全档位标题/描述与类型注册表一致`, () => {
+      const s = getToolSchema(id)
+      expect(s, `${id} 未注册`).toBeTruthy()
+      const f0 = typeof s!.fields === 'function' ? s!.fields({}) : s!.fields
+      const tf = f0.find((f) => f.key === 'type')
+      expect(tf, `${id} 缺少 key='type' 的类型选择器`).toBeTruthy()
+      const opts = tf!.options as Array<{ value: string; label: string }>
+      expect(opts.length).toBeGreaterThan(0)
+      for (const o of opts) {
+        const h = s!.headerFor?.({ type: o.value })
+        expect(h, `类型 ${o.value} 无页头信息`).toBeDefined()
+        expect(h!.title).toBe(o.label)
+        expect(h!.description.trim()).not.toBe('')
+      }
+    })
+  }
+})

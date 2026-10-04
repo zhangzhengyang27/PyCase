@@ -306,6 +306,10 @@ export const scivizLabSchema: InteractiveToolSchema = {
   },
   computeVia: 'sidecar',
   compute: (v) => ({ rows: [{ label: '图形', value: String(v.type ?? 'streamplot') }] }),
+  headerFor: (v) => {
+    const t = SCIVIZ_TYPES.find((x) => x.value === v.type) ?? SCIVIZ_TYPES[0]!
+    return { title: t.label, description: t.description }
+  },
   pyCode: (v) => {
     const t = SCIVIZ_TYPES.find((x) => x.value === v.type) ?? SCIVIZ_TYPES[0]!
     return `${SV_HEAD}\n${t.body(v)}\n${SV_OUT}`

@@ -8,6 +8,7 @@ import { VIZ_TYPES } from './tool-schemas-viz2'
 import { PIL_FAMILIES } from './tool-schemas-pil'
 import { CV_OPS } from './tool-schemas-opencv'
 import { TURTLE_SHAPES } from './tool-schemas-turtle'
+import { GAME_TYPES } from './tool-schemas-games'
 import {
   TITLE_TO_INTERACTIVE,
   TOPICS_FAMILY_TO_INTERACTIVE,
@@ -26,7 +27,8 @@ const LAB_REGISTRIES: Record<string, RegistryLike[]> = {
   'interactive:viz-lab': VIZ_TYPES,
   'interactive:pil-lab': PIL_FAMILIES,
   'interactive:cv-lab': CV_OPS,
-  'interactive:turtle-lab': TURTLE_SHAPES
+  'interactive:turtle-lab': TURTLE_SHAPES,
+  'interactive:games-lab': GAME_TYPES
 }
 
 /** 实验室类型名 > 交互页标题 > 原样家族键 */

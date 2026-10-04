@@ -228,6 +228,7 @@ export const systemInfoSchema: InteractiveToolSchema = {
   pyCode: () =>
     WRAP(`import os
 import platform
+import psutil
 import sys
 
 _r = {
@@ -237,8 +238,7 @@ _r = {
         {"label": "CPU 核数", "value": str(os.cpu_count())},
         {"label": "内存", "value": f"{psutil.virtual_memory().total / 1024 ** 3:.0f} GB"},
     ]
-}
-import psutil`)
+}`)
 }
 
 export const processTopSchema: InteractiveToolSchema = {
@@ -256,7 +256,10 @@ export const processTopSchema: InteractiveToolSchema = {
 procs = []
 for p in psutil.process_iter(["pid", "name", "memory_info"]):
     try:
-        procs.append((p.info["memory_info"].rss, p.info["pid"], p.info["name"] or "?"))
+        mi = p.info["memory_info"]
+        if mi is None:
+            continue
+        procs.append((mi.rss, p.info["pid"], p.info["name"] or "?"))
     except (psutil.NoSuchProcess, psutil.AccessDenied):
         continue
 procs.sort(reverse=True)

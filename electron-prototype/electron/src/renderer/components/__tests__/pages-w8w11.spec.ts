@@ -80,7 +80,7 @@ describe('quickRun 自动运行', () => {
   it('进页自动运行一次（切走再切回只跑一次/每次进入各一次）', async () => {
     selectedId.value = QUICK.id
     let w = mount(InteractiveToolPage)
-    await vi.waitFor(() => expect(hoisted.runSnippet).toHaveBeenCalledWith(QUICK.id, 'print(1)\n'))
+    await vi.waitFor(() => expect(hoisted.runSnippet).toHaveBeenCalledWith(QUICK.id, 'print(1)\n', `${QUICK.id}|`))
     w.unmount()
 
     selectedId.value = 'tools_other'
@@ -115,8 +115,10 @@ describe('sidecar 结果渲染', () => {
   it('runOutput 命中标记 → 表格渲染；运行中态显示', async () => {
     selectedId.value = QUICK.id
     const w = mount(InteractiveToolPage)
-    // 直接驱动 store（mock 的 date-run 保真实 refs；页面无需点击——sidecar 区随 runOutput 渲染）
+    // 直接驱动 store（mock 的 date-run 保真实 refs；页面无需点击——sidecar 区随 runOutput 渲染）。
+    // 运行结果按上下文隔离：须先把 runContext 置成本页上下文
     const dateRun = await import('../../src/store/date-run')
+    dateRun.runContext.value = `${QUICK.id}|`
     dateRun.runBusy.value = true
     dateRun.runOutput.value =
       '加载中\n<<<JSON>>>\n{"table":{"columns":["挂载点","用"],"rows":[["/","10G"]]}}\n<<<END>>>'

@@ -272,7 +272,8 @@ print(f"{name} 的值是 {value:${String(v.spec ?? '.2f')}}")`
 
 root = Path("project")
 tree = ["main.py", "utils.py", "data/train.csv", "data/test.csv", "docs/readme.txt", "notes.txt"]
-for p in map(Path, tree):
+for rel in tree:
+    p = root / rel
     p.parent.mkdir(parents=True, exist_ok=True)
     p.touch()
 
@@ -306,6 +307,10 @@ export const basicsLabSchema: InteractiveToolSchema = {
   compute: (v) => {
     const t = BASICS_TYPES.find((x) => x.value === v.type) ?? BASICS_TYPES[0]!
     return t.compute(v)
+  },
+  headerFor: (v) => {
+    const t = BASICS_TYPES.find((x) => x.value === v.type) ?? BASICS_TYPES[0]!
+    return { title: t.label, description: t.description }
   },
   pyCode: (v) => {
     const t = BASICS_TYPES.find((x) => x.value === v.type) ?? BASICS_TYPES[0]!

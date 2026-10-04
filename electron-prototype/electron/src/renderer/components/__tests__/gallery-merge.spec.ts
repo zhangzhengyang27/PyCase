@@ -14,7 +14,7 @@ import {
   searchQuery,
   type VExample
 } from '../../src/store/catalog'
-import { selectedId, openDetail, pendingPreset } from '../../src/store/detail'
+import { selectedId, pendingPreset } from '../../src/store/detail'
 
 function ex(id: string, overrides: Partial<VExample> = {}): VExample {
   return {
@@ -56,14 +56,17 @@ describe('mergeVariantCards（纯函数）', () => {
     expect(merged[0]!.id).toBe('topics_viz-bar-d1')
   })
 
-  it('未路由家族（游戏）与 CLI 工具不折叠，独立单例原样通过', () => {
+  it('游戏家族折叠为类型族卡；CLI 工具不折叠', () => {
     const merged = mergeVariantCards([
       ...Array.from({ length: 5 }, (_, i) => ex(`topics_game-snake-${i + 1}`)),
       ex('e-cli', { title: '正则测试器' }),
       ex('topics_basics-dataclass')
     ])
-    expect(merged).toHaveLength(7)
-    expect(merged.every((e) => !e.variantCount)).toBe(true)
+    // 贪吃蛇 5 变体 → 1 张族卡；CLI 工具与已路由单例原样（标题重写不改数量）
+    expect(merged).toHaveLength(3)
+    const snake = merged.find((e) => e.id === 'topics_game-snake-1')!
+    expect(snake.title).toBe('贪吃蛇')
+    expect(snake.variantCount).toBe(5)
   })
 
   it('幂等：对已折叠池重复调用不变', () => {

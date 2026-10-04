@@ -18,66 +18,6 @@
    "file": "bulk_games/snake_v1.py"
   },
   {
-   "id": "topics_game-snake-2",
-   "name": "snake_v2.py",
-   "category": "topics",
-   "tags": [
-    "Pygame",
-    "游戏"
-   ],
-   "title": "贪吃蛇·1",
-   "description": "网格贪吃蛇，吃食物变长，撞墙/自身结束。本变体：1（速度 9，窗口 624×456）。",
-   "requirements": [
-    "pygame"
-   ],
-   "file": "bulk_games/snake_v2.py"
-  },
-  {
-   "id": "topics_game-snake-3",
-   "name": "snake_v3.py",
-   "category": "topics",
-   "tags": [
-    "Pygame",
-    "游戏"
-   ],
-   "title": "贪吃蛇·2",
-   "description": "网格贪吃蛇，吃食物变长，撞墙/自身结束。本变体：2（速度 11，窗口 672×480）。",
-   "requirements": [
-    "pygame"
-   ],
-   "file": "bulk_games/snake_v3.py"
-  },
-  {
-   "id": "topics_game-snake-4",
-   "name": "snake_v4.py",
-   "category": "topics",
-   "tags": [
-    "Pygame",
-    "游戏"
-   ],
-   "title": "贪吃蛇·3",
-   "description": "网格贪吃蛇，吃食物变长，撞墙/自身结束。本变体：3（速度 13，窗口 720×504）。",
-   "requirements": [
-    "pygame"
-   ],
-   "file": "bulk_games/snake_v4.py"
-  },
-  {
-   "id": "topics_game-snake-5",
-   "name": "snake_v5.py",
-   "category": "topics",
-   "tags": [
-    "Pygame",
-    "游戏"
-   ],
-   "title": "贪吃蛇·4",
-   "description": "网格贪吃蛇，吃食物变长，撞墙/自身结束。本变体：4（速度 15，窗口 768×528）。",
-   "requirements": [
-    "pygame"
-   ],
-   "file": "bulk_games/snake_v5.py"
-  },
-  {
    "id": "topics_game-catch-1",
    "name": "catch_v1.py",
    "category": "topics",
@@ -93,51 +33,6 @@
    "file": "bulk_games/catch_v1.py"
   },
   {
-   "id": "topics_game-catch-2",
-   "name": "catch_v2.py",
-   "category": "topics",
-   "tags": [
-    "Pygame",
-    "游戏"
-   ],
-   "title": "接水果·速度5",
-   "description": "左右移动篮子接水果，漏接扣命。本变体：速度5（速度 4.1，窗口 600×480）。",
-   "requirements": [
-    "pygame"
-   ],
-   "file": "bulk_games/catch_v2.py"
-  },
-  {
-   "id": "topics_game-catch-3",
-   "name": "catch_v3.py",
-   "category": "topics",
-   "tags": [
-    "Pygame",
-    "游戏"
-   ],
-   "title": "接水果·速度6",
-   "description": "左右移动篮子接水果，漏接扣命。本变体：速度6（速度 4.8，窗口 640×480）。",
-   "requirements": [
-    "pygame"
-   ],
-   "file": "bulk_games/catch_v3.py"
-  },
-  {
-   "id": "topics_game-catch-4",
-   "name": "catch_v4.py",
-   "category": "topics",
-   "tags": [
-    "Pygame",
-    "游戏"
-   ],
-   "title": "接水果·速度7",
-   "description": "左右移动篮子接水果，漏接扣命。本变体：速度7（速度 5.5，窗口 680×480）。",
-   "requirements": [
-    "pygame"
-   ],
-   "file": "bulk_games/catch_v4.py"
-  },
-  {
    "id": "topics_game-pong-1",
    "name": "pong_v1.py",
    "category": "topics",
@@ -151,51 +46,6 @@
     "pygame"
    ],
    "file": "bulk_games/pong_v1.py"
-  },
-  {
-   "id": "topics_game-pong-2",
-   "name": "pong_v2.py",
-   "category": "topics",
-   "tags": [
-    "Pygame",
-    "游戏"
-   ],
-   "title": "双人弹球·先得4分",
-   "description": "W/S 与方向键控制球拍对打。本变体：先得4分（速度 -，窗口 680×440）。",
-   "requirements": [
-    "pygame"
-   ],
-   "file": "bulk_games/pong_v2.py"
-  },
-  {
-   "id": "topics_game-pong-3",
-   "name": "pong_v3.py",
-   "category": "topics",
-   "tags": [
-    "Pygame",
-    "游戏"
-   ],
-   "title": "双人弹球·先得5分",
-   "description": "W/S 与方向键控制球拍对打。本变体：先得5分（速度 -，窗口 720×440）。",
-   "requirements": [
-    "pygame"
-   ],
-   "file": "bulk_games/pong_v3.py"
-  },
-  {
-   "id": "topics_game-pong-4",
-   "name": "pong_v4.py",
-   "category": "topics",
-   "tags": [
-    "Pygame",
-    "游戏"
-   ],
-   "title": "双人弹球·先得6分",
-   "description": "W/S 与方向键控制球拍对打。本变体：先得6分（速度 -，窗口 760×440）。",
-   "requirements": [
-    "pygame"
-   ],
-   "file": "bulk_games/pong_v4.py"
   }
  ],
  "schema_version": 2

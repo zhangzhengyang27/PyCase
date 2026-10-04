@@ -22,13 +22,15 @@ vi.mock('../sidecar-client', () => ({
   }
 }))
 
-import { runBusy, runExitCode, runOutput, runSnippet, stopSnippet } from '../store/date-run'
+import { runBusy, runContext, runExitCode, runImages, runOutput, runSnippet, stopSnippet } from '../store/date-run'
 import { DATE_CALC_ID } from '../interactive-tools'
 
 beforeEach(() => {
   runOutput.value = ''
   runExitCode.value = null
   runBusy.value = false
+  runImages.value = []
+  runContext.value = null
   runExample.mockClear()
   stopRun.mockClear()
 })
@@ -69,5 +71,24 @@ describe('runSnippet', () => {
     await vi.waitFor(() => expect(runBusy.value).toBe(false))
     stopSnippet()
     expect(stopRun).not.toHaveBeenCalled()
+  })
+  it('runImages 只接受本 run_id（sidecar 扫描工作区产物图推送）', async () => {
+    runSnippet(DATE_CALC_ID, 'x')
+    await vi.waitFor(() => expect(runBusy.value).toBe(true))
+    listeners.runImages({ run_id: 'other', images: ['file:///noise.png'] })
+    expect(runImages.value).toEqual([])
+    listeners.runImages({ run_id: 'r1', images: ['file:///ws/chart.png'] })
+    expect(runImages.value).toEqual(['file:///ws/chart.png'])
+    listeners.runImages({ run_id: 'r1', images: [] })
+    expect(runImages.value).toEqual([])
+  })
+  it('runSnippet 记录运行上下文：缺省按 id，实验室页可带类型', async () => {
+    runSnippet(DATE_CALC_ID, 'x')
+    await vi.waitFor(() => expect(runBusy.value).toBe(true))
+    expect(runContext.value).toBe(`${DATE_CALC_ID}|`)
+    listeners.runFinished({ run_id: 'r1', exit_code: 0 })
+    await vi.waitFor(() => expect(runBusy.value).toBe(false))
+    runSnippet(DATE_CALC_ID, 'x', `${DATE_CALC_ID}|a`)
+    expect(runContext.value).toBe(`${DATE_CALC_ID}|a`)
   })
 })

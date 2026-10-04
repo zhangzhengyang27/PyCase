@@ -366,6 +366,15 @@ export const TOPICS_FAMILY_TO_INTERACTIVE: Record<string, { page: string; type?:
   'python-basics_pillow-ascii-art': { page: 'interactive:ascii-art' },
   'python-basics_pillow-edge-detect': { page: 'interactive:pil-lab', type: 'contour' },
   'python-basics_pillow-histogram-equalize': { page: 'interactive:cv-lab', type: 'equalize' },
+  // ---- 游戏系列（Pygame 游戏实验室：原生窗口模式）----
+  'game-snake': { page: 'interactive:games-lab', type: 'snake' },
+  'game-pong': { page: 'interactive:games-lab', type: 'pong' },
+  'game-catch': { page: 'interactive:games-lab', type: 'catch' },
+  'pygame-snake': { page: 'interactive:games-lab', type: 'snake' },
+  'pygame-pong': { page: 'interactive:games-lab', type: 'pong' },
+  'pygame-catch': { page: 'interactive:games-lab', type: 'catch' },
+  'pygame-breakout': { page: 'interactive:games-lab', type: 'breakout' },
+  'pygame-memory': { page: 'interactive:games-lab', type: 'memory' },
   // ---- bulk_basics 语法教学单例（语法实验室）----
   'basics-comprehension': { page: 'interactive:basics-lab', type: 'comprehension' },
   'basics-decorator': { page: 'interactive:basics-lab', type: 'decorator' },
