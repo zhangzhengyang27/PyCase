@@ -129,6 +129,11 @@ console.log('assignSections')
     byKey['tag:basics'].includes('both1') && !byKey['tag:algo'].includes('both1')
   )
   check('排序 进算法与数据结构区', byKey['tag:algo'].includes('s1'))
+  check('爬虫标签进网络爬虫区', (() => {
+    const secs = assignSections([ex('c1', { tags: ['爬虫'] })])
+    const bucket = secs.find((s) => s.key === 'tag:crawler')
+    return !!bucket && bucket.items.map((e) => e.id).includes('c1')
+  })())
   check('无标签且未命中主题进 others', byKey.others.includes('plain1'))
   check('空库时 others 分节不出现', !assignSections([]).some((s) => s.key === 'others'))
 }
@@ -136,20 +141,21 @@ console.log('assignSections')
 // 7. tagSectionLabel：结果条范围标题反查
 {
   check('组内标签反查分区名', tagSectionLabel(['python-basics']) === '语言基础')
+  check('爬虫标签反查网络爬虫分区', tagSectionLabel(['爬虫']) === '网络爬虫')
   check('大小写不敏感', tagSectionLabel(['Python-Basics']) === '语言基础')
   check('未知标签返回 undefined', tagSectionLabel(['no-such-tag']) === undefined)
 }
 
-// 8. SECTION_CATALOG：侧栏二级分区菜单的完整元数据（全部 8 项，others 恒在）
+// 8. SECTION_CATALOG：侧栏二级分区菜单的完整元数据（全部 9 项，others 恒在）
 {
-  check('8 项 = 5 主题 + 2 标签组 + 其他', SECTION_CATALOG.length === 8)
+  check('9 项 = 5 主题 + 3 标签组 + 其他', SECTION_CATALOG.length === 9)
   // 与 assignSections 同序；assignSections 空库省略 others，这里补回正好对齐 8 项
   check(
     '键序与 assignSections 一致（others 恒在末尾）',
     SECTION_CATALOG.map((s) => s.key).join() === [...assignSections([]).map((s) => s.key), 'others'].join()
   )
   check(
-    "kind 分布：5 theme + 2 tags + 1 others",
+    "kind 分布：5 theme + 3 tags + 1 others",
     SECTION_CATALOG.filter((s) => s.kind === 'theme').length === 5 &&
       SECTION_CATALOG.filter((s) => s.kind === 'tags').length === TAG_SECTIONS.length &&
       SECTION_CATALOG.filter((s) => s.kind === 'others').length === 1
@@ -158,7 +164,11 @@ console.log('assignSections')
     "标签组项带 tags（下钻/图标解析用）",
     SECTION_CATALOG.filter((s) => s.kind === 'tags').every((s) => Array.isArray(s.tags) && s.tags.length > 0)
   )
-  check('others 收尾', SECTION_CATALOG[7].key === 'others')
+  check('others 收尾', SECTION_CATALOG[8].key === 'others')
+  check(
+    '网络爬虫分区：爬虫标签命中且排在标签组末位',
+    sectionLabelOf('tag:crawler') === '网络爬虫' && SECTION_CATALOG[7].key === 'tag:crawler'
+  )
   check(
     'sectionLabelOf 反查（分区 key → 展示名）',
     sectionLabelOf('tag:basics') === '语言基础' &&

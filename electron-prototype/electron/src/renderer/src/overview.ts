@@ -41,12 +41,17 @@ export const TAG_SECTIONS: ReadonlyArray<{ key: string; label: string; tags: str
     key: 'tag:algo',
     label: '算法与数据结构',
     tags: ['algorithms', 'algorithm', '数据结构', '排序', '算法']
+  },
+  {
+    key: 'tag:crawler',
+    label: '网络爬虫',
+    tags: ['爬虫', '网络爬虫']
   }
 ]
 
 /**
  * 侧栏二级分区菜单的完整元数据表（与 assignSections 完全同序：
- * 5 主题 → 2 标签组 → 其他 = 8 项）。
+ * 5 主题 → 3 标签组 → 其他 = 9 项）。
  * 与 assignSections 的唯一差别：others 恒在（菜单需完整 8 项，计数为 0 也展示），
  * 而 assignSections 会在 others 为空时省略该分区以避开「0 个」噪音。
  * 分区下钻统一走「分区」筛选维度（FilterQuery.sections），故此处不再需要 kind 驱动下钻分支。

@@ -41,6 +41,7 @@ const SECTION_ICONS: Record<string, LucideIcon> = {
   viz: BarChart3,
   'tag:basics': Blocks,
   'tag:algo': Calculator,
+  'tag:crawler': Globe,
   others: Package
 }
 
