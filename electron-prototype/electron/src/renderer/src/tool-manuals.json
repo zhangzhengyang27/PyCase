@@ -28,7 +28,7 @@
     {
      "flag": "directory",
      "nargs": "?",
-     "default": ".",
+     "default": "演示数据",
      "positional": true
     },
     {
@@ -943,12 +943,6 @@
     }
    ]
   },
-  "tools_merge_courseware.py": {
-   "title": "merge_courseware",
-   "summary": "将课程资料（按周组织的 Python 代码）融合进当前项目。",
-   "usage": "python merge_courseware.py",
-   "params": []
-  },
   "tools_office-docx-create": {
    "title": "Word 文档生成",
    "summary": "Word 生成：会议纪要模板。",
@@ -960,7 +954,7 @@
   },
   "tools_office-docx-read": {
    "title": "Word 读取",
-   "summary": "Word 读取：先跑 docx-create 生成文件，再提取内容。",
+   "summary": "Word 读取：提取段落与表格。\n没有数据？运行时自动生成示例文档 周会纪要.docx 再读取。",
    "usage": "python office_docx-read.py",
    "params": [],
    "notes": [
@@ -984,7 +978,7 @@
     {
      "flag": "directory",
      "nargs": "?",
-     "default": ".",
+     "default": "演示数据/文档",
      "positional": true
     },
     {
@@ -1083,7 +1077,7 @@
   },
   "tools_office-xls-read": {
    "title": "Excel 读取与遍历",
-   "summary": "Excel 读取：遍历 + 汇总。",
+   "summary": "Excel 读取：遍历 + 汇总。\n没有数据？运行时自动生成示例工作簿 销售明细.xlsx 再读取。",
    "usage": "python office_xls-read.py",
    "params": [],
    "notes": [
@@ -1216,18 +1210,6 @@
    "usage": "python office3_xls-vlookup-join.py",
    "params": []
   },
-  "tools_plan_regroup.py": {
-   "title": "plan_regroup",
-   "summary": "规划：将扁平化的章节按主题分组到子目录，子目录内连续编号 NN-标题.py。\n仅打印计划，不实际移动。",
-   "usage": "python plan_regroup.py",
-   "params": []
-  },
-  "tools_regroup.py": {
-   "title": "regroup",
-   "summary": "将扁平化章节按主题分组到子目录，子目录内连续编号 NN-标题.py。\n用法：python3 regroup.py [--dry]",
-   "usage": "python regroup.py",
-   "params": []
-  },
   "tools_rename_normalize.py": {
    "title": "rename_normalize",
    "summary": "规范化文件名：驼峰/连字符命名的英文 .py 改为 snake_case；清理冗余 venv 副本。",
@@ -1238,24 +1220,6 @@
    "title": "rename_weeks",
    "summary": "将按周命名的目录改为按内容语义命名。用法：python3 rename_weeks.py [--dry]",
    "usage": "python rename_weeks.py",
-   "params": []
-  },
-  "tools_renumber.py": {
-   "title": "renumber",
-   "summary": "对剩余单层章节统一连续编号 NN-标题.py，去掉 hm_/my-/pachong 等前缀。\n不建子目录（主题单一）。用法：python3 renumber.py [--dry]",
-   "usage": "python renumber.py",
-   "params": []
-  },
-  "tools_renumber_crawler.py": {
-   "title": "renumber_crawler",
-   "summary": "统一 crawler/01-basics 与 02-intermediate/dynamic 的文件命名。\n- 去掉重复/无序前缀，统一为连续 NN-标题.py\n- 驼峰英文文件名转 snake_case（如 MozillaCookieJar -> mozilla_cookie_jar）\n用法：python3 renumber_crawler.py [--dry]",
-   "usage": "python renumber_crawler.py",
-   "params": []
-  },
-  "tools_renumber_remaining.py": {
-   "title": "renumber_remaining",
-   "summary": "处理剩余目录的命名规范化。用法：python3 renumber_remaining.py [--dry]",
-   "usage": "python renumber_remaining.py",
    "params": []
   },
   "tools_tools-qr-matrix-1": {
@@ -1319,17 +1283,6 @@
    "params": [],
    "notes": [
     "教学示例：脚本内数据为演示硬编码；实际使用把数据源换成真实文件/目录即可。"
-   ]
-  },
-  "tools_verify_merge.py": {
-   "title": "verify_merge",
-   "summary": "校验融合完整性：源目录应纳入的文件是否全部已存在于目标。",
-   "usage": "python verify_merge.py",
-   "params": [
-    {
-     "flag": "--src",
-     "help": "源课程资料目录（按周组织）"
-    }
    ]
   }
  }

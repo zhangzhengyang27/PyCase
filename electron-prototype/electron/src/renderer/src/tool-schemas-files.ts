@@ -13,6 +13,28 @@ const IMG_EXTS = ['png', 'jpg', 'jpeg', 'webp', 'bmp']
 const COLLECT = (srcDir: string) => `import glob, os
 
 SRC = ${JSON.stringify(srcDir)}
+
+def _seed_sample_images():
+    """目录缺图时自动生成 6 张示例图片（用户零输入即可体验）。"""
+    from PIL import Image, ImageDraw
+    os.makedirs(SRC, exist_ok=True)
+    for i in range(6):
+        im = Image.new("RGB", (640, 420), ("#1f2430", "#20242c", "#1b2a34")[i % 3])
+        dr = ImageDraw.Draw(im)
+        palette = ["#e74c3c", "#f4a261", "#e9c46a", "#2a9d8f", "#457b9d", "#9d4edd"]
+        for k in range(5):
+            x0, y0 = 40 + k * 110 + i * 13, 60 + (k % 3) * 90
+            dr.rectangle([x0, y0, x0 + 88, y0 + 66], outline=palette[k], width=6)
+        dr.ellipse([240, 150, 400, 290], outline="#f1faee", width=8)
+        dr.line([(0, 380), (640, 360)], fill="#8ab17d", width=10)
+        im.save(os.path.join(SRC, f"sample_{i + 1}.png"))
+
+if not os.path.isdir(SRC) or not any(
+    f.lower().endswith((".png", ".jpg", ".jpeg", ".webp", ".bmp")) for f in os.listdir(SRC)
+):
+    _seed_sample_images()
+    print("未选择图片目录：已自动生成 6 张示例图片到", SRC)
+
 files = sorted(
     f for ext in ("*.png", "*.jpg", "*.jpeg", "*.webp", "*.bmp")
     for f in glob.glob(os.path.join(SRC, ext))
@@ -25,6 +47,25 @@ print(f"共 {len(files)} 张图片待处理")
 function jpgGuard(varName: string): string {
   return `if ${varName}.mode in ("RGBA", "P"):\n    ${varName} = ${varName}.convert("RGB")`
 }
+
+const SEED_FILE = (file: string, gif = false): string => `import os
+if not os.path.exists(${JSON.stringify(file)}):
+    from PIL import Image, ImageDraw
+    os.makedirs(os.path.dirname(${JSON.stringify(file)}) or ".", exist_ok=True)
+    frames = []
+    for i in range(4 if ${gif ? 'True' : 'False'} else 1):
+        im = Image.new("RGB", (480, 320), ("#1f2430", "#20242c", "#1b2a34", "#16202c")[i % 4])
+        dr = ImageDraw.Draw(im)
+        dr.ellipse([60 + i * 40, 110, 220 + i * 40, 260], outline="#f1faee", width=8)
+        dr.rectangle([300, 80 + i * 20, 430, 200], outline="#e74c3c", width=6)
+        if i == 0:
+            im.save(${JSON.stringify(file)})
+        else:
+            frames.append(im)
+    if frames:
+        Image.open(${JSON.stringify(file)}).save(${JSON.stringify(file)}, save_all=True, append_images=frames, duration=400)
+    print("未指定文件：已自动生成示例图片", ${JSON.stringify(file)})
+`
 
 // ---------------------------------------------------------------------------
 // 1. 批量缩放
@@ -51,8 +92,8 @@ export const batchResizeSchema: InteractiveToolSchema = {
   ],
   computeVia: 'sidecar',
   compute: (v) => {
-    const dir = str(v.dir)
-    if (!dir) return { error: '请选择图片目录' }
+    const dir = str(v.dir) || '示例图片'
+    if (!dir) return { rows: [{ label: '数据', value: '未选择目录——运行时自动生成示例图片' }] }
     const maxSide = Math.trunc(Number(v.maxSide))
     if (!Number.isFinite(maxSide) || maxSide < 16 || maxSide > 20000) return { error: '长边上限需为 16~20000 的整数' }
     return {
@@ -64,7 +105,7 @@ export const batchResizeSchema: InteractiveToolSchema = {
     }
   },
   pyCode: (v) => {
-    const dir = str(v.dir)
+    const dir = str(v.dir) || '示例图片'
     const maxSide = Math.trunc(Number(v.maxSide))
     const fmt = str(v.format ?? 'png')
     if (!dir || !Number.isFinite(maxSide) || maxSide < 16) return INVALID_CODE
@@ -111,8 +152,8 @@ export const batchConvertSchema: InteractiveToolSchema = {
   ],
   computeVia: 'sidecar',
   compute: (v) => {
-    const dir = str(v.dir)
-    if (!dir) return { error: '请选择图片目录' }
+    const dir = str(v.dir) || '示例图片'
+    if (!dir) return { rows: [{ label: '数据', value: '未选择目录——运行时自动生成示例图片' }] }
     return {
       rows: [
         { label: '源目录', value: dir, copy: true },
@@ -121,7 +162,7 @@ export const batchConvertSchema: InteractiveToolSchema = {
     }
   },
   pyCode: (v) => {
-    const dir = str(v.dir)
+    const dir = str(v.dir) || '示例图片'
     const fmt = str(v.format ?? 'webp')
     if (!dir) return INVALID_CODE
     return `"""批量格式转换 → ${fmt.toUpperCase()}。"""
@@ -166,8 +207,8 @@ export const batchCropSchema: InteractiveToolSchema = {
   ],
   computeVia: 'sidecar',
   compute: (v) => {
-    const dir = str(v.dir)
-    if (!dir) return { error: '请选择图片目录' }
+    const dir = str(v.dir) || '示例图片'
+    if (!dir) return { rows: [{ label: '数据', value: '未选择目录——运行时自动生成示例图片' }] }
     return {
       rows: [
         { label: '源目录', value: dir, copy: true },
@@ -176,7 +217,7 @@ export const batchCropSchema: InteractiveToolSchema = {
     }
   },
   pyCode: (v) => {
-    const dir = str(v.dir)
+    const dir = str(v.dir) || '示例图片'
     const ratio = str(v.ratio ?? '1:1')
     const [rw, rh] = ratio.split(':').map(Number)
     if (!dir || !Number.isFinite(rw) || !Number.isFinite(rh)) return INVALID_CODE
@@ -211,7 +252,7 @@ export const batchWatermarkSchema: InteractiveToolSchema = {
   tags: ['图片', '批量'],
   fields: [
     { key: 'dir', label: '图片目录', type: 'dir', required: true },
-    { key: 'text', label: '水印文字', type: 'text', required: true, placeholder: '@ 我的作品' },
+    { key: 'text', label: '水印文字', type: 'text', default: '示例水印', required: true, placeholder: '@ 我的作品' },
     {
       key: 'position',
       label: '位置',
@@ -227,8 +268,8 @@ export const batchWatermarkSchema: InteractiveToolSchema = {
   ],
   computeVia: 'sidecar',
   compute: (v) => {
-    const dir = str(v.dir)
-    if (!dir) return { error: '请选择图片目录' }
+    const dir = str(v.dir) || '示例图片'
+    if (!dir) return { rows: [{ label: '数据', value: '未选择目录——运行时自动生成示例图片' }] }
     if (!str(v.text)) return { error: '请输入水印文字' }
     return {
       rows: [
@@ -238,7 +279,7 @@ export const batchWatermarkSchema: InteractiveToolSchema = {
     }
   },
   pyCode: (v) => {
-    const dir = str(v.dir)
+    const dir = str(v.dir) || '示例图片'
     const text = str(v.text)
     const fontSize = Math.trunc(Number(v.fontSize ?? 48))
     const tile = str(v.position ?? 'corner') === 'tile'
@@ -287,8 +328,8 @@ export const paletteSchema: InteractiveToolSchema = {
   ],
   computeVia: 'sidecar',
   compute: (v) => {
-    const file = str(v.file)
-    if (!file) return { error: '请选择图片文件' }
+    const file = str(v.file) || '示例图片/sample_1.png'
+    if (!file) return { rows: [{ label: '数据', value: '未选择文件——运行时自动生成示例图片' }] }
     const n = Math.trunc(Number(v.colors ?? 6))
     if (!Number.isFinite(n) || n < 2 || n > 12) return { error: '主色数量需为 2~12 的整数' }
     return {
@@ -299,10 +340,11 @@ export const paletteSchema: InteractiveToolSchema = {
     }
   },
   pyCode: (v) => {
-    const file = str(v.file)
+    const file = str(v.file) || '示例图片/sample_1.png'
     const n = Math.trunc(Number(v.colors ?? 6))
-    if (!file || !Number.isFinite(n) || n < 2) return INVALID_CODE
+    if (!Number.isFinite(n) || n < 2) return INVALID_CODE
     return `"""主色调提取：量化 ${Number.isFinite(n) && n <= 12 ? n : 6} 色 + 色板图。"""
+${SEED_FILE(file)}
 from PIL import Image, ImageDraw
 
 im = Image.open(${JSON.stringify(file)}).convert("RGB")
@@ -337,14 +379,13 @@ export const gifExtractSchema: InteractiveToolSchema = {
   fields: [{ key: 'file', label: 'GIF 文件', type: 'file', required: true, accept: ['gif'] }],
   computeVia: 'sidecar',
   compute: (v) => {
-    const file = str(v.file)
-    if (!file) return { error: '请选择 GIF 文件' }
-    return { rows: [{ label: '源文件', value: file, copy: true }] }
+    const file = str(v.file) || '示例图片/sample.gif'
+    return { rows: [{ label: '源文件', value: file, copy: true }, { label: '数据', value: '未选择文件时运行将自动生成示例 GIF' }] }
   },
   pyCode: (v) => {
-    const file = str(v.file)
-    if (!file) return INVALID_CODE
-    return `"""GIF 帧提取 → PNG 序列。"""
+    const file = str(v.file) || '示例图片/sample.gif'
+    return `${SEED_FILE(file, true)}
+"""GIF 帧提取 → PNG 序列。"""
 from PIL import Image
 
 im = Image.open(${JSON.stringify(file)})
@@ -373,8 +414,8 @@ export const gifComposeSchema: InteractiveToolSchema = {
   ],
   computeVia: 'sidecar',
   compute: (v) => {
-    const dir = str(v.dir)
-    if (!dir) return { error: '请选择图片目录' }
+    const dir = str(v.dir) || '示例图片'
+    if (!dir) return { rows: [{ label: '数据', value: '未选择目录——运行时自动生成示例图片' }] }
     const duration = Math.trunc(Number(v.duration ?? 200))
     if (!Number.isFinite(duration) || duration < 20) return { error: '每帧延时应 ≥20ms' }
     return {
@@ -386,7 +427,7 @@ export const gifComposeSchema: InteractiveToolSchema = {
     }
   },
   pyCode: (v) => {
-    const dir = str(v.dir)
+    const dir = str(v.dir) || '示例图片'
     const duration = Math.trunc(Number(v.duration ?? 200))
     const loop = Math.trunc(Number(v.loop ?? 0))
     if (!dir || !Number.isFinite(duration) || duration < 20) return INVALID_CODE
@@ -422,8 +463,8 @@ export const batchEnhanceSchema: InteractiveToolSchema = {
   ],
   computeVia: 'sidecar',
   compute: (v) => {
-    const dir = str(v.dir)
-    if (!dir) return { error: '请选择图片目录' }
+    const dir = str(v.dir) || '示例图片'
+    if (!dir) return { rows: [{ label: '数据', value: '未选择目录——运行时自动生成示例图片' }] }
     const br = Number(v.brightness)
     const ct = Number(v.contrast)
     if (!Number.isFinite(br) || br < 10 || br > 300) return { error: '亮度需为 10~300 的百分比' }
@@ -436,7 +477,7 @@ export const batchEnhanceSchema: InteractiveToolSchema = {
     }
   },
   pyCode: (v) => {
-    const dir = str(v.dir)
+    const dir = str(v.dir) || '示例图片'
     const br = Number(v.brightness)
     const ct = Number(v.contrast)
     if (!dir || !Number.isFinite(br) || !Number.isFinite(ct)) return INVALID_CODE
@@ -471,8 +512,8 @@ export const roundedFrameSchema: InteractiveToolSchema = {
   ],
   computeVia: 'sidecar',
   compute: (v) => {
-    const file = str(v.file)
-    if (!file) return { error: '请选择图片文件' }
+    const file = str(v.file) || '示例图片/sample_1.png'
+    if (!file) return { rows: [{ label: '数据', value: '未选择文件——运行时自动生成示例图片' }] }
     const radius = Math.trunc(Number(v.radius ?? 24))
     if (!Number.isFinite(radius) || radius < 0 || radius > 500) return { error: '圆角半径需为 0~500 的整数' }
     const border = Math.trunc(Number(v.border ?? 0))
@@ -487,12 +528,13 @@ export const roundedFrameSchema: InteractiveToolSchema = {
     }
   },
   pyCode: (v) => {
-    const file = str(v.file)
+    const file = str(v.file) || '示例图片/sample_1.png'
     const radius = Math.trunc(Number(v.radius ?? 24))
     const border = Math.trunc(Number(v.border ?? 0))
     const color = str(v.borderColor ?? '#333333')
-    if (!file || !/^#[0-9a-fA-F]{6}$/.test(color)) return INVALID_CODE
+    if (!/^#[0-9a-fA-F]{6}$/.test(color)) return INVALID_CODE
     return `"""圆角 + 描边（输出 PNG，透明四角）。"""
+${SEED_FILE(file)}
 from PIL import Image, ImageDraw
 
 im = Image.open(${JSON.stringify(file)}).convert("RGBA")
@@ -525,14 +567,18 @@ export const imageInfoSchema: InteractiveToolSchema = {
   fields: [{ key: 'file', label: '图片文件', type: 'file', required: true, accept: IMG_EXTS }],
   computeVia: 'sidecar',
   compute: (v) => {
-    const file = str(v.file)
-    if (!file) return { error: '请选择图片文件' }
-    return { rows: [{ label: '源文件', value: file, copy: true }] }
+    const file = str(v.file) || '示例图片/sample_1.png'
+    return {
+      rows: [
+        { label: '源文件', value: file, copy: true },
+        { label: '数据', value: '未选择文件时运行将自动生成示例图片' }
+      ]
+    }
   },
   pyCode: (v) => {
-    const file = str(v.file)
-    if (!file) return INVALID_CODE
-    return `"""图片信息报告。"""
+    const file = str(v.file) || '示例图片/sample_1.png'
+    return `${SEED_FILE(file)}
+"""图片信息报告。"""
 import os
 
 from PIL import Image
@@ -716,12 +762,12 @@ export const imgToPdfSchema: InteractiveToolSchema = {
   fields: [{ key: 'dir', label: '图片目录', type: 'dir', required: true }],
   computeVia: 'sidecar',
   compute: (v) => {
-    const dir = str(v.dir)
-    if (!dir) return { error: '请选择图片目录' }
+    const dir = str(v.dir) || '示例图片'
+    if (!dir) return { rows: [{ label: '数据', value: '未选择目录——运行时自动生成示例图片' }] }
     return { rows: [{ label: '源目录', value: dir, copy: true }] }
   },
   pyCode: (v) => {
-    const dir = str(v.dir)
+    const dir = str(v.dir) || '示例图片'
     if (!dir) return INVALID_CODE
     return `"""图片转 PDF（每图一页）。"""
 from PIL import Image
@@ -754,8 +800,8 @@ export const contactSheetSchema: InteractiveToolSchema = {
   ],
   computeVia: 'sidecar',
   compute: (v) => {
-    const dir = str(v.dir)
-    if (!dir) return { error: '请选择图片目录' }
+    const dir = str(v.dir) || '示例图片'
+    if (!dir) return { rows: [{ label: '数据', value: '未选择目录——运行时自动生成示例图片' }] }
     const cols = Math.trunc(Number(v.cols ?? 4))
     if (!Number.isFinite(cols) || cols < 2 || cols > 8) return { error: '列数需为 2~8 的整数' }
     const cell = Math.trunc(Number(v.cell ?? 200))
@@ -770,7 +816,7 @@ export const contactSheetSchema: InteractiveToolSchema = {
     }
   },
   pyCode: (v) => {
-    const dir = str(v.dir)
+    const dir = str(v.dir) || '示例图片'
     const cols = Math.trunc(Number(v.cols ?? 4))
     const cell = Math.trunc(Number(v.cell ?? 200))
     const bg = str(v.bg ?? '#111111')

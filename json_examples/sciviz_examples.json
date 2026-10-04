@@ -38,63 +38,6 @@
    "file": "sciviz_examples/sciviz-bar-basics.py"
   },
   {
-   "id": "topics_data-analysis_sciviz-sciviz-contour-fields.py",
-   "name": "sciviz-contour-fields.py",
-   "category": "topics",
-   "tags": [
-    "科研绘图",
-    "等值线",
-    "物理场"
-   ],
-   "title": "二维物理场等值线图（科研绘图）",
-   "description": "netCDF/dat 物理场数据的 contour 等值线与 colorbar 定制，海洋模型数据可视化（Code Notebook Lecture 2.9）。",
-   "requirements": [
-    "matplotlib",
-    "netcdf4",
-    "numpy",
-    "pandas"
-   ],
-   "file": "../examples_assets/code_notebook/chapter2/sciviz-contour-fields.py"
-  },
-  {
-   "id": "topics_data-analysis_sciviz-sciviz-pcolor-fields.py",
-   "name": "sciviz-pcolor-fields.py",
-   "category": "topics",
-   "tags": [
-    "科研绘图",
-    "色彩图",
-    "物理场"
-   ],
-   "title": "二维物理场色彩图（科研绘图）",
-   "description": "海洋模型数据的 pcolor/色彩图渲染与色标（cmap）定制（Code Notebook Lecture 2.10）。",
-   "requirements": [
-    "matplotlib",
-    "netcdf4",
-    "numpy",
-    "pandas"
-   ],
-   "file": "../examples_assets/code_notebook/chapter2/sciviz-pcolor-fields.py"
-  },
-  {
-   "id": "topics_data-analysis_sciviz-sciviz-streamplot.py",
-   "name": "sciviz-streamplot.py",
-   "category": "topics",
-   "tags": [
-    "科研绘图",
-    "流场图",
-    "streamplot"
-   ],
-   "title": "二维流场图（科研绘图）",
-   "description": "全球风场 netCDF 数据的 streamplot 流线可视化，密度与线宽映射风速（Code Notebook Lecture 2.11）。",
-   "requirements": [
-    "matplotlib",
-    "netcdf4",
-    "numpy",
-    "pandas"
-   ],
-   "file": "../examples_assets/code_notebook/chapter2/sciviz-streamplot.py"
-  },
-  {
    "id": "topics_data-analysis_sciviz-sciviz-unstructured-mesh.py",
    "name": "sciviz-unstructured-mesh.py",
    "category": "topics",
@@ -178,25 +121,6 @@
    "file": "../examples_assets/code_notebook/chapter3/sciviz-dendrogram.py"
   },
   {
-   "id": "topics_data-analysis_sciviz-sciviz-chord-diagram.py",
-   "name": "sciviz-chord-diagram.py",
-   "category": "topics",
-   "tags": [
-    "科研绘图",
-    "和弦图",
-    "关系数据"
-   ],
-   "title": "和弦图（chord diagram，科研绘图）",
-   "description": "关系矩阵数据的和弦图绘制，展示实体间的流向与关联（Code Notebook Lecture 3.6）。",
-   "requirements": [
-    "matplotlib",
-    "netcdf4",
-    "numpy",
-    "pandas"
-   ],
-   "file": "../examples_assets/code_notebook/chapter3/sciviz-chord-diagram.py"
-  },
-  {
    "id": "topics_data-analysis_sciviz-sciviz-box-violin.py",
    "name": "sciviz-box-violin.py",
    "category": "topics",
@@ -215,66 +139,6 @@
     "seaborn"
    ],
    "file": "../examples_assets/code_notebook/chapter3/sciviz-box-violin.py"
-  },
-  {
-   "id": "topics_data-analysis_sciviz-sciviz-wordcloud.py",
-   "name": "sciviz-wordcloud.py",
-   "category": "topics",
-   "tags": [
-    "科研绘图",
-    "词云",
-    "wordcloud"
-   ],
-   "title": "词云图（科研绘图）",
-   "description": "word_cloud 生成中英文词云，自定义形状、配色与停用词（Code Notebook Lecture 3.8）。",
-   "requirements": [
-    "matplotlib",
-    "netcdf4",
-    "numpy",
-    "pandas",
-    "pillow",
-    "scipy",
-    "wordcloud"
-   ],
-   "file": "../examples_assets/code_notebook/chapter3/sciviz-wordcloud.py"
-  },
-  {
-   "id": "topics_data-analysis_sciviz-sciviz-auto-Lecture2 10 training.py",
-   "name": "sciviz-auto-Lecture2 10 training.py",
-   "category": "topics",
-   "tags": [
-    "科研绘图",
-    "matplotlib",
-    "自动收录"
-   ],
-   "title": "Lecture2 10 training（科研绘图）",
-   "description": "由 Chapter2/Lecture2_10_training.ipynb 转换的科研绘图示例（自动收录）。",
-   "requirements": [
-    "matplotlib",
-    "netcdf4",
-    "numpy",
-    "pandas"
-   ],
-   "file": "../examples_assets/code_notebook/chapter2/sciviz-auto-Lecture2 10 training.py"
-  },
-  {
-   "id": "topics_data-analysis_sciviz-sciviz-auto-Lecture2 11 training.py",
-   "name": "sciviz-auto-Lecture2 11 training.py",
-   "category": "topics",
-   "tags": [
-    "科研绘图",
-    "matplotlib",
-    "自动收录"
-   ],
-   "title": "Lecture2 11 training（科研绘图）",
-   "description": "由 Chapter2/Lecture2_11_training.ipynb 转换的科研绘图示例（自动收录）。",
-   "requirements": [
-    "matplotlib",
-    "netcdf4",
-    "numpy",
-    "pandas"
-   ],
-   "file": "../examples_assets/code_notebook/chapter2/sciviz-auto-Lecture2 11 training.py"
   },
   {
    "id": "topics_data-analysis_sciviz-sciviz-auto-Lecture2 4 Training.py",
