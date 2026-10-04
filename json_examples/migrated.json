@@ -133,6 +133,7 @@
     "apscheduler",
     "baidu-aip",
     "beautifulsoup4",
+    "chardet",
     "click",
     "colorama",
     "flask",

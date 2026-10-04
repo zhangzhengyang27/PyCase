@@ -1,0 +1,19 @@
+# 语料验证豁免清单：id + 可接受类别 + 原因。
+# 口径 = 离线/代理环境下实测（2026-10-04 全量 395 条逐条真跑后的分诊结论）。
+# 只豁免「语义上就该如此」的条目：需外网 / 需常驻进程 / 无主流程的模块演示。
+# 新增豁免必须给原因；真 bug（ERROR 类非网络原因）不许进这里。
+topics_crawler-http-timeout-retry TIMEOUT 需外网：重试循环在断网下按设计挂起到超时
+topics_crawler-http-post-form TIMEOUT 需外网：同上
+topics_crawler-http-status-handle TIMEOUT 需外网：同上
+topics_crawler-crawl-paginate TIMEOUT 需外网：同上
+topics_crawler2-bs4-quote-extract TIMEOUT 需外网：同上
+topics_crawler2-antiban-header-pool TIMEOUT 需外网：同上
+topics_crawler3-health-check TIMEOUT 需外网：同上
+tools_dev-speed-test ERROR 需外网：httpbin 大文件下载在离线/代理环境必失败
+tools_dev-speed-test TIMEOUT 需外网：同上（断网时表现为重试挂起而非 SSL 报错）
+tools_dev-http-headers-inspect EMPTY 需外网：离线时优雅退出、无输出属预期
+tools_dev-site-monitor EMPTY 需外网：同上
+tools_dev-git-stats EMPTY 需 git 仓库上下文：临时目录无 .git 属预期
+tools_dev-file-watch TIMEOUT 常驻监听器：按设计持续运行到超时
+tools_timer-tomato TIMEOUT 常驻计时器：番茄钟按设计运行到超时
+topics_python-basics_11-_____10-mymod.py EMPTY 模块演示：只定义可导入的函数集，无主流程
