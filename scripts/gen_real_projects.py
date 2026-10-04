@@ -10,6 +10,8 @@ import hashlib
 import json
 from pathlib import Path
 
+from generator_guard import guard_regen
+
 ROOT = Path(__file__).resolve().parent.parent
 OUT_DIR = ROOT / "json_examples"
 
@@ -20,6 +22,9 @@ def slug(text: str) -> str:
 
 
 class Collection:
+    # 退役对账守卫豁免开关：确要新增/收缩条目时显式置 True（改代码本身即留痕）
+    allow_unsafe_write: bool = False
+
     def __init__(self, file: str, name: str, description: str, merge: bool = False):
         self.file = file
         self.name = name
@@ -58,6 +63,8 @@ class Collection:
 
     def save(self) -> int:
         out = OUT_DIR / self.file
+        # 退役对账守卫：语料大退役后重跑会复活已退役条目/覆盖后批条目——有差即中止
+        guard_regen(out, self.examples, tool=f"gen_real_projects[{self.file}]", force=self.allow_unsafe_write)
         with open(out, "w", encoding="utf-8") as f:
             json.dump({"name": self.name, "description": self.description,
                        "examples": self.examples}, f, ensure_ascii=False, indent=1)

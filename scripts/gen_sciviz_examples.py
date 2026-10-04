@@ -30,6 +30,8 @@ import shutil
 import warnings
 from pathlib import Path
 
+from generator_guard import guard_regen
+
 ROOT = Path(__file__).resolve().parent.parent
 NB_ROOT = Path.home() / "Downloads" / "Code_Notebook"
 ASSETS = ROOT / "examples_assets" / "code_notebook"
@@ -272,7 +274,12 @@ def sync_assets(code: str, rel: str, assets_chapter: Path) -> bool:
 
 
 def main() -> None:
+    import argparse
     import sys
+
+    ap = argparse.ArgumentParser(description="再生成 sciviz_examples.json（写出前有退役对账守卫）")
+    ap.add_argument("--force", action="store_true", help="豁免对账差异（复活/丢失条目）强制写出")
+    args = ap.parse_args()
 
     stdlib = set(sys.stdlib_module_names)
     examples = []
@@ -330,6 +337,8 @@ def main() -> None:
         "description": "来自 Code Notebook 教材的科研出版级绘图示例（ipynb 转换）。",
         "examples": examples,
     }
+    # 退役对账守卫：语料大退役后重跑本脚本会复活已退役课件条目——有差即中止（--force 豁免）
+    guard_regen(OUT, examples, tool="gen_sciviz_examples", force=args.force)
     OUT.write_text(json.dumps(out, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print(f"已写出：{OUT}（{len(examples)} 条）")
 
