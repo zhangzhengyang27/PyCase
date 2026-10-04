@@ -6,7 +6,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "scripts"))
 
-from verify_corpus import classify, load_allowlist  # noqa: E402
+from verify_corpus import allow_verdicts_for, classify, load_allowlist  # noqa: E402
 
 
 def test_ok_with_stdout() -> None:
@@ -66,3 +66,18 @@ def test_allowlist_parses_comments_and_multiple_verdicts(tmp_path: Path) -> None
     )
     table = load_allowlist(p)
     assert table == {"topics_web-ip-lookup": {"NEEDS_DATA", "ERROR"}}
+
+
+def test_allowlist_prefix_rules_match_by_id_prefix(tmp_path: Path) -> None:
+    p = tmp_path / "allow.txt"
+    p.write_text(
+        "prefix:topics_crawler TIMEOUT 需外网\n"
+        "prefix:topics_crawler ERROR 需外网\n"
+        "tools_dev-speed-test ERROR 需外网\n",
+        encoding="utf-8",
+    )
+    table = load_allowlist(p)
+    # 前缀族内逐条命中，精确 id 照常，族外不豁免
+    assert allow_verdicts_for(table, "topics_crawler2-bs4-quote-extract") == {"TIMEOUT", "ERROR"}
+    assert allow_verdicts_for(table, "tools_dev-speed-test") == {"ERROR"}
+    assert allow_verdicts_for(table, "topics_algo-dijkstra-1") == set()

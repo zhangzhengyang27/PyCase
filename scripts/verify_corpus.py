@@ -69,7 +69,11 @@ def classify(exit_code: int, stdout: str, stderr: str, timed_out: bool, artifact
 
 
 def load_allowlist(path: Path) -> dict[str, set[str]]:
-    """豁免清单：每行 `id verdict [reason…]`；同一 id 可声明多个可接受类别。"""
+    """豁免清单：每行 `id verdict [reason…]`；同一 id 可声明多个可接受类别。
+
+    `prefix:<前缀> verdict [reason…]` 形态按 id 前缀匹配——网络依赖类（爬虫实战等）
+    的具体哪条失败随环境漂移（限流/代理/断网），逐条枚举不胜其烦，按家族声明。
+    """
     table: dict[str, set[str]] = {}
     if not path.exists():
         return table
@@ -80,6 +84,15 @@ def load_allowlist(path: Path) -> dict[str, set[str]]:
         parts = line.split()
         table.setdefault(parts[0], set()).add(parts[1])
     return table
+
+
+def allow_verdicts_for(table: dict[str, set[str]], item_id: str) -> set[str]:
+    """合并精确 id 与 prefix: 前缀两类豁免条目。"""
+    accepted = set(table.get(item_id, ()))
+    for key, verdicts in table.items():
+        if key.startswith("prefix:") and item_id.startswith(key[len("prefix:"):]):
+            accepted |= verdicts
+    return accepted
 
 
 def run_one(python: str, rel_file: str, timeout: float) -> dict:
@@ -146,7 +159,7 @@ def main() -> None:
                 print(f"  已完成 {i}/{len(futures)}")
 
     for key, r in results.items():
-        accepted = allow.get(key, set())
+        accepted = allow_verdicts_for(allow, key)
         if r["verdict"] in accepted and r["verdict"] != "OK":
             r["verdict"] = "ALLOWED"
             r["allow_reason"] = f"豁免清单声明可接受: {sorted(accepted)}"
