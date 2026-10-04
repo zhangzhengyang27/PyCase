@@ -241,10 +241,18 @@ function isInvalid(key: string): boolean {
           </div>
           <template v-if="isSidecar">
             <ToolResultPanel v-if="result?.error" :result="result" data-testid="sidecar-invalid" />
-            <div v-else-if="runActive && runBusy" class="text-control text-ink-mute pt-4 text-center" data-testid="sidecar-running">
+            <div
+              v-else-if="runActive && runBusy"
+              class="text-control text-ink-mute pt-4 text-center"
+              data-testid="sidecar-running"
+            >
               正在运行…
             </div>
-            <ToolResultPanel v-else-if="runActive && sidecarResult" :result="sidecarResult" data-testid="sidecar-result" />
+            <ToolResultPanel
+              v-else-if="runActive && sidecarResult"
+              :result="sidecarResult"
+              data-testid="sidecar-result"
+            />
             <ToolResultPanel v-else-if="result" :result="result" data-testid="sidecar-echo" />
             <div v-else class="text-control text-ink-mute pt-4 text-center">点击「运行」获取结果</div>
             <div v-if="runActive && runImages.length" class="flex flex-wrap gap-3" data-testid="page-run-images">

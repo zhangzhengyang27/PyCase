@@ -18,7 +18,7 @@ const baseEnv: EnvStatus = {
   venv_path: '/tmp/PyCase/.venv',
   venv_ready: false,
   python_version: '3.13.0',
-  examples: 1496,
+  examples: 395,
   elapsed_ms: 80_000
 }
 

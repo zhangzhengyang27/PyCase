@@ -191,8 +191,15 @@ console.log('画廊池与工具箱互补')
 await boot()
 check('galleryExamples 排除 tools（6 → 5）', S.galleryExamples.value.length === 5)
 check('galleryExamples 不含 tool1', !S.galleryExamples.value.some((e) => e.id === 'tool1'))
-check('toolsTotal 只数 tools（=1）', S.toolsTotal.value === 1)
-check('toolboxItems 只含 tools', ids(S.toolboxItems.value) === 'tool1')
+check(
+  'toolsTotal = 交互工具 + 目录池 tools（与 toolboxItems 等长）',
+  S.toolsTotal.value === S.toolboxItems.value.length && S.toolsTotal.value > 1
+)
+check(
+  'toolboxItems：交互页在前、目录池 tool1 收尾',
+  ids(S.toolboxItems.value).endsWith('tool1') &&
+    S.toolboxItems.value.slice(0, -1).every((e) => String(e.id).startsWith('interactive:'))
+)
 check('filtered 默认等于画廊池', ids(S.filtered.value) === 't1,t2,t3,proj1,risk')
 
 console.log('排序')
@@ -232,11 +239,11 @@ S.favOnly.value = true
 calls.length = 0
 S.clearFilters()
 check(
-  'clearFilters 归零全部维度（含分区范围）',
+  'clearFilters 归零筛选维度但保留分区范围（清空不清分区）',
   S.activeTheme.value === 'all' &&
     S.minQuality.value === 0 &&
     S.activeTags.value.size === 0 &&
-    S.activeSectionKey.value === null &&
+    S.activeSectionKey.value === 'tag:crawling' &&
     S.activeRunStatus.value === 'all' &&
     S.activeRunnable.value === 'all'
 )
@@ -259,9 +266,6 @@ S.activeTheme.value = 'turtle'
 calls.length = 0
 S.removeChip({ key: 'theme' })
 check('theme 芯片 → all 且持久化', S.activeTheme.value === 'all' && setCalls('viewPrefs').length === 1)
-S.activeSectionKey.value = 'tag:basics'
-S.removeChip({ key: 'section' })
-check('section 芯片 → 全部示例（null）', S.activeSectionKey.value === null)
 S.minQuality.value = 90
 calls.length = 0
 S.removeChip({ key: 'quality' })
@@ -276,15 +280,15 @@ check('q 芯片 → 清空搜索框', S.searchQuery.value === '')
 console.log('侧栏分区范围（selectSection / openGallery）')
 await boot()
 // 选分区：设置 sections 维度并清掉主题 facet（避免分区主题与主题维度叠出空集）。
-// 夹具分区落位：t1 命中 tag:basics，proj1 进 projects，t2/t3/risk 落 others。
+// 夹具分区落位：t1 命中 tag:basics，t2/t3/proj1/risk 落 others（「综合项目」分区已退役）。
 S.activeTheme.value = 'turtle'
 calls.length = 0
 S.selectSection('others')
 check('selectSection 设置分区范围', S.activeSectionKey.value === 'others')
 check('selectSection 清掉主题 facet 并持久化', S.activeTheme.value === 'all' && setCalls('viewPrefs').length === 1)
-check('分区范围驱动 filtered（sections OR 语义）', ids(S.filtered.value) === 't2,t3,risk')
-S.selectSection('projects')
-check('切换到综合项目分区', ids(S.filtered.value) === 'proj1')
+check('分区范围驱动 filtered（sections OR 语义）', ids(S.filtered.value) === 't2,t3,proj1,risk')
+S.selectSection('tag:algo')
+check('切换到空标签组分区', ids(S.filtered.value) === '')
 await boot()
 S.selectSection('tag:basics')
 check('标签组分区命中互斥成员', ids(S.filtered.value) === 't1')
@@ -296,7 +300,7 @@ check('selectSection(null) → 全部示例', S.activeSectionKey.value === null)
 check('selectSection(null) 不动主题 facet', S.activeTheme.value === 'viz' && setCalls('viewPrefs').length === 0)
 S.activeTheme.value = 'all'
 // 页头入口：范围归零，可选叠加收藏
-S.selectSection('projects')
+S.selectSection('others')
 S.openGallery()
 check('openGallery() 范围归零', S.activeSectionKey.value === null)
 S.openGallery({ favOnly: true })
@@ -305,17 +309,17 @@ check('openGallery({favOnly}) 置收藏开关', S.favOnly.value === true)
 console.log('侧栏分区菜单数据（gallerySectionNav）')
 await boot()
 const nav = S.gallerySectionNav.value
-check('gallerySectionNav 完整 15 项', nav.length === 15)
+check('gallerySectionNav 完整 8 项', nav.length === 8)
 check(
-  '键序 = THEMES + 标签组 + 综合项目 + 其他',
-  nav[0].key === 'turtle' && nav[13].key === 'projects' && nav[14].key === 'others'
+  '键序 = THEMES + 标签组 + 其他',
+  nav[0].key === 'turtle' && nav[5].key === 'tag:basics' && nav[7].key === 'others'
 )
 check(
   '计数取互斥分配成员数',
   nav.find((s) => s.key === 'tag:basics').count === 1 &&
-    nav.find((s) => s.key === 'projects').count === 1 &&
-    nav.find((s) => s.key === 'others').count === 3 &&
-    nav.find((s) => s.key === 'turtle').count === 0
+    nav.find((s) => s.key === 'others').count === 4 &&
+    nav.find((s) => s.key === 'turtle').count === 0 &&
+    !nav.some((s) => s.key === 'projects')
 )
 const baseRunnable = S.facetCounts.value.runnableCounts.get('runnable')
 S.selectSection('others')

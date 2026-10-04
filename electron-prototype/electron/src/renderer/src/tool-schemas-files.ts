@@ -380,7 +380,12 @@ export const gifExtractSchema: InteractiveToolSchema = {
   computeVia: 'sidecar',
   compute: (v) => {
     const file = str(v.file) || '示例图片/sample.gif'
-    return { rows: [{ label: '源文件', value: file, copy: true }, { label: '数据', value: '未选择文件时运行将自动生成示例 GIF' }] }
+    return {
+      rows: [
+        { label: '源文件', value: file, copy: true },
+        { label: '数据', value: '未选择文件时运行将自动生成示例 GIF' }
+      ]
+    }
   },
   pyCode: (v) => {
     const file = str(v.file) || '示例图片/sample.gif'

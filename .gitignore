@@ -90,3 +90,10 @@ examples_assets/code_notebook/chapter2/data/
 examples_assets/code_notebook/chapter3/Data/
 examples_assets/code_notebook/chapter4/Data/
 .superpowers/
+
+# 交互工具在仓库根手工运行时的播种产物（应用内运行落盘在 sidecar 工作区，不进仓库）
+/contact_sheet.png
+/sample_video.mp4
+/sample_audio.wav
+/示例图片/
+/演示数据/

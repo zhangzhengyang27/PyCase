@@ -115,7 +115,8 @@ npm run sidecar      # 只冻结并冒烟 Python sidecar
 ## 打包链的三道验证（CI `packaging` job 双平台矩阵）
 
 1. **冻结冒烟**：`scripts/build_sidecar.py --smoke` 真启动冻结产物，断言
-   `sidecar_ready` → `ping` → `list_examples == 1496`（能加载 app 包、能读随包数据）；
+   `sidecar_ready` → `ping` → `list_examples == 语料条数`（期望值从 `json_examples/facts.json` 派生，
+   能加载 app 包、能读随包数据）；
 2. **产物断言**：`resources/` 下必须有 `sidecar/sidecar(.exe)`、`requirements.txt`、
    `json_examples/facts.json`、`topics`、`tools`、`projects`、`examples_assets`；
 3. **打包产物自测**（macOS）：直接启动 `.app/Contents/MacOS/...` 跑 `SMOKE_TEST=1` 全套走查探针。

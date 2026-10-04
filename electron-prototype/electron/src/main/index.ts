@@ -1,6 +1,16 @@
 // Electron 主进程：管理窗口、spawn Python sidecar、桥接 IPC。
 
-import { app, BrowserWindow, ipcMain, dialog, Menu, protocol, net, shell, type MenuItemConstructorOptions } from 'electron'
+import {
+  app,
+  BrowserWindow,
+  ipcMain,
+  dialog,
+  Menu,
+  protocol,
+  net,
+  shell,
+  type MenuItemConstructorOptions
+} from 'electron'
 import { spawn, type ChildProcess } from 'node:child_process'
 import path from 'node:path'
 import fs from 'node:fs'
@@ -17,9 +27,7 @@ import type { SmokeContext } from './smoke'
 
 // 特权协议注册必须在 app ready 之前：dev 模式渲染层在 http://localhost 上，
 // Chromium webSecurity 禁止 http 页面加载 file:// 子资源，运行产物图必须走本协议
-protocol.registerSchemesAsPrivileged([
-  { scheme: IMG_SCHEME, privileges: { stream: true, supportFetchAPI: true } }
-])
+protocol.registerSchemesAsPrivileged([{ scheme: IMG_SCHEME, privileges: { stream: true, supportFetchAPI: true } }])
 
 // ---------------------------------------------------------------------------
 // 路径解析

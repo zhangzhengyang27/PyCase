@@ -270,7 +270,7 @@ def _drill_data_dir(tmp_path: Path, pid_file: Path) -> Path:
         ),
         encoding="utf-8",
     )
-    # 物化缓存软链到仓库已有缓存（与生产同源）：避免冷启动重物化 1496 条
+    # 物化缓存软链到仓库已有缓存（与生产同源）：避免冷启动重物化全库条目
     (data / ".json_examples_cache").symlink_to(REPO_CACHE)
     # 假共享 venv：命中"已就绪"分支，不起真实创建/安装
     venv_dir = data / ".venv"

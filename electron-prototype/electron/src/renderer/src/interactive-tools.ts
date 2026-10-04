@@ -162,8 +162,5 @@ export const interactiveToolItems = computed<VExample[]>(() => [
 ])
 
 export function getToolSchema(id: string): InteractiveToolSchema | undefined {
-  return (
-    interactiveToolSchemas.find((s) => s.id === id) ??
-    interactiveGallerySchemas.find((s) => s.id === id)
-  )
+  return interactiveToolSchemas.find((s) => s.id === id) ?? interactiveGallerySchemas.find((s) => s.id === id)
 }

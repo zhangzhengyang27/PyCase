@@ -96,7 +96,7 @@ const versionText = computed(() => (appInfo.value.version ? `v${appInfo.value.ve
 
       <p class="m-0 px-4.5 pb-3.5 text-body text-ink-dim leading-[1.65]">
         内置
-        <b class="text-ink">{{ env?.examples || 1493 }} 条 Python 示例</b
+        <b class="text-ink">{{ env?.examples || 395 }} 条 Python 示例</b
         >：浏览、运行、改代码都在一个窗口里完成。<template v-if="!ready"
           >首次启动需要几分钟准备运行环境，这一步不会挡住浏览。</template
         ><template v-else>运行环境已就绪，可以直接运行任何示例。</template>

@@ -6,8 +6,11 @@ tool-schemas.ts 的 compute 输出与同一文件一致。改口径的顺序：�
 JSON，再同步 TS schema，双侧测试同时转绿。
 """
 
+import base64 as _b64
+import colorsys
 import datetime as dt
 import json
+import re as _re
 import subprocess
 import sys
 from pathlib import Path
@@ -34,7 +37,10 @@ def ref_temp(v: float, frm: str, to: str, p: str) -> dict:
     c = k - 273.15
     f = c * 9 / 5 + 32
     m = {"C": c, "F": f, "K": k}
-    fmt = lambda x: f"{x:.{int(p)}f}"
+
+    def fmt(x: float) -> str:
+        return f"{x:.{int(p)}f}"
+
     return {
         "primary": fmt(m[to]),
         "rows": {"摄氏 ℃": fmt(m["C"]), "华氏 ℉": fmt(m["F"]), "开尔文 K": fmt(m["K"])},
@@ -138,10 +144,6 @@ def test_palindrome_cases_match_reference():
 # ---------------------------------------------------------------------------
 # W3：devtools 工具参考实现（口径与 TS 侧逐条同构；uuid 随机型只验格式规范存在）
 # ---------------------------------------------------------------------------
-import colorsys
-import csv as _csv
-import io as _io
-import re as _re
 
 
 def ref_regex(c: dict) -> list:
@@ -201,8 +203,8 @@ def ref_color(s: str) -> dict:
         r, g, b = (int(x) for x in m.groups())
     else:
         m = _re.fullmatch(r"hsl\(\s*(\d+)\s*,\s*(\d+)%\s*,\s*(\d+)%\s*\)", s)
-        h, l, ss = int(m.group(1)) / 360, int(m.group(3)) / 100, int(m.group(2)) / 100
-        r, g, b = (round(x * 255) for x in colorsys.hls_to_rgb(h, l, ss))
+        h, li, ss = int(m.group(1)) / 360, int(m.group(3)) / 100, int(m.group(2)) / 100
+        r, g, b = (round(x * 255) for x in colorsys.hls_to_rgb(h, li, ss))
     hh, ll, sss = colorsys.rgb_to_hls(r / 255, g / 255, b / 255)
     return {
         "hex": f"#{r:02x}{g:02x}{b:02x}",
@@ -279,7 +281,7 @@ def gen_class(name, obj, lines):
             fields.append((k, f"list[{sub}]"))
         else:
             fields.append((k, pytype(v)))
-    lines += [f"@dataclass", f"class {name}:"]
+    lines += ["@dataclass", f"class {name}:"]
     if not fields:
         lines.append("    pass")
     lines += [f"    {k}: {t}" for k, t in fields]
@@ -354,12 +356,15 @@ def test_uuid_format_specs_present():
 # ---------------------------------------------------------------------------
 # W4：JWT / .env / TOC / gitignore / 规范化 / 查找替换（随机型 pwdgen 只验常量在位）
 # ---------------------------------------------------------------------------
-import base64 as _b64
+
+
+def _b64_pad(s: str) -> str:
+    return s + "=" * (-len(s) % 4)
 
 
 def ref_jwt(tok: str) -> dict:
     h, p, sig = tok.split(".")
-    pad = lambda s: s + "=" * (-len(s) % 4)
+    pad = _b64_pad
     hh = json.loads(_b64.urlsafe_b64decode(pad(h)))
     pp = json.loads(_b64.urlsafe_b64decode(pad(p)))
     exp_s = (
@@ -720,7 +725,7 @@ def test_img_to_pdf_real_execution(tmp_path):
     r = subprocess.run([sys.executable, str(script)], cwd=tmp_path, capture_output=True, text=True, timeout=60)
     assert r.returncode == 0, r.stderr
     pypdf = pytest.importorskip("pypdf")
-    r2 = PdfReader = pypdf.PdfReader(tmp_path / "out.pdf")
+    r2 = pypdf.PdfReader(tmp_path / "out.pdf")
     assert len(r2.pages) == 3
 
 
@@ -931,7 +936,7 @@ def test_csv_column_stats_real_execution(tmp_path):
 
 
 def test_table_diff_wizard_real_execution(tmp_path):
-    openpyxl = pytest.importorskip("openpyxl")
+    pytest.importorskip("openpyxl")
     from openpyxl import Workbook
 
     old = tmp_path / "old.xlsx"
@@ -1037,7 +1042,7 @@ print("<<<END>>>")
 
 
 def test_excel_build_real_execution(tmp_path):
-    openpyxl = pytest.importorskip("openpyxl")
+    pytest.importorskip("openpyxl")
     data = "名称,数量\n苹果,12\nlisi,"
     script = tmp_path / "run.py"
     script.write_text(EXCEL_BUILD_TPL.format(data=data), encoding="utf-8")
@@ -1276,7 +1281,7 @@ def test_vault_roundtrip_real_execution(tmp_path):
 
 
 def test_word_read_real_execution(tmp_path):
-    docx = pytest.importorskip("docx")
+    pytest.importorskip("docx")
     from docx import Document
 
     src = tmp_path / "周会.docx"

@@ -38,7 +38,7 @@ export interface SmokeContext {
 export function runSmokeTest(ctx: SmokeContext): void {
   const failures: string[] = []
   // 冒烟总超时：默认 180s，可用 SMOKE_TIMEOUT_MS 覆盖。
-  // 链路耗时随示例量增长，本机实测（1496 个示例）：首次 list_examples ≈17s、
+  // 链路耗时随示例量增长，本机实测（1496 个示例的旧库）：首次 list_examples ≈17s、
   // import ≈13s、每次 delete ≈13s——仅「导入/删除」三步就要 40s+，加上
   // 渲染层加载与末尾 8s 观察窗，原先的 45s 在原样跑通之前就会超时。
   const timeoutMs = Number(process.env.SMOKE_TIMEOUT_MS) || 180000
@@ -372,10 +372,10 @@ export function runSmokeTest(ctx: SmokeContext): void {
         if (p.fatal) throw new Error(`页面走查: ${p.fatal}`)
         const problems: string[] = []
         if ((p.cards as number) < 1) problems.push('画廊无卡片')
-        // 侧栏二级分区菜单（v2 唯一分区入口）：16 项 = 「全部示例」+ 15 分区，且不得残留 emoji
+        // 侧栏二级分区菜单（v2 唯一分区入口）：9 项 = 「全部示例」+ 8 分区（5 主题 + 2 标签组 + 其他），且不得残留 emoji
         if (p.subnav !== true) problems.push('侧栏缺二级分区菜单')
-        if (p.subCount !== 16) problems.push(`侧栏分区项总数 ${p.subCount} != 16（全部示例 + 15 分区）`)
-        if (p.subSectionCount !== 15) problems.push(`侧栏分区数 ${p.subSectionCount} != 15`)
+        if (p.subCount !== 9) problems.push(`侧栏分区项总数 ${p.subCount} != 9（全部示例 + 8 分区）`)
+        if (p.subSectionCount !== 8) problems.push(`侧栏分区数 ${p.subSectionCount} != 8`)
         if (p.subAll !== true) problems.push('侧栏二级菜单缺「全部示例」入口')
         if (p.cardChip !== true || p.cardChipSvg !== true) problems.push('卡片缺语义图标 chip')
         if (p.cardChipText !== '') problems.push(`图标 chip 内含文本（emoji 残留？）: ${p.cardChipText}`)
@@ -388,21 +388,21 @@ export function runSmokeTest(ctx: SmokeContext): void {
         if ((p.uiCodeHits as number) < 1) problems.push('渲染层未合并服务端代码命中（切面未接线？）')
         if ((p.uiFiltered as number) < 1) problems.push('按代码词搜索后结果为空')
         // 分区构成：主题分类是服务端下发的派生事实（契约 §3.2/§5），漂移必须暴露。
-        // 冻结基线口径 = **画廊池（不含 tools；当前 1333 条 = 1496 - 163 tools）**，
-        // 数值等于迁移前 v1 的 TS 谓词分类结果（已用 themes.ts 原谓词对 1496 条逐条独立复核：零不一致）。
+        // 冻结基线口径 = **画廊池（不含 tools；当前 265 条 = 395 - 130 tools）**，
+        // 数值取自 facts.json 烘焙的 theme 分布（contract_store.theme_key 同源，2026-10-04 实测）。
         // 数据增删示例时必须同步更新这几个数字——它们是"分类没漂移"的锚点。
         const FROZEN_THEMES: Record<string, number> = {
-          'Turtle 绘图': 355,
-          'Pygame 游戏': 18,
-          'OpenCV 视觉': 166,
-          'PIL 图像处理': 170,
-          数据可视化: 427
+          'Turtle 绘图': 29,
+          'Pygame 游戏': 8,
+          'OpenCV 视觉': 25,
+          'PIL 图像处理': 36,
+          数据可视化: 79
         }
         const counts = (p.sectionCounts || {}) as Record<string, number>
         for (const [label, expect] of Object.entries(FROZEN_THEMES)) {
           if (counts[label] !== expect) problems.push(`分区「${label}」成员 ${counts[label]} != 冻结基线 ${expect}`)
         }
-        // 合计对的是「画廊池」而非全库：tools 不在任何分区里，拿 1496 对会永远差 163。
+        // 合计对的是「画廊池」而非全库：tools 不在任何分区里，拿全库对会永远差 tools 的条数。
         // 分区是一次互斥分配，成员合计必须等于池大小——这条不随示例增删漂移，是结构性不变量
         const memberSum = Object.values(counts).reduce((a, b) => a + (b > 0 ? b : 0), 0)
         if (memberSum !== p.poolTotal) {

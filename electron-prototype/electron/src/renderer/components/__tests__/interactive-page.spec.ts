@@ -50,7 +50,8 @@ const typed: InteractiveToolSchema = {
       ]
     }
   ],
-  headerFor: (v) => (v.type === 'b' ? { title: '乙型', description: '乙的描述。' } : { title: '甲型', description: '甲的描述。' }),
+  headerFor: (v) =>
+    v.type === 'b' ? { title: '乙型', description: '乙的描述。' } : { title: '甲型', description: '甲的描述。' },
   compute: (v) => ({ primary: { value: String(v.type ?? '') } }),
   pyCode: () => 'print(1)\n'
 }

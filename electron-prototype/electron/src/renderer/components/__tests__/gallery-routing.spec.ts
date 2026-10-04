@@ -15,12 +15,7 @@ import InteractiveToolPage from '../interactive/InteractiveToolPage.vue'
 import GalleryView from '../GalleryView.vue'
 import ExampleCard from '../ExampleCard.vue'
 import { examples, type VExample } from '../../src/store/catalog'
-import {
-  interactiveSourceId,
-  openDetail,
-  pendingPreset,
-  selectedId
-} from '../../src/store/detail'
+import { interactiveSourceId, openDetail, pendingPreset, selectedId } from '../../src/store/detail'
 import { getToolSchema } from '../../src/interactive-tools'
 import { toolValues } from '../../src/store/interactive'
 import { TOPICS_FAMILY_TO_INTERACTIVE, VIZ_FAMILY_TO_INTERACTIVE } from '../../src/interactive-mapping'
@@ -70,7 +65,12 @@ describe('画廊路由收口（openDetail → 实验室页）', () => {
   })
 
   it('d1~d12 序号与数据模式一一对应', async () => {
-    const pairs: Array<[number, string]> = [[1, 'sine'], [6, 'pulse'], [10, 'spike'], [12, 'square']]
+    const pairs: Array<[number, string]> = [
+      [1, 'sine'],
+      [6, 'pulse'],
+      [10, 'spike'],
+      [12, 'square']
+    ]
     for (const [n, mode] of pairs) {
       examples.value = [vizExample('stem', n)]
       await openDetail(`topics_viz-stem-d${n}`)

@@ -58,8 +58,7 @@ const SERIES_RULES: Array<[prefix: string, label: string]> = [
   ['crawler2-store-', '爬虫Ⅱ · 清洗导出'],
   ['crawler2-target-', '爬虫Ⅱ · 目标实战'],
   ['crawler2-eng-', '爬虫Ⅱ · 工程化'],
-  ['data-analysis_sciviz-sciviz-auto', '科研绘图课件'],
-  ['crawler_bilibili', 'bilibili 弹幕爬虫项目']
+  ['data-analysis_sciviz-sciviz-auto', '科研绘图课件']
 ]
 
 function seriesMetaOf(ex: VExample): { key: string; label: string } | null {

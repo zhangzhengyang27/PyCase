@@ -9,9 +9,9 @@
 // 契约 §5：列表不带 code，代码命中由 sidecar 按需读文件）。它是画廊唯一的文本检索入口，
 // 筛选下拉只承担维度收窄，不能顶替它。
 import { computed } from 'vue'
-import {  LayoutGrid, List, Star, X } from 'lucide-vue-next'
+import { LayoutGrid, List, Star, X } from 'lucide-vue-next'
 import { THEMES } from '../src/themes'
-import { 
+import {
   activeSectionKey,
   activeTheme,
   clearAllFilters,
@@ -141,7 +141,6 @@ function facetSuffix(has: boolean, n: number | undefined): string {
             <List :size="13" :stroke-width="1.5" /> 列表
           </button>
         </div>
-
       </div>
     </div>
 

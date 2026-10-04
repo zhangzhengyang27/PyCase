@@ -262,8 +262,6 @@ export const TOPICS_FAMILY_TO_INTERACTIVE: Record<string, { page: string; type?:
   // ---- sciviz 明确等价 ----
   'data-analysis_sciviz-sciviz-venn-diagram': { page: 'interactive:venn' },
   'data-analysis_sciviz-sciviz-dendrogram': { page: 'interactive:dendrogram' },
-  'data-analysis_sciviz-sciviz-wordcloud': { page: 'interactive:wordcloud-chart' },
-  'data-analysis_sciviz-sciviz-contour-fields': { page: 'interactive:viz-lab', type: 'contour-filled' },
   // ---- 爬虫中交互页能力确实覆盖的条目（请求/头检查/批量下载/汇率/天气）----
   'crawler-http-get-basic': { page: 'interactive:http-requester' },
   'crawler-http-headers-ua': { page: 'interactive:http-headers' },
@@ -282,15 +280,10 @@ export const TOPICS_FAMILY_TO_INTERACTIVE: Record<string, { page: string; type?:
   'data-analysis_dataviz-horizontal-bar-rank': { page: 'interactive:viz-lab', type: 'hbar' },
   'data-analysis_dataviz-gantt-chart': { page: 'interactive:甘特图' },
   // ---- sciviz 出版级（科研绘图实验室 / viz-lab 共享类型）----
-  'data-analysis_sciviz-sciviz-streamplot': { page: 'interactive:sciviz-lab', type: 'streamplot' },
-  'data-analysis_sciviz-sciviz-pcolor-fields': { page: 'interactive:sciviz-lab', type: 'pcolor' },
   'data-analysis_sciviz-sciviz-unstructured-mesh': { page: 'interactive:sciviz-lab', type: 'unstructured-mesh' },
   'data-analysis_sciviz-sciviz-complex-axes': { page: 'interactive:sciviz-lab', type: 'complex-axes' },
-  'data-analysis_sciviz-sciviz-3d-profile': { page: 'interactive:sciviz-lab', type: '3d-profile' },
-  'data-analysis_sciviz-sciviz-3d-bars': { page: 'interactive:sciviz-lab', type: '3d-bars' },
   'data-analysis_sciviz-sciviz-seaborn-stats': { page: 'interactive:sciviz-lab', type: 'stats-style' },
   'data-analysis_sciviz-sciviz-box-violin': { page: 'interactive:sciviz-lab', type: 'box-violin' },
-  'data-analysis_sciviz-sciviz-chord-diagram': { page: 'interactive:sciviz-lab', type: 'chord' },
   'data-analysis_sciviz-sciviz-bar-basics': { page: 'interactive:viz-lab', type: 'bar' },
   // ---- bulk_pil 滤镜家族（tool-schemas-pil.ts，画廊专用页）----
   'pil-gaussian': { page: 'interactive:pil-lab', type: 'gaussian' },
@@ -371,8 +364,8 @@ export const TOPICS_FAMILY_TO_INTERACTIVE: Record<string, { page: string; type?:
   'basics-generator': { page: 'interactive:basics-lab', type: 'generator' },
   'basics-dataclass': { page: 'interactive:basics-lab', type: 'dataclass' },
   'basics-error-handling': { page: 'interactive:basics-lab', type: 'error-handling' },
-  'basics-string-format': { page: 'interactive:basics-lab', type: 'string-format' },
-  'basics_pathlib': { page: 'interactive:basics-lab', type: 'pathlib' },
+  // 注意：string-format 的真实 id 是下划线（topics_basics_string-format），与同组连字符命名不同源
+  'basics_string-format': { page: 'interactive:basics-lab', type: 'string-format' },
   'basics-pathlib': { page: 'interactive:basics-lab', type: 'pathlib' },
   // ---- bulk_turtle 图形家族（tool-schemas-turtle.ts）----
   'turtle-spiral': { page: 'interactive:turtle-lab', type: 'spiral' },

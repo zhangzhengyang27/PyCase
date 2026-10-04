@@ -17,6 +17,7 @@
 import ast
 import json
 import re
+import subprocess
 import sys
 from pathlib import Path
 
@@ -129,7 +130,19 @@ def main() -> int:
         "comment": "工具手册数据（W7 手册页基座）：由 scripts/gen_tool_manuals.py 从工具源码生成（docstring 概述 + argparse 参数表 + 用法行）。勿手改——改生成器后重跑；tests/test_tool_manuals.py 钉覆盖率与新鲜度。",
         "manuals": dict(sorted(manuals.items())),
     }
-    OUT.write_text(json.dumps(out, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
+    # indent=2 接近 Prettier 的 JSON 风格；短数组折叠等细节交给下面的 prettier 收尾。
+    # 新鲜度测试（test_manuals_file_is_fresh）按语义比对，格式由 prettier 门禁管。
+    OUT.write_text(json.dumps(out, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    try:
+        subprocess.run(
+            ["npx", "prettier", "--write", str(OUT.relative_to(ROOT))],
+            cwd=str(ROOT),
+            check=False,
+            capture_output=True,
+            timeout=60,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        pass  # 无 node 环境时跳过（CI 的格式门禁会另行覆盖）
     print(f"✅ 手册 {len(manuals)} 份（工具总数 {total}，排除 {skipped}）→ {OUT.relative_to(ROOT)}")
     return 0
 

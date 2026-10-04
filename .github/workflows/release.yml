@@ -70,7 +70,7 @@ jobs:
         working-directory: electron-prototype/electron
         run: npm ci
 
-      # 冻结 sidecar 并冒烟（真启动 / list_examples == 1496）：
+      # 冻结 sidecar 并冒烟（真启动 / list_examples == 语料条数）：
       # 冻包按 runner 架构产出（Apple Silicon runner 出 arm64、Intel runner 出 x64）
       - name: 冻结 sidecar + 冒烟
         run: |

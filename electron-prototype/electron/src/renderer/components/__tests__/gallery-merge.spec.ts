@@ -5,15 +5,7 @@ import { flushPromises, mount } from '@vue/test-utils'
 import GalleryView from '../GalleryView.vue'
 import ExampleCard from '../ExampleCard.vue'
 import { mergeVariantCards } from '../../src/gallery-merge'
-import {
-  examples,
-  favOnly,
-  galleryPool,
-  loadError,
-  loading,
-  searchQuery,
-  type VExample
-} from '../../src/store/catalog'
+import { examples, favOnly, galleryPool, loadError, loading, searchQuery, type VExample } from '../../src/store/catalog'
 import { selectedId, pendingPreset } from '../../src/store/detail'
 
 function ex(id: string, overrides: Partial<VExample> = {}): VExample {
@@ -98,15 +90,14 @@ describe('序列折叠（非实验室同主题序列）', () => {
     expect(series.variantCount).toBe(2)
   })
 
-  it('sciviz 课件与 bilibili 项目折叠为单张序列卡', () => {
+  it('sciviz 课件折叠为单张序列卡（bilibili 序列规则已随语料退役移除）', () => {
     const merged = mergeVariantCards([
       ...Array.from({ length: 21 }, (_, i) => ex(`topics_data-analysis_sciviz-sciviz-auto-Lecture${i + 1}`)),
       ...Array.from({ length: 9 }, (_, i) => ex(`topics_crawler_bilibili_part${i + 1}`))
     ])
-    expect(merged).toHaveLength(2)
+    expect(merged).toHaveLength(10)
     expect(merged[0]!.title).toBe('科研绘图课件')
     expect(merged[0]!.variantCount).toBe(21)
-    expect(merged[1]!.title).toBe('bilibili 弹幕爬虫项目')
   })
 })
 

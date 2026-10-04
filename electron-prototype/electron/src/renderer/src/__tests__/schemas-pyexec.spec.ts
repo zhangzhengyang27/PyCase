@@ -50,7 +50,10 @@ describe.skipIf(!hasVenv)('pyCode 真跑回归（.venv 执行 + 产物非空）'
     const { cwd } = run(pyCodeOf('interactive:pil-lab', { type: 'gifframes' }))
     const out = execFileSync(
       VENV_PY,
-      ['-c', `from PIL import Image; im = Image.open(${JSON.stringify(join(cwd, 'effect.png'))}).convert('RGB'); print('uniform' if all(lo == hi for lo, hi in im.getextrema()) else 'ok')`],
+      [
+        '-c',
+        `from PIL import Image; im = Image.open(${JSON.stringify(join(cwd, 'effect.png'))}).convert('RGB'); print('uniform' if all(lo == hi for lo, hi in im.getextrema()) else 'ok')`
+      ],
       { encoding: 'utf8', timeout: 30_000 }
     )
     expect(out.trim()).toBe('ok')
@@ -59,7 +62,11 @@ describe.skipIf(!hasVenv)('pyCode 真跑回归（.venv 执行 + 产物非空）'
   it('pathlib：glob 有输出且不向运行目录撒游离目录', () => {
     const { stdout, cwd } = run(pyCodeOf('interactive:basics-lab', { type: 'pathlib' }))
     expect(stdout).toContain('main.py')
-    expect(readdirSync(cwd).filter((n) => n !== 'page.py').sort()).toEqual(['project'])
+    expect(
+      readdirSync(cwd)
+        .filter((n) => n !== 'page.py')
+        .sort()
+    ).toEqual(['project'])
   })
 
   it('word-doc / word-table / stock-inventory：JSON 标记输出不缺 import json', () => {
@@ -74,7 +81,18 @@ describe.skipIf(!hasVenv)('pyCode 真跑回归（.venv 执行 + 产物非空）'
   })
 
   it('charts-v2 中文图页：12 页默认路径全部产出 chart.png（曾整批缺 import json）', () => {
-    for (const id of ['interactive:直方图', 'interactive:热力图', 'interactive:雷达图', 'interactive:箱线图', 'interactive:面积图', 'interactive:误差条图', 'interactive:水平条形图', 'interactive:极坐标玫瑰', 'interactive:散点密度图', 'interactive:阶梯图']) {
+    for (const id of [
+      'interactive:直方图',
+      'interactive:热力图',
+      'interactive:雷达图',
+      'interactive:箱线图',
+      'interactive:面积图',
+      'interactive:误差条图',
+      'interactive:水平条形图',
+      'interactive:极坐标玫瑰',
+      'interactive:散点密度图',
+      'interactive:阶梯图'
+    ]) {
       const { stdout } = run(pyCodeOf(id))
       expect(stdout, id).toContain('已输出 chart.png')
     }
@@ -86,7 +104,9 @@ describe.skipIf(!hasVenv)('pyCode 真跑回归（.venv 执行 + 产物非空）'
     expect((bad as { error?: string }).error).toContain('网格形状不对')
     const { stdout } = run(pyCodeOf('interactive:等高线图'))
     expect(stdout).toContain('已输出 chart.png')
-    const { stdout: custom } = run(pyCodeOf('interactive:等高线图', { levels: 8, data: 'x,a,b\nr1,1,2\nr2,2,3\nr3,3,5' }))
+    const { stdout: custom } = run(
+      pyCodeOf('interactive:等高线图', { levels: 8, data: 'x,a,b\nr1,1,2\nr2,2,3\nr3,3,5' })
+    )
     expect(custom).toContain('已输出 chart.png')
   })
 })

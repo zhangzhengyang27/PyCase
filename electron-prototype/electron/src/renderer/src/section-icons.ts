@@ -7,13 +7,11 @@ import {
   Boxes,
   Calculator,
   Camera,
-  ClipboardList,
   Database,
   Download,
   FileSpreadsheet,
   FileText,
   Film,
-  FlaskConical,
   Folder,
   Gamepad2,
   GitBranch,
@@ -21,9 +19,7 @@ import {
   GraduationCap,
   Image,
   MessageSquare,
-  Network,
   Package,
-  Rocket,
   Shield,
   Sparkles,
   Timer,
@@ -31,13 +27,12 @@ import {
   Turtle,
   Wand2,
   Wrench,
-  Zap,
   Activity,
   type LucideIcon
 } from 'lucide-vue-next'
 import { INTERACTIVE_GROUP_KEY } from './interactive-tools'
 
-/** 画廊分区（五大主题 + 标签分区 + 综合项目 / 其他） */
+/** 画廊分区（五大主题 + 标签分区 / 其他，与 SECTION_CATALOG 同源） */
 const SECTION_ICONS: Record<string, LucideIcon> = {
   turtle: Turtle,
   games: Gamepad2,
@@ -45,14 +40,7 @@ const SECTION_ICONS: Record<string, LucideIcon> = {
   images: Image,
   viz: BarChart3,
   'tag:basics': Blocks,
-  'tag:advanced': Zap,
-  'tag:crawling': Network,
-  'tag:webapp': Globe,
-  'tag:office': ClipboardList,
-  'tag:database': Database,
-  'tag:testing': FlaskConical,
   'tag:algo': Calculator,
-  projects: Rocket,
   others: Package
 }
 

@@ -5,7 +5,7 @@
 electron-builder 的 extraResources 指向它——打包不可复现（审计 C1）。现在：
 
     python scripts/build_sidecar.py            # 冻结到 electron-prototype/electron/sidecar-dist/
-    python scripts/build_sidecar.py --smoke    # 冻结后跑冒烟：真启动 + list_examples == 1493
+    python scripts/build_sidecar.py --smoke    # 冻结后跑冒烟：真启动 + list_examples == 语料条数
 
 产物名随平台（sidecar / sidecar.exe），与 package.json 的 extraResources 约定一致。
 
@@ -35,7 +35,20 @@ ROOT = Path(__file__).resolve().parent.parent
 ELECTRON_DIR = ROOT / "electron-prototype" / "electron"
 SPEC = ELECTRON_DIR / "build-pyinstaller" / "sidecar.spec"
 OUT_DIR = ELECTRON_DIR / "sidecar-dist"
-EXPECTED_EXAMPLES = 1493
+
+
+def _expected_examples() -> int:
+    """期望条数从真相源 json_examples/facts.json 派生，不硬编码。
+
+    与 tests/test_guard_data.py 的语料锚点同源；若清单与 facts 烘焙态漂移，
+    list_examples 的运行时计数会对不上这里，冒烟失败即漂移信号。
+    """
+    facts = ROOT / "json_examples" / "facts.json"
+    data = json.loads(facts.read_text(encoding="utf-8"))
+    items = data.get("items")
+    if not isinstance(items, dict) or not items:
+        raise SystemExit(f"[sidecar] facts.json 异常：items 缺失或为空（{facts}）")
+    return len(items)
 
 
 def _binary_name() -> str:
@@ -137,8 +150,9 @@ def smoke(binary: Path) -> None:
 
         listed = call(2, "list_examples", {})
         total = listed.get("result", {}).get("total")
-        if total != EXPECTED_EXAMPLES:
-            raise SystemExit(f"[sidecar] list_examples 异常: total={total}（期望 {EXPECTED_EXAMPLES}）")
+        expected = _expected_examples()
+        if total != expected:
+            raise SystemExit(f"[sidecar] list_examples 异常: total={total}（期望 {expected}）")
         print(f"[sidecar] list_examples ✓ total={total}")
         print("[sidecar] 冻结产物冒烟通过")
     except SystemExit as exc:

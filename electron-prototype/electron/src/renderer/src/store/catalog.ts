@@ -103,7 +103,7 @@ const lastRunIndex = computed(() => FilterEngine.buildLastRunIndex(runHistory.va
 
 // 分区筛选判定：sectionKeyOf 对「未命中任何主题/项目/标签组」的条目返回 undefined
 // （卡片据此回退分类图标），但这些条目正是 assignSections 的 others 桶——筛选侧需补成
-// 'others'，侧栏 15 个分区（含「其他示例」）才能在 sections 维度统一表达。
+// 'others'，侧栏 8 个分区（含「其他示例」）才能在 sections 维度统一表达。
 const sectionKeyForFilter = (ex: FilterEngine.ExampleLike): string | undefined =>
   sectionKeyOf(ex as ExampleItem) ?? 'others'
 
@@ -399,7 +399,7 @@ export function clearAllFilters(): void {
 
 /** 侧栏二级菜单选取分区范围：null = 全部示例。
  *  分区是「范围」而非叠加筛选——切换范围时清掉主题 facet，避免分区主题与主题维度叠出空集
- *  （15 个分区含 others 统一走 sections 维度，故不再需要 theme/tagsAny/category 三套下钻） */
+ *  （8 个分区含 others 统一走 sections 维度，故不再需要 theme/tagsAny/category 三套下钻） */
 export function selectSection(key: string | null): void {
   activeSectionKey.value = key
   if (key !== null && activeTheme.value !== 'all') {

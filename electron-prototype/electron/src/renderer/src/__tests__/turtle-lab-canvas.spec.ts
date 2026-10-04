@@ -69,18 +69,14 @@ describe.skipIf(!hasTurtlePython)('turtle-lab 曲线族真跑取证（画布 lin
   })
 
   for (const { value, minEndpoints } of CURVE_FAMILIES) {
-    it(
-      `${value}: 落笔端点 ≥ ${minEndpoints}`,
-      () => {
-        const codePath = join(dir, `${value}.py`)
-        writeFileSync(codePath, pyCodeOf(value))
-        const out = execFileSync('python3', [join(dir, 'harness.py'), codePath], {
-          encoding: 'utf8',
-          timeout: 60_000
-        })
-        expect(Number(out.trim())).toBeGreaterThanOrEqual(minEndpoints)
-      },
-      90_000
-    )
+    it(`${value}: 落笔端点 ≥ ${minEndpoints}`, () => {
+      const codePath = join(dir, `${value}.py`)
+      writeFileSync(codePath, pyCodeOf(value))
+      const out = execFileSync('python3', [join(dir, 'harness.py'), codePath], {
+        encoding: 'utf8',
+        timeout: 60_000
+      })
+      expect(Number(out.trim())).toBeGreaterThanOrEqual(minEndpoints)
+    }, 90_000)
   }
 })

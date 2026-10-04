@@ -8,7 +8,15 @@ import { ChevronUp, Copy, Download, Play, Square } from 'lucide-vue-next'
 import { applyMonacoTheme, currentMonacoTheme, monaco } from '../../monaco'
 import { pushToast } from '../../toast'
 import { api } from '../../src/sidecar-client'
-import { runBusy, runContext, runExitCode, runImages, runOutput, runSnippet, stopSnippet } from '../../src/store/date-run'
+import {
+  runBusy,
+  runContext,
+  runExitCode,
+  runImages,
+  runOutput,
+  runSnippet,
+  stopSnippet
+} from '../../src/store/date-run'
 import BaseButton from '../base/BaseButton.vue'
 
 const props = defineProps<{ code: string; runId: string; contextKey?: string | null }>()

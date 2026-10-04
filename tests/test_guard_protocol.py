@@ -30,7 +30,7 @@ for _p in (str(SIDECAR_DIR), str(ROOT)):
     if _p not in sys.path:
         sys.path.insert(0, _p)
 
-import server  # noqa: E395
+import server  # noqa: E402  # sys.path 注入后才能导入 sidecar 模块
 
 
 def _workspace_of(example_id: str) -> Path:

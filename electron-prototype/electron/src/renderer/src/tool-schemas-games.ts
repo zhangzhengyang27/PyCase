@@ -21,7 +21,12 @@ export interface GameType {
 }
 
 const P = (key: string, label: string, def: number, help?: string) => ({
-  key, label, type: 'number' as const, default: def, width: 'half' as const, ...(help ? { help } : {})
+  key,
+  label,
+  type: 'number' as const,
+  default: def,
+  width: 'half' as const,
+  ...(help ? { help } : {})
 })
 
 const gamesFamily = (
@@ -33,10 +38,12 @@ const gamesFamily = (
 ): GameType => ({ value, label, description, fields, body })
 
 export const GAME_TYPES: GameType[] = [
-  gamesFamily('snake', '贪吃蛇',
-  '网格贪吃蛇：吃食物变长，撞墙/自身结束（game-snake 全变体的速度与窗口全部参数化）。',
-  [P('speed', '速度（FPS）', 7), P('cell', '格子大小', 24), P('cols', '横向格数', 24), P('rows', '纵向格数', 18)],
-  (v) => `CELL = max(12, ${Math.max(12, Math.trunc(Number(v.cell) || 24))})
+  gamesFamily(
+    'snake',
+    '贪吃蛇',
+    '网格贪吃蛇：吃食物变长，撞墙/自身结束（game-snake 全变体的速度与窗口全部参数化）。',
+    [P('speed', '速度（FPS）', 7), P('cell', '格子大小', 24), P('cols', '横向格数', 24), P('rows', '纵向格数', 18)],
+    (v) => `CELL = max(12, ${Math.max(12, Math.trunc(Number(v.cell) || 24))})
 COLS = max(8, ${Math.max(8, Math.trunc(Number(v.cols) || 24))})
 ROWS = max(8, ${Math.max(8, Math.trunc(Number(v.rows) || 18))})
 SPEED = max(2, ${Math.max(2, Math.trunc(Number(v.speed) || 7))})
@@ -81,11 +88,19 @@ while True:
     screen.blit(font.render(f"Score: {score}", True, (240, 240, 240)), (8, 6))
     pygame.display.flip()
     clock.tick(SPEED)
-pygame.quit()`),
-  gamesFamily('pong', '双人弹球',
-  'W/S 与方向键控制球拍对打，先到目标分获胜（game-pong 全变体的窗口与目标分参数化）。',
-  [P('first-to', '目标分', 3), P('width', '窗口宽', 640), P('height', '窗口高', 440), P('paddle-speed', '球拍速度', 6)],
-  (v) => `W = max(320, ${Math.max(320, Math.trunc(Number(v.width) || 640))})
+pygame.quit()`
+  ),
+  gamesFamily(
+    'pong',
+    '双人弹球',
+    'W/S 与方向键控制球拍对打，先到目标分获胜（game-pong 全变体的窗口与目标分参数化）。',
+    [
+      P('first-to', '目标分', 3),
+      P('width', '窗口宽', 640),
+      P('height', '窗口高', 440),
+      P('paddle-speed', '球拍速度', 6)
+    ],
+    (v) => `W = max(320, ${Math.max(320, Math.trunc(Number(v.width) || 640))})
 H = max(240, ${Math.max(240, Math.trunc(Number(v.height) || 440))})
 WIN = max(1, ${Math.max(1, Math.trunc(Number(v['first-to']) || 3))})
 PADDLE_SPEED = max(2, ${Math.max(2, Math.trunc(Number(v['paddle-speed']) || 6))})
@@ -126,11 +141,14 @@ while True:
     if WIN in score:
         print(f"比赛结束 {score[0]}:{score[1]}")
         break
-pygame.quit()`),
-  gamesFamily('catch', '接水果',
-  '左右移动篮子接水果，漏接扣命（game-catch 全变体的落速与生成间隔参数化）。',
-  [P('drop', '水果落速', 3.4), P('spawn', '生成间隔ms', 560), P('lives', '生命数', 3)],
-  (v) => `W, H = 560, 480
+pygame.quit()`
+  ),
+  gamesFamily(
+    'catch',
+    '接水果',
+    '左右移动篮子接水果，漏接扣命（game-catch 全变体的落速与生成间隔参数化）。',
+    [P('drop', '水果落速', 3.4), P('spawn', '生成间隔ms', 560), P('lives', '生命数', 3)],
+    (v) => `W, H = 560, 480
 DROP = max(0.5, ${Number(v.drop) || 3.4})
 SPAWN_MS = max(80, ${Math.max(80, Math.trunc(Number(v.spawn) || 560))})
 LIVES = max(1, ${Math.max(1, Math.trunc(Number(v.lives) || 3))})
@@ -174,11 +192,14 @@ while True:
     if lives <= 0:
         print(f"游戏结束，接住 {caught} 个")
         break
-pygame.quit()`),
-  gamesFamily('memory', '记忆翻牌',
-  '翻牌配对状态机：点击翻开两张，相同即消除（网格与牌数参数化）。',
-  [P('cols', '列数', 4, '偶数网格'), P('rows', '行数', 4), P('cell', '牌尺寸', 92)],
-  (v) => `COLS = max(2, ${Math.max(2, Math.trunc(Number(v.cols) || 4))})
+pygame.quit()`
+  ),
+  gamesFamily(
+    'memory',
+    '记忆翻牌',
+    '翻牌配对状态机：点击翻开两张，相同即消除（网格与牌数参数化）。',
+    [P('cols', '列数', 4, '偶数网格'), P('rows', '行数', 4), P('cell', '牌尺寸', 92)],
+    (v) => `COLS = max(2, ${Math.max(2, Math.trunc(Number(v.cols) || 4))})
 ROWS = max(2, ${Math.max(2, Math.trunc(Number(v.rows) || 4))})
 if (COLS * ROWS) % 2:
     ROWS += 1  # 牌数必须为偶数才能两两配对
@@ -227,11 +248,14 @@ while True:
     if all(cards["matched"]):
         print("全部配对完成！")
         break
-pygame.quit()`),
-  gamesFamily('breakout', '打砖块',
-  '球拍反弹消砖（砖阵行列与球速参数化）。',
-  [P('brick-rows', '砖行数', 5), P('brick-cols', '砖列数', 9), P('ball-speed', '球速', 3.6)],
-  (v) => `W, H = 560, 480
+pygame.quit()`
+  ),
+  gamesFamily(
+    'breakout',
+    '打砖块',
+    '球拍反弹消砖（砖阵行列与球速参数化）。',
+    [P('brick-rows', '砖行数', 5), P('brick-cols', '砖列数', 9), P('ball-speed', '球速', 3.6)],
+    (v) => `W, H = 560, 480
 BRICK_ROWS = max(2, ${Math.max(2, Math.trunc(Number(v['brick-rows']) || 5))})
 BRICK_COLS = max(4, ${Math.max(4, Math.trunc(Number(v['brick-cols']) || 9))})
 SPEED = max(1.0, ${Number(v['ball-speed']) || 3.6})
@@ -294,7 +318,8 @@ while True:
     if ball.top > H:
         print("球落底，游戏结束")
         break
-pygame.quit()`)
+pygame.quit()`
+  )
 ]
 
 // ---------------------------------------------------------------------------
@@ -312,7 +337,8 @@ const GAME_TYPE_FIELD: FieldSpec = {
 export const gamesLabSchema: InteractiveToolSchema = {
   id: 'interactive:games-lab',
   title: 'Pygame 游戏实验室',
-  description: '贪吃蛇 / 双人弹球 / 接水果 / 记忆翻牌 / 打砖块：运行弹出原生 pygame 窗口实时游玩（ESC 或关窗结束），速度/窗口/目标分全部可调。',
+  description:
+    '贪吃蛇 / 双人弹球 / 接水果 / 记忆翻牌 / 打砖块：运行弹出原生 pygame 窗口实时游玩（ESC 或关窗结束），速度/窗口/目标分全部可调。',
   tags: ['pygame', '游戏'],
   fields: (v) => {
     const t = GAME_TYPES.find((x) => x.value === v.type) ?? GAME_TYPES[0]!

@@ -13,11 +13,21 @@ export interface BasicsType {
 }
 
 const S = (key: string, label: string, def: string, opts: Array<[string, string]>, help?: string): FieldSpec => ({
-  key, label, type: 'select', default: def, width: 'half',
-  options: opts.map(([value, olabel]) => ({ value, label: olabel })), ...(help ? { help } : {})
+  key,
+  label,
+  type: 'select',
+  default: def,
+  width: 'half',
+  options: opts.map(([value, olabel]) => ({ value, label: olabel })),
+  ...(help ? { help } : {})
 })
 const T = (key: string, label: string, def: string, help?: string): FieldSpec => ({
-  key, label, type: 'text', default: def, width: 'half', ...(help ? { help } : {})
+  key,
+  label,
+  type: 'text',
+  default: def,
+  width: 'half',
+  ...(help ? { help } : {})
 })
 
 const NUMS = (raw: unknown): number[] =>
@@ -27,7 +37,11 @@ const NUMS = (raw: unknown): number[] =>
     .filter((x) => Number.isFinite(x))
 
 const P0 = (key: string, label: string, def: number): FieldSpec => ({
-  key, label, type: 'number', default: def, width: 'half'
+  key,
+  label,
+  type: 'number',
+  default: def,
+  width: 'half'
 })
 
 export const BASICS_TYPES: BasicsType[] = [
@@ -37,17 +51,31 @@ export const BASICS_TYPES: BasicsType[] = [
     description: '列表推导式的「变换 + 过滤」组合：[表达式 for x in 序列 if 条件]。',
     fields: [
       T('data', '序列（逗号分隔数字）', '1,2,3,4,5,6,7,8'),
-      S('expr', '变换', 'square', [['square', 'x*x'], ['double', 'x*2'], ['neg', '-x'], ['id', 'x 原样']]),
-      S('cond', '过滤', 'even', [['none', '不过滤'], ['even', 'x 为偶数'], ['gt5', 'x > 5']])
+      S('expr', '变换', 'square', [
+        ['square', 'x*x'],
+        ['double', 'x*2'],
+        ['neg', '-x'],
+        ['id', 'x 原样']
+      ]),
+      S('cond', '过滤', 'even', [
+        ['none', '不过滤'],
+        ['even', 'x 为偶数'],
+        ['gt5', 'x > 5']
+      ])
     ],
     compute: (v) => {
       const nums = NUMS(v.data)
       if (!nums.length) return { error: '请输入数字序列' }
       const fns: Record<string, (x: number) => number> = {
-        square: (x) => x * x, double: (x) => x * 2, neg: (x) => -x, id: (x) => x
+        square: (x) => x * x,
+        double: (x) => x * 2,
+        neg: (x) => -x,
+        id: (x) => x
       }
       const conds: Record<string, (x: number) => boolean> = {
-        none: () => true, even: (x) => x % 2 === 0, gt5: (x) => x > 5
+        none: () => true,
+        even: (x) => x % 2 === 0,
+        gt5: (x) => x > 5
       }
       const out = nums.filter(conds[String(v.cond ?? 'even')]).map(fns[String(v.expr ?? 'square')])
       return { text: `[${out.join(', ')}]`, rows: [{ label: '输出个数', value: String(out.length) }] }
@@ -62,7 +90,14 @@ print(out)`
     value: 'decorator',
     label: '装饰器',
     description: '装饰器堆叠的调用顺序：@计时 @日志 包裹函数，先外后内。',
-    fields: [S('stack', '装饰器组合', 'timer+logger', [['timer', '@timer'], ['logger', '@logger'], ['timer+logger', '@timer @logger'], ['logger+timer', '@logger @timer']])],
+    fields: [
+      S('stack', '装饰器组合', 'timer+logger', [
+        ['timer', '@timer'],
+        ['logger', '@logger'],
+        ['timer+logger', '@timer @logger'],
+        ['logger+timer', '@logger @timer']
+      ])
+    ],
     compute: (v) => {
       const stack = String(v.stack ?? 'timer+logger')
       const names = stack.split('+')
@@ -165,8 +200,17 @@ print(Item(name='示例', price=9.5, stock=3))`
     label: '异常处理',
     description: 'try/except/else/finally 执行流：抛什么、接什么、谁必然执行。',
     fields: [
-      S('exc', '抛出的异常', 'value', [['none', '不抛异常'], ['value', 'ValueError'], ['key', 'KeyError'], ['type', 'TypeError']]),
-      S('catch', 'except 子句', 'value', [['value', 'except ValueError'], ['broad', 'except Exception'], ['none', '不接（向上抛）']])
+      S('exc', '抛出的异常', 'value', [
+        ['none', '不抛异常'],
+        ['value', 'ValueError'],
+        ['key', 'KeyError'],
+        ['type', 'TypeError']
+      ]),
+      S('catch', 'except 子句', 'value', [
+        ['value', 'except ValueError'],
+        ['broad', 'except Exception'],
+        ['none', '不接（向上抛）']
+      ])
     ],
     compute: (v) => {
       const exc = String(v.exc ?? 'value')
@@ -210,8 +254,17 @@ finally:
     fields: [
       T('name', '名字', 'PyCase'),
       T('value', '数值', '42.5678'),
-      S('spec', '数值格式', '.2f', [['.2f', '两位小数'], ['.0f', '整数'], ['10.2f', '右对齐宽 10'], ['>10', '右对齐字符串']]),
-      S('style', '展示风格', 'all', [['all', '三代对照'], ['f', '仅 f-string'], ['pct', '仅 %-format']])
+      S('spec', '数值格式', '.2f', [
+        ['.2f', '两位小数'],
+        ['.0f', '整数'],
+        ['10.2f', '右对齐宽 10'],
+        ['>10', '右对齐字符串']
+      ]),
+      S('style', '展示风格', 'all', [
+        ['all', '三代对照'],
+        ['f', '仅 f-string'],
+        ['pct', '仅 %-format']
+      ])
     ],
     compute: (v) => {
       const name = String(v.name ?? 'PyCase')
@@ -249,8 +302,16 @@ print(f"{name} 的值是 {value:${String(v.spec ?? '.2f')}}")`
     label: 'pathlib 路径',
     description: 'Path 的 glob 模式匹配与常用属性（对合成目录树演示）。',
     fields: [
-      S('glob', 'glob 模式', '*.py', [['*.py', '*.py'], ['data*/*', 'data*/*'], ['**/*.txt', '**/*.txt（递归）']]),
-      S('show', '展示', 'name', [['name', '文件名'], ['stem', '主名'], ['suffix', '后缀']])
+      S('glob', 'glob 模式', '*.py', [
+        ['*.py', '*.py'],
+        ['data*/*', 'data*/*'],
+        ['**/*.txt', '**/*.txt（递归）']
+      ]),
+      S('show', '展示', 'name', [
+        ['name', '文件名'],
+        ['stem', '主名'],
+        ['suffix', '后缀']
+      ])
     ],
     compute: (v) => {
       const tree = ['main.py', 'utils.py', 'data/train.csv', 'data/test.csv', 'docs/readme.txt', 'notes.txt']
@@ -262,7 +323,11 @@ print(f"{name} 的值是 {value:${String(v.spec ?? '.2f')}}")`
         return p.endsWith('.txt')
       }
       const hits = tree.filter(match).map((p) => {
-        if (show === 'stem') return p.split('/').pop()!.replace(/\.[^.]+$/, '')
+        if (show === 'stem')
+          return p
+            .split('/')
+            .pop()!
+            .replace(/\.[^.]+$/, '')
         if (show === 'suffix') return p.includes('.') ? '.' + p.split('.').pop()! : ''
         return p.split('/').pop()!
       })
@@ -298,7 +363,8 @@ const BASICS_TYPE_FIELD: FieldSpec = {
 export const basicsLabSchema: InteractiveToolSchema = {
   id: 'interactive:basics-lab',
   title: 'Python 语法实验室',
-  description: '推导式 / 装饰器 / 生成器 / dataclass / 异常处理 / 字符串格式化 / pathlib——改参数看执行流，抽屉给等价脚本。',
+  description:
+    '推导式 / 装饰器 / 生成器 / dataclass / 异常处理 / 字符串格式化 / pathlib——改参数看执行流，抽屉给等价脚本。',
   tags: ['语法', '教学'],
   fields: (v) => {
     const t = BASICS_TYPES.find((x) => x.value === v.type) ?? BASICS_TYPES[0]!

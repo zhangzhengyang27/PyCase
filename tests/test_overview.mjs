@@ -1,11 +1,13 @@
-// overview.ts 纯函数单元测试：主题互斥分区 + 标签分区/综合项目 + others 兜底桶 + 质量降序预览
+// overview.ts 纯函数单元测试：主题互斥分区 + 标签分区 + others 兜底桶 + 质量降序预览
 //
 // v2 口径：主题判定认服务端下发的 theme_key（列表不含 code，判据在服务端，
 // 见 src/themes.ts 与 app/contract_store.py::theme_key）。夹具因此给 theme_key，
 // 而不是像 v1 那样塞 code 让前端跑正则。
+// 8 分区口径（607df36）：5 主题 + 2 标签组 + 其他；「综合项目」分区已退役，
+// 未命中主题/标签组的条目（含 projects 分类）一律落 others。
 import { createRendererLoader } from './renderer-loader.mjs'
 
-const { assignSections, TAG_SECTIONS, tagSectionLabel, PROJECTS_SECTION_META, SECTION_CATALOG, sectionLabelOf } =
+const { assignSections, TAG_SECTIONS, tagSectionLabel, SECTION_CATALOG, sectionLabelOf } =
   createRendererLoader().load('overview')
 
 function ex(id, { theme = null, name = id, tags = [], quality } = {}) {
@@ -24,10 +26,10 @@ function check(desc, cond) {
 
 console.log('assignSections')
 
-// 1. 结构分区恒在（空库时也保留：5 主题 + 8 标签组 + 综合项目），others 为空则省略
+// 1. 结构分区（空库时 others 为空则省略：5 主题 + 2 标签组）
 {
   const sections = assignSections([])
-  check('空库返回 5 主题 + 8 标签组 + 综合项目', sections.length === 5 + TAG_SECTIONS.length + 1)
+  check('空库返回 5 主题 + 2 标签组（others 省略）', sections.length === 5 + TAG_SECTIONS.length)
   check(
     "标签组全部带 tags 与 kind='tags'",
     sections.filter((s) => s.kind === 'tags').every((s) => Array.isArray(s.tags) && s.tags.length > 0)
@@ -36,7 +38,6 @@ console.log('assignSections')
     "主题分区 kind='theme'",
     sections.slice(0, 5).every((s) => s.kind === 'theme')
   )
-  check("项目区 kind='projects'", sections.find((s) => s.key === 'projects')?.kind === 'projects')
   check('others 为空时省略', !sections.some((s) => s.key === 'others'))
 }
 
@@ -90,7 +91,7 @@ console.log('assignSections')
 }
 
 // 5. projects / tools 分类同样参与主题命中（games 谓词排除 projects）；
-//    未命中主题的 projects 进综合项目区（先于标签组），tools 命中谓词照常进主题区
+//    未命中主题/标签组的条目（含 projects 分类）一律落 others（「综合项目」分区已退役）
 {
   const examples = [
     { ...ex('proj1', {}), category: 'projects' },
@@ -99,71 +100,69 @@ console.log('assignSections')
   ]
   const sections = assignSections(examples)
   const games = sections.find((s) => s.key === 'games')
-  const projects = sections.find((s) => s.key === 'projects')
-  const webapp = sections.find((s) => s.key === 'tag:webapp')
-  check('projects 未命中主题即进综合项目区', !games.items.some((e) => e.id === 'proj1'))
+  const others = sections.find((s) => s.key === 'others')
+  check('projects 未命中主题不再进 games', !games.items.some((e) => e.id === 'proj1'))
   check(
     'tools 命中主题照常进主题区',
     games.items.some((e) => e.id === 'tool1')
   )
-  check('projects 落入综合项目区（先于标签组）', projects.items.map((e) => e.id).join() === 'proj1,proj2')
-  check('flask 项目不进 Web 应用区', !webapp.items.some((e) => e.id === 'proj2'))
+  check(
+    '未命中主题/标签组的 projects 落 others',
+    others.items.map((e) => e.id).join() === 'proj1,proj2'
+  )
 }
 
 // 6. 标签分区：命中组内任一标签即入区；声明顺序即优先级（多组同时命中取先声明者）
 {
   const sections = assignSections([
-    ex('crawl1', { tags: ['web-crawling'] }),
-    ex('net1', { tags: ['网络'] }),
-    ex('both1', { tags: ['web-crawling', 'python-basics'] }),
-    ex('db1', { tags: ['databases'] }),
+    ex('a1', { tags: ['python-basics'] }),
+    ex('a2', { tags: ['基础'] }),
+    ex('both1', { tags: ['python-basics', 'algorithms'] }),
+    ex('s1', { tags: ['排序'] }),
     ex('plain1', {})
   ])
   const byKey = Object.fromEntries(sections.map((s) => [s.key, s.items.map((e) => e.id)]))
-  check('web-crawling 进网络爬虫区', byKey['tag:crawling'].includes('crawl1'))
-  check('中文标签 网络 同样进网络爬虫区', byKey['tag:crawling'].includes('net1'))
+  check('python-basics 进语言基础区', byKey['tag:basics'].includes('a1'))
+  check('中文标签 基础 同样进语言基础区', byKey['tag:basics'].includes('a2'))
   check(
-    '双组命中取声明序靠前者（语言基础 > 网络爬虫）',
-    byKey['tag:basics'].includes('both1') && !byKey['tag:crawling'].includes('both1')
+    '双组命中取声明序靠前者（语言基础 > 算法与数据结构）',
+    byKey['tag:basics'].includes('both1') && !byKey['tag:algo'].includes('both1')
   )
-  check('databases 进数据库区', byKey['tag:database'].includes('db1'))
+  check('排序 进算法与数据结构区', byKey['tag:algo'].includes('s1'))
   check('无标签且未命中主题进 others', byKey.others.includes('plain1'))
   check('空库时 others 分节不出现', !assignSections([]).some((s) => s.key === 'others'))
 }
 
 // 7. tagSectionLabel：结果条范围标题反查
 {
-  check('组内标签反查分区名', tagSectionLabel(['web-crawling']) === '网络爬虫')
-  check('大小写不敏感', tagSectionLabel(['Web-Crawling']) === '网络爬虫')
+  check('组内标签反查分区名', tagSectionLabel(['python-basics']) === '语言基础')
+  check('大小写不敏感', tagSectionLabel(['Python-Basics']) === '语言基础')
   check('未知标签返回 undefined', tagSectionLabel(['no-such-tag']) === undefined)
-  check('项目区元数据可导出', PROJECTS_SECTION_META.label === '综合项目')
 }
 
-// 8. SECTION_CATALOG：侧栏二级分区菜单的完整元数据（全部 15 项，others 恒在）
+// 8. SECTION_CATALOG：侧栏二级分区菜单的完整元数据（全部 8 项，others 恒在）
 {
-  check('15 项 = 5 主题 + 8 标签组 + 综合项目 + 其他', SECTION_CATALOG.length === 15)
-  // 与 assignSections 同序；assignSections 空库省略 others，这里补回正好对齐 15 项
+  check('8 项 = 5 主题 + 2 标签组 + 其他', SECTION_CATALOG.length === 8)
+  // 与 assignSections 同序；assignSections 空库省略 others，这里补回正好对齐 8 项
   check(
     '键序与 assignSections 一致（others 恒在末尾）',
     SECTION_CATALOG.map((s) => s.key).join() === [...assignSections([]).map((s) => s.key), 'others'].join()
   )
   check(
-    "kind 分布：5 theme + 8 tags + 1 projects + 1 others",
+    "kind 分布：5 theme + 2 tags + 1 others",
     SECTION_CATALOG.filter((s) => s.kind === 'theme').length === 5 &&
       SECTION_CATALOG.filter((s) => s.kind === 'tags').length === TAG_SECTIONS.length &&
-      SECTION_CATALOG.filter((s) => s.kind === 'projects').length === 1 &&
       SECTION_CATALOG.filter((s) => s.kind === 'others').length === 1
   )
   check(
     "标签组项带 tags（下钻/图标解析用）",
     SECTION_CATALOG.filter((s) => s.kind === 'tags').every((s) => Array.isArray(s.tags) && s.tags.length > 0)
   )
-  check('projects / others 收尾', SECTION_CATALOG[13].key === 'projects' && SECTION_CATALOG[14].key === 'others')
+  check('others 收尾', SECTION_CATALOG[7].key === 'others')
   check(
     'sectionLabelOf 反查（分区 key → 展示名）',
-    sectionLabelOf('tag:crawling') === '网络爬虫' &&
+    sectionLabelOf('tag:basics') === '语言基础' &&
       sectionLabelOf('others') === '其他示例' &&
-      sectionLabelOf('projects') === '综合项目' &&
       sectionLabelOf(null) === undefined &&
       sectionLabelOf('no-such-key') === undefined
   )

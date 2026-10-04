@@ -330,7 +330,7 @@ let _sourceInflightId: string | null = null
 /**
  * 装载示例源码（详情页源码的唯一来源）。
  *
- * 契约 v2 起 `list_examples` 不再下发源码（1496 条只为元数据序列化），源码必须由
+ * 契约 v2 起 `list_examples` 不再下发源码（全库只为元数据序列化），源码必须由
  * `get_example` 按 id 单独读取。渲染层若继续从列表项取 `ex.code`，恒为空串 →
  * Monaco 回落到「请选择示例」占位注释 → 用户看到的就是「代码块全空白」。
  *

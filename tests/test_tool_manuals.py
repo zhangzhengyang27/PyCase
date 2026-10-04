@@ -55,9 +55,14 @@ def test_manuals_cover_all_non_excluded_tools():
 
 
 def test_manuals_file_is_fresh():
-    before = OUT.read_bytes()
+    """语义新鲜度：文件内容与生成器输出解析后相等（防手改/生成器漂移）。
+
+    不做逐字节比对：Prettier 会把放得下的短数组收成单行，json.dumps 不会——
+    格式一致性由 prettier 门禁管，这里只锁内容。
+    """
+    before = json.loads(OUT.read_text(encoding="utf-8"))
     subprocess.run([sys.executable, str(GENERATOR)], check=True, capture_output=True)
-    after = OUT.read_bytes()
+    after = json.loads(OUT.read_text(encoding="utf-8"))
     assert before == after, "tool-manuals.json 与生成器输出不一致（被手改或生成器已更新）——重跑 scripts/gen_tool_manuals.py"
 
 

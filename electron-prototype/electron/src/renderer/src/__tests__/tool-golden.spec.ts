@@ -485,10 +485,17 @@ describe('B 档 pyCode 关键片段（PIL/openpyxl/pypdf 管线）', () => {
   })
   it('输入缺失 → 自播种示例数据（dir/file 型）或引导注释（office 系需用户文件）', () => {
     const SEED_IDS = new Set([
-      'interactive:batch-resize', 'interactive:batch-convert', 'interactive:batch-crop',
-      'interactive:batch-watermark', 'interactive:palette', 'interactive:gif-extract',
-      'interactive:batch-enhance', 'interactive:rounded-frame', 'interactive:image-info',
-      'interactive:gif-compose', 'interactive:img-to-pdf'
+      'interactive:batch-resize',
+      'interactive:batch-convert',
+      'interactive:batch-crop',
+      'interactive:batch-watermark',
+      'interactive:palette',
+      'interactive:gif-extract',
+      'interactive:batch-enhance',
+      'interactive:rounded-frame',
+      'interactive:image-info',
+      'interactive:gif-compose',
+      'interactive:img-to-pdf'
     ])
     for (const [name, id] of Object.entries(files)) {
       // 与应用同口径：字段默认值参与（toolValueOf），空 dir/file 才触发自播种

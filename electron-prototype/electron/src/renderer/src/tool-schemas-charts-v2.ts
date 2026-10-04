@@ -100,7 +100,15 @@ function base(
         if (lines.length < 2) return INVALID
         return PRELUDE + '\n' + `header, data_rows = parse_csv(${JSON.stringify(data)})\n` + body(v) + '\n' + OUT
       }
-      return GEN_HEAD + PRELUDE + '\n' + `header, data_rows = gen_csv(${JSON.stringify(v.mode ?? "sine")}, ${JSON.stringify(Math.trunc(Number(v.points ?? 60)) || 60)})\n` + body(v) + '\n' + OUT
+      return (
+        GEN_HEAD +
+        PRELUDE +
+        '\n' +
+        `header, data_rows = gen_csv(${JSON.stringify(v.mode ?? 'sine')}, ${JSON.stringify(Math.trunc(Number(v.points ?? 60)) || 60)})\n` +
+        body(v) +
+        '\n' +
+        OUT
+      )
     }
   }
 }
@@ -357,9 +365,7 @@ export const contourChartSchema: InteractiveToolSchema = {
     const grid = lines.slice(1).map((l) => l.split(',').slice(1))
     const width = grid[0]?.length ?? 0
     const shaped =
-      width >= 2 &&
-      grid.every((r) => r.length === width) &&
-      grid.flat().every((c) => Number.isFinite(Number(c)))
+      width >= 2 && grid.every((r) => r.length === width) && grid.flat().every((c) => Number.isFinite(Number(c)))
     if (!shaped) {
       return { error: '网格形状不对：首列为标签，其余列均为数值、每行列数一致，且至少 2 行 × 2 列数值' }
     }

@@ -33,7 +33,8 @@ import BaseButton from './components/base/BaseButton.vue'
 import { statusDotCls } from './src/utils'
 import { applyMonacoTheme } from './monaco'
 import { aiPanelOpen, aiSettingsOpen, initAIEvents, loadAISettings, openAISettings } from './src/store/ai'
-import { galleryPool,
+import {
+  galleryPool,
   activeSectionKey,
   activeView,
   examples,

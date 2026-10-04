@@ -29,7 +29,7 @@ import server  # noqa: E402
 def _make_v2_store(tmp_path: Path, examples: list[dict], collection: str = "demo"):
     """v2 夹具：把 code 落成真实文件并写 file 字段（契约 §2.2），返回 (store, index)。
 
-    ``_ensure_store()`` 会加载真实库（1496 条，慢），资源/风险用例必须注入假 store，
+    ``_ensure_store()`` 会加载真实库（当前为 395 条，慢），资源/风险用例必须注入假 store，
     且工作区根落在 tmp_path 下，任何落盘都不碰真实数据。
     注：无 code 且无 file 的条目没有内容来源，load 期应被跳过——保留在夹具里断言该行为。
     """
