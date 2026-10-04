@@ -205,7 +205,11 @@ function isInvalid(key: string): boolean {
               <span
                 class="text-caption px-2 py-0.5 rounded-control"
                 :class="
-                  i === stepIndex ? 'bg-accent text-on-accent font-medium' : i < stepIndex ? 'text-accent' : 'text-ink-faint'
+                  i === stepIndex
+                    ? 'bg-accent text-on-accent font-medium'
+                    : i < stepIndex
+                      ? 'text-accent'
+                      : 'text-ink-faint'
                 "
               >
                 {{ i + 1 }}. {{ st.title }}
