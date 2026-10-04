@@ -35,6 +35,33 @@ print("<<<END>>>")
 
 const MEDIA_NOTE = '（需本机安装 ffmpeg）'
 
+/** 生成脚本公共序章：定义 FF、缺输入时用 lavfi 合成示例媒体（用户零输入即可体验）。
+ * seeds 为 Python 字面量列表：[["路径", "video"|"audio"], ...] */
+const MEDIA_PREAMBLE = (seeds: Array<[string, string]>): string => `import json
+import os
+import shutil
+import subprocess
+
+FF = shutil.which("ffmpeg")
+if not FF:
+    raise SystemExit("未找到 ffmpeg（brew install ffmpeg / apt install ffmpeg）")
+
+def _seed_media(path, kind):
+    if os.path.exists(path):
+        return
+    os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
+    if kind == "video":
+        cmd = [FF, "-y", "-loglevel", "error", "-f", "lavfi", "-i", "testsrc=size=640x360:rate=24",
+               "-f", "lavfi", "-i", "sine=frequency=440:duration=6", "-shortest", "-pix_fmt", "yuv420p", path]
+    else:
+        cmd = [FF, "-y", "-loglevel", "error", "-f", "lavfi", "-i", "sine=frequency=440:duration=6", path]
+    subprocess.run(cmd, check=True, capture_output=True)
+    print("未选择输入：已自动生成示例媒体", path)
+
+for _p, _k in ${JSON.stringify(seeds)}:
+    _seed_media(_p, _k)
+`
+
 // ---------------------------------------------------------------------------
 // 1. 视频压缩（CRF 质量档 + preset）
 // ---------------------------------------------------------------------------
@@ -57,7 +84,7 @@ export const videoCompressSchema: InteractiveToolSchema = {
   ],
   computeVia: 'sidecar',
   compute: (v) => {
-    if (!str(v.file)) return { error: '请选择视频文件' }
+    if (!str(v.file)) return { rows: [{ label: '数据', value: '未选择文件——运行时自动生成示例视频' }] }
     const crf = Math.trunc(Number(v.crf ?? 26))
     if (!Number.isFinite(crf) || crf < 14 || crf > 34) return { error: 'CRF 需为 14~34 的整数' }
     return {
@@ -68,11 +95,11 @@ export const videoCompressSchema: InteractiveToolSchema = {
     }
   },
   pyCode: (v) => {
-    const file = str(v.file)
+    const file = str(v.file) || 'sample_video.mp4'
     const crf = Math.trunc(Number(v.crf ?? 26))
     const preset = str(v.preset ?? 'fast')
     if (!file || !Number.isFinite(crf)) return '# 选择视频文件后自动生成代码'
-    return `"""视频压缩：CRF ${crf} / ${preset}。"""
+    return MEDIA_PREAMBLE([['sample_video.mp4', 'video']]) + `"""视频压缩：CRF ${crf} / ${preset}。"""
 cmd = [FF, "-i", ${JSON.stringify(file)}, "-c:v", "libx264", "-crf", "${crf}", "-preset", "${preset}", "-c:a", "aac", "compressed.mp4", "-y"]
 ${FOOT('"compressed.mp4"')}`
   }
@@ -108,11 +135,11 @@ export const videoConvertSchema: InteractiveToolSchema = {
         }
       : { error: '请选择视频文件' },
   pyCode: (v) => {
-    const file = str(v.file)
+    const file = str(v.file) || 'sample_video.mp4'
     const fmt = str(v.format ?? 'mkv')
     if (!file) return '# 选择视频文件后自动生成代码'
     const codec = fmt === 'webm' ? '"-c:v", "libvpx-vp9", "-c:a", "libopus"' : '"-c:v", "libx264", "-c:a", "aac"'
-    return `"""格式转换 → ${fmt.toUpperCase()}。"""
+    return MEDIA_PREAMBLE([['sample_video.mp4', 'video']]) + `"""格式转换 → ${fmt.toUpperCase()}。"""
 cmd = [FF, "-i", ${JSON.stringify(file)}, ${codec}, "converted.${fmt}", "-y"]
 ${FOOT(`"converted.${fmt}"`)}`
   }
@@ -131,9 +158,8 @@ export const videoMergeSchema: InteractiveToolSchema = {
   compute: (v) =>
     str(v.dir) ? { rows: [{ label: '目录', value: str(v.dir), copy: true }] } : { error: '请选择视频目录' },
   pyCode: (v) => {
-    const dir = str(v.dir)
-    if (!dir) return '# 选择视频目录后自动生成代码'
-    return `"""视频合并（concat demuxer 无损拼接）。"""
+    const dir = str(v.dir) || '示例视频'
+    return MEDIA_PREAMBLE([[dir + "/clip_1.mp4", "video"], [dir + "/clip_2.mp4", "video"], [dir + "/clip_3.mp4", "video"]]) + `"""视频合并（concat demuxer 无损拼接）。"""
 import glob
 
 parts = sorted(glob.glob(os.path.join(${JSON.stringify(dir)}, "*.mp4")))
@@ -164,7 +190,7 @@ export const videoToGifSchema: InteractiveToolSchema = {
   ],
   computeVia: 'sidecar',
   compute: (v) => {
-    if (!str(v.file)) return { error: '请选择视频文件' }
+    if (!str(v.file)) return { rows: [{ label: '数据', value: '未选择文件——运行时自动生成示例视频' }] }
     const fps = Math.trunc(Number(v.fps ?? 12))
     if (!Number.isFinite(fps) || fps < 5 || fps > 30) return { error: '帧率需为 5~30 的整数' }
     return {
@@ -175,13 +201,13 @@ export const videoToGifSchema: InteractiveToolSchema = {
     }
   },
   pyCode: (v) => {
-    const file = str(v.file)
+    const file = str(v.file) || 'sample_video.mp4'
     const start = Number(v.start ?? 0)
     const dur = Number(v.dur ?? 5)
     const fps = Number.isFinite(Number(v.fps)) ? Math.trunc(Number(v.fps)) : 12
     const width = Number.isFinite(Number(v.width)) ? Math.trunc(Number(v.width)) : 480
     if (!file) return '# 选择视频文件后自动生成代码'
-    return `"""视频转 GIF（palettegen 优化）。"""
+    return MEDIA_PREAMBLE([['sample_video.mp4', 'video']]) + `"""视频转 GIF（palettegen 优化）。"""
 cmd = [FF, "-ss", "${Number.isFinite(start) ? start : 0}", "-t", "${Number.isFinite(dur) && dur > 0 ? dur : 5}", "-i", ${JSON.stringify(file)},
        "-vf", f"fps=${fps},scale=${width}:-1:flags=lanczos,split[s0][s1];[s0]palettegen[p];[s1][p]paletteuse",
        "clip.gif", "-y"]
@@ -209,10 +235,10 @@ export const videoShotSchema: InteractiveToolSchema = {
         }
       : { error: '请选择视频文件' },
   pyCode: (v) => {
-    const file = str(v.file)
+    const file = str(v.file) || 'sample_video.mp4'
     const at = Number(v.at ?? 3)
     if (!file) return '# 选择视频文件后自动生成代码'
-    return `"""视频截图。"""
+    return MEDIA_PREAMBLE([['sample_video.mp4', 'video']]) + `"""视频截图。"""
 cmd = [FF, "-ss", "${Number.isFinite(at) && at >= 0 ? at : 3}", "-i", ${JSON.stringify(file)}, "-frames:v", "1", "shot.png", "-y"]
 ${FOOT('"shot.png"')}`
   }
@@ -231,9 +257,9 @@ export const removeAudioSchema: InteractiveToolSchema = {
   compute: (v) =>
     str(v.file) ? { rows: [{ label: '源文件', value: str(v.file), copy: true }] } : { error: '请选择视频文件' },
   pyCode: (v) => {
-    const file = str(v.file)
+    const file = str(v.file) || 'sample_video.mp4'
     if (!file) return '# 选择视频文件后自动生成代码'
-    return `"""去除音轨（流复制）。"""
+    return MEDIA_PREAMBLE([['sample_video.mp4', 'video']]) + `"""去除音轨（流复制）。"""
 cmd = [FF, "-i", ${JSON.stringify(file)}, "-an", "-c:v", "copy", "muted.mp4", "-y"]
 ${FOOT('"muted.mp4"')}`
   }
@@ -265,11 +291,11 @@ export const avTrimSchema: InteractiveToolSchema = {
     }
   },
   pyCode: (v) => {
-    const file = str(v.file)
+    const file = str(v.file) || 'sample_video.mp4'
     const start = Number(v.start ?? 0)
     const dur = Number(v.dur ?? 30)
     if (!file) return '# 选择音视频文件后自动生成代码'
-    return `"""音视频裁剪（流复制）。"""
+    return MEDIA_PREAMBLE([['sample_video.mp4', 'video']]) + `"""音视频裁剪（流复制）。"""
 cmd = [FF, "-ss", "${Number.isFinite(start) && start >= 0 ? start : 0}", "-i", ${JSON.stringify(file)}, "-t", "${Number.isFinite(dur) && dur > 0 ? dur : 30}", "-c", "copy", "trimmed.mp4", "-y"]
 ${FOOT('"trimmed.mp4"')}`
   }
@@ -300,10 +326,10 @@ export const volumeAdjustSchema: InteractiveToolSchema = {
     }
   },
   pyCode: (v) => {
-    const file = str(v.file)
+    const file = str(v.file) || 'sample_video.mp4'
     const vol = Number(v.vol ?? 1.5)
     if (!file || !Number.isFinite(vol)) return '# 选择文件后自动生成代码'
-    return `"""音量调整 ×${Number.isFinite(vol) && vol >= 0.1 ? vol : 1.5}。"""
+    return MEDIA_PREAMBLE([['sample_video.mp4', 'video']]) + `"""音量调整 ×${Number.isFinite(vol) && vol >= 0.1 ? vol : 1.5}。"""
 cmd = [FF, "-i", ${JSON.stringify(file)}, "-af", "volume=${Number.isFinite(vol) && vol >= 0.1 ? vol : 1.5}", "-c:v", "copy", "adjusted.mp4", "-y"]
 ${FOOT('"adjusted.mp4"')}`
   }
@@ -322,9 +348,9 @@ export const extractAudioSchema: InteractiveToolSchema = {
   compute: (v) =>
     str(v.file) ? { rows: [{ label: '源文件', value: str(v.file), copy: true }] } : { error: '请选择视频文件' },
   pyCode: (v) => {
-    const file = str(v.file)
+    const file = str(v.file) || 'sample_video.mp4'
     if (!file) return '# 选择视频文件后自动生成代码'
-    return `"""提取音频 → mp3。"""
+    return MEDIA_PREAMBLE([['sample_video.mp4', 'video']]) + `"""提取音频 → mp3。"""
 cmd = [FF, "-i", ${JSON.stringify(file)}, "-vn", "-c:a", "libmp3lame", "-b:a", "192k", "audio.mp3", "-y"]
 ${FOOT('"audio.mp3"')}`
   }
@@ -355,7 +381,7 @@ export const audioCompressSchema: InteractiveToolSchema = {
   ],
   computeVia: 'sidecar',
   compute: (v) => {
-    if (!str(v.file)) return { error: '请选择音频文件' }
+    if (!str(v.file)) return { rows: [{ label: '数据', value: '未选择文件——运行时自动生成示例音频' }] }
     const br = Math.trunc(Number(v.bitrate ?? 128))
     if (!Number.isFinite(br) || br < 32 || br > 320) return { error: '码率需为 32~320 kbps' }
     return {
@@ -366,12 +392,11 @@ export const audioCompressSchema: InteractiveToolSchema = {
     }
   },
   pyCode: (v) => {
-    const file = str(v.file)
+    const file = str(v.file) || 'sample_audio.wav'
     const fmt = str(v.format ?? 'm4a')
     const br = Number.isFinite(Number(v.bitrate)) ? Math.trunc(Number(v.bitrate)) : 128
-    if (!file) return '# 选择音频文件后自动生成代码'
     const codec = fmt === 'mp3' ? '"libmp3lame"' : '"aac"'
-    return `"""音频压缩转码 → ${fmt.toUpperCase()} @ ${br}k。"""
+    return MEDIA_PREAMBLE([[file, 'audio']]) + `"""音频压缩转码 → ${fmt.toUpperCase()} @ ${br}k。"""
 cmd = [FF, "-i", ${JSON.stringify(file)}, "-vn", "-c:a", ${codec}, "-b:a", "${br}k", "compressed.${fmt}", "-y"]
 ${FOOT(`"compressed.${fmt}"`)}`
   }
@@ -391,7 +416,7 @@ export const batchTranscodeSchema: InteractiveToolSchema = {
   ],
   computeVia: 'sidecar',
   compute: (v) => {
-    if (!str(v.dir)) return { error: '请选择视频目录' }
+    if (!str(v.dir)) return { rows: [{ label: '数据', value: '未选择目录——运行时自动生成示例视频' }] }
     const crf = Math.trunc(Number(v.crf ?? 26))
     if (!Number.isFinite(crf) || crf < 14 || crf > 34) return { error: 'CRF 需为 14~34 的整数' }
     return {
@@ -402,10 +427,9 @@ export const batchTranscodeSchema: InteractiveToolSchema = {
     }
   },
   pyCode: (v) => {
-    const dir = str(v.dir)
+    const dir = str(v.dir) || '示例视频'
     const crf = Number.isFinite(Number(v.crf)) ? Math.trunc(Number(v.crf)) : 26
-    if (!dir) return '# 选择视频目录后自动生成代码'
-    return `"""批量转码 → mp4（CRF ${crf}）。"""
+    return MEDIA_PREAMBLE([[dir + "/clip_1.mp4", "video"], [dir + "/clip_2.mp4", "video"]]) + `"""批量转码 → mp4（CRF ${crf}）。"""
 import glob
 import json
 import os
