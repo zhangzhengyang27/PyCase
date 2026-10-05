@@ -167,7 +167,7 @@ export interface GallerySectionNav {
   count: number
 }
 
-/** 侧栏二级分区菜单的数据：完整 8 项（SECTION_CATALOG 恒含空分区，计数为 0 也展示），
+/** 侧栏二级分区菜单的数据：完整 13 项（SECTION_CATALOG 恒含空分区，计数为 0 也展示），
  *  计数取互斥分配后的成员数（与卡片徽章 / 结果条一致） */
 export const gallerySectionNav = computed<GallerySectionNav[]>(() => {
   const counts = new Map(gallerySections.value.map((s) => [s.key, s.items.length]))

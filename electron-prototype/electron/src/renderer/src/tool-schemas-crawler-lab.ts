@@ -80,6 +80,13 @@ class _FixtureHandler(BaseHTTPRequestHandler):
                 self._send(200, json.dumps({"updated": True}), "application/json", {"Last-Modified": "Wed, 01 Oct 2025 08:00:00 GMT"})
         elif p == "/private/secret":
             self._send(200, "机密内容")
+        elif p == "/protected":
+            auth = self.headers.get("Authorization", "")
+            cookie = self.headers.get("Cookie", "")
+            if auth == "Bearer demo-token-123" or "token=demo-token-123" in cookie:
+                self._send(200, json.dumps({"secret": "受保护数据"}, ensure_ascii=False), "application/json")
+            else:
+                self._send(401, "unauthorized")
         elif p == "/page/1" or p == "/page/2" or p == "/page/3":
             self._send(200, self._page_html(int(p.split("/")[-1])))
         elif p == "/quotes":
@@ -134,7 +141,8 @@ class _FixtureHandler(BaseHTTPRequestHandler):
         raw = self.rfile.read(length).decode("utf-8")
         u = urlparse(self.path)
         if u.path == "/login":
-            self._send(200, json.dumps({"token": "demo-token-123"}), "application/json")
+            self._send(200, json.dumps({"token": "demo-token-123"}), "application/json",
+                       {"Set-Cookie": "token=demo-token-123; Path=/"})
         else:
             self._send(200, json.dumps({"echo": raw, "ctype": self.headers.get("Content-Type", "")}, ensure_ascii=False), "application/json")
 
@@ -266,7 +274,7 @@ token = login.json()["token"]
 s.headers["Authorization"] = "Bearer " + token
 print("登录获得 token:", token)
 resp = s.get(TARGET, timeout=10)
-print("受保护页状态:", resp.status_code, "（无会话直接访问会 401/403）")
+print("受保护页状态:", resp.status_code, "（下面裸请求对照应为 401）")
 plain = requests.get(TARGET, timeout=10)
 print("裸请求状态:", plain.status_code)`
   ),
@@ -322,7 +330,7 @@ for attempt in range(1, max_retries + 1):
         print(f"第 {attempt} 次失败（{e}）→ 退避 {wait}s")
         time.sleep(min(wait, 2))
 else:
-    print("重试耗尽，放弃本次抓取")`
+    print(f"重试耗尽（{max_retries} 次后仍 503）→ 放弃本次抓取并记录")`
   ),
   ct(
     'antiban-ua-pool',
@@ -411,7 +419,7 @@ cookies = {"token": token}
 resp = requests.get(TARGET, cookies=cookies, timeout=10)
 print("带 Cookie →", resp.status_code)
 resp2 = requests.get(TARGET, timeout=10)
-print("不带   →", resp2.status_code if resp2.status_code != 200 else "200（演示端点不强制）")`
+print("不带   →", resp2.status_code, "（应 401：凭据缺失）")`
   ),
   ct(
     'throttle-domain',
@@ -936,8 +944,9 @@ print(f"计划抓取 {args.pages} 页，关键词={args.keyword or '无'}，输�
 rows = []
 for page in range(1, args.pages + 1):
     data = requests.get(BASE + f"/api/items?page={page}", timeout=10).json()
-    rows.extend(i for i in data["items"] if args.keyword in i["name"] or True)
-    print(f"  第 {page} 页完成")
+    hits = [i for i in data["items"] if args.keyword in i["name"]] or data["items"]
+    rows.extend(hits)
+    print(f"  第 {page} 页完成，命中 {len(hits)}/{len(data['items'])} 条")
 with open(args.output, "w", encoding="utf-8") as f:
     f.write(json.dumps(rows, ensure_ascii=False))
 print(f"落盘 {len(rows)} 条 → {args.output}")`

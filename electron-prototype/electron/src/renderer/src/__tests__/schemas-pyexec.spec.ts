@@ -6,9 +6,13 @@ import { existsSync, mkdtempSync, writeFileSync, readdirSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
-import type { FieldValue } from '../interactive-tools'
+import type { FieldValue, InteractiveToolSchema } from '../interactive-tools'
 import { getToolSchema } from '../interactive-tools'
 import { CRAWLER_TYPES, crawlerLabSchema } from '../tool-schemas-crawler-lab'
+import { PANDAS_TYPES, pandasLabSchema } from '../tool-schemas-pandas-lab'
+import { SQLITE_TYPES, sqliteLabSchema } from '../tool-schemas-sqlite-lab'
+import { WEB_TYPES, webLabSchema } from '../tool-schemas-web-lab'
+import { ASYNC_TYPES, asyncioLabSchema } from '../tool-schemas-asyncio-lab'
 
 // 页面产物依赖 psutil/PIL/numpy（系统 python3 无），用仓库根 .venv 跑
 const VENV_PY = join(process.cwd(), '../../.venv/bin/python')
@@ -118,28 +122,53 @@ describe.skipIf(!hasVenv)('pyCode 真跑回归（.venv 执行 + 产物非空）'
 // （xml-ns 未声明命名空间前缀 / test-spider 引用未定义 __main__ / unittest 输出走 stderr），
 // 本循环作为永久回归钉住「每个类型生成的脚本 exit 0 且 stdout 有内容」。
 // ---------------------------------------------------------------------------
-describe.skipIf(!hasVenv)('爬虫实验室全类型真跑', () => {
-  it('57 类型逐一生成 + 执行：exit 0 且 stdout 非空', () => {
-    expect(CRAWLER_TYPES.length).toBe(57)
-    const failures: string[] = []
-    for (const t of CRAWLER_TYPES) {
-      const v: Record<string, FieldValue> = { type: t.value }
-      for (const f of t.fields ?? []) v[f.key] = f.default
-      const code = crawlerLabSchema.pyCode(v)
-      expect(code, `${t.value} 生成空代码`).not.toBe('')
-      const cwd = mkdtempSync(join(tmpdir(), 'crawler-pyexec-'))
-      writeFileSync(join(cwd, 'page.py'), code)
-      try {
-        const stdout = execFileSync(VENV_PY, [join(cwd, 'page.py')], {
-          encoding: 'utf8',
-          timeout: 60_000,
-          cwd
-        })
-        if (!stdout.trim() || stdout.includes('Traceback')) failures.push(t.value)
-      } catch (e) {
-        failures.push(`${t.value}: ${String((e as Error).message).split('\n')[0]}`)
+describe.skipIf(!hasVenv)('五实验室全类型真跑（107 类型 = 产品承诺「每个示例能真实运行」的执法线）', () => {
+  const LABS: Array<[string, InteractiveToolSchema, Array<{ value: string }>, number]> = [
+    ['crawler', crawlerLabSchema, CRAWLER_TYPES, 57],
+    ['pandas', pandasLabSchema, PANDAS_TYPES, 20],
+    ['sqlite', sqliteLabSchema, SQLITE_TYPES, 10],
+    ['web', webLabSchema, WEB_TYPES, 10],
+    ['asyncio', asyncioLabSchema, ASYNC_TYPES, 10]
+  ]
+  function runType(schema: InteractiveToolSchema, value: string, extra: Record<string, FieldValue> = {}): string {
+    const v: Record<string, FieldValue> = { type: value, ...extra }
+    const fieldList = typeof schema.fields === 'function' ? schema.fields(v) : schema.fields
+    for (const f of fieldList) if (v[f.key] === undefined) v[f.key] = f.default
+    const code = schema.pyCode(v)
+    expect(code, `${value} 生成空代码`).not.toBe('')
+    const cwd = mkdtempSync(join(tmpdir(), 'pyexec-'))
+    writeFileSync(join(cwd, 'page.py'), code)
+    return execFileSync(VENV_PY, [join(cwd, 'page.py')], {
+      encoding: 'utf8',
+      timeout: 60_000,
+      cwd
+    })
+  }
+
+  for (const [name, schema, types, total] of LABS) {
+    it(`${name}-lab ${total} 类型逐一生成 + 执行：exit 0 且 stdout 非空`, () => {
+      expect(types.length).toBe(total)
+      const failures: string[] = []
+      for (const t of types) {
+        try {
+          const stdout = runType(schema, t.value)
+          if (!stdout.trim() || stdout.includes('Traceback')) failures.push(t.value)
+        } catch (e) {
+          failures.push(`${t.value}: ${String((e as Error).message).split('\n')[0]}`)
+        }
       }
-    }
-    expect(failures, `失败类型: ${failures.join(', ')}`).toEqual([])
-  }, 300_000)
+      expect(failures, `失败类型: ${failures.join(', ')}`).toEqual([])
+    }, 300_000)
+  }
+
+  it('对抗输入回归：含引号/换行的用户文本必须原样嵌入（JSON.stringify 惯例），不得产生 SyntaxError', () => {
+    const evil = `x'; import os\nos.system('echo pwned')`
+    const webOut = runType(webLabSchema, 'headers-cookies', { session: evil })
+    expect(webOut).not.toContain('Traceback')
+    // 字面回显（换行后段被 header 语义截断，断言换行前段原样出现 = 嵌入为字符串而非语法注入）
+    expect(webOut).toContain("session=x'; import os")
+    const crawlerOut = runType(crawlerLabSchema, 'http-headers', { ua: 'x" narc; drop table' })
+    expect(crawlerOut).not.toContain('Traceback')
+    expect(crawlerOut).toContain('narc') // UA 头服务端原样回显
+  })
 })

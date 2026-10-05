@@ -33,7 +33,7 @@ STUDENTS_CSV = """name,class,chinese,math,english
 孙八,2班,91,93,88
 """
 
-WEATHER = None  # 由 rng 生成：60 天 × 北京/上海 的温度湿度
+# 由 rng 生成：60 天 × 北京/上海 的温度湿度
 _w = pd.date_range("2025-08-01", periods=60, freq="D")
 WEATHER = pd.DataFrame(
     {

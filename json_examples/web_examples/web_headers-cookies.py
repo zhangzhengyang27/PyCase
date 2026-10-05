@@ -51,7 +51,7 @@ class Handler(BaseHandler):
         if path == "/login":
             self._send(200, "已登录", headers={
                 "X-Request-Id": "req-1",
-                'Set-Cookie': 'session=sess-9527; Path=/',
+                'Set-Cookie': 'session=' + "sess-9527" + '; Path=/',
             })
         elif path == "/me":
             self._send(200, "你的会话: " + (self.headers.get("Cookie") or "<无>"))

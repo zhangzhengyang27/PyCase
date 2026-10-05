@@ -3,7 +3,7 @@
 // v2 口径：主题判定认服务端下发的 theme_key（列表不含 code，判据在服务端，
 // 见 src/themes.ts 与 app/contract_store.py::theme_key）。夹具因此给 theme_key，
 // 而不是像 v1 那样塞 code 让前端跑正则。
-// 8 分区口径（607df36）：5 主题 + 2 标签组 + 其他；「综合项目」分区已退役，
+// 13 分区口径（e59d523）：5 主题 + 7 标签组 + 其他；「综合项目」分区已退役，
 // 未命中主题/标签组的条目（含 projects 分类）一律落 others。
 import { createRendererLoader } from './renderer-loader.mjs'
 
@@ -149,7 +149,7 @@ console.log('assignSections')
 // 8. SECTION_CATALOG：侧栏二级分区菜单的完整元数据（全部 13 项，others 恒在）
 {
   check('13 项 = 5 主题 + 7 标签组 + 其他', SECTION_CATALOG.length === 13)
-  // 与 assignSections 同序；assignSections 空库省略 others，这里补回正好对齐 8 项
+  // 与 assignSections 同序；assignSections 空库省略 others，这里补回正好对齐 13 项
   check(
     '键序与 assignSections 一致（others 恒在末尾）',
     SECTION_CATALOG.map((s) => s.key).join() === [...assignSections([]).map((s) => s.key), 'others'].join()

@@ -559,6 +559,7 @@ async def _run_subprocess(
         if resolved is None:
             _notify("run_output", {"run_id": run_id, "text": "[错误] 无法准备工作区，运行已取消\n"})
             _notify("run_finished", {"run_id": run_id, "exit_code": -1})
+            _running.pop(run_id, None)
             return
         workspace = resolved
         file_path = workspace / item.name

@@ -22,7 +22,7 @@ matplotlib 示例统一注入 MPLBACKEND=Agg（无头出图；tkinter 弹窗型�
 schemas-pyexec.spec.ts 及后续 dump 管线承接。
 
 用法：
-  .venv/bin/python scripts/verify_corpus.py                 # 全量 395 条
+  .venv/bin/python scripts/verify_corpus.py                 # 全量 445 条
   .venv/bin/python scripts/verify_corpus.py --limit 30      # 抽样
   .venv/bin/python scripts/verify_corpus.py --json out.json # 机器可读报告
 """
